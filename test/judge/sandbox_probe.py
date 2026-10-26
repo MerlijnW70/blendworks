@@ -9,11 +9,12 @@ import time
 arguments = sys.argv[sys.argv.index("--") + 1 :]
 bridge_dir, mode, out_path = arguments[0], arguments[1], arguments[2]
 memory_mb = int(arguments[arguments.index("--memory-mb") + 1])
+memory_kind = arguments[arguments.index("--memory-kind") + 1] if "--memory-kind" in arguments else "address-space"
 sys.path.insert(0, bridge_dir)
 
 from judge_common import apply_memory_cap
 
-result = {"limits": apply_memory_cap(memory_mb * 1024 * 1024)}
+result = {"limits": apply_memory_cap(memory_mb * 1024 * 1024, memory_kind)}
 
 if mode == "sleep":
     time.sleep(600)

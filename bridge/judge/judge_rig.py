@@ -3,13 +3,33 @@ from math import radians, sin, tan
 import bpy
 from mathutils import Matrix, Vector
 
+from judge_outlines import add_outlines
+
 RESOLUTION = 512
-SAMPLES = 64
+SAMPLES = 24
 SEED = 0
 BACKGROUND_GREY = 0.18
 FIELD_OF_VIEW = radians(35.0)
 FRAME_MARGIN = 1.18
 MINIMUM_EXTENT = 1e-3
+
+STAMPS = (
+    "use_stamp",
+    "use_stamp_date",
+    "use_stamp_time",
+    "use_stamp_render_time",
+    "use_stamp_frame",
+    "use_stamp_frame_range",
+    "use_stamp_memory",
+    "use_stamp_hostname",
+    "use_stamp_camera",
+    "use_stamp_lens",
+    "use_stamp_scene",
+    "use_stamp_marker",
+    "use_stamp_filename",
+    "use_stamp_sequencer_strip",
+    "use_stamp_note",
+)
 
 VIEWS = {
     "front": (Vector((0.0, -1.0, 0.0)), Vector((0.0, 0.0, 1.0)), True),
@@ -39,23 +59,24 @@ def orientation(side, upward, depth):
     return Matrix((side, upward, depth)).transposed().to_4x4()
 
 
-def configure_scene(scene):
+def configure_scene(scene, resolution=RESOLUTION, samples=SAMPLES, outlines=True):
     scene.render.engine = "CYCLES"
-    scene.cycles.device = "CPU"
-    scene.cycles.samples = SAMPLES
+    scene.cycles.samples = samples
     scene.cycles.use_adaptive_sampling = False
     scene.cycles.seed = SEED
     scene.cycles.use_animated_seed = False
     scene.cycles.use_denoising = True
-    scene.cycles.denoiser = "OPENIMAGEDENOISE"
     scene.cycles.shading_system = False
-    scene.render.resolution_x = RESOLUTION
-    scene.render.resolution_y = RESOLUTION
+    scene.render.resolution_x = resolution
+    scene.render.resolution_y = resolution
     scene.render.resolution_percentage = 100
     scene.render.film_transparent = False
     scene.render.dither_intensity = 0.0
     scene.render.use_compositing = False
     scene.render.use_sequencer = False
+    scene.render.use_persistent_data = True
+    for stamp in STAMPS:
+        setattr(scene.render, stamp, False)
     scene.render.image_settings.file_format = "PNG"
     scene.render.image_settings.color_mode = "RGB"
     scene.render.image_settings.color_depth = "8"
@@ -64,21 +85,9 @@ def configure_scene(scene):
     scene.view_settings.exposure = 0.0
     scene.view_settings.gamma = 1.0
     scene.frame_set(1)
-    scene.render.use_freestyle = True
-    scene.render.line_thickness_mode = "ABSOLUTE"
-    scene.render.line_thickness = 1.5
-    settings = scene.view_layers[0].freestyle_settings
-    for existing in list(settings.linesets):
-        settings.linesets.remove(existing)
-    line_set = settings.linesets.new("judge-lines")
-    line_set.select_by_visibility = True
-    line_set.select_silhouette = True
-    line_set.select_border = True
-    line_set.select_crease = True
-    line_style = bpy.data.linestyles.new("judge-lines")
-    line_style.color = (0.05, 0.05, 0.05)
-    line_style.thickness = 1.5
-    line_set.linestyle = line_style
+    scene.render.use_freestyle = False
+    if outlines:
+        add_outlines(scene)
     scene.world = studio_world()
 
 
@@ -154,6 +163,9 @@ class Rig:
         camera.clip_start = max(distance - self.radius * 2.0, distance * 1e-3)
         camera.clip_end = distance + self.radius * 2.0
         self.camera.matrix_world = Matrix.Translation(self.centre + depth * distance) @ orientation(side, upward, depth)
+        self.place_lights(side, upward, depth)
+
+    def place_lights(self, side, upward, depth):
         for light, direction in self.lights:
             towards_light = (side * direction.x + upward * direction.y + depth * direction.z).normalized()
             light_side, light_up, light_depth = basis(towards_light, upward if abs(towards_light.dot(upward)) < 0.99 else side)
@@ -176,7 +188,8 @@ class Rig:
             half = tan(camera.angle / 2)
             x = (local.x / -local.z) / half
             y = (local.y / -local.z) / half
-        return (x + 1) / 2 * RESOLUTION, (1 - (y + 1) / 2) * RESOLUTION
+        size = self.scene.render.resolution_x
+        return (x + 1) / 2 * size, (1 - (y + 1) / 2) * size
 
     def render(self, view, path):
         self.aim(view)

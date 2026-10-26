@@ -9,7 +9,7 @@ from judge_common import (
     DEFAULT_MAX_TRIANGLES,
     DEFAULT_MEMORY_MB,
     JudgeError,
-    apply_memory_cap,
+    memory_cap_from,
     positive_int,
     run_guarded,
     script_arguments,
@@ -18,12 +18,12 @@ from judge_common import (
 from judge_geometry import Measurer, guaranteed_triangles
 from judge_load import load_asset
 
-USAGE = "measure.py -- <asset> <out.json> [--max-triangles n] [--memory-mb n]"
+USAGE = "measure.py -- <asset> <out.json> [--max-triangles n] [--memory-mb n] [--memory-kind address-space|data] [--uv-grid path]"
 
 
 def measure(asset, options):
     triangle_cap = positive_int(options["max-triangles"], "max-triangles")
-    limits = apply_memory_cap(positive_int(options["memory-mb"], "memory-mb") * 1024 * 1024)
+    limits = memory_cap_from(options)
     loaded = load_asset(asset)
     scene = bpy.context.scene
     estimate = guaranteed_triangles(scene)
@@ -32,6 +32,8 @@ def measure(asset, options):
     measurer = Measurer(triangle_cap)
     measurer.measure(bpy.context.evaluated_depsgraph_get())
     measurements = measurer.result()
+    if options["uv-grid"]:
+        measurer.uv_grid.save(os.path.abspath(options["uv-grid"]))
     measurements.update(loaded)
     measurements["objectsAll"] = len(scene.objects)
     return {"measurements": measurements, "limits": {**limits, "maxTriangles": triangle_cap}}
@@ -39,7 +41,7 @@ def measure(asset, options):
 
 def main():
     positional, options = split_arguments(
-        script_arguments(), {"max-triangles": str(DEFAULT_MAX_TRIANGLES), "memory-mb": str(DEFAULT_MEMORY_MB)}
+        script_arguments(), {"max-triangles": str(DEFAULT_MAX_TRIANGLES), "memory-mb": str(DEFAULT_MEMORY_MB), "memory-kind": "address-space", "uv-grid": ""}
     )
     if len(positional) != 2:
         print(USAGE, file=sys.stderr)

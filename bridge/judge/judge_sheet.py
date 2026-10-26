@@ -2,7 +2,7 @@ from array import array
 
 import bpy
 
-from judge_font import GLYPH_HEIGHT, draw_text, fit_text
+from judge_font import GLYPH_HEIGHT, draw_text, fit_text, printable, text_width
 
 BACKGROUND = (0.10, 0.10, 0.11, 1.0)
 TEXT = (0.93, 0.93, 0.93, 1.0)
@@ -98,7 +98,8 @@ def compose(tiles, header_lines, path):
     columns = min(len(tiles), 4)
     rows = (len(tiles) + columns - 1) // columns
     header_height = MARGIN + HEADER_LINE * len(header_lines)
-    width = MARGIN * 2 + columns * tile_size + (columns - 1) * GAP
+    header_width = max(text_width(printable(text), HEADER_SCALE) for text, _ in header_lines) if header_lines else 0
+    width = MARGIN * 2 + max(columns * tile_size + (columns - 1) * GAP, header_width)
     height = header_height + GAP + rows * (LABEL_HEIGHT + tile_size) + (rows - 1) * GAP + MARGIN
     canvas = Canvas(width, height)
     for index, (text, colour) in enumerate(header_lines):

@@ -10,7 +10,9 @@ export type Limits = { timeoutMs: number; memoryBytes: number };
 
 export type Isolation = { network: "isolated" | "not isolated"; memory: string; timeoutMs: number; platform: string };
 
-export type Plan = { command: string; args: string[]; isolation: Isolation };
+export type Plan = { command: string; args: string[]; isolation: Isolation; gpu: boolean };
+
+export type SandboxDevice = "cpu" | "gpu";
 
 export type Tools = { platform: NodeJS.Platform; unshare: boolean; prlimit: boolean };
 
@@ -31,7 +33,8 @@ export function detectTools(): Tools {
   return detected;
 }
 
-export function planSandbox(blender: string, script: string, scriptArgs: string[], limits: Limits, tools: Tools): Plan {
+export function planSandbox(blender: string, script: string, scriptArgs: string[], limits: Limits, tools: Tools, device: SandboxDevice = "cpu"): Plan {
+  const gpu = device === "gpu";
   const blenderArgs = [...BLENDER_FLAGS, "--python", script, "--", ...scriptArgs];
   const memoryMb = Math.floor(limits.memoryBytes / (1024 * 1024));
   const withCap = [...blenderArgs, "--memory-mb", String(memoryMb)];
@@ -40,20 +43,24 @@ export function planSandbox(blender: string, script: string, scriptArgs: string[
       command: blender,
       args: withCap,
       isolation: { network: "not isolated", memory: `job object, ${memoryMb} MB, no child processes`, timeoutMs: limits.timeoutMs, platform: "windows" },
+      gpu,
     };
   }
+  if (gpu) withCap.push("--memory-kind", "data");
+  const limit = gpu ? `--data=${limits.memoryBytes}` : `--as=${limits.memoryBytes}`;
+  const kind = gpu ? "data segment" : "address space";
   const prefix: string[] = [];
-  if (tools.prlimit) prefix.push("prlimit", `--as=${limits.memoryBytes}`, "--core=0", "--");
+  if (tools.prlimit) prefix.push("prlimit", limit, "--core=0", "--");
   prefix.push(blender, ...withCap);
   const network = tools.unshare ? "isolated" : "not isolated";
-  const memory = tools.prlimit ? `prlimit address space, ${memoryMb} MB` : `setrlimit address space, ${memoryMb} MB`;
+  const memory = `${tools.prlimit ? "prlimit" : "setrlimit"} ${kind}, ${memoryMb} MB`;
   const isolation: Isolation = { network, memory, timeoutMs: limits.timeoutMs, platform: tools.platform };
-  if (tools.unshare) return { command: "unshare", args: ["-rn", ...prefix], isolation };
+  if (tools.unshare) return { command: "unshare", args: ["-rn", ...prefix], isolation, gpu };
   const [command, ...args] = prefix;
-  return { command: command ?? blender, args, isolation };
+  return { command: command ?? blender, args, isolation, gpu };
 }
 
-export function sandboxEnvironment(home: string): NodeJS.ProcessEnv {
+export function sandboxEnvironment(home: string, gpu = false): NodeJS.ProcessEnv {
   const keep = ["PATH", "Path", "SystemRoot", "SYSTEMROOT", "windir", "LANG"];
   const environment: NodeJS.ProcessEnv = {};
   for (const name of keep) if (process.env[name] !== undefined) environment[name] = process.env[name];
@@ -63,7 +70,7 @@ export function sandboxEnvironment(home: string): NodeJS.ProcessEnv {
     environment[name] = folder;
   }
   Object.assign(environment, { HOME: home, USERPROFILE: home, TEMP: home, TMP: home, TMPDIR: home });
-  Object.assign(environment, { CUDA_VISIBLE_DEVICES: "", HIP_VISIBLE_DEVICES: "" });
+  if (!gpu) Object.assign(environment, { CUDA_VISIBLE_DEVICES: "", HIP_VISIBLE_DEVICES: "" });
   return environment;
 }
 
@@ -73,7 +80,7 @@ export async function runSandboxed(plan: Plan, workDir: string): Promise<RunResu
     return await new Promise<RunResult>((resolve, reject) => {
       const child = spawn(plan.command, plan.args, {
         cwd: workDir,
-        env: sandboxEnvironment(home),
+        env: sandboxEnvironment(home, plan.gpu),
         stdio: ["ignore", "pipe", "pipe"],
         windowsHide: true,
       });

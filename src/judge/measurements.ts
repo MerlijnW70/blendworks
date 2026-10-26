@@ -45,12 +45,37 @@ export const measureOutputSchema = z.union([
   z.object({ ok: z.literal(false), error: scriptErrorSchema }),
 ]);
 
+const deviceSchema = z.object({ backend: z.string().max(16), devices: z.array(z.string().max(200)).max(16) });
+const elapsed = z.number().nonnegative();
+
+export const probesSchema = z
+  .array(z.object({ backend: z.string().max(16), devices: z.array(z.string().max(200)).max(16), usable: z.boolean(), reason: z.string().max(400) }))
+  .max(8);
+
+const scriptFailureSchema = z.object({ ok: z.literal(false), error: scriptErrorSchema, probes: probesSchema.optional() });
+
 export const renderOutputSchema = z.union([
   z.object({
     ok: z.literal(true),
     views: z.array(z.object({ view: z.string().max(32), path: z.string() })),
     contactSheet: z.string(),
     contactSheetSize: z.tuple([count, count]),
+    device: deviceSchema.nullable(),
+    probes: probesSchema,
+    timings: z.object({ device: elapsed.nullable(), views: elapsed.nullable(), sheet: elapsed }),
   }),
-  z.object({ ok: z.literal(false), error: scriptErrorSchema }),
+  scriptFailureSchema,
+]);
+
+export const closeupsOutputSchema = z.union([
+  z.object({
+    ok: z.literal(true),
+    images: z.array(z.object({ name: z.string().max(64), path: z.string() })).max(16),
+    sheet: z.string(),
+    sheetSize: z.tuple([count, count]),
+    device: deviceSchema,
+    probes: probesSchema,
+    timings: z.object({ device: elapsed.nullable(), render: elapsed, sheet: elapsed }),
+  }),
+  scriptFailureSchema,
 ]);

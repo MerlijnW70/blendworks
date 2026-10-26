@@ -69,19 +69,50 @@ An asset spec is JSON (`schemas/asset-spec.schema.json`), so it can be pinned by
 
 ## 4. The judge
 
-`blendworks judge <spec.json> <asset> [--out <dir>]` does the following:
+`blendworks judge <spec.json> <asset> [--out <dir>] [--preview]` does the following:
 1. Starts headless Blender in a sandbox with a fresh factory scene (`--factory-startup --disable-autoexec`). In WSL it also has no network.
 2. Imports the asset with the judge's own script. The worker's file never runs code: a `.blend` delivery is opened with auto-run disabled, and only its data is read.
 3. Measures every rule of the spec: triangles, bounds, origin, manifoldness, materials, UV coverage and overlap, object count, file size.
-4. Renders the spec's views with a fixed camera rig fitted to the asset's bounds, a neutral three-point light, Cycles on the CPU, a fixed seed and fixed samples. The result is a contact sheet.
+4. Renders the spec's views with a fixed camera rig fitted to the asset's bounds, a neutral three-point light, Cycles with a fixed seed, 24 samples and denoising, at 512 px. Outlines come from the compositor (edges in the normal and depth passes), so they cost almost nothing on any device. The result is a contact sheet.
 5. Writes `report.json`, with every rule, its measured value and pass or fail, plus the PNGs. It exits 0 when every rule passes and 1 otherwise.
 
-Its use with Solive is `intent-engine judge â€¦ --sandbox none --run "blendworks judge spec.json work.glb"`. Visual quality beyond the rules is for a judge agent viewing the contact sheet against the brief, or a committee.
+### Render device
+
+Every render picks its device from `BLENDWORKS_DEVICE`:
+- **`auto`** (the default) tries OptiX, then CUDA, HIP, Metal and oneAPI inside the sandbox, and uses the first backend whose device lists and passes a small test render. Otherwise it renders on the CPU.
+- **`gpu`** fails with a reason when no GPU backend works.
+- **`cpu`** never starts a GPU.
+
+The denoiser is the OptiX denoiser on OptiX and OpenImageDenoise elsewhere. A re-run on the CPU gives byte-identical images. On a GPU, a small share of pixels may differ by one level out of 255.
+
+`report.json` and the summary name the device, for example `render: gpu OPTIX (NVIDIA GeForce RTX 4080)` or `render: cpu`. They also give the wall time of each stage: measure, device (the GPU probe), render and sheet.
+
+### Sandbox with a GPU
+
+- **The address-space limit.** It stays on the measuring stage and on CPU renders. It is not used for GPU renders: CUDA reserves a large virtual address space, and under `prlimit --as` the GPU render of a large asset crashes.
+- **GPU renders.** They run under `unshare -rn` with a data-segment limit (`prlimit --data`, and `RLIMIT_DATA` inside Blender) of the same size, plus the same timeout. The summary prints a separate `render sandbox:` line naming that limit.
+- **No GPU in the sandbox.** If no GPU starts inside the sandbox, or Blender crashes there, `auto` renders on the CPU under the original limits. The summary says why.
+- **Windows.** A job object caps memory for both devices.
+
+### Preview mode
+
+With `--preview`, the judge measures and checks every rule and draws the UV layout, but renders no views. The report marks the views as skipped (`renders.viewsSkipped`), and the exit code depends on the rules alone.
+
+### Close-ups
+
+`blendworks closeups <asset> --out <dir> [--res <px>] [--samples <n>]` renders 9 close-ups:
+- a hero three-quarter view;
+- a 2 × 2 grid of zoomed tiles from the front-right;
+- a 2 × 2 grid of zoomed tiles from the back-left.
+
+Each framing is fitted to the asset's vertices, and the four tiles of a grid together make up the whole view. The command also writes a labelled `closeup-sheet.png`. It uses the judge's light rig, device choice and sandbox, without outlines. The defaults are 1200 px and 16 samples with denoising, and the command prints its total time.
+
+Its use with Solive is `intent-engine judge … --sandbox none --run "blendworks judge spec.json work.glb"`. Visual quality beyond the rules is for a judge agent viewing the contact sheet and the close-up sheet against the brief, or a committee.
 
 ## 5. Determinism
 
 - Measurements are exact and repeatable.
-- Renders use a fixed seed, samples and resolution, so the same asset gives the same report and near-identical images.
+- Renders use a fixed seed, samples and resolution, so the same asset on the same device gives the same report and the same images (byte-identical on the CPU; on a GPU, at most one level out of 255 apart in a small share of pixels).
 - The judge pins the Blender version and refuses others.
 
 ## 6. Asset library

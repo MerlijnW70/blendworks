@@ -91,14 +91,18 @@ describe("the rules", () => {
     const rules = evaluateRules(spec, { ...CRATE, triangles: 900 });
     const text = summarize({
       passed: false,
+      preview: false,
       spec: { path: "spec.json", sha256: null, name: "wooden crate" },
       asset: { path: "crate.glb", sha256: null, bytes: 2784 },
       blender: "5.2.3",
       sandbox: null,
+      renderSandbox: null,
+      device: null,
       failure: null,
       rules,
       measurements: CRATE,
       renders: null,
+      timings: { measure: null, device: null, render: null, sheet: null, total: 0 },
     });
     expect(text.split("\n")[0]).toBe("FAIL  wooden crate  (crate.glb)");
     expect(text).toContain("FAIL  triangles.max      measured 900; required at most 800");

@@ -1,5 +1,8 @@
+import os
 from array import array
 from math import floor
+
+from judge_common import JudgeError
 
 GRID = 512
 SATURATING_INCREMENT = bytes(min(value + 1, 2) for value in range(256))
@@ -45,6 +48,25 @@ class UvGrid:
             start = row * size + span[0]
             end = row * size + span[1] + 1
             self.counts[start:end] = self.counts[start:end].translate(SATURATING_INCREMENT)
+
+    def save(self, path):
+        temporary = path + ".partial"
+        with open(temporary, "wb") as handle:
+            handle.write(bytes(self.counts))
+        os.replace(temporary, path)
+
+    @classmethod
+    def load(cls, path, size=GRID):
+        grid = cls(size)
+        try:
+            with open(path, "rb") as handle:
+                data = handle.read(size * size + 1)
+        except OSError:
+            raise JudgeError("usage", "the UV grid file is missing") from None
+        if len(data) != size * size or max(data, default=0) > 2:
+            raise JudgeError("usage", "the UV grid file is malformed")
+        grid.counts = bytearray(data)
+        return grid
 
     def coverage(self):
         return 1.0 - self.counts.count(0) / len(self.counts)

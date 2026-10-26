@@ -1,16 +1,19 @@
 import json
 import os
 import sys
+import time
 
 DEFAULT_MEMORY_MB = 4096
 DEFAULT_MAX_TRIANGLES = 2_000_000
+MEMORY_KINDS = ("address-space", "data")
 
 
 class JudgeError(Exception):
-    def __init__(self, code, message):
+    def __init__(self, code, message, extra=None):
         super().__init__(message)
         self.code = code
         self.message = message
+        self.extra = extra or {}
 
 
 def script_arguments():
@@ -61,20 +64,27 @@ def is_inside(path, directory):
         return False
 
 
-def apply_memory_cap(memory_bytes):
+def memory_kind(text):
+    if text not in MEMORY_KINDS:
+        raise JudgeError("usage", f"--memory-kind must be one of {', '.join(MEMORY_KINDS)}")
+    return text
+
+
+def apply_memory_cap(memory_bytes, kind="address-space"):
     if sys.platform == "win32":
         return windows_job_cap(memory_bytes)
-    return posix_cap(memory_bytes)
+    return posix_cap(memory_bytes, memory_kind(kind))
 
 
-def posix_cap(memory_bytes):
+def posix_cap(memory_bytes, kind):
     import resource
 
-    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    which = resource.RLIMIT_DATA if kind == "data" else resource.RLIMIT_AS
+    soft, hard = resource.getrlimit(which)
     limit = memory_bytes if hard == resource.RLIM_INFINITY else min(memory_bytes, hard)
-    resource.setrlimit(resource.RLIMIT_AS, (limit, limit))
+    resource.setrlimit(which, (limit, limit))
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
-    return {"memoryBytes": limit, "childProcesses": "allowed"}
+    return {"memoryBytes": limit, "memoryKind": kind, "childProcesses": "allowed"}
 
 
 def windows_job_cap(memory_bytes):
@@ -129,14 +139,23 @@ def windows_job_cap(memory_bytes):
         raise JudgeError("sandbox", f"could not set the job limits (error {ctypes.get_last_error()})")
     if not kernel32.AssignProcessToJobObject(wintypes.HANDLE(job), wintypes.HANDLE(kernel32.GetCurrentProcess())):
         raise JudgeError("sandbox", f"could not enter the job object (error {ctypes.get_last_error()})")
-    return {"memoryBytes": memory_bytes, "childProcesses": "blocked"}
+    return {"memoryBytes": memory_bytes, "memoryKind": "job object", "childProcesses": "blocked"}
+
+
+def memory_cap_from(options):
+    return apply_memory_cap(positive_int(options["memory-mb"], "memory-mb") * 1024 * 1024, options["memory-kind"])
 
 
 def run_guarded(out_path, work):
     try:
         payload = {"ok": True, **work()}
     except JudgeError as error:
-        payload = {"ok": False, "error": {"code": error.code, "message": error.message}}
+        payload = {**error.extra, "ok": False, "error": {"code": error.code, "message": error.message}}
     except MemoryError:
         payload = {"ok": False, "error": {"code": "memory_cap", "message": "the asset needs more memory than the cap allows"}}
     write_json(out_path, payload)
+
+
+def stopwatch():
+    started = time.perf_counter()
+    return lambda: round(time.perf_counter() - started, 3)

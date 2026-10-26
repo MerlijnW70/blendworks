@@ -1,19 +1,17 @@
-import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, extname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { basename, join, resolve } from "node:path";
 import { blenderPath } from "../blender.js";
+import type { z } from "zod";
+import type { DeviceMode } from "./device.js";
 import { measureOutputSchema, renderOutputSchema, type Measurements } from "./measurements.js";
-import { summarize, type Failure, type Report } from "./report.js";
+import { summarize, type Report, type Timings } from "./report.js";
 import { evaluateRules } from "./rules.js";
-import { detectTools, planSandbox, runSandboxed, type Isolation, type Limits, type Tools } from "./sandbox.js";
-import { DEFAULT_VIEWS, FORMATS, readSpec, SpecError, type AssetSpec } from "./spec.js";
-import { blenderVersion, BlenderVersionError } from "./version.js";
+import { detectTools, type Limits, type SandboxDevice, type Tools } from "./sandbox.js";
+import { DEFAULT_VIEWS, readSpec, SpecError, type AssetSpec } from "./spec.js";
+import { checkAsset, checkBlender, DEFAULT_BACKENDS, DEFAULTS, deviceMode, onDevice, runScript, seconds, sha256, StageFailure, type Attempt, type Sandbox } from "./stages.js";
 
-export const SCRIPTS_DIR = fileURLToPath(new URL("../../bridge/judge/", import.meta.url));
-
-export const DEFAULTS = { timeoutMs: 300_000, memoryBytes: 4096 * 1024 * 1024, maxTriangles: 2_000_000, maxFileBytes: 256 * 1024 * 1024 };
+export { DEFAULTS, SCRIPTS_DIR } from "./stages.js";
 
 export type JudgeOptions = {
   specPath: string;
@@ -25,91 +23,97 @@ export type JudgeOptions = {
   maxTriangles?: number;
   maxFileBytes?: number;
   tools?: Tools;
+  preview?: boolean;
+  device?: DeviceMode;
+  backends?: readonly string[];
 };
 
-class StageFailure extends Error {
-  constructor(readonly failure: Failure) {
-    super(failure.message);
-  }
-}
-
 const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "render.json", "contact-sheet.png", "views"];
-
-function sha256(path: string): string {
-  return createHash("sha256").update(readFileSync(path)).digest("hex");
-}
-
-function checkAsset(assetPath: string, maxFileBytes: number): number {
-  if (!existsSync(assetPath)) throw new StageFailure({ stage: "asset", code: "missing", message: "the asset file does not exist" });
-  const stats = statSync(assetPath);
-  if (!stats.isFile()) throw new StageFailure({ stage: "asset", code: "not_a_file", message: "the asset path is not a file" });
-  if (stats.size === 0) throw new StageFailure({ stage: "asset", code: "empty", message: "the asset file is empty" });
-  if (stats.size > maxFileBytes) {
-    throw new StageFailure({ stage: "asset", code: "too_large", message: `the asset is ${stats.size} bytes, over the judge's cap of ${maxFileBytes}` });
-  }
-  const extension = extname(assetPath).slice(1).toLowerCase();
-  if (!(FORMATS as readonly string[]).includes(extension)) {
-    throw new StageFailure({ stage: "asset", code: "unsupported_format", message: `.${extension} is not a supported format (${FORMATS.join(", ")})` });
-  }
-  return stats.size;
-}
-
-function readOutput(path: string): unknown {
-  try {
-    return JSON.parse(readFileSync(path, "utf8"));
-  } catch {
-    return undefined;
-  }
-}
-
-async function runScript(
-  stage: "measure" | "render",
-  blender: string,
-  scriptArgs: string[],
-  outputPath: string,
-  limits: Limits,
-  tools: Tools,
-  workDir: string,
-): Promise<{ output: unknown; isolation: Isolation }> {
-  const plan = planSandbox(blender, join(SCRIPTS_DIR, `${stage}.py`), scriptArgs, limits, tools);
-  const result = await runSandboxed(plan, workDir);
-  if (result.timedOut) {
-    throw new StageFailure({ stage, code: "timeout", message: `Blender took longer than ${limits.timeoutMs / 1000} s and was stopped` });
-  }
-  const output = readOutput(outputPath);
-  if (output === undefined) {
-    const tail = result.output.trim().split("\n").slice(-3).join(" | ").slice(0, 400);
-    throw new StageFailure({
-      stage,
-      code: "crashed",
-      message: `Blender exited with code ${result.code ?? result.signal} without a result (out of memory under the ${limits.memoryBytes / 1048576} MB cap, or a crash): ${tail}`,
-    });
-  }
-  return { output, isolation: plan.isolation };
-}
 
 function prepareOutDir(outDir: string): void {
   mkdirSync(outDir, { recursive: true });
   for (const name of OUTPUTS) rmSync(join(outDir, name), { recursive: true, force: true });
 }
 
+type Draft = Omit<Report, "summary">;
+
+function uvGridPath(sandbox: Sandbox): string {
+  return join(sandbox.workDir, "uv-grid.bin");
+}
+
+type RenderOutput = Extract<z.infer<typeof renderOutputSchema>, { ok: true }>;
+
+async function renderStage(draft: Draft, spec: AssetSpec, assetPath: string, outDir: string, sandbox: Sandbox, maxTriangles: number, options: JudgeOptions) {
+  const measurementsPath = join(outDir, "measurements.json");
+  const views = (spec.views ?? DEFAULT_VIEWS).join(",");
+  const title = spec.name ?? basename(assetPath);
+  const baseArgs = [assetPath, measurementsPath, outDir, "--views", views, "--title", title, "--max-triangles", String(maxTriangles)];
+  baseArgs.push("--uv-grid", uvGridPath(sandbox));
+  const outputPath = join(outDir, "render.json");
+  let failedGpuSeconds: number | null = null;
+  const run = async (args: string[], device: SandboxDevice): Promise<Attempt<{ output: RenderOutput; seconds: number }>> => {
+    const rendered = await runScript("render", "render.py", args, outputPath, sandbox, device);
+    const parsed = renderOutputSchema.safeParse(rendered.output);
+    if (!parsed.success) throw new StageFailure({ stage: "render", code: "malformed", message: "the render script wrote malformed output" });
+    draft.renderSandbox = rendered.isolation;
+    const output = parsed.data;
+    if (output.ok) return { ok: true, value: { output, seconds: rendered.seconds }, backend: output.device?.backend ?? "CPU", probes: output.probes };
+    if (output.error.code === "gpu_unavailable" && device === "gpu") {
+      failedGpuSeconds = rendered.seconds;
+      return { ok: false, message: output.error.message, probes: output.probes ?? [] };
+    }
+    throw new StageFailure({ stage: "render", ...output.error });
+  };
+  let result: { output: RenderOutput; seconds: number };
+  if (options.preview === true) {
+    const preview = await run([...baseArgs, "--mode", "preview"], "cpu");
+    if (!preview.ok) throw new StageFailure({ stage: "render", code: "gpu_unavailable", message: preview.message });
+    result = preview.value;
+  } else {
+    const chosen = await onDevice(deviceMode(options.device), options.backends ?? DEFAULT_BACKENDS, (request) =>
+      run([...baseArgs, "--device", request.device, "--backends", request.backends.join(",")], request.sandbox),
+    );
+    draft.device = chosen.device;
+    result = chosen.value;
+  }
+  const { output } = result;
+  const probeSeconds = output.timings.device ?? failedGpuSeconds;
+  draft.timings.device = probeSeconds;
+  draft.timings.sheet = output.timings.sheet;
+  draft.timings.render = options.preview === true ? null : Math.max(0, seconds((result.seconds - output.timings.sheet - (output.timings.device ?? 0)) * 1000));
+  draft.renders = {
+    viewsSkipped: options.preview === true,
+    views: output.views.map((entry) => ({ view: entry.view, path: resolve(entry.path) })),
+    contactSheet: join(outDir, "contact-sheet.png"),
+  };
+}
+
+function emptyTimings(): Timings {
+  return { measure: null, device: null, render: null, sheet: null, total: 0 };
+}
+
 export async function judge(options: JudgeOptions): Promise<Report> {
+  const started = performance.now();
   const outDir = resolve(options.outDir);
   const specPath = resolve(options.specPath);
   const assetPath = resolve(options.assetPath);
   const limits: Limits = { timeoutMs: options.timeoutMs ?? DEFAULTS.timeoutMs, memoryBytes: options.memoryBytes ?? DEFAULTS.memoryBytes };
   const maxTriangles = options.maxTriangles ?? DEFAULTS.maxTriangles;
   prepareOutDir(outDir);
-  const draft: Omit<Report, "summary"> = {
+  const draft: Draft = {
     passed: false,
+    preview: options.preview === true,
     spec: { path: specPath, sha256: existsSync(specPath) && statSync(specPath).isFile() ? sha256(specPath) : null, name: null },
     asset: { path: assetPath, sha256: null, bytes: null },
     blender: null,
     sandbox: null,
+    renderSandbox: null,
+    device: null,
     failure: null,
     rules: [],
     measurements: null,
     renders: null,
+    timings: emptyTimings(),
   };
   const workDir = mkdtempSync(join(tmpdir(), "blendworks-judge-"));
   try {
@@ -124,33 +128,21 @@ export async function judge(options: JudgeOptions): Promise<Report> {
     draft.asset.bytes = checkAsset(assetPath, options.maxFileBytes ?? DEFAULTS.maxFileBytes);
     draft.asset.sha256 = sha256(assetPath);
     const blender = options.blender ?? blenderPath();
-    try {
-      draft.blender = await blenderVersion(blender);
-    } catch (error) {
-      if (error instanceof BlenderVersionError) throw new StageFailure({ stage: "blender", code: "unsupported_blender", message: error.message });
-      throw error;
-    }
-    const tools = options.tools ?? detectTools();
+    draft.blender = await checkBlender(blender);
+    if (options.preview !== true) deviceMode(options.device);
+    const sandbox: Sandbox = { blender, limits, tools: options.tools ?? detectTools(), workDir };
     const measurementsPath = join(outDir, "measurements.json");
-    const measured = await runScript("measure", blender, [assetPath, measurementsPath, "--max-triangles", String(maxTriangles)], measurementsPath, limits, tools, workDir);
+    const measureArgs = [assetPath, measurementsPath, "--max-triangles", String(maxTriangles), "--uv-grid", uvGridPath(sandbox)];
+    const measured = await runScript("measure", "measure.py", measureArgs, measurementsPath, sandbox);
     draft.sandbox = measured.isolation;
+    draft.timings.measure = measured.seconds;
     const parsed = measureOutputSchema.safeParse(measured.output);
     if (!parsed.success) throw new StageFailure({ stage: "measure", code: "malformed", message: "the measuring script wrote malformed output" });
     if (!parsed.data.ok) throw new StageFailure({ stage: "measure", ...parsed.data.error });
     const measurements: Measurements = parsed.data.measurements;
     draft.measurements = measurements;
     draft.rules = evaluateRules(spec, measurements);
-    const views = (spec.views ?? DEFAULT_VIEWS).join(",");
-    const title = spec.name ?? basename(assetPath);
-    const renderArgs = [assetPath, measurementsPath, outDir, "--views", views, "--title", title, "--max-triangles", String(maxTriangles)];
-    const rendered = await runScript("render", blender, renderArgs, join(outDir, "render.json"), limits, tools, workDir);
-    const renderParsed = renderOutputSchema.safeParse(rendered.output);
-    if (!renderParsed.success) throw new StageFailure({ stage: "render", code: "malformed", message: "the render script wrote malformed output" });
-    if (!renderParsed.data.ok) throw new StageFailure({ stage: "render", ...renderParsed.data.error });
-    draft.renders = {
-      views: renderParsed.data.views.map((entry) => ({ view: entry.view, path: resolve(entry.path) })),
-      contactSheet: join(outDir, "contact-sheet.png"),
-    };
+    await renderStage(draft, spec, assetPath, outDir, sandbox, maxTriangles, options);
   } catch (error) {
     if (!(error instanceof StageFailure)) throw error;
     draft.failure = error.failure;
@@ -159,6 +151,7 @@ export async function judge(options: JudgeOptions): Promise<Report> {
   }
   if (draft.failure) draft.rules.unshift({ rule: draft.failure.stage, measured: draft.failure.message, limit: "to complete", pass: false });
   draft.passed = draft.failure === null && draft.rules.length > 0 && draft.rules.every((rule) => rule.pass);
+  draft.timings.total = seconds(performance.now() - started);
   const report: Report = { ...draft, summary: summarize(draft) };
   writeFileSync(join(outDir, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
   writeFileSync(join(outDir, "summary.txt"), `${report.summary}\n`);
