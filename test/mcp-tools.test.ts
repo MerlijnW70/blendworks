@@ -25,6 +25,10 @@ describe("tools built from the bridge's describe", () => {
       "blender_render_preview",
       "blender_scene_info",
       "blender_slow",
+      "library_apply",
+      "library_download",
+      "library_preview",
+      "library_search",
     ]);
     const add = tools.find((tool) => tool.name === "blender_add_primitive");
     expect(add?.description).toBe("Add a primitive mesh object.");

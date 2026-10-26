@@ -19,6 +19,7 @@ DESIGN_COMMANDS = {
     "add_light", "add_camera", "look_at", "set_world",
     "render_preview", "export", "save_blend", "import",
 }
+ASSET_LIBRARY_COMMANDS = {"set_world_hdri"}
 SCHEMA_KEYS = {"type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",
                "maximum", "exclusiveMinimum", "minItems", "maxItems", "minLength", "maxLength", "default"}
 
@@ -47,7 +48,8 @@ def test_describe_matches_the_registry(bridge):
 def test_every_design_command_exists(bridge):
     names = set(bridge.handler.registry.names())
     assert DESIGN_COMMANDS <= names, sorted(DESIGN_COMMANDS - names)
-    assert set(COMMANDS) - DESIGN_COMMANDS == {"run_python"}
+    assert ASSET_LIBRARY_COMMANDS <= names, sorted(ASSET_LIBRARY_COMMANDS - names)
+    assert set(COMMANDS) - DESIGN_COMMANDS - ASSET_LIBRARY_COMMANDS == {"run_python"}
 
 
 def test_descriptions_are_one_line_and_schemas_are_closed(bridge):

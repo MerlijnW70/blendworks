@@ -59,3 +59,12 @@ export function confineArgs(command: BridgeCommand, args: BridgeArgs, workspace:
   }
   return confined;
 }
+
+export function listTools(bridgeTools: Map<string, ToolEntry>, libraryTools: Tool[]): Tool[] {
+  const listed = [...bridgeTools.values()].map((entry) => entry.tool);
+  for (const tool of libraryTools) {
+    if (bridgeTools.has(tool.name)) throw new Error(`the tool name ${tool.name} is taken twice`);
+    listed.push(tool);
+  }
+  return listed;
+}

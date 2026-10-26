@@ -1,0 +1,289 @@
+{
+ "aerial_asphalt_01": {
+  "type": 1,
+  "tags": [
+   "road",
+   "flat",
+   "cracked"
+  ],
+  "date_published": 1597061145,
+  "name": "Aerial Asphalt 01",
+  "categories": [
+   "asphalt",
+   "outdoor",
+   "floor",
+   "road",
+   "man made",
+   "aerial"
+  ],
+  "dimensions": [
+   30000,
+   30000
+  ],
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "max_resolution": [
+   8192,
+   8192
+  ],
+  "files_hash": "cdf3c8f091b3589407bdf0697a2deb2c6b40650d",
+  "description": "Free 8K asphalt texture of a flat, worn road with subtle cracks, faint tire marks and gritty surface - ideal for aerial, outdoor, road and floor scenes.",
+  "category_id": "8871debe-40cf-5e4d-a5e5-1ddfe979f14f",
+  "category": "Asphalt & Bitumen/Asphalt/Worn Road Surface",
+  "attributes": {
+   "surface_use": "floor",
+   "condition": [
+    "weathered",
+    "cracked",
+    "worn"
+   ],
+   "origin": "man_made",
+   "setting": "outdoor",
+   "aerial": true
+  },
+  "img_version": "151f24f1",
+  "download_count": 148264,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/aerial_asphalt_01.png?width=256&height=256&format=webp&v=151f24f1"
+ },
+ "metal_plate": {
+  "type": 1,
+  "tags": [
+   "bare",
+   "painted",
+   "rusty",
+   "pattern",
+   "iron",
+   "factory",
+   "industrial",
+   "steel"
+  ],
+  "date_published": 1529475787,
+  "name": "Metal Plate",
+  "categories": [
+   "metal",
+   "floor",
+   "man made",
+   "indoor",
+   "outdoor",
+   "dirty"
+  ],
+  "authors": {
+   "Rob Tuytel": "All"
+  },
+  "dimensions": [
+   500,
+   500
+  ],
+  "max_resolution": [
+   8192,
+   8192
+  ],
+  "files_hash": "1046b39bf68d65eeb80dab84a99186a453ee94e0",
+  "description": "Free 8K texture of worn diamond-plate steel with chipped green paint, rust, pitting and dark oily highlights. Rough, dirty industrial metal surface.",
+  "category_id": "73ed1247-6414-5a28-9bea-f5a74162136a",
+  "category": "Metal/Plate & Grating/Diamond & Checker Plate",
+  "attributes": {
+   "surface_use": "floor",
+   "condition": [
+    "damaged",
+    "rusted",
+    "worn",
+    "painted"
+   ],
+   "origin": "man_made",
+   "setting": "either"
+  },
+  "img_version": "23925522",
+  "download_count": 309659,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/metal_plate.png?width=256&height=256&format=webp&v=23925522"
+ },
+ "leafy_grass": {
+  "date_published": 1685145600,
+  "name": "Leafy Grass",
+  "categories": [
+   "outdoor",
+   "floor"
+  ],
+  "type": 1,
+  "tags": [
+   "grass",
+   "green",
+   "nature",
+   "ground",
+   "foliage",
+   "leaves",
+   "plants",
+   "outdoors",
+   "twigs",
+   "sticks",
+   "trampled"
+  ],
+  "authors": {
+   "Charlotte Baglioni": "All"
+  },
+  "info": null,
+  "dimensions": [
+   2000,
+   2000
+  ],
+  "max_resolution": [
+   8192,
+   8192
+  ],
+  "files_hash": "90fd49a21ddface404d32d9956c3a9f3ca8e0679",
+  "description": "Free 8K leafy grass texture: trampled green blades with scattered brown leaves and twigs, low-relief rough soil surface with a natural matte finish.",
+  "attributes": {
+   "surface_use": "ground",
+   "origin": "natural",
+   "setting": "outdoor"
+  },
+  "category_id": "21e06d88-2ab6-5bdd-ad11-869b7ff0b573",
+  "category": "Ground & Terrain/Grass & Vegetation/Lush & Green Grass",
+  "img_version": "8866acdc",
+  "download_count": 96077,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/leafy_grass.png?width=256&height=256&format=webp&v=8866acdc"
+ },
+ "american_walnut_veneer": {
+  "type": 1,
+  "name": "American Walnut Veneer",
+  "tags": [
+   "american walnut",
+   "natural grain",
+   "hardwood",
+   "grain",
+   "natural wood grain",
+   "natural wood",
+   "gray",
+   "wood grain",
+   "veneer",
+   "walnut",
+   "wood"
+  ],
+  "authors": {
+   "Jenelle van Heerden": "All"
+  },
+  "max_resolution": [
+   8192,
+   8192
+  ],
+  "dimensions": [
+   1000,
+   1000
+  ],
+  "files_hash": "807d85949308d6470af0a0beff79bf47b415ae95",
+  "description": "Free American walnut veneer PBR texture with subtle gray tone, fine natural grain and smooth hardwood finish - great for furniture, cabinetry and interiors.",
+  "category_id": "11f97979-30ff-513c-97e0-916d1b9f37ac",
+  "category": "Wood/Veneer/Walnut Veneer",
+  "attributes": {
+   "surface_use": "object",
+   "origin": "man_made",
+   "condition": [
+    "clean"
+   ]
+  },
+  "date_published": 1786448942,
+  "categories": [
+   "wood",
+   "raw wood"
+  ],
+  "vault": "wood",
+  "img_version": "b59918b0",
+  "download_count": 1596,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/american_walnut_veneer.png?width=256&height=256&format=webp&v=b59918b0"
+ },
+ "angli_veneer": {
+  "type": 1,
+  "name": "Angli Veneer",
+  "tags": [
+   "veneer",
+   "veneer wood",
+   "natural grain",
+   "grain",
+   "wood",
+   "natural wood grain",
+   "wood grain",
+   "angli",
+   "light wood",
+   "flat wood surface"
+  ],
+  "authors": {
+   "Jenelle van Heerden": "All"
+  },
+  "max_resolution": [
+   8192,
+   8192
+  ],
+  "dimensions": [
+   1000,
+   1000
+  ],
+  "files_hash": "7f5dc005a4c8d5d16e80de80ed5e7e327d070f53",
+  "description": "Free Angli Veneer PBR texture: light natural wood veneer with subtle grain, smooth flat finish and low roughness - ideal for furniture, cabinetry, interiors.",
+  "category_id": "696337cd-d4c7-5cc4-98f9-cddf9a6c4ee5",
+  "category": "Wood/Veneer/Light Hardwood Veneer",
+  "attributes": {
+   "surface_use": "object",
+   "origin": "man_made",
+   "condition": [
+    "clean"
+   ]
+  },
+  "date_published": 1786448942,
+  "categories": [
+   "wood",
+   "raw wood"
+  ],
+  "vault": "wood",
+  "img_version": "b3f1ef29",
+  "download_count": 562,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/angli_veneer.png?width=256&height=256&format=webp&v=b3f1ef29"
+ },
+ "ash_veneer": {
+  "type": 1,
+  "name": "Ash Veneer",
+  "tags": [
+   "ash wood",
+   "ash",
+   "wood",
+   "hardwood",
+   "veneer",
+   "veneer wood",
+   "natural grain",
+   "natural veneer",
+   "fine grain",
+   "natural wood"
+  ],
+  "authors": {
+   "Jenelle van Heerden": "All"
+  },
+  "max_resolution": [
+   8192,
+   8192
+  ],
+  "dimensions": [
+   1000,
+   1000
+  ],
+  "files_hash": "190feb85ae9a2599356c54da42fc9afc6b987a1e",
+  "description": "Free PBR ash veneer: fine-grain hardwood with subtle linear grain, low sheen and seamless tiling - ideal for furniture, interiors, cabinetry.",
+  "category_id": "696337cd-d4c7-5cc4-98f9-cddf9a6c4ee5",
+  "category": "Wood/Veneer/Light Hardwood Veneer",
+  "attributes": {
+   "surface_use": "object",
+   "origin": "man_made",
+   "condition": [
+    "clean"
+   ]
+  },
+  "date_published": 1786448942,
+  "categories": [
+   "wood",
+   "raw wood"
+  ],
+  "vault": "wood",
+  "img_version": "18014e14",
+  "download_count": 1336,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/ash_veneer.png?width=256&height=256&format=webp&v=18014e14"
+ }
+}

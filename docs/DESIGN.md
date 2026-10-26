@@ -83,3 +83,38 @@ Its use with Solive is `intent-engine judge … --sandbox none --run "blendworks
 - Measurements are exact and repeatable.
 - Renders use a fixed seed, samples and resolution, so the same asset gives the same report and near-identical images.
 - The judge pins the Blender version and refuses others.
+
+## 6. Asset library
+
+The MCP server offers Poly Haven's free CC0 assets as a starting point: HDRIs for lighting, scanned PBR texture sets for real materials, and models for reference. The `library_` tools sit beside the `blender_` tools.
+
+| Tool | What it does |
+|---|---|
+| `library_search` | Searches by type (`hdri`, `texture`, `model`), free text, category and tags, with paging (`page`, `per_page` up to 24). It returns id, name, type, categories, tags, dimensions in metres, maximum pixel size and the resolutions on offer, most downloaded first. An unknown category is refused with the known ones. |
+| `library_preview` | Returns the asset's thumbnail as PNG image content, 64 to 512 px, at most 1 MiB. |
+| `library_download` | Downloads one asset at a chosen resolution and format into the workspace. An HDRI is one `.hdr` (default) or `.exr`. A texture is its PBR map set in `jpg` (default), `png` or `exr`: by default `Diffuse`, `nor_gl`, `Rough`, `Metal`, `AO`, `Displacement` and `Mask` where present, or the maps named in `maps`. A model is its `.gltf` with the buffers and textures it uses. |
+| `library_apply` | Uses a downloaded asset through bridge commands only. An HDRI becomes the world environment with `set_world_hdri` (strength, rotation about Z). A model is imported with `import`. A texture set becomes a material with `material_pbr` and, given `object`, is assigned with `assign_material`; without `material_pbr` it fails with a clear message. |
+
+`set_world_hdri` (bridge, Lights and camera family) loads an `.hdr` or `.exr` from inside the workspace, under the same path rules as `import`, into a new world: Environment Texture through a Mapping node to the Background.
+
+### Folder layout and licence records
+
+```
+<workspace>/library/
+  hdri/<id>/<id>_1k.hdr, LICENSE.json
+  texture/<id>/<id>_diff_1k.jpg, <id>_nor_gl_1k.jpg, …, LICENSE.json
+  model/<id>/<id>_1k.gltf, <id>.bin, textures/…, LICENSE.json
+  .cache/   API listings, kept 24 hours
+  .tmp/     downloads in progress
+```
+
+`LICENSE.json` records the asset id, name, type, source page (`https://polyhaven.com/a/<id>`), licence (`CC0-1.0` with its URL), authors, resolution, format, main file or maps, every file with its URL, size and md5, and the download time. It is also the manifest that `library_apply` and repeat downloads check.
+
+### Limits and safety
+
+- **Network:** only the Node side fetches, through one client, and only from `api.polyhaven.com`, `dl.polyhaven.org` and `cdn.polyhaven.com` over https. Redirects are followed by hand, at most 5, and one to any other host is refused. Requests carry a descriptive `User-Agent`, time out after 20 s without data, and are retried twice with exponential backoff on network errors, HTTP 429 and 5xx.
+- **Validation:** every API response is checked with zod; an unexpected shape is refused.
+- **Ids and paths:** ids match `^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$`. Every file path from the API must stay inside the asset folder, and every folder inside the workspace. A glTF may refer only to the files Poly Haven lists for it.
+- **Downloads:** each file must have the published size and md5, or the download is refused. Files land in a temporary folder that replaces the asset folder only when everything has arrived, so a failure leaves nothing behind and keeps an earlier download intact. The total is capped at 300 MB by default (`BLENDWORKS_LIBRARY_MAX_MB`), which takes 2K and 4K texture sets; a larger resolution is refused before any file is fetched, naming the ones that fit.
+- **No code:** downloads are data only. Models enter Blender only through the bridge's `import`.
+- **Offline:** search, preview and new downloads need the network and fail with a clear message without it; cached listings answer for 24 hours. Downloaded assets keep working: `library_apply` and repeat downloads read only the workspace.

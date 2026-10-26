@@ -1,0 +1,219 @@
+{
+ "Barrel_01": {
+  "type": 2,
+  "date_published": 1585605600,
+  "name": "Barrel_01",
+  "categories": [
+   "industrial",
+   "containers"
+  ],
+  "authors": {
+   "Jorge Camacho": "All"
+  },
+  "sponsors": [
+   "3267566",
+   "11167855",
+   "11109006"
+  ],
+  "max_resolution": [
+   8192,
+   8192
+  ],
+  "polycount": 2682,
+  "texel_density": 4804.410195602988,
+  "dimensions": [
+   563.0351305007935,
+   563.0352199077606,
+   880.0000050105155
+  ],
+  "files_hash": "45ce352c4416845813a00e478950b500796b0a60",
+  "tags": [
+   "barrel",
+   "oil",
+   "explosive",
+   "radioactive",
+   "metal",
+   "red barrel",
+   "oil barrel",
+   "drums",
+   "fuel barrel",
+   "explosive barrel",
+   "industrial"
+  ],
+  "description": "Free worn red metal oil drum with explosive hazard marking - realistic, scratched, rusty industrial barrel ideal for games, VFX, and environment scenes.",
+  "category_id": "0348a0e9-773f-5146-9dd0-0d34cbdfee62",
+  "category": "Containers & Storage/Barrels & Drums/Metal Drums",
+  "attributes": {
+   "condition": [
+    "rusted"
+   ],
+   "material": [
+    "metal"
+   ]
+  },
+  "img_version": "29e315a9",
+  "download_count": 60331,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/Barrel_01.png?width=256&height=256&format=webp&v=29e315a9"
+ },
+ "ArmChair_01": {
+  "date_published": 1585605600,
+  "name": "Arm Chair 01",
+  "categories": [
+   "furniture",
+   "seating"
+  ],
+  "type": 2,
+  "tags": [
+   "gothic",
+   "vintage",
+   "chair",
+   "furniture",
+   "victorian",
+   "couch",
+   "wood",
+   "varnished",
+   "classic"
+  ],
+  "authors": {
+   "Kirill Sannikov": "All"
+  },
+  "sponsors": [
+   "66627515",
+   "4047949"
+  ],
+  "max_resolution": [
+   4096,
+   4096
+  ],
+  "polycount": 5626,
+  "texel_density": 1972.3631956341671,
+  "dimensions": [
+   848.4309017658234,
+   765.7602727413177,
+   1065.087635157397
+  ],
+  "files_hash": "8a04a102d4a1e1a480bc4288384d4a2dfd649608",
+  "description": "Free (CC0) vintage Victorian armchair 3D model - varnished carved wood frame, upholstered seat; gothic/classic styling ideal for interiors, period scenes, and renders.",
+  "category_id": "11261ec6-df2b-5150-9904-684d2558070d",
+  "category": "Furniture/Seating/Chairs",
+  "attributes": {
+   "condition": [
+    "worn"
+   ],
+   "material": [
+    "wood",
+    "fabric"
+   ]
+  },
+  "img_version": "abbc4732",
+  "download_count": 32574,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/ArmChair_01.png?width=256&height=256&format=webp&v=abbc4732"
+ },
+ "CashRegister_01": {
+  "date_published": 1585605600,
+  "name": "Cash Register 01",
+  "categories": [
+   "appliances",
+   "props"
+  ],
+  "type": 2,
+  "tags": [
+   "commercial",
+   "store",
+   "vintage",
+   "cash",
+   "transaction",
+   "register",
+   "money",
+   "sales",
+   "convenience store",
+   "cashier",
+   "retail",
+   "business"
+  ],
+  "authors": {
+   "Joe Seabuhr": "All"
+  },
+  "sponsors": [
+   "42579608",
+   "297038"
+  ],
+  "max_resolution": [
+   8192,
+   8192
+  ],
+  "polycount": 9927,
+  "texel_density": 5156.575013122558,
+  "dimensions": [
+   600.4907041788101,
+   624.2051124572754,
+   621.3557496666908
+  ],
+  "files_hash": "a28caf40c20cabd1ee08e639d41982066d7340c6",
+  "description": "Free 8K vintage cash register model with worn cream finish, metal base and open coin drawer, featuring detailed keys, levers, decals, scratches & grime.",
+  "category_id": "136f0bfb-4dca-56bb-92b5-f3666e5bf8f5",
+  "category": "Electronics & Appliances/Devices & Instruments/Retail Machines",
+  "attributes": {
+   "condition": [
+    "worn"
+   ],
+   "material": [
+    "metal"
+   ]
+  },
+  "img_version": "ce53a8fc",
+  "download_count": 20902,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/CashRegister_01.png?width=256&height=256&format=webp&v=ce53a8fc"
+ },
+ "Chandelier_01": {
+  "date_published": 1585605600,
+  "sponsors": [
+   "66627515"
+  ],
+  "name": "Chandelier 01",
+  "categories": [
+   "lighting",
+   "decorative"
+  ],
+  "type": 2,
+  "tags": [
+   "lighting",
+   "ceiling",
+   "hanging",
+   "fixture",
+   "chandelier",
+   "ornate",
+   "vintage"
+  ],
+  "authors": {
+   "Kirill Sannikov": "All"
+  },
+  "max_resolution": [
+   4096,
+   4096
+  ],
+  "polycount": 26860,
+  "texel_density": 48.18698572680034,
+  "dimensions": [
+   746.4556992053986,
+   815.5497610569,
+   798.2709443223541
+  ],
+  "files_hash": "4de97a301043c23293772a3f8d5498a088141ddf",
+  "description": "Free 4K model of an ornate vintage brass chandelier with six fabric shades, decorative beads and hanging ceiling mount, detailed for archviz and games.",
+  "category_id": "f0e24a22-b694-5cc0-8624-dd68b862c9ef",
+  "category": "Lighting/Ceiling/Chandeliers",
+  "attributes": {
+   "condition": [
+    "worn"
+   ],
+   "material": [
+    "brass",
+    "fabric"
+   ]
+  },
+  "img_version": "6f35a661",
+  "download_count": 34930,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/Chandelier_01.png?width=256&height=256&format=webp&v=6f35a661"
+ }
+}

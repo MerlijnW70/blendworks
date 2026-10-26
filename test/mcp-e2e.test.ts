@@ -53,7 +53,9 @@ describe.skipIf(bridgeMissing)(TITLE, () => {
     const names = tools.map((entry) => entry.name);
     expect(names).toEqual(expect.arrayContaining(["blender_add_primitive", "blender_scene_info", "blender_render_preview", "blender_export"]));
     expect(names).not.toContain("blender_run_python");
-    expect(names.every((name) => name.startsWith("blender_"))).toBe(true);
+    const library = ["library_search", "library_preview", "library_download", "library_apply"];
+    expect(names.filter((name) => name.startsWith("library_"))).toEqual(library);
+    expect(names.filter((name) => !library.includes(name)).every((name) => name.startsWith("blender_"))).toBe(true);
 
     await tool("blender_add_primitive", { type: "cube", size: 1 });
     const info = JSON.parse(texts(await tool("blender_scene_info", {}))) as unknown;

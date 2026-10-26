@@ -1,0 +1,56 @@
+{
+ "evs_cap": 23,
+ "type": 0,
+ "whitebalance": 6590,
+ "date_published": 1581375600,
+ "name": "Abandoned Parking",
+ "old_id": 446,
+ "categories": [
+  "outdoor",
+  "skies",
+  "urban",
+  "midday",
+  "partly cloudy",
+  "high contrast",
+  "natural light"
+ ],
+ "date_taken": 1565001960,
+ "authors": {
+  "Sergej Majboroda": "All"
+ },
+ "sponsors": [
+  "3237733"
+ ],
+ "backplates": true,
+ "tags": [
+  "parking",
+  "asphalt",
+  "road",
+  "tree",
+  "bush",
+  "derelict",
+  "abandoned",
+  "industrial",
+  "backplates"
+ ],
+ "files_hash": "755a567c45a96a277b298c973fcb3cecfba9cf92",
+ "max_resolution": [
+  16384,
+  8192
+ ],
+ "description": "Free, unclipped 16K HDRI of an abandoned parking area - midday, partly cloudy, high-contrast natural light with sharp shadows, cracked asphalt and overgrown scrub.",
+ "category_id": "d199c866-62a7-5677-b114-acd36fcba9a4",
+ "category": "Streets & Town/Parking/Surface Lots",
+ "attributes": {
+  "time_of_day": "midday",
+  "weather": "partly_cloudy",
+  "light_type": "natural",
+  "contrast": "high",
+  "backplates": true,
+  "environment": "outdoor",
+  "sky_view": "open"
+ },
+ "img_version": "50d010fe",
+ "download_count": 100407,
+ "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/abandoned_parking.png?width=256&height=256&format=webp&v=50d010fe"
+}

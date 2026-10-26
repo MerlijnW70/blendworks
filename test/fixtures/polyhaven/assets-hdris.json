@@ -1,0 +1,374 @@
+{
+ "abandoned_parking": {
+  "evs_cap": 23,
+  "type": 0,
+  "whitebalance": 6590,
+  "date_published": 1581375600,
+  "name": "Abandoned Parking",
+  "categories": [
+   "outdoor",
+   "skies",
+   "urban",
+   "midday",
+   "partly cloudy",
+   "high contrast",
+   "natural light"
+  ],
+  "date_taken": 1565001960,
+  "authors": {
+   "Sergej Majboroda": "All"
+  },
+  "sponsors": [
+   "3237733"
+  ],
+  "backplates": true,
+  "tags": [
+   "parking",
+   "asphalt",
+   "road",
+   "tree",
+   "bush",
+   "derelict",
+   "abandoned",
+   "industrial",
+   "backplates"
+  ],
+  "files_hash": "755a567c45a96a277b298c973fcb3cecfba9cf92",
+  "max_resolution": [
+   16384,
+   8192
+  ],
+  "description": "Free, unclipped 16K HDRI of an abandoned parking area - midday, partly cloudy, high-contrast natural light with sharp shadows, cracked asphalt and overgrown scrub.",
+  "category_id": "d199c866-62a7-5677-b114-acd36fcba9a4",
+  "category": "Streets & Town/Parking/Surface Lots",
+  "attributes": {
+   "time_of_day": "midday",
+   "weather": "partly_cloudy",
+   "light_type": "natural",
+   "contrast": "high",
+   "backplates": true,
+   "environment": "outdoor",
+   "sky_view": "open"
+  },
+  "img_version": "50d010fe",
+  "download_count": 100405,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/abandoned_parking.png?width=256&height=256&format=webp&v=50d010fe"
+ },
+ "aarfontein_dawn_2": {
+  "type": 0,
+  "name": "Aarfontein Dawn 2",
+  "categories": [
+   "outdoor",
+   "nature",
+   "natural light",
+   "low contrast",
+   "medium contrast",
+   "partly cloudy",
+   "sunrise-sunset"
+  ],
+  "category": "Desert & Arid/Karoo & Scrubland/Rocky Outcrops",
+  "attributes": {
+   "time_of_day": "sunrise",
+   "weather": "partly_cloudy",
+   "light_type": "natural",
+   "contrast": "low",
+   "environment": "outdoor",
+   "sky_view": "open"
+  },
+  "tags": [
+   "grass",
+   "hilltop",
+   "arid landscape",
+   "blue hour",
+   "mountain",
+   "view",
+   "horizon glow"
+  ],
+  "description": "Free, unclipped 24K HDRI of a rocky grassland at dawn: soft pre-sunrise glow, pale blue sky with pink clouds, cool ambient light and gentle warm horizon tint.",
+  "authors": {
+   "Dario Barresi": "All"
+  },
+  "info": "A bit of a hike in the dark up to this point at five in the morning, quite chilly. Seeing both the moon and the sunrise in the same sky was beautiful",
+  "date_taken": 1765169760,
+  "coords": [
+   -32.377278,
+   21.299259
+  ],
+  "evs_cap": 12,
+  "whitebalance": 5303,
+  "category_id": "17f5bde9-351f-5d8d-892e-b92f33187f86",
+  "max_resolution": [
+   24576,
+   12288
+  ],
+  "files_hash": "fd2742fa2eb5c6c7b1ba9062b35a836c5b3b636b",
+  "date_published": 1789430400,
+  "img_version": "9f3e0257",
+  "download_count": 1799,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/aarfontein_dawn_2.png?width=256&height=256&format=webp&v=9f3e0257"
+ },
+ "blocky_photo_studio": {
+  "evs_cap": 22,
+  "type": 0,
+  "whitebalance": 4950,
+  "tags": [
+   "studio",
+   "stair",
+   "ramp",
+   "stand",
+   "modern",
+   "concrete"
+  ],
+  "name": "Blocky Photo Studio",
+  "categories": [
+   "urban",
+   "indoor",
+   "studio",
+   "artificial light",
+   "natural light",
+   "low contrast"
+  ],
+  "date_taken": 1671463020,
+  "authors": {
+   "Sergej Majboroda": "All"
+  },
+  "info": null,
+  "date_published": 1673740800,
+  "max_resolution": [
+   16384,
+   8192
+  ],
+  "files_hash": "692b04d1184b22c8ca4d7e409232be24f8febc87",
+  "description": "Free 16K unclipped HDRI of a modern concrete studio with soft window light and cool studio lamps, low-contrast with diffuse shadows and subtle highlights.",
+  "category_id": "3aec9d2e-21ed-5f1f-88c0-c45a9c6ee7b9",
+  "category": "Studio/Photo Studios/Natural-Light Studios",
+  "attributes": {
+   "light_type": "mixed",
+   "contrast": "low",
+   "environment": "indoor",
+   "weather": "overcast"
+  },
+  "img_version": "87b5ed0d",
+  "download_count": 117184,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/blocky_photo_studio.png?width=256&height=256&format=webp&v=87b5ed0d"
+ },
+ "blue_photo_studio": {
+  "evs_cap": 16,
+  "type": 0,
+  "whitebalance": 4200,
+  "tags": [
+   "couch",
+   "wooden floor",
+   "lamp",
+   "window",
+   "seat",
+   "dark",
+   "backplates"
+  ],
+  "name": "Blue Photo Studio",
+  "categories": [
+   "studio",
+   "indoor",
+   "artificial light",
+   "natural light",
+   "urban",
+   "medium contrast",
+   "midday"
+  ],
+  "backplates": true,
+  "date_taken": 1676983020,
+  "authors": {
+   "Sergej Majboroda": "All"
+  },
+  "info": null,
+  "files_hash": "5025f894d2b1140cd239203f3edb8e9b3f2204cb",
+  "date_published": 1681084800,
+  "max_resolution": [
+   16384,
+   8192
+  ],
+  "sponsors": [
+   "82322099"
+  ],
+  "description": "Unclipped, free 16K HDRI with cool midday studio lighting, mixing natural window light and artificial lamps to produce a medium-contrast, moody blue indoor ambiance.",
+  "category_id": "3aec9d2e-21ed-5f1f-88c0-c45a9c6ee7b9",
+  "category": "Studio/Photo Studios/Natural-Light Studios",
+  "attributes": {
+   "light_type": "mixed",
+   "contrast": "medium",
+   "backplates": true,
+   "environment": "indoor",
+   "weather": "overcast"
+  },
+  "img_version": "d6972885",
+  "download_count": 162682,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/blue_photo_studio.png?width=256&height=256&format=webp&v=d6972885"
+ },
+ "brown_photostudio_01": {
+  "evs_cap": 19,
+  "type": 0,
+  "whitebalance": 5000,
+  "tags": [
+   "studio",
+   "lamp",
+   "photo",
+   "chair",
+   "window",
+   "wood",
+   "fluorescent",
+   "couch",
+   "victorian",
+   "backplates"
+  ],
+  "name": "Brown Photostudio 01",
+  "categories": [
+   "indoor",
+   "urban",
+   "natural light",
+   "artificial light",
+   "medium contrast",
+   "studio",
+   "low contrast"
+  ],
+  "backplates": true,
+  "coords": [
+   49.219840481786065,
+   28.429115247630943
+  ],
+  "date_taken": 1649156160,
+  "authors": {
+   "Sergej Majboroda": "All"
+  },
+  "date_published": 1652194804,
+  "max_resolution": [
+   16384,
+   8192
+  ],
+  "files_hash": "0754a9afc133bdc706601d12073eba22c4e50514",
+  "sponsors": [
+   "82322099"
+  ],
+  "description": "Free, unclipped 16K HDRI. Warm, soft mixed natural window light with subtle fluorescent fill over brown wooden studio floors, low contrast and cozy mood.",
+  "category_id": "3aec9d2e-21ed-5f1f-88c0-c45a9c6ee7b9",
+  "category": "Studio/Photo Studios/Natural-Light Studios",
+  "attributes": {
+   "light_type": "mixed",
+   "contrast": "low",
+   "backplates": true,
+   "environment": "indoor",
+   "weather": "overcast"
+  },
+  "img_version": "72f7ca1d",
+  "download_count": 222091,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/brown_photostudio_01.png?width=256&height=256&format=webp&v=72f7ca1d"
+ },
+ "blaubeuren_church_square": {
+  "evs_cap": 17,
+  "type": 0,
+  "tags": [
+   "snow",
+   "winter",
+   "town",
+   "europe",
+   "christmas",
+   "road",
+   "path"
+  ],
+  "date_published": 1612220400,
+  "name": "Blaubeuren Church Square",
+  "categories": [
+   "outdoor",
+   "urban",
+   "night",
+   "overcast",
+   "medium contrast",
+   "artificial light"
+  ],
+  "date_taken": 1609955580,
+  "coords": [
+   48.411932,
+   9.784667
+  ],
+  "authors": {
+   "Andreas Mischok": "All"
+  },
+  "sponsors": [
+   "49655030"
+  ],
+  "max_resolution": [
+   20380,
+   10190
+  ],
+  "files_hash": "e32b98b5242be76fcdb3cc7602ccc3dde3bb2687",
+  "description": "Free 20K unclipped HDRI of a snowy European church square at night - overcast sky, warm street and Christmas lights, medium-contrast artificial lighting.",
+  "category_id": "92cbbd88-2dc2-5727-a6e4-3d8521698987",
+  "category": "Streets & Town/Squares & Plazas/Church & Cathedral Squares",
+  "attributes": {
+   "time_of_day": "night",
+   "weather": "overcast",
+   "light_type": "artificial",
+   "contrast": "medium",
+   "season": "winter",
+   "environment": "outdoor",
+   "sky_view": "obstructed"
+  },
+  "img_version": "a3bfb264",
+  "download_count": 67279,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/blaubeuren_church_square.png?width=256&height=256&format=webp&v=a3bfb264"
+ },
+ "blaubeuren_night": {
+  "evs_cap": 18,
+  "type": 0,
+  "tags": [
+   "tree",
+   "grass",
+   "path",
+   "park",
+   "bench"
+  ],
+  "date_published": 1597096800,
+  "name": "Blaubeuren Night",
+  "categories": [
+   "outdoor",
+   "urban",
+   "night",
+   "partly cloudy",
+   "high contrast",
+   "artificial light"
+  ],
+  "coords": [
+   48.41401,
+   9.788845
+  ],
+  "date_taken": 1594414140,
+  "authors": {
+   "Andreas Mischok": "All"
+  },
+  "files_hash": "6f28f0fe1b9e48166c86ef3d11d4d2c8124b7f94",
+  "max_resolution": [
+   18500,
+   9250
+  ],
+  "description": "Free 18K unclipped HDRI: warm streetlamp and cool blue artificial lights bathe a park path at night, creating high-contrast shadows beneath tree canopies, grass, and benches.",
+  "sponsors": [
+   {
+    "url": "https://www.youtube.com/cggeek",
+    "name": "CG Geek"
+   },
+   "128081732"
+  ],
+  "category_id": "6578c246-5f7e-582b-a52f-b2e42fbec4e7",
+  "category": "Parks & Gardens/Parks/Tree-lined Paths",
+  "attributes": {
+   "time_of_day": "night",
+   "weather": "partly_cloudy",
+   "light_type": "artificial",
+   "contrast": "high",
+   "environment": "outdoor",
+   "sky_view": "obstructed"
+  },
+  "img_version": "98ceeeea",
+  "download_count": 88616,
+  "thumbnail_url": "https://cdn.polyhaven.com/asset_img/thumbs/blaubeuren_night.png?width=256&height=256&format=webp&v=98ceeeea"
+ }
+}

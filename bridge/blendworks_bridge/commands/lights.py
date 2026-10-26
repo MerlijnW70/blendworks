@@ -1,9 +1,10 @@
 import math
+import os
 
 import bpy
 from mathutils import Matrix, Vector
 
-from ..errors import bad_args
+from ..errors import bad_args, failed
 from ..registry import command
 from ..schema import boolean, color, length, number, string, vector3
 from ..util import degrees, get_object, link_object, place, require_free_name, vec
@@ -187,3 +188,55 @@ def snapshot_world(world):
             node.inputs["Strength"].default_value = tree_values[1]
 
     return restore
+
+
+HDRI_EXTENSIONS = (".hdr", ".exr")
+
+
+@command(
+    "set_world_hdri",
+    "Light the scene with an equirectangular .hdr or .exr image from the workspace as the world environment.",
+    {
+        "path": string("Image path inside the workspace, relative to it.", max_length=1024),
+        "strength": number("Environment strength.", 0.0, 100.0, 1.0),
+        "rotation": number("Turn the environment about the Z axis, in degrees.", -360.0, 360.0, 0.0),
+    },
+    ["path"],
+)
+def set_world_hdri(ctx, args):
+    path = ctx.workspace.existing(args["path"], HDRI_EXTENSIONS)
+    image = bpy.data.images.load(path, check_existing=False)
+    image.name = os.path.basename(path)
+    width, height = image.size[0], image.size[1]
+    if width == 0 or height == 0:
+        raise failed(f"{args['path']} is not a readable {os.path.splitext(path)[1]} image")
+    world = bpy.data.worlds.new("World HDRI")
+    tree = world.node_tree
+    if tree is None:
+        raise failed("Blender created a world without a node tree")
+    tree.nodes.clear()
+    coordinates = tree.nodes.new("ShaderNodeTexCoord")
+    mapping = tree.nodes.new("ShaderNodeMapping")
+    environment = tree.nodes.new("ShaderNodeTexEnvironment")
+    background = tree.nodes.new("ShaderNodeBackground")
+    output = tree.nodes.new("ShaderNodeOutputWorld")
+    environment.image = image
+    environment.projection = "EQUIRECTANGULAR"
+    mapping.inputs["Rotation"].default_value = (0.0, 0.0, math.radians(args["rotation"]))
+    background.inputs["Strength"].default_value = args["strength"]
+    tree.links.new(coordinates.outputs["Generated"], mapping.inputs["Vector"])
+    tree.links.new(mapping.outputs["Vector"], environment.inputs["Vector"])
+    tree.links.new(environment.outputs["Color"], background.inputs["Color"])
+    tree.links.new(background.outputs["Background"], output.inputs["Surface"])
+    for node, x in ((coordinates, -900), (mapping, -700), (environment, -450), (background, -150), (output, 100)):
+        node.location = (x, 0)
+    ctx.scene.world = world
+    return {
+        "world": world.name,
+        "image": image.name,
+        "path": ctx.workspace.relative(path),
+        "width": width,
+        "height": height,
+        "strength": rounded_strength(background),
+        "rotation": args["rotation"],
+    }

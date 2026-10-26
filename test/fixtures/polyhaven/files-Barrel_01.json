@@ -1,0 +1,540 @@
+{
+ "explosive_metallic": {
+  "8k": {
+   "jpg": {
+    "size": 3196148,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/Barrel_01/Barrel_01_explosive_metallic_8k.jpg",
+    "md5": "623d2ba5286133c7ae03c9ebe17cede3"
+   },
+   "png": {
+    "size": 8697926,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/Barrel_01/Barrel_01_explosive_metallic_8k.png",
+    "md5": "01902c946c613e2695832325d6fac382"
+   },
+   "exr": {
+    "size": 18083777,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/Barrel_01/Barrel_01_explosive_metallic_8k.exr",
+    "md5": "5ecadaa73de8bfae69e725b428c58511"
+   }
+  },
+  "4k": {
+   "jpg": {
+    "size": 1158716,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/Barrel_01/Barrel_01_explosive_metallic_4k.jpg",
+    "md5": "24f55162584e5cf0bf4ce6ec828d3838"
+   },
+   "png": {
+    "size": 3693765,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/Barrel_01/Barrel_01_explosive_metallic_4k.png",
+    "md5": "0a6e77b13203ff8c17e314e0bfa57331"
+   },
+   "exr": {
+    "size": 6891442,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/Barrel_01/Barrel_01_explosive_metallic_4k.exr",
+    "md5": "5cbd90da6d52ef0515ca2164790ba9f6"
+   }
+  },
+  "2k": {
+   "jpg": {
+    "size": 386123,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/Barrel_01/Barrel_01_explosive_metallic_2k.jpg",
+    "md5": "0c242854d28c4a88960ce3f307c47506"
+   },
+   "png": {
+    "size": 1105564,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/Barrel_01/Barrel_01_explosive_metallic_2k.png",
+    "md5": "3926c40318c1bbdcff551cb1f717989f"
+   },
+   "exr": {
+    "size": 2081405,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/Barrel_01/Barrel_01_explosive_metallic_2k.exr",
+    "md5": "50a52a202b8ef92a08560d9f183d93f2"
+   }
+  },
+  "1k": {
+   "jpg": {
+    "size": 124583,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_metallic_1k.jpg",
+    "md5": "b7166dfd7340a02998e1cb49fc58e6d7"
+   },
+   "png": {
+    "size": 333303,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Barrel_01/Barrel_01_explosive_metallic_1k.png",
+    "md5": "c5f9a570f37d8320e80b3313a8fb767a"
+   },
+   "exr": {
+    "size": 628883,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/Barrel_01/Barrel_01_explosive_metallic_1k.exr",
+    "md5": "fd0dbe42e1d1ce8330b0e16a47579ab9"
+   }
+  }
+ },
+ "explosive_arm": {
+  "8k": {
+   "jpg": {
+    "size": 7650951,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/Barrel_01/Barrel_01_explosive_arm_8k.jpg",
+    "md5": "16d70df5022b740fba1b484dd9524d36"
+   },
+   "png": {
+    "size": 47513236,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/Barrel_01/Barrel_01_explosive_arm_8k.png",
+    "md5": "ee44c681f1ce748b2d77c1a8fce33d4e"
+   },
+   "exr": {
+    "size": 62615191,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/Barrel_01/Barrel_01_explosive_arm_8k.exr",
+    "md5": "26484e1d728ad6a2c035e3f63b0f07f9"
+   }
+  },
+  "4k": {
+   "jpg": {
+    "size": 2602892,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/Barrel_01/Barrel_01_explosive_arm_4k.jpg",
+    "md5": "a29077af83cdfe6c6bbea81465a3c0bc"
+   },
+   "png": {
+    "size": 16886482,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/Barrel_01/Barrel_01_explosive_arm_4k.png",
+    "md5": "56f7d9ba937b907295e28b7466024530"
+   },
+   "exr": {
+    "size": 22527831,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/Barrel_01/Barrel_01_explosive_arm_4k.exr",
+    "md5": "d660da40e388d38ad6cd85b01f5c079b"
+   }
+  },
+  "2k": {
+   "jpg": {
+    "size": 814101,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/Barrel_01/Barrel_01_explosive_arm_2k.jpg",
+    "md5": "5aaba73164df1518bbc417efb7782d67"
+   },
+   "png": {
+    "size": 4510220,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/Barrel_01/Barrel_01_explosive_arm_2k.png",
+    "md5": "5999f14ec2d1c9feb61db4e3635dc157"
+   },
+   "exr": {
+    "size": 6739456,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/Barrel_01/Barrel_01_explosive_arm_2k.exr",
+    "md5": "001372a2b86ecc3254c6e9f43c1416ce"
+   }
+  },
+  "1k": {
+   "jpg": {
+    "size": 243594,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_arm_1k.jpg",
+    "md5": "ccfe5da162b909fe98f4780e41cc1233"
+   },
+   "png": {
+    "size": 1246995,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Barrel_01/Barrel_01_explosive_arm_1k.png",
+    "md5": "7e1e84f704c274cda5ae91c415cdb83a"
+   },
+   "exr": {
+    "size": 1948555,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/Barrel_01/Barrel_01_explosive_arm_1k.exr",
+    "md5": "d42679e02d86b475fc06b67a0f8b1019"
+   }
+  }
+ },
+ "explosive_nor_gl": {
+  "8k": {
+   "jpg": {
+    "size": 12529645,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/Barrel_01/Barrel_01_explosive_nor_gl_8k.jpg",
+    "md5": "802c75232c10e45caeaa3d79ac2b3f17"
+   },
+   "png": {
+    "size": 74373841,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/Barrel_01/Barrel_01_explosive_nor_gl_8k.png",
+    "md5": "5ded15dfb46dc683f3785aff56f197dc"
+   },
+   "exr": {
+    "size": 70178422,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/Barrel_01/Barrel_01_explosive_nor_gl_8k.exr",
+    "md5": "dd0078b89662ae01e702038e7e9450c9"
+   }
+  },
+  "4k": {
+   "jpg": {
+    "size": 3622949,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/Barrel_01/Barrel_01_explosive_nor_gl_4k.jpg",
+    "md5": "8611f85e3da2d79ed21c6cb840e8448f"
+   },
+   "png": {
+    "size": 24838191,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/Barrel_01/Barrel_01_explosive_nor_gl_4k.png",
+    "md5": "6b4206df771874ffbd6a96548f1f0fc7"
+   },
+   "exr": {
+    "size": 25674639,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/Barrel_01/Barrel_01_explosive_nor_gl_4k.exr",
+    "md5": "7b62d043d86dae66398476999ed85add"
+   }
+  },
+  "2k": {
+   "jpg": {
+    "size": 875565,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/Barrel_01/Barrel_01_explosive_nor_gl_2k.jpg",
+    "md5": "8018e6790829cbbe453de4f25f314362"
+   },
+   "png": {
+    "size": 6658513,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/Barrel_01/Barrel_01_explosive_nor_gl_2k.png",
+    "md5": "10e97bbdc562736070d01577b428e16d"
+   },
+   "exr": {
+    "size": 6985843,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/Barrel_01/Barrel_01_explosive_nor_gl_2k.exr",
+    "md5": "eb1566ecd7655faece357fc7c0aaa26d"
+   }
+  },
+  "1k": {
+   "jpg": {
+    "size": 185578,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_nor_gl_1k.jpg",
+    "md5": "f49be8d1ab465c944380b9d565c6ab47"
+   },
+   "png": {
+    "size": 1631810,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Barrel_01/Barrel_01_explosive_nor_gl_1k.png",
+    "md5": "8b6cf9bee1f227c9afe40cf181104de7"
+   },
+   "exr": {
+    "size": 1699979,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/Barrel_01/Barrel_01_explosive_nor_gl_1k.exr",
+    "md5": "4ba205fde6a3d364c6e35568e9e63519"
+   }
+  }
+ },
+ "gltf": {
+  "8k": {
+   "gltf": {
+    "include": {
+     "Barrel_01.bin": {
+      "size": 81756,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/Barrel_01/Barrel_01.bin",
+      "md5": "e9f1036a183a1747aea6d40c556d7410"
+     },
+     "textures/Barrel_01_explosive_nor_gl_8k.jpg": {
+      "size": 12529645,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/Barrel_01/Barrel_01_explosive_nor_gl_8k.jpg",
+      "md5": "802c75232c10e45caeaa3d79ac2b3f17"
+     },
+     "textures/Barrel_01_explosive_arm_8k.jpg": {
+      "size": 7650951,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/Barrel_01/Barrel_01_explosive_arm_8k.jpg",
+      "md5": "16d70df5022b740fba1b484dd9524d36"
+     },
+     "textures/Barrel_01_explosive_diff_8k.jpg": {
+      "size": 5973689,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/Barrel_01/Barrel_01_explosive_diff_8k.jpg",
+      "md5": "7c258e0819a65fd482c5529dc5b48d29"
+     }
+    },
+    "size": 2711,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/Barrel_01/Barrel_01_8k.gltf",
+    "md5": "34293af2ccf652b89cfb511bd495f229"
+   }
+  },
+  "4k": {
+   "gltf": {
+    "include": {
+     "Barrel_01.bin": {
+      "size": 81756,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/Barrel_01/Barrel_01.bin",
+      "md5": "e9f1036a183a1747aea6d40c556d7410"
+     },
+     "textures/Barrel_01_explosive_arm_4k.jpg": {
+      "size": 2602892,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/Barrel_01/Barrel_01_explosive_arm_4k.jpg",
+      "md5": "a29077af83cdfe6c6bbea81465a3c0bc"
+     },
+     "textures/Barrel_01_explosive_nor_gl_4k.jpg": {
+      "size": 3622949,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/Barrel_01/Barrel_01_explosive_nor_gl_4k.jpg",
+      "md5": "8611f85e3da2d79ed21c6cb840e8448f"
+     },
+     "textures/Barrel_01_explosive_diff_4k.jpg": {
+      "size": 2011055,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/Barrel_01/Barrel_01_explosive_diff_4k.jpg",
+      "md5": "1dee09fa6b66ac94eecddf6f82ecdfde"
+     }
+    },
+    "size": 2711,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/4k/Barrel_01/Barrel_01_4k.gltf",
+    "md5": "aabc40b134d8b11f11424fafea96b413"
+   }
+  },
+  "2k": {
+   "gltf": {
+    "include": {
+     "Barrel_01.bin": {
+      "size": 81756,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/Barrel_01/Barrel_01.bin",
+      "md5": "e9f1036a183a1747aea6d40c556d7410"
+     },
+     "textures/Barrel_01_explosive_arm_2k.jpg": {
+      "size": 814101,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/Barrel_01/Barrel_01_explosive_arm_2k.jpg",
+      "md5": "5aaba73164df1518bbc417efb7782d67"
+     },
+     "textures/Barrel_01_explosive_diff_2k.jpg": {
+      "size": 613078,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/Barrel_01/Barrel_01_explosive_diff_2k.jpg",
+      "md5": "c8914e7197e19feb37436c3035f1b3cd"
+     },
+     "textures/Barrel_01_explosive_nor_gl_2k.jpg": {
+      "size": 875565,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/Barrel_01/Barrel_01_explosive_nor_gl_2k.jpg",
+      "md5": "8018e6790829cbbe453de4f25f314362"
+     }
+    },
+    "size": 2711,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/Barrel_01/Barrel_01_2k.gltf",
+    "md5": "b590284768d2c7bf92a96e759ca9e9d8"
+   }
+  },
+  "1k": {
+   "gltf": {
+    "include": {
+     "Barrel_01.bin": {
+      "size": 81756,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/Barrel_01/Barrel_01.bin",
+      "md5": "e9f1036a183a1747aea6d40c556d7410"
+     },
+     "textures/Barrel_01_explosive_diff_1k.jpg": {
+      "size": 179308,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_diff_1k.jpg",
+      "md5": "a36cd738a17cab52dc4c264a03b2848b"
+     },
+     "textures/Barrel_01_explosive_nor_gl_1k.jpg": {
+      "size": 185578,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_nor_gl_1k.jpg",
+      "md5": "f49be8d1ab465c944380b9d565c6ab47"
+     },
+     "textures/Barrel_01_explosive_arm_1k.jpg": {
+      "size": 243594,
+      "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_arm_1k.jpg",
+      "md5": "ccfe5da162b909fe98f4780e41cc1233"
+     }
+    },
+    "size": 2711,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/1k/Barrel_01/Barrel_01_1k.gltf",
+    "md5": "45c109401126ea3e5df2fe2c6b6f6d39"
+   }
+  }
+ },
+ "explosive_roughness": {
+  "8k": {
+   "jpg": {
+    "size": 6963730,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/Barrel_01/Barrel_01_explosive_roughness_8k.jpg",
+    "md5": "51f4d9b9a959429bc3cb2c10034bf84b"
+   },
+   "png": {
+    "size": 20584781,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/Barrel_01/Barrel_01_explosive_roughness_8k.png",
+    "md5": "3e07cda797a81e7b6ef6fbcdc019b715"
+   },
+   "exr": {
+    "size": 36034094,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/Barrel_01/Barrel_01_explosive_roughness_8k.exr",
+    "md5": "1dececc89269065dcb493a685534c01d"
+   }
+  },
+  "4k": {
+   "jpg": {
+    "size": 2531283,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/Barrel_01/Barrel_01_explosive_roughness_4k.jpg",
+    "md5": "64bde734db96202c1ef8483169aa21d9"
+   },
+   "png": {
+    "size": 7176044,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/Barrel_01/Barrel_01_explosive_roughness_4k.png",
+    "md5": "0f94e2e9977b769fd8b10284748b9539"
+   },
+   "exr": {
+    "size": 11876437,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/Barrel_01/Barrel_01_explosive_roughness_4k.exr",
+    "md5": "192d1ac898548ebce35f5e08c6ea588f"
+   }
+  },
+  "2k": {
+   "jpg": {
+    "size": 791137,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/Barrel_01/Barrel_01_explosive_roughness_2k.jpg",
+    "md5": "9a2c9768f98d52f8ecd6663dd7a0e372"
+   },
+   "png": {
+    "size": 2086761,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/Barrel_01/Barrel_01_explosive_roughness_2k.png",
+    "md5": "afe41d88d2d1fff979219d4950e0eb91"
+   },
+   "exr": {
+    "size": 3458136,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/Barrel_01/Barrel_01_explosive_roughness_2k.exr",
+    "md5": "b77a38e171241eb1ef5fdd1e3aa6e57a"
+   }
+  },
+  "1k": {
+   "jpg": {
+    "size": 236568,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_roughness_1k.jpg",
+    "md5": "f81186079ebd907dc6162abd0a90ece7"
+   },
+   "png": {
+    "size": 584713,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Barrel_01/Barrel_01_explosive_roughness_1k.png",
+    "md5": "d5ce4574587ce46bd1e788fd72b3e463"
+   },
+   "exr": {
+    "size": 993717,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/Barrel_01/Barrel_01_explosive_roughness_1k.exr",
+    "md5": "99337de5596635995b04d7d6a799d072"
+   }
+  }
+ },
+ "explosive_diff": {
+  "8k": {
+   "jpg": {
+    "size": 5973689,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/Barrel_01/Barrel_01_explosive_diff_8k.jpg",
+    "md5": "7c258e0819a65fd482c5529dc5b48d29"
+   },
+   "png": {
+    "size": 44720397,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/Barrel_01/Barrel_01_explosive_diff_8k.png",
+    "md5": "81f14758ae8298c34dbf9301910a2965"
+   },
+   "exr": {
+    "size": 52146007,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/Barrel_01/Barrel_01_explosive_diff_8k.exr",
+    "md5": "f059bbaffb13bf5fe36688d95c74b693"
+   }
+  },
+  "4k": {
+   "jpg": {
+    "size": 2011055,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/Barrel_01/Barrel_01_explosive_diff_4k.jpg",
+    "md5": "1dee09fa6b66ac94eecddf6f82ecdfde"
+   },
+   "png": {
+    "size": 16430211,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/Barrel_01/Barrel_01_explosive_diff_4k.png",
+    "md5": "0dd3cfa9000693915289308b24da0be2"
+   },
+   "exr": {
+    "size": 19695656,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/Barrel_01/Barrel_01_explosive_diff_4k.exr",
+    "md5": "d77398047387d2f66e80d2c814811b18"
+   }
+  },
+  "2k": {
+   "jpg": {
+    "size": 613078,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/Barrel_01/Barrel_01_explosive_diff_2k.jpg",
+    "md5": "c8914e7197e19feb37436c3035f1b3cd"
+   },
+   "png": {
+    "size": 4805672,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/Barrel_01/Barrel_01_explosive_diff_2k.png",
+    "md5": "9dfe6e69c3a19cdc008a6d2d3487c6bd"
+   },
+   "exr": {
+    "size": 5879944,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/Barrel_01/Barrel_01_explosive_diff_2k.exr",
+    "md5": "89cf503c0f5accff3a1654ac1d2a199f"
+   }
+  },
+  "1k": {
+   "jpg": {
+    "size": 179308,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_diff_1k.jpg",
+    "md5": "a36cd738a17cab52dc4c264a03b2848b"
+   },
+   "png": {
+    "size": 1377390,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Barrel_01/Barrel_01_explosive_diff_1k.png",
+    "md5": "3226b7797c876525160ebebe0c6f97bb"
+   },
+   "exr": {
+    "size": 1672172,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/Barrel_01/Barrel_01_explosive_diff_1k.exr",
+    "md5": "824bc705a29fc83b10e42da2cc4243d4"
+   }
+  }
+ },
+ "explosive_nor_dx": {
+  "8k": {
+   "jpg": {
+    "size": 12534758,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/8k/Barrel_01/Barrel_01_explosive_nor_dx_8k.jpg",
+    "md5": "b10a172de8b3a8c183b4ffe6ee3c37e8"
+   },
+   "png": {
+    "size": 74361200,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/8k/Barrel_01/Barrel_01_explosive_nor_dx_8k.png",
+    "md5": "54135c252feb44bfa1b6ea95d11be0d0"
+   },
+   "exr": {
+    "size": 70269695,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/8k/Barrel_01/Barrel_01_explosive_nor_dx_8k.exr",
+    "md5": "ffb5365e1c58bbe5d24064eb531def5e"
+   }
+  },
+  "4k": {
+   "jpg": {
+    "size": 3628408,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/4k/Barrel_01/Barrel_01_explosive_nor_dx_4k.jpg",
+    "md5": "29f1464f5e38ad08e8a031e93630540a"
+   },
+   "png": {
+    "size": 24841390,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/4k/Barrel_01/Barrel_01_explosive_nor_dx_4k.png",
+    "md5": "0c1cfce79cc45df05ddedb5f6cd14e83"
+   },
+   "exr": {
+    "size": 25696185,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/4k/Barrel_01/Barrel_01_explosive_nor_dx_4k.exr",
+    "md5": "0e0b1affa41fa5a8ae1957d0b3845640"
+   }
+  },
+  "2k": {
+   "jpg": {
+    "size": 876426,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/Barrel_01/Barrel_01_explosive_nor_dx_2k.jpg",
+    "md5": "e24fa45c9cd8ad37ec2cffb2f870338f"
+   },
+   "png": {
+    "size": 6659640,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/2k/Barrel_01/Barrel_01_explosive_nor_dx_2k.png",
+    "md5": "e1e0af112069be30cbdfded50348aace"
+   },
+   "exr": {
+    "size": 6988101,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/2k/Barrel_01/Barrel_01_explosive_nor_dx_2k.exr",
+    "md5": "ced17811edafa55cd792d548e5654e2d"
+   }
+  },
+  "1k": {
+   "jpg": {
+    "size": 185510,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/1k/Barrel_01/Barrel_01_explosive_nor_dx_1k.jpg",
+    "md5": "f77ee04778373445a15310daf3b2de35"
+   },
+   "png": {
+    "size": 1632613,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/Barrel_01/Barrel_01_explosive_nor_dx_1k.png",
+    "md5": "d093d1d9d032da72ea15c3965b37f677"
+   },
+   "exr": {
+    "size": 1702103,
+    "url": "https://dl.polyhaven.org/file/ph-assets/Models/exr/1k/Barrel_01/Barrel_01_explosive_nor_dx_1k.exr",
+    "md5": "c5d30a54c10fcf1bac617b9f697e96cf"
+   }
+  }
+ }
+}
