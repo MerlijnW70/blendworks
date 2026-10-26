@@ -1,0 +1,21 @@
+import importlib
+
+MODULES = (
+    "scene",
+    "objects",
+    "transforms",
+    "mesh_edit",
+    "modifiers",
+    "geometry",
+    "materials",
+    "uv",
+    "lights",
+    "render",
+    "files",
+    "run_python",
+)
+
+
+def load():
+    for name in MODULES:
+        importlib.import_module(f"{__name__}.{name}")

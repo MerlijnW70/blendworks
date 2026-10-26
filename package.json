@@ -9,7 +9,8 @@
     "test": "vitest run",
     "test:bridge": "node scripts/bridge-tests.mjs",
     "rules": "node scripts/rules.mjs",
-    "check": "npm run rules && npm run typecheck && npm run test && npm run test:bridge && npm run build"
+    "check": "npm run rules && npm run typecheck && npm run test && npm run test:bridge && npm run build && npm run build:addon",
+    "build:addon": "node bridge/build-addon.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",

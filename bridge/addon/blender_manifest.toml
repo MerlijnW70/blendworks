@@ -1,0 +1,17 @@
+schema_version = "1.0.0"
+
+id = "blendworks"
+version = "0.1.0"
+name = "Blendworks Bridge"
+tagline = "Lets AI agents build in Blender over a localhost socket"
+maintainer = "Blendworks contributors"
+type = "add-on"
+tags = ["Development", "Modeling"]
+
+blender_version_min = "4.2.0"
+
+license = ["SPDX:GPL-3.0-or-later"]
+
+[permissions]
+network = "Serves bridge commands on a 127.0.0.1 port"
+files = "Imports, exports and saves files in the workspace folder"
