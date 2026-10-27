@@ -5,8 +5,9 @@ import bmesh
 from ..errors import bad_args, failed
 from ..limits import MAX_MESH_VERTICES
 from ..registry import command
-from ..schema import boolean, integer, length, number, string
-from ..selection import FACE_PROPERTIES, select_faces
+from ..normals import hardened_loop_normals
+from ..schema import boolean, indices, integer, length, number, string
+from ..selection import EXTENDED_FACE_PROPERTIES, has_selector, select_faces
 from ..util import EditMesh, get_mesh_object, mesh_counts
 
 OBJECT = string("Mesh object.")
@@ -15,7 +16,7 @@ OBJECT = string("Mesh object.")
 def with_faces(properties):
     merged = {"name": OBJECT}
     merged.update(properties)
-    merged.update(FACE_PROPERTIES)
+    merged.update(EXTENDED_FACE_PROPERTIES)
     return merged
 
 
@@ -107,30 +108,30 @@ def inset(ctx, args):
 
 @command(
     "bevel",
-    "Bevel the edges sharper than angle (optionally only those of the selected faces) by a width in metres.",
-    with_faces(
-        {
-            "width": length("Bevel width in metres.", maximum=1000.0),
-            "segments": integer("Number of bevel segments.", 1, 16, 1),
-            "profile": number("Profile shape; 0.5 is round.", 0.0, 1.0, 0.5),
-            "angle": number("Only edges whose faces meet at least this many degrees off flat.", 0.0, 180.0, 30.0),
-            "clamp": boolean("Keep bevels from overlapping.", True),
-        }
-    ),
+    "Bevel edges by a width in metres: the edges sharper than angle, those of the selected faces, or the listed edges; harden_normals keeps flat faces flat-shaded.",
+    {
+        **with_faces(
+            {
+                "width": length("Bevel width in metres.", maximum=1000.0),
+                "segments": integer("Number of bevel segments.", 1, 16, 1),
+                "profile": number("Profile shape; 0.5 is round.", 0.0, 1.0, 0.5),
+                "angle": number("Only edges whose faces meet at least this many degrees off flat (not used with edges).", 0.0, 180.0, 30.0),
+                "clamp": boolean("Keep bevels from overlapping.", True),
+                "harden_normals": boolean("Set custom normals so flat faces keep their normals and the bevel blends into them.", False),
+            }
+        ),
+        "edges": indices("Edge indices to bevel instead of choosing by angle; each must border two faces.", 1, 100_000),
+    },
     ["name", "width"],
 )
 def bevel(ctx, args):
     obj = get_mesh_object(args["name"])
     width = local_length(obj, args["width"])
-    threshold = math.radians(args["angle"]) - 1e-6
-    selecting = "faces" in args or "facing" in args
+    normals = None
     with EditMesh(ctx, obj) as bm:
-        candidates = {edge for face in select_faces(bm, obj, args) for edge in face.edges} if selecting else set(bm.edges)
-        edges = [edge for edge in bm.edges if edge in candidates and sharp_enough(edge, threshold)]
-        if not edges:
-            raise bad_args(f"no edges of {obj.name} are at least {args['angle']} degrees sharp")
+        edges = bevel_edges(bm, obj, args)
         verts = list({vert for edge in edges for vert in edge.verts})
-        bmesh.ops.bevel(
+        created = bmesh.ops.bevel(
             bm,
             geom=edges + verts,
             offset=width,
@@ -140,7 +141,34 @@ def bevel(ctx, args):
             affect="EDGES",
             clamp_overlap=args["clamp"],
         )
+        if args["harden_normals"]:
+            normals = hardened_loop_normals(bm, created["faces"])
+            for face in bm.faces:
+                face.smooth = True
+    if normals is not None:
+        obj.data.normals_split_custom_set(normals)
     return edit_result(obj, {"bevelled_edges": len(edges)})
+
+
+def bevel_edges(bm, obj, args):
+    if "edges" in args:
+        bm.edges.ensure_lookup_table()
+        wanted = sorted(set(args["edges"]))
+        if wanted[-1] >= len(bm.edges):
+            raise bad_args(f"edge index {wanted[-1]} is out of range; {obj.name} has {len(bm.edges)} edges")
+        if has_selector(args):
+            raise bad_args("give edges or a face selection, not both")
+        chosen = [bm.edges[index] for index in wanted]
+        open_edge = next((edge.index for edge in chosen if len(edge.link_faces) != 2), None)
+        if open_edge is not None:
+            raise bad_args(f"edge {open_edge} does not border exactly two faces")
+        return chosen
+    threshold = math.radians(args["angle"]) - 1e-6
+    candidates = {edge for face in select_faces(bm, obj, args) for edge in face.edges} if has_selector(args) else set(bm.edges)
+    edges = [edge for edge in bm.edges if edge in candidates and sharp_enough(edge, threshold)]
+    if not edges:
+        raise bad_args(f"no edges of {obj.name} are at least {args['angle']} degrees sharp")
+    return edges
 
 
 def sharp_enough(edge, threshold):

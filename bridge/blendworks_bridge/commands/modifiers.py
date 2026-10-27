@@ -3,9 +3,13 @@ import bpy
 
 from ..errors import bad_args, failed, not_found
 from ..limits import MAX_MESH_VERTICES
+from ..meshdata import MeshData
+from ..modifier_specs import SPECS, configure, kind_schemas
 from ..registry import command
-from ..schema import array, boolean, integer, length, number, string, vector3
-from ..util import check_vertex_cap, get_mesh_object, get_object, mesh_counts
+from ..schema import array, boolean, integer, length, names, number, string, vector3
+from ..topology import describe_problems, manifold_report, mesh_report
+from ..util import EditMesh, check_vertex_cap, get_mesh_object, get_object, mesh_counts
+from .mesh_edit import local_length
 
 OBJECT = string("Mesh object.")
 APPLY = boolean("Apply the modifier to the mesh now instead of keeping it live.", False)
@@ -15,6 +19,10 @@ def add_modifier(ctx, obj, kind, settings, apply):
     modifier = obj.modifiers.new(name=kind.title(), type=kind)
     for key, value in settings.items():
         setattr(modifier, key, value)
+    return finish_modifier(ctx, obj, modifier, kind, apply)
+
+
+def finish_modifier(ctx, obj, modifier, kind, apply):
     name = modifier.name
     if apply:
         apply_modifiers(ctx, obj, [name])
@@ -94,37 +102,105 @@ def apply_modifier(ctx, args):
     return {"name": obj.name, "applied": names, "mesh": mesh_counts(obj.data)}
 
 
+def evaluated_report(ctx, obj):
+    evaluated = obj.evaluated_get(ctx.depsgraph())
+    mesh = bpy.data.meshes.new_from_object(evaluated)
+    try:
+        return mesh_report(mesh)
+    finally:
+        bpy.data.meshes.remove(mesh)
+
+
+def union_of_cutters(ctx, cutters):
+    merged = MeshData()
+    for cutter in cutters:
+        mesh = bpy.data.meshes.new_from_object(cutter.evaluated_get(ctx.depsgraph()))
+        try:
+            merged.append(MeshData.from_mesh(mesh), cutter.matrix_world)
+        finally:
+            bpy.data.meshes.remove(mesh)
+    mesh = bpy.data.meshes.new("Cutters")
+    merged.to_mesh(mesh)
+    stand_in = bpy.data.objects.new("Cutters", mesh)
+    ctx.scene.collection.objects.link(stand_in)
+    return stand_in
+
+
+def remove_stand_in(stand_in):
+    mesh = stand_in.data
+    bpy.data.objects.remove(stand_in)
+    bpy.data.meshes.remove(mesh)
+
+
+def clean_boolean_result(ctx, obj, distance):
+    with EditMesh(ctx, obj) as bm:
+        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=local_length(obj, distance))
+        if manifold_report(bm)["manifold"]:
+            bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+
+
+def dispose_cutters(ctx, cutters, action):
+    for cutter in cutters:
+        if action == "hide":
+            cutter.hide_set(True, view_layer=ctx.view_layer)
+            cutter.hide_render = True
+        elif action == "delete":
+            data = cutter.data
+            bpy.data.objects.remove(cutter)
+            if data.users == 0:
+                bpy.data.meshes.remove(data)
+
+
 @command(
     "boolean",
-    "Combine a mesh with a cutter mesh: union, difference or intersect; fails if the result would be empty.",
+    "Combine a mesh with one cutter or a list of cutters (unioned first, one exact operation): union, difference or intersect; merges close vertices, and can refuse a non-manifold result.",
     {
         "name": OBJECT,
         "cutter": string("The other mesh object."),
+        "cutters": names("Several other mesh objects, joined by union first and applied in one operation with the exact solver.", 1, 1000),
         "operation": string("Boolean operation.", ["union", "difference", "intersect"], "difference"),
-        "solver": string("exact is robust, float is fast, manifold needs closed meshes.", ["exact", "float", "manifold"], "exact"),
-        "cutter_action": string("What to do with the cutter: hide it, keep it shown, or delete it (needs apply).", ["hide", "keep", "delete"], "hide"),
+        "solver": string("exact is robust, float is fast, manifold needs closed meshes; cutters always use exact.", ["exact", "float", "manifold"], "exact"),
+        "cutter_action": string("What to do with the cutters: hide them, keep them shown, or delete them (needs apply).", ["hide", "keep", "delete"], "hide"),
         "apply": boolean("Apply the boolean to the mesh now instead of keeping it live.", True),
+        "manifold": boolean("Refuse and roll back when the result is not a closed manifold.", False),
+        "cleanup": boolean("After applying, merge vertices closer than merge_distance and recalculate the normals of a closed result.", True),
+        "merge_distance": length("Cleanup merge distance in metres.", 0.00001, 1.0),
     },
-    ["name", "cutter"],
+    ["name"],
 )
 def boolean_command(ctx, args):
     obj = get_mesh_object(args["name"])
-    cutter = get_mesh_object(args["cutter"])
-    if cutter == obj:
+    if ("cutter" in args) == ("cutters" in args):
+        raise bad_args("give the cutters as exactly one of cutter or cutters")
+    cutters = [get_mesh_object(name) for name in (args["cutters"] if "cutters" in args else [args["cutter"]])]
+    if len({cutter.name for cutter in cutters}) != len(cutters):
+        raise bad_args("a cutter is listed twice")
+    if obj in cutters:
         raise bad_args("an object cannot cut itself")
     if args["cutter_action"] == "delete" and not args["apply"]:
         raise bad_args("cutter_action delete needs apply=true; a live boolean needs its cutter")
-    settings = {"operation": args["operation"].upper(), "solver": args["solver"].upper(), "object": cutter}
-    result = add_modifier(ctx, obj, "BOOLEAN", settings, args["apply"])
-    if args["cutter_action"] == "hide":
-        cutter.hide_set(True, view_layer=ctx.view_layer)
-        cutter.hide_render = True
-    elif args["cutter_action"] == "delete":
-        data = cutter.data
-        bpy.data.objects.remove(cutter)
-        if data.users == 0:
-            bpy.data.meshes.remove(data)
-    result["cutter"] = args["cutter_action"]
+    multiple = "cutters" in args
+    if multiple and (args["solver"] != "exact" or not args["apply"]):
+        raise bad_args("cutters use the exact solver and need apply=true")
+    settings = {"operation": args["operation"].upper(), "solver": args["solver"].upper()}
+    stand_in = union_of_cutters(ctx, cutters) if multiple else None
+    try:
+        settings["object"] = stand_in if multiple else cutters[0]
+        if multiple:
+            settings["use_self"] = True
+        result = add_modifier(ctx, obj, "BOOLEAN", settings, args["apply"])
+    finally:
+        if stand_in is not None:
+            remove_stand_in(stand_in)
+    if args["apply"] and args["cleanup"]:
+        clean_boolean_result(ctx, obj, args["merge_distance"])
+    report = mesh_report(obj.data) if args["apply"] else evaluated_report(ctx, obj)
+    if args["manifold"] and not report["manifold"]:
+        raise failed(f"the boolean result is not manifold: {describe_problems(report)}")
+    dispose_cutters(ctx, cutters, args["cutter_action"])
+    result.update({"cutter": args["cutter_action"], "cutters": len(cutters), "manifold": report["manifold"], "volume": round(report["volume"], 9) if report["volume"] is not None else None})
+    if args["apply"]:
+        result["mesh"] = mesh_counts(obj.data)
     return result
 
 
@@ -222,3 +298,30 @@ def solidify(ctx, args):
 def decimate(ctx, args):
     obj = get_mesh_object(args["name"])
     return add_modifier(ctx, obj, "DECIMATE", {"decimate_type": "COLLAPSE", "ratio": args["ratio"]}, args["apply"])
+
+
+KIND_PROPERTIES = kind_schemas()
+
+
+@command(
+    "add_modifier",
+    "Add one typed modifier (displace, weld, screw, curve, simple_deform, wireframe, lattice, shrinkwrap, triangulate, weighted_normal, bevel, solidify): fill in exactly one of those fields.",
+    {
+        "name": OBJECT,
+        "modifier_name": string("Name for the modifier; default the kind's name."),
+        "apply": APPLY,
+        **KIND_PROPERTIES,
+    },
+    ["name"],
+)
+def add_modifier_command(ctx, args):
+    obj = get_mesh_object(args["name"])
+    given = [kind for kind in SPECS if kind in args]
+    if len(given) != 1:
+        raise bad_args(f"give exactly one modifier field out of: {', '.join(SPECS)}")
+    kind = given[0]
+    modifier = obj.modifiers.new(name=args.get("modifier_name", kind.title()), type=SPECS[kind]["blender"])
+    configure(obj, kind, args[kind], modifier)
+    result = finish_modifier(ctx, obj, modifier, kind, args["apply"])
+    result["kind"] = kind
+    return result

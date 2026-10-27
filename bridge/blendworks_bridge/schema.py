@@ -173,3 +173,29 @@ def _check_number(schema, value, where):
     if "maximum" in schema and value > schema["maximum"]:
         raise bad_args(f"{where} must be at most {schema['maximum']}")
     return value
+
+
+def point2(description=None):
+    item = {"type": "number", "minimum": -MAX_COORDINATE, "maximum": MAX_COORDINATE}
+    return array(item, description or "Point [x, y] in metres.", 2, 2)
+
+
+def point3(description=None):
+    item = {"type": "number", "minimum": -MAX_COORDINATE, "maximum": MAX_COORDINATE}
+    return array(item, description or "Point [x, y, z] in metres.", 3, 3)
+
+
+def points2(description, min_items, max_items, default=None):
+    return array(point2(), description, min_items, max_items, default)
+
+
+def points3(description, min_items, max_items, default=None):
+    return array(point3(), description, min_items, max_items, default)
+
+
+def indices(description, min_items=1, max_items=200_000):
+    return array({"type": "integer", "minimum": 0}, description, min_items, max_items)
+
+
+def described(schema, description):
+    return {**schema, "description": description}

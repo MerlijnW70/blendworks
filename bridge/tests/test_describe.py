@@ -14,6 +14,8 @@ DESIGN_COMMANDS = {
     "extrude", "inset", "bevel", "subdivide", "decimate", "boolean", "mirror", "array", "solidify",
     "shade_smooth", "shade_flat", "recalc_normals", "merge_by_distance", "apply_modifier",
     "mesh_from_data", "curve_from_points", "text_object",
+    "lathe", "sweep", "loft", "extrude_outline", "gear", "sprocket", "roller_chain",
+    "instances", "rivet_line", "add_modifier", "mesh_query", "transform_selection", "displace_noise",
     "add_material", "assign_material", "vertex_colors",
     "uv_smart_project", "uv_unwrap", "uv_info", "uv_pack",
     "image_load", "image_new", "image_save", "image_info",

@@ -37,8 +37,13 @@ The `BLENDER` environment variable names the binary everywhere.
 |---|---|
 | Scene | `describe`, `scene_info` (objects, meshes with vertex, face and triangle counts, materials, cameras, lights, bounds, units), `new_scene`, `select`, `delete` |
 | Objects | `add_primitive` (cube, cylinder, cone, sphere, ico sphere, torus, plane, with size and segments), `transform` (location, rotation, scale), `apply_transform`, `set_origin` (geometry centre, bottom centre, cursor), `duplicate`, `join`, `rename`, `parent` |
-| Mesh editing | `extrude`, `inset`, `bevel`, `subdivide`, `decimate`, `boolean` (union, difference, intersect), `mirror`, `array`, `solidify`, `shade_smooth` / `shade_flat`, `recalc_normals`, `merge_by_distance`, `apply_modifier` |
-| Geometry from data | `mesh_from_data` (vertices and faces, with a size cap), `curve_from_points`, `text_object` |
+| Mesh editing | `extrude`, `inset`, `bevel` (by angle, by selected faces or by listed edges, optionally with harden normals), `subdivide`, `decimate`, `boolean` (union, difference, intersect, with one cutter or a list of cutters, optional manifold check), `mirror`, `array`, `solidify`, `shade_smooth` / `shade_flat`, `recalc_normals`, `merge_by_distance`, `apply_modifier` |
+| Modifiers | `add_modifier` (typed fields for displace with built-in noise textures, weld, screw, curve, simple deform, wireframe, lattice, shrinkwrap, triangulate, weighted normal, bevel and solidify; unknown fields are refused), `apply_modifier` |
+| Shapes from profiles | `lathe`, `sweep`, `loft`, `extrude_outline` (with holes), `gear`, `sprocket`, `roller_chain` |
+| Repetition and placement | `instances` (linked copies at points, along waypoints, a curve or an edge loop, or on a circle; optionally realised into one mesh), `rivet_line` |
+| Selection and queries | `mesh_query` (paged face centres, normals, areas, materials, islands), `transform_selection` (move, rotate, scale selected faces or vertices); face selectors on `extrude`, `inset`, `bevel`, `subdivide`, `shade_smooth`, `shade_flat`, `mesh_query`, `transform_selection` and `displace_noise` |
+| Wear | `displace_noise` (seeded jitter or hammer-facet dents, masked by selection or vertex group) |
+| Geometry from data | `mesh_from_data` (vertices and faces, with material indices, UVs, smooth flags, sharp edges and creases, inline or from a JSON file in the workspace, with one size cap), `curve_from_points`, `text_object` |
 | Materials | `add_material` (Principled BSDF: base colour, metallic, roughness, emission, alpha), `assign_material` (whole object or face set), `vertex_colors` |
 | Textures | `image_load` (PNG, JPEG, OpenEXR or WebP from the workspace, with a colour space), `image_new` (blank 8-bit or float image, a bake target), `image_save` (PNG or JPEG into the workspace, 8 or 16 bit, quality), `image_info` (size, colour space, file or packed, users) |
 | PBR and procedural materials | `material_pbr` (Principled BSDF from image maps: base colour, metallic, roughness, ORM, normal in the OpenGL or DirectX convention, height as a bump, emission, alpha and AO; UV map and mapping), `material_procedural` (presets built in code: wood, worn metal, rust, stone, concrete, fabric, dirt; typed parameters), `material_layer` (an overlay preset over a material through a noise, edge, cavity or vertex colour mask) |
@@ -49,6 +54,35 @@ The `BLENDER` environment variable names the binary everywhere.
 | Import | `import` (`.glb`, `.gltf`, `.fbx`, `.obj` from a path inside the working folder) |
 
 All lengths are in metres, and all angles in degrees.
+
+### Modelling kit
+
+- **Shapes** (`lathe`, `sweep`, `loft`, `extrude_outline`, `gear`, `sprocket`, `roller_chain`) make real meshes with UVs and a `shading` choice: smooth, flat, or auto, which smooths everything except edges sharper than `smooth_angle`. A closed result is reported as `manifold` with its `volume`.
+- **Lathe:**
+  - The profile is `[x, z]` points in the XZ plane; `x` is the distance from the axis.
+  - The first and last point may lie on the axis, and each such point is one vertex, so the result is closed and manifold.
+  - `caps` closes an off-axis end with a flat face, or a partial turn with two wedge faces; `seam_merge` shares the vertices at the seam of a full turn.
+- **Sweep:**
+  - The profile moves along the path with rotation-minimising frames, which never flip.
+  - A corner without `fillet_radius` is mitred, so the thickness stays constant; with it, the corner is a circular arc of that radius.
+  - `scale_start` and `scale_end` taper the profile linearly with distance, and `twist` is the total roll in degrees.
+  - A closed path spreads the frame drift over its length, so the seam has no gap; it needs `twist` in whole turns and equal scales.
+  - A `curve` object is followed in world space.
+- **Loft:** sections with fewer points get extra points by splitting their longest edges until they match the largest section (or `samples`), which keeps their shape. With `align`, each section's start point is shifted to the position that twists the skin least. The winding follows the direction of travel, whatever the section orientation.
+- **UVs:**
+  - The faces of a shape are unwrapped in metres: a sweep, loft or lathe is one strip along its length, and caps are flat islands.
+  - The islands are then packed together into the UV square at one texel density, without overlap and without rotation.
+  - A gear, plate or chain is unwrapped the same way, with its walls as one strip.
+- **Instances:**
+  - Linked copies share one mesh, named `name_000`, `name_001` and so on, under an empty named `name`. The source's mesh is used, not its transform.
+  - A shared mesh cannot take `apply_modifier`; duplicate it unlinked first.
+  - `realize` merges the copies into one mesh, which keeps the source's UVs, so the copies overlap in UV space.
+  - Along a path, `spacing` places one at the start and then at each step that still fits; `count` spreads them over the whole path.
+  - `align frame` turns X along the path or circle tangent and Z to the up or normal direction.
+- **Booleans:** `cutters` are joined into one mesh and cut in a single exact operation, so overlapping cutters act as their union. After applying, close vertices are merged and the normals of a closed result are recalculated. `manifold` refuses, and rolls back, a result that is not a closed manifold.
+- **Selection:** `faces`, `facing`, `box` (the world-space face centre lies inside), `with_material`, `normal` with `normal_angle`, `island` (connected faces, numbered by lowest face index) and `area_min` / `area_max` (world area) all combine with and.
+- **Harden normals:** `bevel` with `harden_normals` stores custom normals: flat faces keep their own normal and the bevel faces blend into them. Blender stores custom normals with about four decimals.
+- **Wear:** `displace_noise` never moves a vertex further than `amplitude`; the same `seed` gives the same result, and vertices at one position move together so seams stay closed.
 
 ## 2. The MCP server
 
