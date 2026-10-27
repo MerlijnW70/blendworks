@@ -4,8 +4,9 @@ import type { RuleResult } from "./rules.js";
 import type { Isolation } from "./sandbox.js";
 import type { Validation } from "./validator.js";
 import { visualLines, type VisualRecord } from "./visual/record.js";
+import { packageLines, type PackageReport } from "../package/report.js";
 
-export type Failure = { stage: "spec" | "asset" | "validate" | "blender" | "measure" | "device" | "render" | "closeups"; code: string; message: string };
+export type Failure = { stage: "spec" | "asset" | "validate" | "blender" | "measure" | "device" | "render" | "closeups" | "package"; code: string; message: string };
 
 export type RenderedView = { view: string; path: string; sha256: string };
 
@@ -51,6 +52,7 @@ export type Report = {
   timings: Timings;
   validation?: Validation | null;
   visual?: VisualRecord | null;
+  package?: PackageReport | null;
   summary: string;
 };
 
@@ -141,6 +143,7 @@ export function summarize(report: Omit<Report, "summary">): string {
   lines.push(`  ${passed} of ${report.rules.length} rules pass`);
   if (report.measurements?.textures) lines.push(...textureLines(report.measurements.textures));
   if (report.validation !== undefined) lines.push(...validationLines(report.validation));
+  if (report.package) lines.push(...packageLines(report.package));
   if (report.measurements) lines.push(...integrityLines(report.measurements));
   if (report.visual) lines.push(...visualLines(report.visual));
   if (report.device) lines.push(`  render: ${describeDevice(report.device)}`);

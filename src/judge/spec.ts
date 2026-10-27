@@ -88,6 +88,35 @@ const gltf = z.strictObject({ validator: z.strictObject({ maxErrors: count.optio
 
 const parts = z.strictObject({ maxFloating: count, tolerance: length.max(MAX_FLOATING_TOLERANCE).optional() });
 
+export const MAX_LODS = 8;
+export const LOD_FILE_LAYOUTS = ["single", "separate"] as const;
+
+const strictlyDecreasing = (values: number[]) => values.every((value, index) => index === 0 || value < (values[index - 1] ?? 0));
+const strictlyIncreasing = (values: number[]) => values.every((value, index) => index === 0 || value > (values[index - 1] ?? 0));
+
+const lods = z
+  .strictObject({
+    count: z.number().int().min(1).max(MAX_LODS),
+    ratios: z.array(z.number().gt(0).lt(1)).min(1).max(MAX_LODS).optional(),
+    maxScreenError: z.number().positive().optional(),
+    distances: z.array(z.number().positive()).min(1).max(MAX_LODS).optional(),
+    minSilhouetteIoU: ratio.optional(),
+    minSimilarity: ratio.optional(),
+    files: z.enum(LOD_FILE_LAYOUTS).optional(),
+  })
+  .refine((value) => (value.ratios === undefined) !== (value.maxScreenError === undefined), { message: "give exactly one of ratios and maxScreenError", path: ["ratios"] })
+  .refine((value) => value.ratios === undefined || (value.ratios.length === value.count && strictlyDecreasing(value.ratios)), {
+    message: "ratios needs one value per level, each smaller than the one before",
+    path: ["ratios"],
+  })
+  .refine((value) => value.distances === undefined || (value.distances.length === value.count && strictlyIncreasing(value.distances)), {
+    message: "distances needs one value per level, each larger than the one before",
+    path: ["distances"],
+  })
+  .refine((value) => value.maxScreenError === undefined || value.distances !== undefined, { message: "maxScreenError needs distances", path: ["distances"] });
+
+const packageRule = z.strictObject({ compressedMaxBytes: z.number().int().positive().optional(), ktx2: z.boolean().optional(), meshopt: z.boolean().optional() });
+
 const baseSchema = z.strictObject({
   $schema: z.string().optional(),
   name: z.string().min(1).max(200).optional(),
@@ -115,6 +144,8 @@ const baseSchema = z.strictObject({
   gltf: gltf.optional(),
   parts: parts.optional(),
   visual: visualRule.optional(),
+  lods: lods.optional(),
+  package: packageRule.optional(),
 });
 
 export const assetSpecSchema = baseSchema
@@ -125,6 +156,8 @@ export const assetSpecSchema = baseSchema
   .refine((spec) => spec.visual === undefined || spec.brief !== undefined, { message: "the visual rule needs a brief", path: ["visual"] });
 
 export type AssetSpec = z.infer<typeof assetSpecSchema>;
+export type LodsRule = z.infer<typeof lods>;
+export type PackageRule = z.infer<typeof packageRule>;
 export type NamedObject = z.infer<typeof namedObject>;
 export type SizeRule = z.infer<typeof sizeRule>;
 export type OriginRule = z.infer<typeof originRule>;

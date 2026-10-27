@@ -20,6 +20,7 @@ MODULES = (
     "bake",
     "uv",
     "uv_pack",
+    "lods",
     "lights",
     "render",
     "files",

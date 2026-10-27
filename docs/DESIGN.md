@@ -30,7 +30,7 @@ The error for a missing Blender lists the places it looked and the download link
 - **Discovery:** `"cmd": "describe"` returns every command with its argument schema, a one-line description and its metadata. The MCP server builds its tool list from it.
   - `mutates`: it changes the scene. `writes_files`: it writes into the workspace.
   - `destructive`: it can discard work that rollback cannot bring back (`delete`, `new_scene`, `load_blend`, `restore_checkpoint`, `run_python`). A command that is destructive only in some cases adds `destructive_when`: `export`, `save_blend`, `image_save` and `checkpoint` when they overwrite a file, and `boolean` when `cutter_action` is delete.
-  - `slow`, `timeout` and `max_timeout`: the default and the largest timeout in seconds. Most commands default to 120 s and allow 600 s. Slow commands default to 300 s and allow 1800 s: `run_python`, `export`, `import`, `save_blend`, `load_blend`, `checkpoint`, `restore_checkpoint`, `render_preview`, `boolean`, `decimate`, `apply_modifier`, `uv_pack`, `set_world_hdri`, `mesh_from_data`, `sweep`, `loft`, `instances`, `rivet_line`, `roller_chain` and `displace_noise`. `bake` defaults to 660 s and allows 1200 s.
+  - `slow`, `timeout` and `max_timeout`: the default and the largest timeout in seconds. Most commands default to 120 s and allow 600 s. Slow commands default to 300 s and allow 1800 s: `run_python`, `export`, `import`, `save_blend`, `load_blend`, `checkpoint`, `restore_checkpoint`, `render_preview`, `boolean`, `decimate`, `generate_lods`, `apply_modifier`, `uv_pack`, `set_world_hdri`, `mesh_from_data`, `sweep`, `loft`, `instances`, `rivet_line`, `roller_chain` and `displace_noise`. `bake` defaults to 660 s and allows 1200 s.
   - `internal`: not offered as an MCP tool (`describe`, `recover`).
 - **Autosave (headless session):** after a mutating command the session saves the whole scene to `<workspace>/.blendworks/autosave.blend`, at most once every `BLENDWORKS_AUTOSAVE_SECONDS` (default 30; `off` disables it). When there are unsaved changes, it always saves before a slow command.
   - Each save is written to a temporary file and renamed into place. The previous save is kept as `autosave.prev.blend`. `autosave.json` records the time, the reason (for example `before run_python`) and the object count.
@@ -66,6 +66,7 @@ The error for a missing Blender lists the places it looked and the download link
 | Baking | `bake` (base colour, roughness, metallic and emission by emission, tangent-space normal and AO; margin, UV map, selected to active with a cage extrusion; optional rewire to a `material_pbr` material) |
 | UV | `uv_smart_project` and `uv_unwrap` (island margin, texel density), `uv_pack` (margin, rotation, shared atlas across objects), `uv_info` (coverage, overlap, texel density) |
 | Lights and camera | `add_light`, `add_camera`, `look_at`, `set_world` (colour or strength) |
+| LODs | `generate_lods` (LOD1..LODn copies named `<name>_LOD<n>` by decimation that keeps borders, materials and UV seams, with weighted normals; reports each level's triangles, ratio, Hausdorff error and screen error) |
 | Output | `render_preview` (PNG or JPEG from the active or a named camera, the turntable views plus `bottom`, or a close-up `focus`, in a chosen shading, at a capped resolution, returned as base64), `export` (glTF binary `.glb`, FBX, OBJ, with the parent empties of the exported objects), `save_blend` |
 | Import | `import` (`.glb`, `.gltf`, `.fbx`, `.obj` from a path inside the working folder), `load_blend` |
 
@@ -286,6 +287,30 @@ Shared mesh data is counted once for UV and topology: four wheels that share one
 - **`model`** (default `claude-opus-5-5`, or `BLENDWORKS_VISUAL_MODEL` when the spec names none), **`effort`** (`low` to `max`, default `high`) and **`provider`** (see the visual judge in §4).
 - **Committee:** `models` (2 to 5, instead of `model`) asks each model for `samples` answers. Each criterion combines the models' medians by `committee`: `min` (the default) takes the lowest; `majority` takes the highest score that a strict majority of the models reach (the middle one of three, the lower of two). The score is then the weighted mean as above.
 
+### LODs and packages
+
+Two optional groups make the judge build a game-ready package from the delivery and judge it (section 7):
+
+```json
+{
+  "format": "glb",
+  "views": ["front", "three-quarter"],
+  "lods": { "count": 3, "ratios": [0.5, 0.25, 0.1], "minSilhouetteIoU": 0.95, "minSimilarity": 0.8, "files": "single" },
+  "package": { "compressedMaxBytes": 2000000, "meshopt": true, "ktx2": false }
+}
+```
+
+- **`lods.count`:** the number of levels besides LOD0, 1 to 8.
+- **`lods.ratios`:** the triangle share of each level against LOD0, each smaller than the one before. Give either this or `maxScreenError`.
+- **`lods.maxScreenError` and `lods.distances`:** the largest error in pixels on the reference display (1080 px tall, 60 degree vertical field of view) at the distance in metres where each level is used. `distances` has one rising value per level, and `maxScreenError` needs it.
+- **`lods.minSilhouetteIoU`, `lods.minSimilarity`:** the least silhouette IoU and SSIM any view of any level may score against LOD0.
+- **`lods.files`:** `single` (the default) writes every level into one `.glb`; `separate` writes one `.glb` per level.
+- **`package.compressedMaxBytes`:** the most bytes the compressed package may take.
+- **`package.meshopt`:** `true` (the default behaviour) compresses with EXT_meshopt_compression and the rule passes when every compressed file uses it; `false` quantises only and passes when none does.
+- **`package.ktx2`:** `true` asks for KTX2 textures. The rule passes only when they were written (or there are no textures); section 7 explains the build that cannot.
+
+Rules in the report: `lods.count`, `lods.ratios` (each level within 5 % of its target), `lods.maxScreenError`, `lods.minSilhouetteIoU` and `lods.minSimilarity` (a null measurement, and a failure, when the views were not rendered), `package.validator` (no errors in any output), `package.equivalent`, `package.compressedMaxBytes`, `package.ktx2` and `package.meshopt`. A spec with neither group gives the report it always gave.
+
 ## 4. The judge
 
 `blendworks judge <spec.json> <asset> [--out <dir>] [--preview] [--render-timeout <s>]` does the following:
@@ -479,3 +504,63 @@ The MCP server offers Poly Haven's free CC0 assets as a starting point: HDRIs fo
 - **Downloads:** each file must have the published size and md5, or the download is refused. Files land in a temporary folder that replaces the asset folder only when everything has arrived, so a failure leaves nothing behind and keeps an earlier download intact. The total is capped at 300 MB by default (`BLENDWORKS_LIBRARY_MAX_MB`), which takes 2K and 4K texture sets; a larger resolution is refused before any file is fetched, naming the ones that fit.
 - **No code:** downloads are data only. Models enter Blender only through the bridge's `import`.
 - **Offline:** search, preview and new downloads need the network and fail with a clear message without it; cached listings answer for 24 hours. Downloaded assets keep working: `library_apply` and repeat downloads read only the workspace.
+
+## 7. Game-ready packages
+
+`blendworks package <asset> --out <dir>` and the spec groups `lods` and `package` (section 3) turn an asset into LODs, an uncompressed package and a compressed package. Every stage runs in the judge's sandbox, and the output is checked against its source.
+
+1. **LODs** (`bridge/package`). Each mesh object `<name>` becomes `<name>_LOD0` (the source), then `<name>_LOD1` to `<name>_LOD<n>`, each decimated from LOD0, never from the level before. Parents, transforms, materials and shared meshes carry over, so linked copies share their level. Objects with shape keys or a skin are refused.
+2. **Packages.** `uncompressed/` holds the levels exported by Blender's glTF exporter, in one `.glb` or one per level. `compressed/` holds the same files after gltfpack. `lods/` holds the LOD renders and `lod-sheet.png`. `package-report.json` holds everything below.
+
+### Decimation
+
+Blender's Decimate modifier (collapse, triangulated) does the work, on a copy welded at 1 µm, because a glTF import splits vertices at every normal or UV break. Its collapse ignores UVs and materials, so the vertices that carry them are frozen through the modifier's vertex group: a vertex with weight 0 never moves, and never collapses into a free vertex. Frozen are the vertices on an open border, on a material boundary, and on a UV seam (a vertex whose corners have different UVs).
+
+- **Ladder.** A level uses the strictest mode that reaches its target within 5 %: `strict` (border, material, seam), `seamsReleased` (border, material), `bordersOnly`, then `free`. A stricter mode is kept only while its geometric error is at most twice the error of the free decimation, with a floor of 0.01 % of the bounds. Dense UV layouts freeze most vertices, so the report names the mode each level used (`modes`).
+- **Clean-up.** Duplicate faces that collapses leave behind are removed, so the exported counts equal the measured ones.
+- **Normals.** A Weighted Normal modifier (face area with angle, weight 50, keep sharp) runs after the collapse, so shading follows the surface.
+- **Screen mode.** Level `k` may err by `maxScreenError × distance / K` metres, where `K = 1080 / (2 tan 30°)` pixels. Each object gets the smallest ratio, found by a seven-step search on the log scale, whose Hausdorff error stays inside that budget. The search then raises the ratio in 15 % steps until the full measurement agrees.
+
+### Error and switch distance
+
+The geometric error of a level is the Hausdorff distance to LOD0 over world-space triangles, by BVH sampling. For each direction the points are every used vertex of one mesh plus `min(50000, max(2000, 2 × triangles))` area-weighted random points on it (fixed seed), each measured to the nearest point of the other mesh. The report gives the maximum, the mean, each direction, and the maximum as a fraction of the LOD0 bounds diagonal. The screen error of a level at distance `d` is `error × K / d` pixels.
+
+Without `distances`, level `k` switches in at `max(error × K / 1 px, 2 × bounding radius, previous distance)`: where its error projects to one pixel.
+
+### Visual check
+
+Each level and LOD0 are rendered with Cycles on the judge's device (section 4), 16 samples, denoised, on a transparent film, from every view of the spec, with a perspective camera at the level's switch-in distance. The crop is `ceil(1.25 × projected size / 32) × 32` pixels, at least 128 and at most 512, at the reference pixel scale.
+
+- **Silhouette IoU:** `|A ∩ B| / |A ∪ B|` over pixels with alpha above 0.5; 1 when both are empty.
+- **Similarity:** the mean SSIM (Wang et al., 2004) of the luminance `0.2126 R + 0.7152 G + 0.0722 B` over the box that holds both silhouettes plus 7 pixels, with 7 × 7 uniform windows, `C1 = 0.01²` and `C2 = 0.03²`, the film composited over grey 0.18.
+- **Budget:** at most 256 Mi sample-pixels (levels × views × 2 × 512² × 16). Over it, or in `--preview`, the views are skipped, and the silhouette and similarity rules fail with a null measurement.
+
+A level reports the minimum over its views. `lod-sheet.png` shows LOD0 above and the level below for every view.
+
+### Compression
+
+`gltfpack` 1.3.0 (the official npm WebAssembly build, pinned exactly) runs in a worker thread with `-kn -km -ke` (named nodes, named materials and extras kept, so the node tree survives), `-cc` for meshopt when it is on, and the default 14-bit quantisation. It inserts unnamed dequantisation nodes; the checks fold them into their named owner.
+
+**KTX2.** The npm build cannot write KTX2: it answers `-tc`, `-tu` and `-tw` with "built without BasisU support", and refuses every texture option. The judge asks the build at run time with a one-triangle probe. When KTX2 is requested and the build cannot write it, the textures are copied unchanged, `compression.ktx2.status` is `unavailable` with the build's reason, and `package.ktx2` fails. Nothing is faked. With a build that can, the arguments are `-tc -tu normal,attrib`: ETC1S for colour maps, UASTC for normal and data maps (metallic-roughness, occlusion). With `colourQuality: "high"`, colour maps use UASTC too.
+
+### Validation and equivalence
+
+The Khronos validator checks every output, and `package.validator` needs 0 errors in all of them. The judge's Blender cannot read meshopt, so the uncompressed package is imported by Blender (the LOD render stage, which also checks each level's triangle count, and that LOD0 keeps the delivered triangle count and bounds), and the compressed package is compared with the uncompressed one by glTF data only:
+
+| Check | Passes when |
+|---|---|
+| `hierarchy` | the named nodes form the same tree, with the same transforms (1e-5) |
+| `triangles` | the total and each node's triangles are equal |
+| `bounds` | each node's box in its own space, and the whole asset's box, differ by at most one quantisation step of the diagonal, `diagonal / (2^14 − 1)` |
+| `materials` | same names, alpha mode, double-sided flag, texture slots and UV sets, same image count, same materials on each node |
+| `validatorCounts` | the validator's triangle count is not above the declared count, and at most 1 % below it (triangles that quantisation collapses) |
+
+Boxes come from the accessors' `min` and `max`, decoded for normalised integers, through the node tree.
+
+### Size and GPU memory
+
+`package-report.json` gives each file's bytes, and `sizes.gpu` the estimated GPU memory before and after. Textures count at RGBA8 with a full mip chain, as in section 3 (a KTX2 image counts 16 bytes per 4 × 4 block for UASTC and 8 for ETC1S). Meshes count as the sum of `count × element size` of every accessor the primitives use, which is what the GPU receives after meshopt decoding.
+
+### Agents
+
+The bridge command `generate_lods` makes the levels in the live scene and reports the triangles, ratio, error and screen error of each, so an agent can check them before it exports with `blender_export`. `blendworks package` then checks the exported file.

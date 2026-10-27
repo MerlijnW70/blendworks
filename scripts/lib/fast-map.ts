@@ -28,6 +28,7 @@ export const BRIDGE_MODULES: [RegExp, string[]][] = [
   [/^bridge\/blendworks_bridge\/commands\/scene\.py$/, ["test_scene.py"]],
   [/^bridge\/blendworks_bridge\/(commands\/(uv|uv_pack)|texel)\.py$/, ["test_uv_texel.py"]],
   [/^bridge\/(addon\/.*|session\.py|build_addon\.py|build-addon\.mjs|blendworks_bridge\/transport\.py)$/, ["test_addon.py", "test_smoke.py"]],
+  [/^bridge\/(package\/.*|blendworks_bridge\/commands\/lods)\.py$/, ["test_lods.py", "test_package_math.py"]],
   [/^bridge\/blendworks_bridge\/.*\.py$/, CORE_BRIDGE],
 ];
 
@@ -72,6 +73,7 @@ function sourceTests(file: string, all: string[]): string[] {
   const area = path.split("/")[0] ?? "";
   if (path === "session") return all.filter((test) => /test\/(session|mcp-e2e)\.test\.ts$/.test(test));
   if (path === "blender") return all.filter((test) => /test\/(blender|tooling\/blender-path)\.test\.ts$/.test(test));
+  if (area === "package") return all.filter((test) => test.startsWith("test/package/"));
   if (area === "judge") {
     const direct = all.filter((test) => test === `test/judge/${name}.test.ts`);
     return direct.length > 0 ? direct : all.filter((test) => test.startsWith("test/judge/"));
@@ -102,6 +104,7 @@ export function selectRelated(changed: string[], tests: TestSet): Selection {
     else if (/^test\/setup\//.test(file) || /^(scripts\/|vitest\.config\.ts$|package\.json$)/.test(file)) add(everyVitest.filter((test) => test.startsWith("test/tooling/")), file);
     else if (/^test\/.*\.ts$/.test(file)) add(importers(file, everyVitest), file);
     else if (/^src\/.*\.ts$/.test(file)) add(sourceTests(file, everyVitest), file);
+    else if (/^bridge\/package\//.test(file) || file === "bridge/blendworks_bridge/commands/lods.py") add(tests.blender.filter((test) => test.startsWith("test/package/")), file);
     else if (/^bridge\/judge\//.test(file)) add(tests.blender.filter((test) => test.startsWith("test/judge/")), file);
     else if (/^schemas\//.test(file)) add(everyVitest.filter((test) => test === "test/judge/spec.test.ts"), file);
     if (/^scripts\/lib\/(bridge|fast)/.test(file) || /^scripts\/bridge-tests/.test(file)) add(tests.bridge.filter((test) => test === "test_smoke.py"), file, bridge);

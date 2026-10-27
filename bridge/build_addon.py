@@ -5,12 +5,13 @@ import zipfile
 BRIDGE = os.path.dirname(os.path.abspath(__file__))
 ADDON = os.path.join(BRIDGE, "addon")
 PACKAGE = os.path.join(BRIDGE, "blendworks_bridge")
+LOD_CORE = os.path.join(BRIDGE, "package")
 FIXED_TIME = (2026, 1, 1, 0, 0, 0)
 
 
 def addon_files():
     files = []
-    for folder, prefix in ((ADDON, ""), (PACKAGE, "blendworks_bridge/")):
+    for folder, prefix in ((ADDON, ""), (PACKAGE, "blendworks_bridge/"), (LOD_CORE, "package/")):
         for root, directories, names in os.walk(folder):
             directories[:] = sorted(name for name in directories if name != "__pycache__")
             for name in sorted(names):

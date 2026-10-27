@@ -4,6 +4,7 @@ import { parseArgs } from "node:util";
 import { CLOSEUP_DEFAULTS, closeups, closeupsSummary } from "./closeups.js";
 import { DeviceError, deviceModeFromEnvironment, type DeviceMode } from "./device.js";
 import { diffReports, diffText, readReport, ReportError } from "./diff.js";
+import { PACKAGE_USAGE, PackageUsageError, packageAsset, parsePackage } from "../package/cli.js";
 import { DEFAULTS, judge } from "./run.js";
 import { StageFailure } from "./stages.js";
 import { EvalError, evalText, visualEval } from "./visual/eval.js";
@@ -151,12 +152,22 @@ function parseVisualEval(argv: string[]) {
   return { command: "visual-eval" as const, labelledPath, outDir: values.out ?? "artifacts/visual-eval", dirs, device: deviceFromEnvironment() };
 }
 
+function parsePackageCommand(argv: string[]) {
+  try {
+    return parsePackage(argv);
+  } catch (error) {
+    if (error instanceof PackageUsageError) throw new UsageError(error.message);
+    throw error;
+  }
+}
+
 export function parseCommand(argv: string[]) {
   const [command, ...rest] = argv;
   if (command === "judge") return parseJudge(rest);
   if (command === "closeups") return parseCloseups(rest);
   if (command === "diff") return parseDiff(rest);
   if (command === "visual-eval") return parseVisualEval(rest);
+  if (command === "package") return parsePackageCommand(rest);
   if (command === "--help" || command === "-h") return { help: USAGE };
   throw new UsageError(USAGE);
 }
@@ -208,6 +219,18 @@ export async function main(argv: string[]): Promise<number> {
     const report = await judge(options);
     console.log(report.summary);
     return report.passed ? 0 : 1;
+  }
+  if (command.command === "package") {
+    const { command: _, ...options } = command;
+    try {
+      const run = await packageAsset(options);
+      console.log(run.summary);
+      return run.passed ? 0 : 1;
+    } catch (error) {
+      if (!(error instanceof StageFailure)) throw error;
+      console.error(`package failed: ${error.failure.stage}: ${error.failure.message} [${error.failure.code}]`);
+      return 1;
+    }
   }
   const { command: _, ...options } = command;
   try {

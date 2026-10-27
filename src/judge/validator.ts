@@ -62,7 +62,30 @@ validator
 
 const text = (limit: number) => z.string().transform((value) => value.slice(0, limit));
 
+const infoSchema = z
+  .object({
+    totalTriangleCount: z.number().int().nonnegative(),
+    totalVertexCount: z.number().int().nonnegative(),
+    drawCallCount: z.number().int().nonnegative(),
+    materialCount: z.number().int().nonnegative(),
+    extensionsUsed: z.array(z.string().max(200)).max(200),
+    extensionsRequired: z.array(z.string().max(200)).max(200),
+    resources: z
+      .array(
+        z.object({
+          pointer: z.string().max(200),
+          mimeType: z.string().max(100).optional(),
+          image: z.object({ width: z.number().int().nonnegative(), height: z.number().int().nonnegative() }).partial().optional(),
+        }),
+      )
+      .max(10_000),
+  })
+  .partial();
+
+export type ValidationInfo = z.infer<typeof infoSchema>;
+
 const reportSchema = z.object({
+  info: infoSchema.optional(),
   issues: z.object({
     numErrors: z.number().int().nonnegative(),
     numWarnings: z.number().int().nonnegative(),
@@ -126,6 +149,10 @@ function readCapped(path: string, room: number): ArrayBuffer | null {
 }
 
 export async function validateGltf(assetPath: string, format: "glb" | "gltf", limits: ValidationLimits): Promise<Validation> {
+  return (await validateGltfDetailed(assetPath, format, limits)).validation;
+}
+
+export async function validateGltfDetailed(assetPath: string, format: "glb" | "gltf", limits: ValidationLimits): Promise<{ validation: Validation; info: ValidationInfo }> {
   const started = performance.now();
   const bytes = readCapped(assetPath, limits.maxBytes);
   if (bytes === null) {
@@ -180,7 +207,7 @@ export async function validateGltf(assetPath: string, format: "glb" | "gltf", li
     if (!report.success) throw new ValidationError("failed", "the validator wrote a malformed report");
     const { issues } = report.data;
     if (issues.truncated) throw new ValidationError("failed", "the validator truncated its issue list");
-    return {
+    const validation: Validation = {
       validator: finished.version,
       seconds: Math.round(performance.now() - started) / 1000,
       bytes: total,
@@ -191,6 +218,7 @@ export async function validateGltf(assetPath: string, format: "glb" | "gltf", li
       issues: issueList(report.data),
       refused: refused.sort(),
     };
+    return { validation, info: report.data.info ?? {} };
   } finally {
     await worker.terminate();
   }

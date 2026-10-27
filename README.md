@@ -39,6 +39,8 @@ npm run --silent fixtures
 node src/judge/bin.js judge crate.spec.json <folder>/crate.glb
 ```
 
+Package an asset for games, with LODs and gltfpack compression, checked by the same judge: `node src/judge/bin.js package crate.glb --out packaged --lods 2 --ratios 0.5,0.25`.
+
 `node src/judge/bin.js` is `blendworks` in a checkout. The judge exits 0 only when every rule passes, and writes `report.json`, `summary.txt` and `contact-sheet.png` to `artifacts/judge`.
 
 ## Environment variables

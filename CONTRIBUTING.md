@@ -6,7 +6,7 @@ Blendworks is built as paid jobs. A job spec in `jobs/<job>/SPEC.md` says what t
 
 - **Node side:** TypeScript, strict, in `src/`.
 - **Blender side:** Python 3 for Blender's bundled interpreter, in `bridge/`. It uses only `bpy`, `bmesh`, `mathutils`, the `numpy` that Blender bundles, and the standard library.
-- **Dependencies:** runtime dependencies are `@modelcontextprotocol/sdk`, `zod`, `gltf-validator` (the Khronos glTF validator, pinned to exactly `2.0.0-dev.3.10`) and `@anthropic-ai/sdk` (the official Anthropic SDK for the visual judge, pinned to exactly `1.3.0`) only; dev dependencies are only those in `package.json`.
+- **Dependencies:** runtime dependencies are `@modelcontextprotocol/sdk`, `zod`, `gltf-validator` (the Khronos glTF validator, pinned to exactly `2.0.0-dev.3.10`), `@anthropic-ai/sdk` (the official Anthropic SDK for the visual judge, pinned to exactly `1.3.0`) and `gltfpack` (meshoptimizer's WebAssembly build, pinned to exactly `1.3.0`) only; dev dependencies are only those in `package.json`.
 - **Blender binary:** `src/blender.ts` is the only place that finds it: the `BLENDER` environment variable, then standard install folders, then `PATH`. Run `npm run doctor` to see what it finds. Tests that need Blender run headless, with `--background --factory-startup`.
 - **No arbitrary code execution** from bridge commands, except the explicitly gated `run_python`.
 - **Code style:** no code comments in TypeScript or Python; clear names instead. Every source file at most 400 lines.

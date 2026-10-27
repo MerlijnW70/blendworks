@@ -15,7 +15,7 @@ DESIGN_COMMANDS = {
     "shade_smooth", "shade_flat", "recalc_normals", "merge_by_distance", "apply_modifier",
     "mesh_from_data", "curve_from_points", "text_object",
     "lathe", "sweep", "loft", "extrude_outline", "gear", "sprocket", "roller_chain",
-    "instances", "rivet_line", "add_modifier", "mesh_query", "transform_selection", "displace_noise",
+    "instances", "rivet_line", "generate_lods", "add_modifier", "mesh_query", "transform_selection", "displace_noise",
     "add_material", "assign_material", "vertex_colors",
     "uv_smart_project", "uv_unwrap", "uv_info", "uv_pack",
     "image_load", "image_new", "image_save", "image_info",
@@ -31,7 +31,7 @@ DECLARED_METADATA = {
     "boolean": dict(SLOW, destructive=True, destructive_when="cutter_action is delete"),
     "image_save": {"writes_files": True, "destructive": True, "destructive_when": "the file already exists", "slow": False},
     **{name: SLOW for name in ("decimate", "import", "uv_pack", "set_world_hdri", "apply_modifier", "sweep", "loft", "instances",
-                               "rivet_line", "roller_chain", "displace_noise", "mesh_from_data")},
+                               "rivet_line", "roller_chain", "displace_noise", "mesh_from_data", "generate_lods")},
 }
 SCHEMA_KEYS = {"type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",
                "maximum", "exclusiveMinimum", "minItems", "maxItems", "minLength", "maxLength", "default"}

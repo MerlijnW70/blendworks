@@ -14,6 +14,8 @@ import { detectTools, type Limits, type Tools } from "./sandbox.js";
 import { readSpec, SpecError, type AssetSpec } from "./spec.js";
 import { checkAsset, checkBlender, DEFAULTS, deviceMode, runScript, seconds, sha256, StageFailure, workOut, type Sandbox } from "./stages.js";
 import { floatingTolerance, validatorRules } from "./texture-rules.js";
+import { packageStage } from "../package/judge-stage.js";
+import { wantsPackage } from "../package/rules.js";
 import { validateGltf, ValidationError, VALIDATOR_DEFAULTS, type Validation } from "./validator.js";
 import { visualStage } from "./visual/judge-stage.js";
 import { visualRules } from "./visual/record.js";
@@ -41,7 +43,7 @@ export type JudgeOptions = {
   visual?: VisualOptions;
 };
 
-const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "contact-sheet.png", "views", "visual.json", "visual", "closeups"];
+const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "contact-sheet.png", "views", "visual.json", "visual", "closeups", "package"];
 const STAGE_OUTPUTS = ["measurements.json", "render.json", "contact-sheet.png"];
 
 function prepareOutDir(outDir: string): void {
@@ -185,6 +187,7 @@ export async function judge(options: JudgeOptions): Promise<Report> {
       draft.visual = await visualStage({ spec, renders: draft.renders, assetPath: delivery.main, outDir, sandbox, maxTriangles, maxFileBytes, ...extra, options: options.visual ?? {} });
       draft.rules.push(...visualRules(draft.visual));
     }
+    if (wantsPackage(spec)) await packageStage(draft, spec, delivery, sandbox, outDir, maxTriangles, options);
   } catch (error) {
     if (!(error instanceof StageFailure)) throw error;
     draft.failure = error.failure;

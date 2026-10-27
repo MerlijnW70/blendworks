@@ -21,6 +21,9 @@ export function serverInstructions(workspace: string): string {
     "  - Materials: blender_material_procedural with blender_material_layer for wear and dirt, or blender_material_pbr from image maps loaded with blender_image_load.",
     "  - Bake: blender_bake with rewire true, so the asset carries image textures; keep baked maps with blender_image_save.",
     "- Export the final asset with blender_export, for example to asset.glb.",
+    "- Levels of detail: blender_generate_lods makes <name>_LOD1 to <name>_LOD<n> by decimation that keeps borders, materials and UV seams, and reports each level's triangles, error and screen error. Check them before you deliver:",
+    "  - Give ratios (falling), or max_screen_error in pixels with the distances in metres where each level is used; the source objects are renamed <name>_LOD0.",
+    "  - Export every <name>_LOD<n> object to one .glb with blender_export, then package it: blendworks package asset.glb --out packaged --lods n --ratios ... renders each level against LOD0, compresses with gltfpack, and validates and compares both packages.",
     "- For real lighting, materials or reference, start from Poly Haven's free CC0 assets: library_search, then library_preview, library_download and library_apply. HDRIs light the scene, texture sets become PBR materials, and models serve as reference.",
     `- Every file path is inside the workspace ${workspace}; give paths relative to it.`,
   ].join("\n");

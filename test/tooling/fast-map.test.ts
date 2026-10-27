@@ -32,6 +32,14 @@ describe("which tests check:fast runs", () => {
     for (const name of ["broken", "closeups", "fixtures", "preview", "sandbox"]) expect(selection.vitest).toContain(`test/judge/${name}.test.ts`);
   });
 
+  it("maps the packaging sources to the package tests and the bridge tests of the LOD core", () => {
+    expect(pick("src/package/pipeline.ts").vitest).toEqual(expect.arrayContaining(["test/package/package.test.ts", "test/package/equivalence.test.ts"]));
+    const core = pick("bridge/package/package_decimate.py");
+    expect(core.vitest).toContain("test/package/package.test.ts");
+    expect(core.bridge).toEqual(["test_lods.py", "test_package_math.py"]);
+    expect(pick("bridge/blendworks_bridge/commands/lods.py").bridge).toEqual(["test_lods.py", "test_package_math.py"]);
+  });
+
   it("maps a library source file to its library test, and an MCP file to its MCP test", () => {
     expect(pick("src/mcp/library/search.ts").vitest).toContain("test/library-search.test.ts");
     expect(pick("src/mcp/library/search.ts").vitest).not.toContain("test/library-textures.test.ts");
