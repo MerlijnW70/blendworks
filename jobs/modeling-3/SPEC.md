@@ -41,7 +41,7 @@ One negative test per acceptance item: a test that fails when the behaviour the 
 - **Allowed files:**
   - `bridge/blendworks_bridge/**`, except `commands/uv_pack.py`, `uvlayout.py` and `texel.py`;
   - `src/mcp/**`, `test/**` (new files, or tests whose asserted behaviour changes, listed in the delivery), `docs/**`.
-- **Files shared with other open jobs:** the judge-speed job owns `commands/uv_pack.py`, `uvlayout.py`, `texel.py`, `src/judge/**` and `bridge/judge/**`. If you must touch `commands/__init__.py` or `chain.py`, keep the change minimal; the job that lands second rebases.
+- **Files shared with other open jobs:** the judge-onepass job owns `commands/uv_pack.py`, `uvlayout.py`, `texel.py`, `src/judge/**` and `bridge/judge/**`. If you must touch `commands/__init__.py` or `chain.py`, keep the change minimal; the job that lands second rebases.
 - **Environment and concurrency:** Blender 5.2 through `BLENDER` (see `npm run doctor`). At most `BLENDWORKS_JOBS` Blender processes run at once, which is 2 by default; do not raise it and do not run several full checks at once.
 - **While working:** iterate with `npm run check:fast` and single test files. Run `npm run check` once, at the end, at low priority.
 
