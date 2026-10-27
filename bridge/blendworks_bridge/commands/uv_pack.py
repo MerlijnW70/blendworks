@@ -2,7 +2,7 @@ from .. import limits
 from ..errors import bad_args
 from ..registry import command
 from ..schema import boolean, integer, names, number, string
-from ..texel import average_island_scale, pack, scale_to_density
+from ..texel import average_island_scale, margin_memory, pack, scale_to_density
 from ..uv_coverage import pack_for_coverage
 from .uv import uv_mesh_object, uv_report
 
@@ -66,7 +66,8 @@ def uv_pack(ctx, args):
     if args["target"] == "coverage":
         if "texel_density" in args:
             raise bad_args("target coverage evens the density itself; texel_density belongs to target fit")
-        search = pack_for_coverage(ctx, groups, args, size)
+        with margin_memory():
+            search = pack_for_coverage(ctx, groups, args, size)
     else:
         for name in COVERAGE_ONLY:
             if name in args:

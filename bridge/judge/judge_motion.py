@@ -33,9 +33,32 @@ def silence_animation():
         block.animation_data.use_nla = False
 
 
+class HeldAnimation:
+    def __init__(self):
+        self.blocks = [(block, block.animation_data.action, block.animation_data.action_slot, block.animation_data.use_nla) for block in animated_blocks()]
+        self.with_data = {block.as_pointer() for block, _, _, _ in self.blocks}
+
+    def restore(self):
+        for block in list(animated_blocks()):
+            if block.as_pointer() not in self.with_data:
+                block.animation_data_clear()
+        for block, action, slot, use_nla in self.blocks:
+            data = block.animation_data
+            data.action = action
+            if action is not None and slot is not None and data.action_slot != slot:
+                data.action_slot = slot
+            data.use_nla = use_nla
+
+
+OBJECT_CHANNELS = ("location", "rotation_quaternion", "rotation_euler", "rotation_axis_angle", "scale")
+
+
 class HeldPose:
     def __init__(self, scene):
+        self.scene = scene
+        self.frame = (scene.frame_current, scene.frame_subframe)
         self.objects = [(obj, obj.matrix_basis.copy()) for obj in scene.objects]
+        self.channels = [(obj, obj.rotation_mode, [tuple(getattr(obj, name)) for name in OBJECT_CHANNELS]) for obj in scene.objects]
         self.bones = []
         for obj in scene.objects:
             if obj.type == "ARMATURE" and obj.pose is not None:
@@ -55,6 +78,15 @@ class HeldPose:
             bone.scale = scale
         for block, value in self.keys:
             block.value = value
+
+    def restore_exactly(self):
+        self.restore()
+        for obj, mode, values in self.channels:
+            obj.rotation_mode = mode
+            for name, value in zip(OBJECT_CHANNELS, values):
+                setattr(obj, name, value)
+        frame, subframe = self.frame
+        self.scene.frame_set(frame, subframe=subframe)
 
 
 def slot_targets(action):
@@ -241,6 +273,7 @@ def clip_entry(action, played, extent, fps, file_format):
 def measure_motion(scene, file_format, static_bounds, triangles):
     fps = scene_fps(scene)
     held = HeldPose(scene)
+    animation = HeldAnimation()
     silence_animation()
     actions = [(action, slot_targets(action)) for action in sorted(bpy.data.actions, key=lambda action: action.name)]
     playable = [(action, targets) for action, targets in actions if targets]
@@ -254,7 +287,8 @@ def measure_motion(scene, file_format, static_bounds, triangles):
         extent, played = play(scene, action, targets, limit)
         overall.include(extent)
         clips.append(clip_entry(action, played, extent, fps, file_format))
-    held.restore()
+    animation.restore()
+    held.restore_exactly()
     bounds, size = overall.result()
     return {
         "clips": len(clips),

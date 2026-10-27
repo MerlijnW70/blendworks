@@ -73,7 +73,7 @@ export async function silhouettes(options: SilhouettesOptions): Promise<Silhouet
     const limits = { timeoutMs: options.timeoutMs ?? SILHOUETTE_DEFAULTS.timeoutMs, memoryBytes: options.memoryBytes ?? DEFAULTS.memoryBytes };
     const sandbox: Sandbox = { blender, limits, tools: options.tools ?? detectTools(blender), workDir, delivery: folder };
     mkdirSync(workOut(sandbox), { recursive: true });
-    const output = await renderSilhouettes(delivered, views.map((view) => ({ view, size })), "asset", sandbox, options.maxTriangles ?? DEFAULTS.maxTriangles);
+    const output = await renderSilhouettes(delivered, views.map((view) => ({ view, size })), sandbox, options.maxTriangles ?? DEFAULTS.maxTriangles);
     const masks = views.map((view) => {
       const mask = renderedMask(sandbox, view);
       const data = encodePng(maskImage(mask));

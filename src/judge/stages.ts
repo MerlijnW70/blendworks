@@ -4,13 +4,11 @@ import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chooseDevice, DeviceError, deviceModeFromEnvironment, fallBackToCpu, GPU_BACKENDS, type BackendProbe, type DeviceMode, type RenderDevice } from "./device.js";
 import type { Failure } from "./report.js";
-import { planSandbox, runSandboxed, type Isolation, type Limits, type SandboxDevice, type Tools } from "./sandbox.js";
+import type { Isolation, Limits, SandboxDevice, Tools } from "./sandbox.js";
 import { FORMATS } from "./spec.js";
 import { blenderVersion, BlenderVersionError } from "./version.js";
 
 export const SCRIPTS_DIR = fileURLToPath(new URL("../../bridge/judge/", import.meta.url));
-
-const LOW_INTEGRITY_LAUNCH_FAILED = 120;
 
 export const DEFAULTS = { timeoutMs: 300_000, memoryBytes: 4096 * 1024 * 1024, maxTriangles: 2_000_000, maxFileBytes: 256 * 1024 * 1024 };
 
@@ -58,46 +56,6 @@ export async function checkBlender(blender: string): Promise<string> {
     if (error instanceof BlenderVersionError) throw new StageFailure({ stage: "blender", code: "unsupported_blender", message: error.message });
     throw error;
   }
-}
-
-function readOutput(path: string): unknown {
-  try {
-    return JSON.parse(readFileSync(path, "utf8"));
-  } catch {
-    return undefined;
-  }
-}
-
-export async function runScript(
-  stage: Failure["stage"],
-  script: string,
-  scriptArgs: string[],
-  outputPath: string,
-  sandbox: Sandbox,
-  device: SandboxDevice = "cpu",
-): Promise<StageResult> {
-  const { blender, limits, tools, workDir } = sandbox;
-  const view = { workDir, writable: [workOut(sandbox)], readOnly: [SCRIPTS_DIR, sandbox.delivery] };
-  const plan = planSandbox(blender, join(SCRIPTS_DIR, script), scriptArgs, limits, tools, device, view);
-  const started = performance.now();
-  const result = await runSandboxed(plan, workDir);
-  const elapsed = seconds(performance.now() - started);
-  if (result.timedOut) {
-    throw new StageFailure({ stage, code: "timeout", message: `Blender took longer than ${limits.timeoutMs / 1000} s and was stopped` });
-  }
-  const output = readOutput(outputPath);
-  if (output === undefined && result.code === LOW_INTEGRITY_LAUNCH_FAILED && plan.lowIntegrity) {
-    throw new StageFailure({ stage, code: "sandbox", message: `the low-integrity launcher could not start Blender: ${result.output.trim().slice(-300)}` });
-  }
-  if (output === undefined) {
-    const tail = result.output.trim().split("\n").slice(-3).join(" | ").slice(0, 400);
-    throw new StageFailure({
-      stage,
-      code: "crashed",
-      message: `Blender exited with code ${result.code ?? result.signal} without a result (out of memory under the ${limits.memoryBytes / 1048576} MB cap, or a crash): ${tail}`,
-    });
-  }
-  return { output, isolation: plan.isolation, seconds: elapsed };
 }
 
 export function deviceMode(requested: DeviceMode | undefined): DeviceMode {

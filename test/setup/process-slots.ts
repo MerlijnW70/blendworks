@@ -34,7 +34,7 @@ vi.mock("@modelcontextprotocol/sdk/client/stdio.js", async (importOriginal) => {
     }
 
     override async start(): Promise<void> {
-      if (this.startsBlender) this.slot = await takeSlot();
+      if (this.startsBlender) this.slot = await takeSlot("lasting");
       try {
         await super.start();
       } catch (error) {

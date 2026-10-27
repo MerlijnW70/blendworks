@@ -127,16 +127,19 @@ export const probesSchema = z
 
 const scriptFailureSchema = z.object({ ok: z.literal(false), error: scriptErrorSchema, probes: probesSchema.optional() });
 
-export const renderOutputSchema = z.union([
+export const viewsOutputSchema = z.union([
   z.object({
     ok: z.literal(true),
     views: z.array(z.object({ view: z.string().max(32), path: z.string() })),
-    contactSheet: z.string(),
-    contactSheetSize: z.tuple([count, count]),
-    device: deviceSchema.nullable(),
+    device: deviceSchema,
     probes: probesSchema,
-    timings: z.object({ device: elapsed.nullable(), views: elapsed.nullable(), sheet: elapsed }),
+    timings: z.object({ device: elapsed.nullable(), views: elapsed }),
   }),
+  z.object({ ok: z.literal(false), error: scriptErrorSchema, probes: probesSchema.optional(), probeSeconds: elapsed.nullable().optional() }),
+]);
+
+export const sheetOutputSchema = z.union([
+  z.object({ ok: z.literal(true), contactSheet: z.string(), contactSheetSize: z.tuple([count, count]), preview: z.boolean(), timings: z.object({ sheet: elapsed }) }),
   scriptFailureSchema,
 ]);
 

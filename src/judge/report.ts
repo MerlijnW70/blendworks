@@ -34,9 +34,10 @@ export type AssetRecord = {
   setBytes: number | null;
 };
 
-export const STAGES = ["measure", "device", "render", "sheet"] as const;
+export const STAGES = ["measure", "reference", "device", "render", "sheet", "closeups"] as const;
+const PASS_ONLY = ["reference", "closeups"] as const;
 
-export type Timings = Record<(typeof STAGES)[number], number | null> & { total: number };
+export type Timings = Record<Exclude<(typeof STAGES)[number], (typeof PASS_ONLY)[number]>, number | null> & Partial<Record<(typeof PASS_ONLY)[number], number | null>> & { total: number };
 
 export type Report = {
   passed: boolean;
@@ -99,7 +100,10 @@ function renderLines(renders: Renders): string[] {
 }
 
 export function timingText(timings: Timings): string {
-  const stages = STAGES.flatMap((stage) => (timings[stage] === null ? [] : [`${stage} ${timings[stage].toFixed(2)} s`]));
+  const stages = STAGES.flatMap((stage) => {
+    const value = timings[stage];
+    return value === null || value === undefined ? [] : [`${stage} ${value.toFixed(2)} s`];
+  });
   return [...stages, `total ${timings.total.toFixed(2)} s`].join(", ");
 }
 

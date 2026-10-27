@@ -8,28 +8,32 @@ SCALE_RANGE = (0.2, 5.0)
 OVERLAP_EPSILON = 1e-7
 TINY = 1e-18
 COMPLEX = numpy.array([1.0, 1j])
+PAIRWISE_FROM = 8
+NEXT_CORNER = [1, 2, 0]
 
 
-def triangles_overlap(triangle, others):
-    if len(others) == 0:
+def edge_axes(triangles):
+    edges = triangles[:, NEXT_CORNER] - triangles
+    axes = numpy.stack([-edges[..., 1], edges[..., 0]], axis=-1)
+    return axes / numpy.maximum(numpy.linalg.norm(edges, axis=-1, keepdims=True), TINY)
+
+
+def separated(first, second, axes):
+    mine = numpy.einsum("pjc,pac->paj", first, axes)
+    theirs = numpy.einsum("pjc,pac->paj", second, axes)
+    return ((theirs.min(axis=2) >= mine.max(axis=2) - OVERLAP_EPSILON) | (theirs.max(axis=2) <= mine.min(axis=2) + OVERLAP_EPSILON)).any(axis=1)
+
+
+def any_overlap(triangles, others):
+    if len(triangles) == 0 or len(others) == 0:
         return False
-    low, high = triangle.min(axis=0), triangle.max(axis=0)
-    near = (others.max(axis=1) > low + OVERLAP_EPSILON).all(axis=1) & (others.min(axis=1) < high - OVERLAP_EPSILON).all(axis=1)
-    others = others[near]
-    if len(others) == 0:
+    low, high = triangles.min(axis=1), triangles.max(axis=1)
+    near = (others.max(axis=1)[None] > low[:, None] + OVERLAP_EPSILON).all(axis=2) & (others.min(axis=1)[None] < high[:, None] - OVERLAP_EPSILON).all(axis=2)
+    pairs = numpy.nonzero(near)
+    if len(pairs[0]) == 0:
         return False
-    apart = numpy.zeros(len(others), dtype=bool)
-    for index in range(3):
-        edge = triangle[(index + 1) % 3] - triangle[index]
-        axis = numpy.array([-edge[1], edge[0]]) / max(numpy.linalg.norm(edge), TINY)
-        mine, theirs = triangle @ axis, others @ axis
-        apart |= (theirs.min(axis=1) >= mine.max() - OVERLAP_EPSILON) | (theirs.max(axis=1) <= mine.min() + OVERLAP_EPSILON)
-    for index in range(3):
-        edge = others[:, (index + 1) % 3] - others[:, index]
-        axis = numpy.stack([-edge[:, 1], edge[:, 0]], axis=1) / numpy.maximum(numpy.linalg.norm(edge, axis=1, keepdims=True), TINY)
-        mine = triangle @ axis.T
-        theirs = numpy.einsum("kjc,kc->kj", others, axis)
-        apart |= (theirs.min(axis=1) >= mine.max(axis=0) - OVERLAP_EPSILON) | (theirs.max(axis=1) <= mine.min(axis=0) + OVERLAP_EPSILON)
+    first, second = triangles[pairs[0]], others[pairs[1]]
+    apart = separated(first, second, edge_axes(first)) | separated(first, second, edge_axes(second))
     return not bool(apart.all())
 
 
@@ -56,6 +60,7 @@ class UVGraph:
         self.edge_loops = {}
         for loop, edge in enumerate(self.loop_edge.tolist()):
             self.edge_loops.setdefault(edge, []).append(loop)
+        self.lists = None
         self.labels = self.find_labels()
 
     @staticmethod
@@ -77,12 +82,19 @@ class UVGraph:
     def matching(self, loop, other, vertex):
         return other if self.loop_vertex[other] == vertex else self.following(other)
 
-    def continuous(self, first, second):
-        for loop in (first, self.following(first)):
-            partner = self.matching(first, second, self.loop_vertex[loop])
-            if numpy.abs(self.uv[loop] - self.uv[partner]).max() > SAME_UV:
-                return False
-        return True
+    def following_all(self, loops):
+        start = self.start[self.face_of_loop[loops]]
+        return start + (loops - start + 1) % self.total[self.face_of_loop[loops]]
+
+    def continuous_pairs(self):
+        pairs = numpy.array([loops for loops in self.edge_loops.values() if len(loops) == 2], dtype=numpy.int64).reshape(-1, 2)
+        first, second = pairs[:, 0], pairs[:, 1]
+        joined = numpy.ones(len(pairs), dtype=bool)
+        for loop in (first, self.following_all(first)):
+            partner = numpy.where(self.loop_vertex[second] == self.loop_vertex[loop], second, self.following_all(second))
+            joined &= ~(numpy.abs(self.uv[loop] - self.uv[partner]).max(axis=1) > SAME_UV)
+        faces = self.face_of_loop[pairs[joined]]
+        return faces.tolist()
 
     def find_labels(self):
         parent = list(range(len(self.start)))
@@ -93,9 +105,8 @@ class UVGraph:
                 item = parent[item]
             return item
 
-        for loops in self.edge_loops.values():
-            if len(loops) == 2 and self.continuous(*loops):
-                parent[find(int(self.face_of_loop[loops[0]]))] = find(int(self.face_of_loop[loops[1]]))
+        for first, second in self.continuous_pairs():
+            parent[find(first)] = find(second)
         names = {}
         return numpy.array([names.setdefault(find(face), len(names)) for face in range(len(parent))], dtype=numpy.int64)
 
@@ -132,14 +143,18 @@ class UVGraph:
         return total
 
     def boundary(self, faces, label):
+        if self.lists is None:
+            self.lists = (self.start.tolist(), self.total.tolist(), self.loop_edge.tolist(), self.face_of_loop.tolist(), self.seams.tolist())
+        starts, totals, loop_edges, face_of_loop, seams = self.lists
+        labels = self.labels
         found = {}
         for face in faces:
-            for loop in range(int(self.start[face]), int(self.start[face] + self.total[face])):
-                edge = int(self.loop_edge[loop])
+            for loop in range(starts[face], starts[face] + totals[face]):
+                edge = loop_edges[loop]
                 others = [item for item in self.edge_loops[edge] if item != loop]
-                if self.seams[edge] or len(others) != 1:
+                if seams[edge] or len(others) != 1:
                     continue
-                neighbour = int(self.labels[self.face_of_loop[others[0]]])
+                neighbour = int(labels[face_of_loop[others[0]]])
                 if neighbour != label:
                     found.setdefault(neighbour, []).append((loop, others[0], edge))
         return found
@@ -159,48 +174,154 @@ def edge_pairs(graph, links):
 
 
 def similarity(source, target):
-    z = (source - source.mean(axis=0)) @ COMPLEX
-    w = (target - target.mean(axis=0)) @ COMPLEX
+    source_mean, target_mean = source.mean(axis=0), target.mean(axis=0)
+    z = (source - source_mean) @ COMPLEX
+    w = (target - target_mean) @ COMPLEX
     energy = float((numpy.abs(z) ** 2).sum())
     if energy < TINY:
         return None
     factor = complex((numpy.conj(z) * w).sum() / energy)
     error = float(numpy.abs(factor * z - w).max())
-    return factor, error, float(numpy.abs(w).max())
+    return factor, error, float(numpy.abs(w).max()), source_mean, target_mean
 
 
-def moved(points, factor, source, target):
-    z = (points - source.mean(axis=0)) @ COMPLEX
-    rotated = factor * z
-    return numpy.stack([rotated.real, rotated.imag], axis=1) + target.mean(axis=0)
+def moved(points, factor, source_mean, target_mean):
+    rotated = factor * ((points - source_mean) @ COMPLEX)
+    return numpy.stack([rotated.real, rotated.imag], axis=1) + target_mean
 
 
-def attach(graph, small, big, links):
+def loop_cross(graph):
+    loops = numpy.arange(len(graph.loop_vertex))
+    first = graph.start[graph.face_of_loop]
+    following = first + (loops - first + 1) % graph.total[graph.face_of_loop]
+    points, shifted = graph.uv, graph.uv[following]
+    return points[:, 0] * shifted[:, 1] - shifted[:, 0] * points[:, 1]
+
+
+def face_half_cross(graph, faces):
+    faces = numpy.asarray(faces, dtype=numpy.int64)
+    halves = numpy.empty(len(faces))
+    for index, face in enumerate(faces.tolist()):
+        halves[index] = graph.signed_area((face,))
+    return halves
+
+
+def ordered_sum(start, values):
+    return float(numpy.cumsum(numpy.concatenate(([start], values)))[-1])
+
+
+class Islands:
+    def __init__(self, graph):
+        self.graph = graph
+        faces = len(graph.start)
+        cross = loop_cross(graph)
+        halves = numpy.empty(faces)
+        simple = graph.total < PAIRWISE_FROM
+        if faces > 0:
+            sums = numpy.add.reduceat(cross, graph.start) if len(cross) else numpy.zeros(faces)
+            halves[:] = 0.5 * sums
+        long_faces = numpy.nonzero(~simple)[0]
+        if len(long_faces):
+            halves[long_faces] = face_half_cross(graph, long_faces)
+        self.half = halves
+        order = numpy.argsort(graph.triangle_face, kind="stable")
+        counts = numpy.bincount(graph.triangle_face, minlength=faces)
+        starts = numpy.concatenate(([0], numpy.cumsum(counts)[:-1]))
+        self.triangles_by_face = (order, starts, counts)
+        self.areas = {}
+        self.triangles = {}
+        self.boxes = {}
+        self.position = numpy.zeros(len(graph.loop_vertex), dtype=numpy.int64)
+
+    def face_triangles(self, faces):
+        order, starts, counts = self.triangles_by_face
+        if not faces:
+            return numpy.empty(0, dtype=numpy.int64)
+        picked = numpy.asarray(faces, dtype=numpy.int64)
+        lengths = counts[picked]
+        offsets = numpy.repeat(starts[picked] - numpy.concatenate(([0], numpy.cumsum(lengths)[:-1])), lengths)
+        return order[numpy.arange(int(lengths.sum())) + offsets]
+
+    def signed_area(self, label, faces):
+        if label not in self.areas:
+            self.areas[label] = ordered_sum(0.0, self.half[numpy.asarray(faces, dtype=numpy.int64)])
+        return self.areas[label]
+
+    def triangles_of(self, label, faces):
+        if label not in self.triangles:
+            self.triangles[label] = self.face_triangles(faces)
+        return self.triangles[label]
+
+    def triangle_boxes(self, label, faces):
+        if label not in self.boxes:
+            self.boxes[label] = self.fresh_boxes(self.triangles_of(label, faces))
+        return self.boxes[label]
+
+    def fresh_boxes(self, triangles):
+        corners = self.graph.uv[self.graph.triangle_loops[triangles]]
+        return corners.min(axis=1), corners.max(axis=1)
+
+    def near(self, label, faces, points):
+        triangles = self.triangles_of(label, faces)
+        if len(triangles) == 0:
+            return numpy.empty((0, 3, 2))
+        low, high = self.triangle_boxes(label, faces)
+        least, most = points.min(axis=0), points.max(axis=0)
+        close = (high > least + OVERLAP_EPSILON).all(axis=1) & (low < most - OVERLAP_EPSILON).all(axis=1)
+        return self.graph.uv[self.graph.triangle_loops[triangles[close]]]
+
+    def merge(self, small, small_faces, big, big_faces):
+        moved_faces = numpy.asarray(small_faces, dtype=numpy.int64)
+        self.half[moved_faces] = face_half_cross(self.graph, moved_faces) if numpy.any(self.graph.total[moved_faces] >= PAIRWISE_FROM) else self.fresh_halves(moved_faces)
+        self.areas[big] = ordered_sum(self.signed_area(big, big_faces), self.half[moved_faces])
+        small_triangles = self.triangles_of(small, small_faces)
+        if big in self.boxes:
+            big_low, big_high = self.boxes[big]
+            small_low, small_high = self.fresh_boxes(small_triangles)
+            self.boxes[big] = (numpy.concatenate((big_low, small_low)), numpy.concatenate((big_high, small_high)))
+        self.triangles[big] = numpy.concatenate((self.triangles_of(big, big_faces), small_triangles))
+        for cache in (self.areas, self.triangles, self.boxes):
+            cache.pop(small, None)
+
+    def fresh_halves(self, faces):
+        graph = self.graph
+        loops = graph.loops_of(faces)
+        first = graph.start[graph.face_of_loop[loops]]
+        following = first + (loops - first + 1) % graph.total[graph.face_of_loop[loops]]
+        points, shifted = graph.uv[loops], graph.uv[following]
+        cross = points[:, 0] * shifted[:, 1] - shifted[:, 0] * points[:, 1]
+        bounds = numpy.concatenate(([0], numpy.cumsum(graph.total[faces])[:-1]))
+        return 0.5 * numpy.add.reduceat(cross, bounds)
+
+
+def attach(graph, islands, small, big, links):
+    small_label, small_faces = small
+    big_label, big_faces = big
     pairs = edge_pairs(graph, links)
     if len(pairs) < 2:
         return False
     source = numpy.array([pair[0] for pair in pairs.values()])
     target = numpy.array([pair[1] for pair in pairs.values()])
-    if len(numpy.unique(numpy.round(source, 9), axis=0)) < 2:
+    rounded_source = numpy.round(source, 9)
+    if (rounded_source == rounded_source[0]).all():
         return False
-    if graph.signed_area(small) * graph.signed_area(big) <= 0:
+    if islands.signed_area(small_label, small_faces) * islands.signed_area(big_label, big_faces) <= 0:
         return False
     fit = similarity(source, target)
     if fit is None or fit[1] > FIT_ERROR * fit[2] * 2 or not SCALE_RANGE[0] <= abs(fit[0]) <= SCALE_RANGE[1]:
         return False
-    loops = graph.loops_of(small)
-    candidate = moved(graph.uv[loops], fit[0], source, target)
-    where = {int(loop): index for index, loop in enumerate(loops)}
-    wanted = numpy.nonzero(numpy.isin(graph.triangle_face, big))[0]
-    others = graph.uv[graph.triangle_loops[wanted]]
-    for triangle in numpy.nonzero(numpy.isin(graph.triangle_face, small))[0]:
-        corners = candidate[[where[int(loop)] for loop in graph.triangle_loops[triangle]]]
-        edge_a, edge_b = corners[1] - corners[0], corners[2] - corners[0]
-        if abs(edge_a[0] * edge_b[1] - edge_a[1] * edge_b[0]) > TINY and triangles_overlap(corners, others):
-            return False
+    loops = graph.loops_of(small_faces)
+    candidate = moved(graph.uv[loops], fit[0], fit[3], fit[4])
+    others = islands.near(big_label, big_faces, candidate)
+    position = islands.position
+    position[loops] = numpy.arange(len(loops))
+    corners = candidate[position[graph.triangle_loops[islands.triangles_of(small_label, small_faces)]]]
+    edge_a, edge_b = corners[:, 1] - corners[:, 0], corners[:, 2] - corners[:, 0]
+    solid = numpy.abs(edge_a[:, 0] * edge_b[:, 1] - edge_a[:, 1] * edge_b[:, 0]) > TINY
+    if any_overlap(corners[solid], others):
+        return False
     graph.uv[loops] = candidate
-    for index, loop in enumerate(loops):
-        vertex = int(graph.loop_vertex[loop])
+    for loop, vertex in zip(loops.tolist(), graph.loop_vertex[loops].tolist()):
         if vertex in pairs:
             graph.uv[loop] = pairs[vertex][1]
     return True
@@ -215,6 +336,7 @@ def merge_small_islands(graph, minimum_share):
     areas = {label: float(graph.area[faces].sum()) for label, faces in members.items()}
     queue = [(area, label) for label, area in areas.items() if area < limit]
     heapq.heapify(queue)
+    islands = Islands(graph)
     merged = 0
     while queue:
         area, label = heapq.heappop(queue)
@@ -223,9 +345,10 @@ def merge_small_islands(graph, minimum_share):
         links_by_island = graph.boundary(members[label], label)
         ranked = sorted(links_by_island.items(), key=lambda item: -sum(float(graph.edge_length[edge]) for _, _, edge in item[1]))
         for neighbour, links in ranked:
-            if attach(graph, members[label], members[neighbour], links):
+            if attach(graph, islands, (label, members[label]), (neighbour, members[neighbour]), links):
+                islands.merge(label, members[label], neighbour, members[neighbour])
                 graph.labels[members[label]] = neighbour
-                members[neighbour] = members[neighbour] + members.pop(label)
+                members[neighbour].extend(members.pop(label))
                 areas[neighbour] += areas.pop(label)
                 if areas[neighbour] < limit:
                     heapq.heappush(queue, (areas[neighbour], neighbour))
@@ -252,4 +375,3 @@ def equalize_density(graphs):
             graph.uv[loops] = (graph.uv[loops] - centre) * factor + centre
             scaled += 1
     return scaled
-

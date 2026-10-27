@@ -1,8 +1,10 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { blenderPath } from "../../src/blender.js";
 import { main } from "../../src/judge/cli.js";
-import { judge, type JudgeOptions } from "../../src/judge/run.js";
+import { DEFAULTS, judge, type JudgeOptions } from "../../src/judge/run.js";
+import { detectTools, planSandbox } from "../../src/judge/sandbox.js";
 import { freshDir, makeFixtures, writeSpec } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
 import { withWorkBudget, workBudget } from "../setup/work-clock.js";
@@ -67,7 +69,9 @@ describe("the render device on this machine", workBudget(120_000), () => {
     const report = await judged("no-gpu", "crate.glb", { device: "auto", backends: [] }, { views: ["front"] });
     expect(report.passed).toBe(true);
     expect(report.device).toMatchObject({ requested: "auto", kind: "cpu", fallback: "no usable GPU (no backend was probed)" });
-    expect(report.renderSandbox).toEqual(report.sandbox);
+    const view = { workDir: specs, writable: [specs], readOnly: [] };
+    const original = planSandbox(blenderPath(), "judge.py", [], { timeoutMs: DEFAULTS.timeoutMs, memoryBytes: DEFAULTS.memoryBytes }, detectTools(blenderPath()), "cpu", view).isolation;
+    expect(report.renderSandbox).toEqual(original);
     expect(report.renders?.views).toHaveLength(1);
     expect(isPng(report.renders!.views[0]!.path)).toBe(true);
     expect(report.summary).toContain("render: cpu (auto fell back to the CPU with the original limits: no usable GPU");

@@ -1,6 +1,7 @@
 from array import array
 
 import bpy
+import numpy
 
 from judge_font import GLYPH_HEIGHT, draw_text, fit_text, printable, text_width
 
@@ -80,14 +81,11 @@ def texture_line(textures):
 
 
 def uv_tile(grid):
-    palette = (UV_EMPTY, UV_ONCE, UV_OVERLAP)
+    palette = numpy.array((UV_EMPTY, UV_ONCE, UV_OVERLAP), dtype=numpy.float32)
+    counts = numpy.frombuffer(bytes(grid.counts), dtype=numpy.uint8)
     rows = array("f")
-    size = grid.size
-    for row in range(size):
-        counts = grid.counts[row * size : (row + 1) * size]
-        for count in counts:
-            rows.extend(palette[count])
-    return rows, size, size
+    rows.frombytes(palette[counts].tobytes())
+    return rows, grid.size, grid.size
 
 
 def crosshair(canvas, x, y, left, top, size):

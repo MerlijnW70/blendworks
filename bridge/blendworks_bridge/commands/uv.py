@@ -1,6 +1,7 @@
 import math
 
 import bpy
+import numpy
 
 from .. import limits
 from ..errors import bad_args, not_found
@@ -159,8 +160,7 @@ def uv_report(obj, layer_name=None, texture_size=1024):
     layer = mesh.uv_layers.get(layer_name) if layer_name else mesh.uv_layers.active
     if layer is None:
         return {"name": obj.name, "has_uv": False, "layers": layers}
-    uvs = [tuple(item.uv) for item in layer.data]
-    covered, overlapped, outside, area = rasterize(mesh, uvs)
+    covered, overlapped, outside, area = rasterize(mesh, layer)
     return {
         "name": obj.name,
         "has_uv": True,
@@ -174,25 +174,74 @@ def uv_report(obj, layer_name=None, texture_size=1024):
     }
 
 
-def rasterize(mesh, uvs):
-    counts = bytearray(GRID * GRID)
-    outside = False
-    area = 0.0
-    for polygon in mesh.polygons:
-        corners = [uvs[index] for index in polygon.loop_indices]
-        if any(not (0.0 <= u <= 1.0 and 0.0 <= v <= 1.0) for u, v in corners):
-            outside = True
-        cells = set()
-        for second in range(1, len(corners) - 1):
-            triangle = (corners[0], corners[second], corners[second + 1])
-            area += abs(signed_area(*triangle))
-            cells.update(triangle_cells(triangle))
-        for cell in cells:
-            if counts[cell] < 2:
-                counts[cell] += 1
-    covered = sum(1 for value in counts if value > 0)
-    overlapped = sum(1 for value in counts if value > 1)
-    return covered, overlapped, outside, area
+CELL_CHUNK = 1 << 22
+
+
+def loop_uvs(mesh, layer):
+    flat = numpy.empty(len(layer.data) * 2, dtype=numpy.float32)
+    layer.data.foreach_get("uv", flat)
+    starts = numpy.empty(len(mesh.polygons), dtype=numpy.int64)
+    totals = numpy.empty(len(mesh.polygons), dtype=numpy.int64)
+    mesh.polygons.foreach_get("loop_start", starts)
+    mesh.polygons.foreach_get("loop_total", totals)
+    return flat.astype(numpy.float64).reshape(-1, 2), starts, totals
+
+
+def fan_triangles(starts, totals):
+    fans = numpy.maximum(totals - 2, 0)
+    polygon = numpy.repeat(numpy.arange(len(starts)), fans)
+    step = numpy.arange(int(fans.sum())) - numpy.repeat(numpy.cumsum(fans) - fans, fans) + 1
+    first = starts[polygon]
+    return polygon, numpy.stack((first, first + step, first + step + 1), axis=1)
+
+
+def rasterize(mesh, layer):
+    uv, starts, totals = loop_uvs(mesh, layer)
+    used = numpy.zeros(len(uv), dtype=bool)
+    used[numpy.repeat(starts, totals) + numpy.arange(int(totals.sum())) - numpy.repeat(numpy.cumsum(totals) - totals, totals)] = True
+    inside = (uv >= 0.0) & (uv <= 1.0)
+    outside = bool((~(inside[:, 0] & inside[:, 1]))[used].any())
+    polygon, corners = fan_triangles(starts, totals)
+    a, b, c = uv[corners[:, 0]], uv[corners[:, 1]], uv[corners[:, 2]]
+    halves = ((b[:, 0] - a[:, 0]) * (c[:, 1] - a[:, 1]) - (c[:, 0] - a[:, 0]) * (b[:, 1] - a[:, 1])) / 2.0
+    area = float(numpy.cumsum(numpy.concatenate(([0.0], numpy.abs(halves))))[-1])
+    doubled = halves * 2.0
+    solid = numpy.abs(doubled) >= 1e-14
+    keys = cell_keys(polygon[solid], a[solid], b[solid], c[solid], doubled[solid])
+    cells = numpy.unique(keys) % (GRID * GRID)
+    counts = numpy.minimum(numpy.bincount(cells, minlength=GRID * GRID), 2)
+    return int((counts > 0).sum()), int((counts > 1).sum()), outside, area
+
+
+def cell_keys(polygon, a, b, c, doubled):
+    points = numpy.stack((a, b, c), axis=1)
+    low = numpy.maximum(0, numpy.floor(points.min(axis=1) * GRID)).astype(numpy.int64)
+    high = numpy.minimum(GRID - 1, numpy.floor(points.max(axis=1) * GRID)).astype(numpy.int64)
+    width = numpy.maximum(high[:, 0] - low[:, 0] + 1, 0)
+    height = numpy.maximum(high[:, 1] - low[:, 1] + 1, 0)
+    sizes = width * height
+    found = []
+    begin = 0
+    while begin < len(sizes):
+        end = begin + max(1, int(numpy.searchsorted(numpy.cumsum(sizes[begin:]), CELL_CHUNK)))
+        found.append(chunk_keys(slice(begin, end), polygon, a, b, c, doubled, low, width, sizes))
+        begin = end
+    return numpy.concatenate(found) if found else numpy.empty(0, dtype=numpy.int64)
+
+
+def chunk_keys(part, polygon, a, b, c, doubled, low, width, sizes):
+    counts = sizes[part]
+    owner = numpy.repeat(numpy.arange(part.start, part.start + len(counts)), counts)
+    offset = numpy.arange(int(counts.sum())) - numpy.repeat(numpy.cumsum(counts) - counts, counts)
+    x = low[owner, 0] + offset % width[owner]
+    y = low[owner, 1] + offset // numpy.maximum(width[owner], 1)
+    px = (x + 0.5) / GRID + SAMPLE_SHIFT
+    py = (y + 0.5) / GRID + SAMPLE_SHIFT
+    a, b, c, doubled = a[owner], b[owner], c[owner], doubled[owner]
+    first = ((b[:, 0] - px) * (c[:, 1] - py) - (c[:, 0] - px) * (b[:, 1] - py)) / doubled
+    second = ((c[:, 0] - px) * (a[:, 1] - py) - (a[:, 0] - px) * (c[:, 1] - py)) / doubled
+    hit = (first >= 0) & (second >= 0) & (first + second <= 1)
+    return polygon[owner[hit]] * (GRID * GRID) + (y * GRID + x)[hit]
 
 
 def signed_area(a, b, c):

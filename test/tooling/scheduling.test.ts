@@ -11,10 +11,10 @@ describe("the order of test files", () => {
     expect(heaviestFirst(["a", "b", "c", "d", "e"], { a: 1, b: 30, c: 1, e: 5 })).toEqual(["d", "b", "e", "a", "c"]);
   });
 
-  it("knows every test file from the committed durations on a fresh cache, the 114 s bridge file among the heaviest", () => {
+  it("knows every test file from the committed durations on a fresh cache, the engraving bridge file among the heaviest", () => {
     const durations = knownDurations(scratch("durations"));
     const bridge = bridgeDurations(durations);
-    expect(bridge["test_uv_coverage.py"]).toBeGreaterThan(60);
+    expect(bridge["test_engrave_many.py"]).toBeGreaterThan(30);
     expect(Object.keys(bridge).every((name) => /^test_\w+\.py$/.test(name))).toBe(true);
     expect(durations["test/judge/fixtures.test.ts"]).toBeGreaterThan(0);
   });

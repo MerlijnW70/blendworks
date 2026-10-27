@@ -73,14 +73,15 @@ def emission_material():
 
 
 def test_scene():
-    bpy.ops.wm.read_factory_settings(use_empty=True)
-    scene = bpy.context.scene
+    scene = bpy.data.scenes.new("device-test")
     mesh = bpy.data.meshes.new("device-test")
     mesh.from_pydata([(-2, -2, 0), (2, -2, 0), (2, 2, 0), (-2, 2, 0)], [], [(0, 1, 2, 3)])
-    mesh.materials.append(emission_material())
+    material = emission_material()
+    mesh.materials.append(material)
     plane = bpy.data.objects.new("device-test", mesh)
     scene.collection.objects.link(plane)
-    camera = bpy.data.objects.new("device-test-camera", bpy.data.cameras.new("device-test-camera"))
+    camera_data = bpy.data.cameras.new("device-test-camera")
+    camera = bpy.data.objects.new("device-test-camera", camera_data)
     camera.location = (0.0, 0.0, 3.0)
     scene.collection.objects.link(camera)
     scene.camera = camera
@@ -93,7 +94,17 @@ def test_scene():
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "PNG"
     scene.view_settings.view_transform = "Standard"
-    return scene
+    return scene, (plane, camera), (mesh, material, camera_data)
+
+
+def remove_test_scene(scene, objects, blocks):
+    bpy.data.scenes.remove(scene)
+    for obj in objects:
+        bpy.data.objects.remove(obj, do_unlink=True)
+    mesh, material, camera_data = blocks
+    bpy.data.meshes.remove(mesh)
+    bpy.data.materials.remove(material)
+    bpy.data.cameras.remove(camera_data)
 
 
 def mean_red(path):
@@ -106,8 +117,7 @@ def mean_red(path):
     return sum(reds) / len(reds) if reds else 0.0
 
 
-def test_render(backend, folder):
-    scene = test_scene()
+def render_test(scene, backend, folder):
     try:
         apply_device(scene, backend)
     except JudgeError as error:
@@ -115,7 +125,8 @@ def test_render(backend, folder):
     path = os.path.join(folder, f"device-test-{backend.lower()}.png")
     scene.render.filepath = path
     try:
-        bpy.ops.render.render(write_still=True)
+        with bpy.context.temp_override(scene=scene, view_layer=scene.view_layers[0]):
+            bpy.ops.render.render(write_still=True)
     except RuntimeError as error:
         first_line = (str(error).strip().splitlines() or [type(error).__name__])[0]
         return f"the test render failed: {first_line[:200]}"
@@ -126,6 +137,14 @@ def test_render(backend, folder):
     if not low <= brightness <= high:
         return f"the test render came out wrong (brightness {brightness:.3f}, expected {low} to {high})"
     return None
+
+
+def test_render(backend, folder):
+    scene, objects, blocks = test_scene()
+    try:
+        return render_test(scene, backend, folder)
+    finally:
+        remove_test_scene(scene, objects, blocks)
 
 
 def probe_backends(order, folder):

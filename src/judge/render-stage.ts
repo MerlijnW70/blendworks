@@ -1,12 +1,11 @@
 import { basename, join } from "node:path";
 import type { z } from "zod";
-import type { DeviceMode } from "./device.js";
-import { renderOutputSchema, type Measurements } from "./measurements.js";
-import type { Report, RenderBudget, Renders } from "./report.js";
-import type { SandboxDevice } from "./sandbox.js";
-import { JUDGE_RENDER, renderProfile } from "./render-profile.js";
-import { DEFAULT_VIEWS, type AssetSpec } from "./spec.js";
-import { DEFAULT_BACKENDS, deviceMode, onDevice, runScript, seconds, sha256, StageFailure, workOut, type Attempt, type Sandbox } from "./stages.js";
+import type { BackendProbe, DeviceMode } from "./device.js";
+import { sheetOutputSchema, viewsOutputSchema, type Measurements } from "./measurements.js";
+import { passOutput, type PassResult, type PassStage } from "./onepass.js";
+import type { Failure, Report, RenderBudget, Renders } from "./report.js";
+import { JUDGE_RENDER } from "./render-profile.js";
+import { fallBack, pickDevice, seconds, sha256, StageFailure, type Sandbox } from "./stages.js";
 
 export const RENDER_RESOLUTION = JUDGE_RENDER.resolution;
 export const RENDER_SAMPLES = JUDGE_RENDER.samples;
@@ -21,96 +20,136 @@ export type RenderOptions = {
 };
 
 type Draft = Omit<Report, "summary">;
-type RenderOutput = Extract<z.infer<typeof renderOutputSchema>, { ok: true }>;
+type ViewsOutput = Extract<z.infer<typeof viewsOutputSchema>, { ok: true }>;
+type SheetOutput = Extract<z.infer<typeof sheetOutputSchema>, { ok: true }>;
 
-export function uvGridPath(sandbox: Sandbox): string {
-  return join(workOut(sandbox), "uv-grid.bin");
-}
+export type RenderAttempt = { result: PassResult; sandbox: Sandbox; gpu: boolean; fallback: boolean };
 
-export function renderBudget(measurements: Measurements, views: number, options: RenderOptions): RenderBudget {
+export type RenderPlan = { skipped: string | null; budget: RenderBudget };
+
+export type RenderContinuation = (stages: PassStage[], gpu: boolean) => Promise<RenderAttempt>;
+
+export function renderBudget(triangles: number | null, views: number, options: RenderOptions): RenderBudget {
   return {
-    triangles: measurements.triangles,
+    triangles: triangles ?? 0,
     samplePixels: views * RENDER_RESOLUTION * RENDER_RESOLUTION * RENDER_SAMPLES,
     maxTriangles: options.renderMaxTriangles ?? RENDER_BUDGET.maxTriangles,
     maxSamplePixels: RENDER_BUDGET.maxSamplePixels,
   };
 }
 
-function overBudget(budget: RenderBudget): string | null {
+export function overBudget(budget: RenderBudget): string | null {
   if (budget.triangles > budget.maxTriangles) return `over the render budget: ${budget.triangles} triangles, at most ${budget.maxTriangles}`;
   if (budget.samplePixels > budget.maxSamplePixels) return `over the render budget: ${budget.samplePixels} sample-pixels, at most ${budget.maxSamplePixels}`;
   return null;
+}
+
+export function samplesOverBudget(views: number, options: RenderOptions): boolean {
+  const budget = renderBudget(null, views, options);
+  return budget.samplePixels > budget.maxSamplePixels;
 }
 
 function emptyRenders(budget: RenderBudget): Renders {
   return { status: "failed", reason: null, failure: null, viewsSkipped: true, views: [], contactSheet: null, contactSheetSha256: null, budget };
 }
 
-export async function renderStage(draft: Draft, spec: AssetSpec, assetPath: string, outDir: string, sandbox: Sandbox, maxTriangles: number, options: RenderOptions): Promise<void> {
-  const out = workOut(sandbox);
-  const views = spec.views ?? DEFAULT_VIEWS;
-  const budget = renderBudget(draft.measurements!, views.length, options);
-  const renders = emptyRenders(budget);
+function interruptedIn(attempt: RenderAttempt, stages: readonly PassStage[]): Failure | null {
+  const interrupted = attempt.result.interrupted;
+  return interrupted !== null && stages.includes(interrupted.stage) ? interrupted.failure : null;
+}
+
+export function sheetResult(attempt: RenderAttempt): SheetOutput {
+  const failure = interruptedIn(attempt, ["sheet"]);
+  if (failure !== null) throw new StageFailure(failure);
+  const parsed = sheetOutputSchema.safeParse(passOutput(attempt.sandbox, "sheet"));
+  if (!parsed.success) throw new StageFailure({ stage: "render", code: "malformed", message: "the render script wrote malformed output" });
+  if (!parsed.data.ok) throw new StageFailure({ stage: "render", ...parsed.data.error });
+  return parsed.data;
+}
+
+type ViewsVerdict = { kind: "rendered"; output: ViewsOutput } | { kind: "cpu"; reason: string; probes: BackendProbe[]; seconds: number | null };
+
+function viewsResult(attempt: RenderAttempt, mode: DeviceMode): ViewsVerdict {
+  const failure = interruptedIn(attempt, ["views", "sheet"]);
+  if (failure !== null) {
+    if (failure.code === "crashed" && attempt.gpu && mode === "auto") return { kind: "cpu", reason: failure.message, probes: [{ backend: "GPU sandbox", devices: [], usable: false, reason: failure.message }], seconds: null };
+    throw new StageFailure(failure);
+  }
+  const parsed = viewsOutputSchema.safeParse(passOutput(attempt.sandbox, "views"));
+  if (!parsed.success) throw new StageFailure({ stage: "render", code: "malformed", message: "the render script wrote malformed output" });
+  const output = parsed.data;
+  if (output.ok) return { kind: "rendered", output };
+  if (output.error.code === "gpu_unavailable" && attempt.gpu) return { kind: "cpu", reason: output.error.message, probes: output.probes ?? [], seconds: output.probeSeconds ?? null };
+  throw new StageFailure({ stage: "render", ...output.error });
+}
+
+export async function interpretRenders(draft: Draft, plan: RenderPlan, first: RenderAttempt, mode: DeviceMode, continueWith: RenderContinuation, outDir: string): Promise<RenderAttempt | null> {
+  const renders = emptyRenders(plan.budget);
   draft.renders = renders;
-  const baseArgs = [assetPath, join(out, "measurements.json"), out, "--views", views.join(","), "--title", spec.name ?? basename(assetPath), "--max-triangles", String(maxTriangles)];
-  baseArgs.push("--uv-grid", uvGridPath(sandbox));
-  const profile = renderProfile();
-  baseArgs.push("--res", String(profile.resolution), "--samples", String(profile.samples));
-  const outputPath = join(out, "render.json");
   let failedGpuSeconds: number | null = null;
-  const run = async (args: string[], device: SandboxDevice, target: Sandbox): Promise<Attempt<{ output: RenderOutput; seconds: number }>> => {
-    const rendered = await runScript("render", "render.py", args, outputPath, target, device);
-    const parsed = renderOutputSchema.safeParse(rendered.output);
-    if (!parsed.success) throw new StageFailure({ stage: "render", code: "malformed", message: "the render script wrote malformed output" });
-    draft.renderSandbox = rendered.isolation;
-    const output = parsed.data;
-    if (output.ok) return { ok: true, value: { output, seconds: rendered.seconds }, backend: output.device?.backend ?? "CPU", probes: output.probes };
-    if (output.error.code === "gpu_unavailable" && device === "gpu") {
-      failedGpuSeconds = rendered.seconds;
-      return { ok: false, message: output.error.message, probes: output.probes ?? [] };
-    }
-    throw new StageFailure({ stage: "render", ...output.error });
-  };
-  const sheetOnly = async (): Promise<RenderOutput> => {
-    const preview = await run([...baseArgs, "--mode", "preview"], "cpu", sandbox);
-    if (!preview.ok) throw new StageFailure({ stage: "render", code: "gpu_unavailable", message: preview.message });
-    draft.timings.sheet = preview.value.output.timings.sheet;
-    return preview.value.output;
-  };
-  const skipped = options.preview === true ? "preview" : overBudget(budget);
-  let output: RenderOutput | null = null;
+  let attempt = first;
+  let sheet: SheetOutput | null = null;
+  let views: ViewsOutput | null = null;
   try {
-    if (skipped !== null) {
-      Object.assign(renders, { status: skipped === "preview" ? "preview" : "skipped", reason: skipped });
-      output = await sheetOnly();
+    if (plan.skipped !== null) {
+      Object.assign(renders, { status: plan.skipped === "preview" ? "preview" : "skipped", reason: plan.skipped });
+      draft.renderSandbox = attempt.result.isolation;
+      sheet = sheetResult(attempt);
     } else {
-      const limits = { ...sandbox.limits, timeoutMs: options.renderTimeoutMs ?? sandbox.limits.timeoutMs };
-      const chosen = await onDevice(deviceMode(options.device), options.backends ?? DEFAULT_BACKENDS, (request) =>
-        run([...baseArgs, "--device", request.device, "--backends", request.backends.join(",")], request.sandbox, { ...sandbox, limits }),
-      );
-      draft.device = chosen.device;
-      output = chosen.value.output;
-      const elapsed = chosen.value.seconds;
+      let verdict = viewsResult(attempt, mode);
+      if (verdict.kind === "cpu") {
+        failedGpuSeconds = verdict.seconds;
+        const chosen = pickDevice(mode, verdict.probes);
+        const device = chosen.kind === "gpu" ? fallBack(chosen, verdict.reason) : chosen;
+        attempt = await continueWith(["views", "sheet"], false);
+        verdict = viewsResult(attempt, mode);
+        if (verdict.kind !== "rendered") throw new StageFailure({ stage: "device", code: "no_gpu", message: verdict.reason });
+        draft.device = device;
+      } else if (mode === "cpu") {
+        draft.device = pickDevice(mode, []);
+      } else {
+        const device = pickDevice(mode, verdict.output.probes);
+        const backend = verdict.output.device.backend;
+        if (device.kind !== "gpu" || device.backend !== backend) {
+          throw new StageFailure({ stage: "device", code: "inconsistent", message: `Blender rendered on ${backend}, but the probes choose ${device.backend ?? "the CPU"}` });
+        }
+        draft.device = device;
+      }
+      draft.renderSandbox = attempt.result.isolation;
+      views = verdict.output;
+      sheet = sheetResult(attempt);
       Object.assign(renders, { status: "rendered", viewsSkipped: false });
-      draft.timings.device = output.timings.device ?? failedGpuSeconds;
-      draft.timings.sheet = output.timings.sheet;
-      draft.timings.render = Math.max(0, seconds((elapsed - output.timings.sheet - (output.timings.device ?? 0)) * 1000));
+      draft.timings.device = views.timings.device ?? failedGpuSeconds;
+      draft.timings.render = views.timings.views;
     }
+    draft.timings.sheet = sheet.timings.sheet;
   } catch (error) {
     if (!(error instanceof StageFailure)) throw error;
     Object.assign(renders, { status: "failed", reason: error.failure.message, failure: error.failure, viewsSkipped: true });
     draft.timings.device ??= failedGpuSeconds;
-    output = await sheetOnly().catch((sheetError: unknown) => {
-      if (sheetError instanceof StageFailure) return null;
-      throw sheetError;
-    });
+    views = null;
+    sheet = await recoverSheet(attempt, continueWith);
+    if (sheet !== null) draft.timings.sheet = sheet.timings.sheet;
   }
-  if (output === null) return;
-  renders.views = output.views.map((entry) => {
-    const path = join(outDir, "views", basename(entry.path));
-    return { view: entry.view, path, sha256: "" };
-  });
+  if (sheet === null) return null;
+  renders.views = (views?.views ?? []).map((entry) => ({ view: entry.view, path: join(outDir, "views", basename(entry.path)), sha256: "" }));
   renders.contactSheet = join(outDir, "contact-sheet.png");
+  return views === null ? null : attempt;
+}
+
+async function recoverSheet(attempt: RenderAttempt, continueWith: RenderContinuation): Promise<SheetOutput | null> {
+  try {
+    const drawn = sheetResult(attempt);
+    if (drawn.preview) return drawn;
+  } catch (error) {
+    if (!(error instanceof StageFailure)) throw error;
+  }
+  try {
+    return sheetResult(await continueWith(["sheet"], false));
+  } catch (error) {
+    if (error instanceof StageFailure) return null;
+    throw error;
+  }
 }
 
 export function hashRenders(renders: Renders | null): void {

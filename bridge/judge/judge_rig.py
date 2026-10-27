@@ -73,6 +73,7 @@ def configure_scene(scene, resolution=RESOLUTION, samples=SAMPLES, outlines=True
     scene.render.film_transparent = False
     scene.render.dither_intensity = 0.0
     scene.render.use_compositing = False
+    scene.render.compositor_device = "CPU"
     scene.render.use_sequencer = False
     scene.render.use_persistent_data = True
     for stamp in STAMPS:

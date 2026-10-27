@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BLENDER_VERSION, blenderThreadArguments } from "../blender.js";
+import { kernelVariables, privateKernels } from "./kernel-cache.js";
 
 export const BLENDER_FLAGS = ["--background", "--factory-startup", "--disable-autoexec", "--python-exit-code", "1"] as const;
 const OUTPUT_TAIL = 16_384;
@@ -28,13 +29,17 @@ export type Isolation = {
 
 export type View = { workDir: string; writable: string[]; readOnly: string[] };
 
-export type Plan = { command: string; args: string[]; isolation: Isolation; gpu: boolean; writable: string[]; lowIntegrity: boolean };
+export type Plan = { command: string; args: string[]; isolation: Isolation; gpu: boolean; writable: string[]; lowIntegrity: boolean; kernels?: string };
 
 export type SandboxDevice = "cpu" | "gpu";
 
 export type Tools = { platform: NodeJS.Platform; unshare: boolean; prlimit: boolean; mountNamespace?: boolean; lowIntegrityPython?: string | null };
 
 export type RunResult = { code: number | null; signal: NodeJS.Signals | null; timedOut: boolean; output: string };
+
+export type Watch = { intervalMs: number; started: () => void; check: () => "running" | "finished" | "expired" };
+
+export type PlanOptions = { addressSpaceUntilGpu?: boolean };
 
 function works(command: string, args: string[]): boolean {
   const result = spawnSync(command, args, { stdio: "ignore", timeout: 20_000 });
@@ -109,13 +114,15 @@ function namespaceArgs(blender: string, view: View, gpu: boolean): string[] {
   return [...NAMESPACE_FLAGS, "sh", MOUNT_SCRIPT, posix.join(realPath(view.workDir), NEW_ROOT), ...writable, "--", ...readOnly, "--"];
 }
 
-export function planSandbox(blender: string, script: string, scriptArgs: string[], limits: Limits, tools: Tools, device: SandboxDevice = "cpu", view?: View): Plan {
+export function planSandbox(blender: string, script: string, scriptArgs: string[], limits: Limits, tools: Tools, device: SandboxDevice = "cpu", view?: View, options: PlanOptions = {}): Plan {
   const gpu = device === "gpu";
   const blenderArgs = [...BLENDER_FLAGS, ...blenderThreadArguments(), "--python", script, "--", ...scriptArgs];
   const memoryMb = Math.floor(limits.memoryBytes / (1024 * 1024));
   const withCap = [...blenderArgs, "--memory-mb", String(memoryMb)];
   if (tools.platform === "win32") return windowsPlan(blender, withCap, limits, tools, gpu, view);
   if (gpu) withCap.push("--memory-kind", "data");
+  const addressSpace = gpu && options.addressSpaceUntilGpu === true;
+  if (addressSpace) withCap.push("--measure-address-space", "yes");
   const limit = gpu ? `--data=${limits.memoryBytes}` : `--as=${limits.memoryBytes}`;
   const kind = gpu ? "data segment" : "address space";
   const isolated = tools.mountNamespace === true && view !== undefined;
@@ -124,7 +131,7 @@ export function planSandbox(blender: string, script: string, scriptArgs: string[
   if (tools.prlimit) prefix.push("prlimit", limit, "--core=0", "--");
   prefix.push(program, ...withCap);
   const network = tools.unshare ? "isolated" : "not isolated";
-  const memory = `${tools.prlimit ? "prlimit" : "setrlimit"} ${kind}, ${memoryMb} MB`;
+  const memory = `${tools.prlimit ? "prlimit" : "setrlimit"} ${kind}, ${memoryMb} MB${addressSpace ? `, address space ${memoryMb} MB until the GPU starts` : ""}`;
   const writable = view?.writable ?? [];
   if (isolated) {
     const isolation: Isolation = {
@@ -163,7 +170,7 @@ export function lowerIntegrity(folder: string): void {
   if (result.status !== 0) throw new Error(`could not give ${folder} a low integrity label for the sandbox`);
 }
 
-export async function runSandboxed(plan: Plan, workDir: string): Promise<RunResult> {
+export async function runSandboxed(plan: Plan, workDir: string, watch?: Watch): Promise<RunResult> {
   for (const folder of plan.writable) mkdirSync(folder, { recursive: true });
   if (plan.lowIntegrity) for (const folder of plan.writable) lowerIntegrity(folder);
   const home = mkdtempSync(join(plan.writable[0] ?? tmpdir(), "blendworks-sandbox-"));
@@ -172,27 +179,39 @@ export async function runSandboxed(plan: Plan, workDir: string): Promise<RunResu
     return await new Promise<RunResult>((resolve, reject) => {
       const child = spawn(plan.command, plan.args, {
         cwd: workDir,
-        env: sandboxEnvironment(home, plan.gpu),
+        env: { ...sandboxEnvironment(home, plan.gpu), ...(plan.gpu ? (plan.kernels === undefined ? privateKernels(home) : kernelVariables(plan.kernels)) : {}) },
         stdio: ["ignore", "pipe", "pipe"],
         windowsHide: true,
       });
+      watch?.started();
       let output = "";
       let timedOut = false;
+      let stopped = false;
       const keep = (chunk: Buffer) => {
         output = (output + chunk.toString("utf8")).slice(-OUTPUT_TAIL);
       };
       child.stdout.on("data", keep);
       child.stderr.on("data", keep);
-      const timer = setTimeout(() => {
-        timedOut = true;
+      const stop = (expired: boolean) => {
+        stopped = true;
+        timedOut = expired;
         child.kill("SIGKILL");
-      }, plan.isolation.timeoutMs);
+      };
+      const timer =
+        watch === undefined
+          ? setTimeout(() => stop(true), plan.isolation.timeoutMs)
+          : setInterval(() => {
+              if (stopped) return;
+              const state = watch.check();
+              if (state !== "running") stop(state === "expired");
+            }, watch.intervalMs);
+      const clear = () => (watch === undefined ? clearTimeout(timer) : clearInterval(timer));
       child.on("error", (error) => {
-        clearTimeout(timer);
+        clear();
         reject(error);
       });
       child.on("close", (code, signal) => {
-        clearTimeout(timer);
+        clear();
         resolve({ code, signal, timedOut, output });
       });
     });

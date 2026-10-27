@@ -5,6 +5,9 @@ import sys
 import time
 
 DEFAULT_MEMORY_MB = 4096
+SHARED_ACCESS_SECONDS = 2.0
+SHARED_ACCESS_FIRST_PAUSE = 0.01
+SHARED_ACCESS_LONGEST_PAUSE = 0.1
 DEFAULT_MAX_TRIANGLES = 2_000_000
 MEMORY_KINDS = ("address-space", "data")
 
@@ -49,11 +52,48 @@ def positive_int(text, name):
     return value
 
 
-def write_json(path, payload):
+def shared_access(action):
+    if os.name != "nt":
+        return action()
+    deadline = time.monotonic() + SHARED_ACCESS_SECONDS
+    pause = SHARED_ACCESS_FIRST_PAUSE
+    while True:
+        try:
+            return action()
+        except PermissionError:
+            if time.monotonic() >= deadline:
+                raise
+        time.sleep(pause)
+        pause = min(pause * 2, SHARED_ACCESS_LONGEST_PAUSE)
+
+
+def write_bytes(path, data):
     temporary = path + ".partial"
-    with open(temporary, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2, sort_keys=True)
-    os.replace(temporary, path)
+
+    def write():
+        with open(temporary, "wb") as handle:
+            handle.write(data)
+
+    shared_access(write)
+    shared_access(lambda: os.replace(temporary, path))
+
+
+def read_bytes(path):
+    def read():
+        with open(path, "rb") as handle:
+            return handle.read()
+
+    return shared_access(read)
+
+
+def json_bytes(payload):
+    return json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
+
+
+def write_json(path, payload):
+    data = json_bytes(payload)
+    write_bytes(path, data)
+    return data
 
 
 def is_inside(path, directory):
@@ -86,6 +126,22 @@ def posix_cap(memory_bytes, kind):
     resource.setrlimit(which, (limit, limit))
     resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
     return {"memoryBytes": limit, "memoryKind": kind, "childProcesses": "allowed"}
+
+
+def cap_address_space(memory_bytes):
+    import resource
+
+    soft, hard = resource.getrlimit(resource.RLIMIT_AS)
+    limit = memory_bytes if hard == resource.RLIM_INFINITY else min(memory_bytes, hard)
+    resource.setrlimit(resource.RLIMIT_AS, (limit, hard))
+    return {"memoryBytes": limit, "memoryKind": "address-space", "childProcesses": "allowed"}
+
+
+def lift_address_space():
+    import resource
+
+    _, hard = resource.getrlimit(resource.RLIMIT_AS)
+    resource.setrlimit(resource.RLIMIT_AS, (hard, hard))
 
 
 def windows_job_cap(memory_bytes):

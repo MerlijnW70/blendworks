@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BlenderNotFoundError, resolveBlender } from "../../src/blender.js";
+import { BlenderNotFoundError, blenderJobs, resolveBlender } from "../../src/blender.js";
 import { listBridgeTests, runPool, selectTests, slowestFirst, summarize } from "../../scripts/lib/bridge-runner.js";
 
 const FILES = ["test_addon.py", "test_bake.py", "test_bake_failures.py", "test_render.py", "test_smoke.py"];
@@ -92,7 +92,7 @@ function blenderAvailable(): boolean {
 
 describe.skipIf(!blenderAvailable())("npm run test:bridge", { timeout: 120_000 }, () => {
   const run = (...args: string[]) =>
-    spawnSync(process.execPath, ["--import", "tsx", resolve("scripts", "bridge-tests.mjs"), ...args], { encoding: "utf8", env: { ...process.env, BLENDWORKS_JOBS: "1" } });
+    spawnSync(process.execPath, ["--import", "tsx", resolve("scripts", "bridge-tests.mjs"), ...args], { encoding: "utf8", env: { ...process.env, BLENDWORKS_JOBS: String(blenderJobs()) } });
 
   it("runs only the files the filters name and prints the time of each", () => {
     const result = run("test_smoke");

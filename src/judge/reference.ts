@@ -8,7 +8,9 @@ import type { ReferenceRule } from "./reference-spec.js";
 import { toBlender, type RuleResult } from "./shape-rules.js";
 import { compareMasks, maskChannel, maskFromPixels, maskImage, overlayImage, type Mask, type MaskChannel } from "./silhouette.js";
 import { VIEWS } from "./spec-shapes.js";
-import { runScript, StageFailure, workOut, type Sandbox } from "./stages.js";
+import { passOutput, runPass, type PassResult } from "./onepass.js";
+import { readShared } from "./shared-access.js";
+import { StageFailure, workOut, type Sandbox } from "./stages.js";
 import { decodePng, encodePng, PNG_SIGNATURE, PngError } from "./visual/png.js";
 
 export const REFERENCE_LIMITS = { maxBytes: 8 * 1024 * 1024, minSide: 16, maxSide: 2048 };
@@ -122,34 +124,41 @@ export function loadReferences(rule: ReferenceRule, specPath: string): LoadedRef
   return loaded;
 }
 
-export function referenceFrame(rule: ReferenceRule, measurements: Measurements, axis: "z" | "y"): { source: "spec" | "asset"; min: number[]; max: number[]; origin: number[] } {
-  if (rule.bounds === undefined) return { source: "asset", min: measurements.bounds.min, max: measurements.bounds.max, origin: measurements.origin.point };
+export function referenceFrame(rule: ReferenceRule, measurements: Measurements | null, axis: "z" | "y"): { source: "spec" | "asset"; min: number[]; max: number[]; origin: number[] } {
+  if (rule.bounds === undefined) {
+    if (measurements === null) throw new Error("the reference frame needs the asset's measurements or the spec's bounds");
+    return { source: "asset", min: measurements.bounds.min, max: measurements.bounds.max, origin: measurements.origin.point };
+  }
   const corners = [toBlender(rule.bounds.min, axis), toBlender(rule.bounds.max, axis)];
   const min = [0, 1, 2].map((index) => Math.min(corners[0]![index]!, corners[1]![index]!));
   const max = [0, 1, 2].map((index) => Math.max(corners[0]![index]!, corners[1]![index]!));
   return { source: "spec", min, max, origin: min.map((low, index) => (low + max[index]!) / 2) };
 }
 
-export async function renderSilhouettes(
-  asset: string,
-  views: { view: string; size: number }[],
-  frame: { min: number[]; max: number[]; origin: number[] } | "asset",
-  sandbox: Sandbox,
-  maxTriangles: number,
-): Promise<SilhouetteOutput> {
-  const out = workOut(sandbox);
-  const args = [asset, out, "--views", views.map((entry) => `${entry.view}:${entry.size}`).join(","), "--max-triangles", String(maxTriangles)];
-  if (frame === "asset") args.push("--frame", "asset");
-  else args.push("--frame", [...frame.min, ...frame.max].join(","), "--origin", frame.origin.join(","));
-  const run = await runScript("reference", "silhouette.py", args, join(out, "silhouettes.json"), sandbox);
-  const parsed = silhouetteOutput.safeParse(run.output);
+export function silhouetteArgs(views: { view: string; size: number }[], frame: { min: number[]; max: number[]; origin: number[] } | "asset" | "measured"): string[] {
+  const args = ["--reference-views", views.map((entry) => `${entry.view}:${entry.size}`).join(",")];
+  if (frame === "asset" || frame === "measured") args.push("--reference-frame", frame);
+  else args.push("--reference-frame", [...frame.min, ...frame.max].join(","), "--reference-origin", frame.origin.join(","));
+  return args;
+}
+
+export function silhouettesFrom(result: PassResult, sandbox: Sandbox): SilhouetteOutput {
+  if (result.interrupted !== null && result.interrupted.stage === "reference") throw new StageFailure(result.interrupted.failure);
+  const parsed = silhouetteOutput.safeParse(passOutput(sandbox, "reference"));
   if (!parsed.success) throw new StageFailure({ stage: "reference", code: "malformed", message: "the silhouette script wrote malformed output" });
   if (!parsed.data.ok) throw new StageFailure({ stage: "reference", ...parsed.data.error });
   return parsed.data;
 }
 
+export async function renderSilhouettes(asset: string, views: { view: string; size: number }[], sandbox: Sandbox, maxTriangles: number): Promise<SilhouetteOutput> {
+  const budgets = { measure: sandbox.limits.timeoutMs, reference: sandbox.limits.timeoutMs, render: sandbox.limits.timeoutMs, closeups: sandbox.limits.timeoutMs };
+  const args = [...silhouetteArgs(views, "asset"), "--max-triangles", String(maxTriangles)];
+  const result = await runPass({ asset, stages: ["reference"], args, device: "cpu", sandbox, budgets });
+  return silhouettesFrom(result, sandbox);
+}
+
 export function renderedMask(sandbox: Sandbox, view: string): Mask {
-  return maskFromPixels(decodePng(readFileSync(join(workOut(sandbox), "silhouettes", `${view}.png`))), "alpha");
+  return maskFromPixels(decodePng(readShared(join(workOut(sandbox), "silhouettes", `${view}.png`))), "alpha");
 }
 
 function writeImage(path: string, image: Parameters<typeof encodePng>[0]): string {
@@ -158,9 +167,13 @@ function writeImage(path: string, image: Parameters<typeof encodePng>[0]): strin
   return digest(data);
 }
 
-export async function referenceStage(draft: Draft, rule: ReferenceRule, references: LoadedReference[], asset: string, sandbox: Sandbox, outDir: string, maxTriangles: number, axis: "z" | "y"): Promise<void> {
-  const frame = referenceFrame(rule, draft.measurements!, axis);
-  const output = await renderSilhouettes(asset, references, frame, sandbox, maxTriangles);
+export function referencePassFrame(rule: ReferenceRule, axis: "z" | "y"): { min: number[]; max: number[]; origin: number[] } | "measured" {
+  if (rule.bounds === undefined) return "measured";
+  const { source: _, ...frame } = referenceFrame(rule, null, axis);
+  return frame;
+}
+
+export function referenceStage(draft: Draft, rule: ReferenceRule, references: LoadedReference[], output: SilhouetteOutput, sandbox: Sandbox, outDir: string): void {
   const folder = join(outDir, REFERENCE_FOLDER);
   mkdirSync(folder, { recursive: true });
   const views = references.map(({ inside: referenceMask, ...reference }): ReferenceView => {
@@ -170,7 +183,7 @@ export async function referenceStage(draft: Draft, rule: ReferenceRule, referenc
     const compared = compareMasks(assetMask, referenceMask);
     return { ...reference, ...compared, silhouette, silhouetteSha256: writeImage(silhouette, maskImage(assetMask)), overlay, overlaySha256: writeImage(overlay, overlayImage(assetMask, referenceMask)) };
   });
-  draft.reference = { frame: { source: frame.source, min: output.frame.min, max: output.frame.max }, views };
+  draft.reference = { frame: { source: rule.bounds === undefined ? "asset" : "spec", min: output.frame.min, max: output.frame.max }, views };
   draft.rules.push(...referenceRules(rule, draft.reference));
 }
 

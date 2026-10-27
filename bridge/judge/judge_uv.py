@@ -2,7 +2,7 @@ import os
 from array import array
 from math import ceil, floor, isfinite
 
-from judge_common import JudgeError
+from judge_common import JudgeError, read_bytes, write_bytes
 
 GRID = 512
 SATURATING_INCREMENT = bytes(min(value + 1, 2) for value in range(256))
@@ -111,17 +111,13 @@ class UvGrid:
 
     def save(self, path):
         self.finish()
-        temporary = path + ".partial"
-        with open(temporary, "wb") as handle:
-            handle.write(bytes(self.counts))
-        os.replace(temporary, path)
+        write_bytes(path, bytes(self.counts))
 
     @classmethod
     def load(cls, path, size=GRID):
         grid = cls(size)
         try:
-            with open(path, "rb") as handle:
-                data = handle.read(size * size + 1)
+            data = read_bytes(path)[: size * size + 1]
         except OSError:
             raise JudgeError("usage", "the UV grid file is missing") from None
         if len(data) != size * size or max(data, default=0) > 2:

@@ -215,3 +215,39 @@ class Measurer:
             measured["vertexColors"] = self.colours.result()
         return measured
 
+
+
+def measured_frame(depsgraph, triangle_cap):
+    triangles = 0
+    objects = 0
+    roots = {}
+    low = [inf, inf, inf]
+    high = [-inf, -inf, -inf]
+    for instance in depsgraph.object_instances:
+        obj = instance.object
+        if obj.type not in GEOMETRY_TYPES:
+            continue
+        matrix = instance.matrix_world.copy()
+        owner = instance.parent if instance.is_instance and instance.parent is not None else obj
+        root = top_ancestor(owner.original)
+        mesh = obj.to_mesh()
+        try:
+            if mesh is None or len(mesh.vertices) == 0:
+                continue
+            mesh.calc_loop_triangles()
+            triangles += len(mesh.loop_triangles)
+            if triangles > triangle_cap:
+                raise JudgeError("too_many_triangles", f"the asset has more than {triangle_cap} triangles, the judge's cap")
+            objects += 1
+            roots[root.name] = root
+            world = world_coordinates(mesh, matrix)
+            extend(low, high, [world[index] for index in face_vertices(mesh)])
+        finally:
+            obj.to_mesh_clear()
+    if objects == 0:
+        raise JudgeError("no_geometry", "the asset holds no mesh geometry")
+    if low[0] == inf:
+        raise JudgeError("no_geometry", "the asset holds no faces, only loose vertices or edges")
+    origin = list(next(iter(roots.values())).matrix_world.translation) if len(roots) == 1 else [0.0, 0.0, 0.0]
+    size = [high[axis] - low[axis] for axis in range(3)]
+    return {"triangles": triangles, "objects": objects, "min": rounded(low), "max": rounded(high), "size": rounded(size), "origin": rounded(origin)}
