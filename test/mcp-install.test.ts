@@ -103,8 +103,12 @@ describe("finding claude", () => {
   });
 });
 
+// Running Claude Code sessions rewrite the whole file at any time, so only its MCP server entries are compared.
 function fingerprint(path: string): string {
-  return existsSync(path) ? createHash("sha256").update(readFileSync(path)).digest("hex") : "absent";
+  if (!existsSync(path)) return "absent";
+  const config = JSON.parse(readFileSync(path, "utf8")) as { mcpServers?: unknown; projects?: Record<string, { mcpServers?: unknown }> };
+  const projects = Object.entries(config.projects ?? {}).map(([project, entry]) => [project, entry.mcpServers ?? null]);
+  return createHash("sha256").update(JSON.stringify([config.mcpServers ?? null, projects])).digest("hex");
 }
 
 const realClaude = findClaude();
