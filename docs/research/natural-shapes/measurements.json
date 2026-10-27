@@ -1,0 +1,662 @@
+[
+ {
+  "name": "boulder_01",
+  "objects": 1,
+  "triangles": 66122,
+  "axes": [
+   1.9244,
+   1.2917,
+   0.9658
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 1.007,
+    "solidity": 0.922
+   },
+   "right": {
+    "box_dimension": 0.999,
+    "solidity": 0.933
+   },
+   "top": {
+    "box_dimension": 0.96,
+    "solidity": 0.932
+   }
+  },
+  "normal_deviation": [
+   {
+    "object": "boulder_01",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 22.61,
+    "p90": 55.46,
+    "p99": 85.75,
+    "flat_share_under_3deg": 0.097,
+    "concave_share": 0.4,
+    "cv": 0.784
+   },
+   {
+    "object": "boulder_01",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 35.97,
+    "p90": 72.32,
+    "p99": 111.88,
+    "flat_share_under_3deg": 0.013,
+    "concave_share": 0.214,
+    "cv": 0.622
+   }
+  ],
+  "albedo": {
+   "texture": "boulder_01_diff_1k.jpg",
+   "used_share": 0.999053955078125,
+   "luminance_mean": 0.37459437810565616,
+   "luminance_cv": 0.2455468056982227,
+   "luminance_p5_p95": [
+    0.20855766335427758,
+    0.5217168912529945
+   ]
+  }
+ },
+ {
+  "name": "coast_rocks_05",
+  "objects": 1,
+  "triangles": 771724,
+  "axes": [
+   4.1706,
+   3.8902,
+   1.2949
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 1.004,
+    "solidity": 0.739
+   },
+   "right": {
+    "box_dimension": 0.981,
+    "solidity": 0.795
+   },
+   "top": {
+    "box_dimension": 0.97,
+    "solidity": 0.984
+   }
+  },
+  "normal_deviation": [
+   {
+    "object": "coast_rocks_05",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 28.68,
+    "p90": 67.41,
+    "p99": 104.86,
+    "flat_share_under_3deg": 0.013,
+    "concave_share": 0.494,
+    "cv": 0.694
+   },
+   {
+    "object": "coast_rocks_05",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 42.51,
+    "p90": 92.47,
+    "p99": 127.32,
+    "flat_share_under_3deg": 0.005,
+    "concave_share": 0.485,
+    "cv": 0.629
+   }
+  ],
+  "albedo": {
+   "texture": "coast_rocks_05_diff_1k.jpg",
+   "used_share": 1.0,
+   "luminance_mean": 0.31220092903065244,
+   "luminance_cv": 0.39527128299564906,
+   "luminance_p5_p95": [
+    0.09797647911161184,
+    0.4883310108900071
+   ]
+  }
+ },
+ {
+  "name": "dead_tree_trunk_02",
+  "objects": 1,
+  "triangles": 83128,
+  "axes": [
+   4.0266,
+   1.0195,
+   0.6553
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 1.053,
+    "solidity": 0.537
+   },
+   "right": {
+    "box_dimension": 1.108,
+    "solidity": 0.729
+   },
+   "top": {
+    "box_dimension": 1.034,
+    "solidity": 0.542
+   }
+  },
+  "normal_deviation": [
+   {
+    "object": "dead_tree_trunk_02",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 25.84,
+    "p90": 69.7,
+    "p99": 119.7,
+    "flat_share_under_3deg": 0.024,
+    "concave_share": 0.159,
+    "cv": 0.805
+   },
+   {
+    "object": "dead_tree_trunk_02",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 48.86,
+    "p90": 91.28,
+    "p99": 133.61,
+    "flat_share_under_3deg": 0.004,
+    "concave_share": 0.076,
+    "cv": 0.594
+   }
+  ],
+  "albedo": {
+   "texture": "dead_tree_trunk_02_diff_1k.jpg",
+   "used_share": 1.0,
+   "luminance_mean": 0.32902355268952166,
+   "luminance_cv": 0.3288476670568339,
+   "luminance_p5_p95": [
+    0.15708314279317853,
+    0.5279733614683152
+   ]
+  }
+ },
+ {
+  "name": "namaqualand_boulder_02",
+  "objects": 1,
+  "triangles": 97964,
+  "axes": [
+   2.5397,
+   1.2561,
+   0.9324
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 0.994,
+    "solidity": 0.841
+   },
+   "right": {
+    "box_dimension": 0.985,
+    "solidity": 0.936
+   },
+   "top": {
+    "box_dimension": 0.98,
+    "solidity": 0.84
+   }
+  },
+  "normal_deviation": [
+   {
+    "object": "boulder_02",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 22.36,
+    "p90": 67.15,
+    "p99": 101.7,
+    "flat_share_under_3deg": 0.029,
+    "concave_share": 0.477,
+    "cv": 0.814
+   },
+   {
+    "object": "boulder_02",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 47.11,
+    "p90": 96.78,
+    "p99": 136.42,
+    "flat_share_under_3deg": 0.004,
+    "concave_share": 0.296,
+    "cv": 0.561
+   }
+  ],
+  "albedo": {
+   "texture": "namaqualand_boulder_02_diff_1k.jpg",
+   "used_share": 1.0,
+   "luminance_mean": 0.32550277985440107,
+   "luminance_cv": 0.3355738134265354,
+   "luminance_p5_p95": [
+    0.17074667455852033,
+    0.5290384572923184
+   ]
+  }
+ },
+ {
+  "name": "rock_09",
+  "objects": 1,
+  "triangles": 12416,
+  "axes": [
+   0.1465,
+   0.0772,
+   0.0345
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 0.995,
+    "solidity": 0.963
+   },
+   "right": {
+    "box_dimension": 0.974,
+    "solidity": 0.952
+   },
+   "top": {
+    "box_dimension": 0.973,
+    "solidity": 0.936
+   }
+  },
+  "normal_deviation": [
+   {
+    "object": "rock_09_LOD0",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 12.8,
+    "p90": 40.05,
+    "p99": 71.97,
+    "flat_share_under_3deg": 0.107,
+    "concave_share": 0.373,
+    "cv": 0.9
+   },
+   {
+    "object": "rock_09_LOD0",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 32.45,
+    "p90": 66.68,
+    "p99": 96.34,
+    "flat_share_under_3deg": 0.018,
+    "concave_share": 0.098,
+    "cv": 0.64
+   }
+  ],
+  "albedo": {
+   "texture": "rock_09_diff_1k.jpg",
+   "used_share": 1.0,
+   "luminance_mean": 0.24991513411105848,
+   "luminance_cv": 0.26848348279448875,
+   "luminance_p5_p95": [
+    0.14726431984901428,
+    0.3609325636446476
+   ]
+  }
+ },
+ {
+  "name": "rock_moss_set_01",
+  "objects": 6,
+  "triangles": 63127,
+  "axes": [
+   9.1093,
+   7.9668,
+   1.785
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 0.984,
+    "solidity": 0.686
+   },
+   "right": {
+    "box_dimension": 0.957,
+    "solidity": 0.751
+   },
+   "top": {
+    "box_dimension": 0.965,
+    "solidity": 0.466
+   }
+  },
+  "normal_deviation": [
+   {
+    "object": "rock_moss_set_01_rock01",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 12.62,
+    "p90": 30.78,
+    "p99": 55.86,
+    "flat_share_under_3deg": 0.053,
+    "concave_share": 0.363,
+    "cv": 0.753
+   },
+   {
+    "object": "rock_moss_set_01_rock01",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 23.54,
+    "p90": 48.18,
+    "p99": 75.19,
+    "flat_share_under_3deg": 0.016,
+    "concave_share": 0.141,
+    "cv": 0.614
+   },
+   {
+    "object": "rock_moss_set_01_rock02",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 9.71,
+    "p90": 28.98,
+    "p99": 65.07,
+    "flat_share_under_3deg": 0.1,
+    "concave_share": 0.298,
+    "cv": 0.973
+   },
+   {
+    "object": "rock_moss_set_01_rock02",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 21.07,
+    "p90": 46.97,
+    "p99": 79.51,
+    "flat_share_under_3deg": 0.023,
+    "concave_share": 0.065,
+    "cv": 0.68
+   },
+   {
+    "object": "rock_moss_set_01_rock03",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 7.28,
+    "p90": 18.31,
+    "p99": 38.03,
+    "flat_share_under_3deg": 0.172,
+    "concave_share": 0.374,
+    "cv": 0.85
+   },
+   {
+    "object": "rock_moss_set_01_rock03",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 15.48,
+    "p90": 38.99,
+    "p99": 57.12,
+    "flat_share_under_3deg": 0.043,
+    "concave_share": 0.188,
+    "cv": 0.705
+   },
+   {
+    "object": "rock_moss_set_01_rock04",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 8.24,
+    "p90": 20.23,
+    "p99": 37.78,
+    "flat_share_under_3deg": 0.116,
+    "concave_share": 0.379,
+    "cv": 0.779
+   },
+   {
+    "object": "rock_moss_set_01_rock04",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 18.49,
+    "p90": 37.97,
+    "p99": 58.13,
+    "flat_share_under_3deg": 0.028,
+    "concave_share": 0.218,
+    "cv": 0.621
+   },
+   {
+    "object": "rock_moss_set_01_rock05",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 7.44,
+    "p90": 17.18,
+    "p99": 29.72,
+    "flat_share_under_3deg": 0.139,
+    "concave_share": 0.327,
+    "cv": 0.717
+   },
+   {
+    "object": "rock_moss_set_01_rock05",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 17.63,
+    "p90": 35.47,
+    "p99": 61.3,
+    "flat_share_under_3deg": 0.028,
+    "concave_share": 0.131,
+    "cv": 0.633
+   },
+   {
+    "object": "rock_moss_set_01_rock06",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 9.17,
+    "p90": 24.52,
+    "p99": 43.61,
+    "flat_share_under_3deg": 0.125,
+    "concave_share": 0.361,
+    "cv": 0.786
+   },
+   {
+    "object": "rock_moss_set_01_rock06",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 22.69,
+    "p90": 43.66,
+    "p99": 64.06,
+    "flat_share_under_3deg": 0.017,
+    "concave_share": 0.135,
+    "cv": 0.575
+   }
+  ],
+  "albedo": {
+   "texture": "rock_moss_set_01_diff_1k.jpg",
+   "used_share": 0.6670160293579102,
+   "luminance_mean": 0.30290479174640345,
+   "luminance_cv": 0.2765495719669669,
+   "luminance_p5_p95": [
+    0.17239373328387736,
+    0.4384565019071102
+   ]
+  }
+ },
+ {
+  "name": "searsia_lucida",
+  "objects": 7,
+  "triangles": 377192,
+  "axes": [
+   4.5394,
+   3.1614,
+   2.1757
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 1.645,
+    "solidity": 0.453
+   },
+   "right": {
+    "box_dimension": 1.551,
+    "solidity": 0.549
+   },
+   "top": {
+    "box_dimension": 1.536,
+    "solidity": 0.335
+   }
+  },
+  "albedo": {
+   "texture": "searsia_lucida_diff_1k.jpg",
+   "used_share": 0.5189208984375,
+   "luminance_mean": 0.4099123675153906,
+   "luminance_cv": 0.25033237302029215,
+   "luminance_p5_p95": [
+    0.2055058988302946,
+    0.5477835563659668
+   ]
+  }
+ },
+ {
+  "name": "fake_uv_sphere",
+  "objects": 1,
+  "triangles": 3968,
+  "axes": [
+   1.0,
+   0.9998,
+   0.9998
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 0.959,
+    "solidity": 1.0
+   },
+   "right": {
+    "box_dimension": 0.959,
+    "solidity": 1.0
+   },
+   "top": {
+    "box_dimension": 0.959,
+    "solidity": 1.0
+   }
+  },
+  "normal_deviation": [
+   {
+    "object": "Sphere",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 2.23,
+    "p90": 2.93,
+    "p99": 3.03,
+    "flat_share_under_3deg": 0.956,
+    "concave_share": 0.0,
+    "cv": 0.331
+   },
+   {
+    "object": "Sphere",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 2.15,
+    "p90": 2.89,
+    "p99": 3.0,
+    "flat_share_under_3deg": 0.99,
+    "concave_share": 0.0,
+    "cv": 0.368
+   }
+  ]
+ },
+ {
+  "name": "fake_displaced_ico",
+  "objects": 1,
+  "triangles": 5120,
+  "axes": [
+   1.0476,
+   0.7953,
+   0.6369
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 0.954,
+    "solidity": 0.987
+   },
+   "right": {
+    "box_dimension": 0.967,
+    "solidity": 0.99
+   },
+   "top": {
+    "box_dimension": 0.951,
+    "solidity": 0.987
+   }
+  },
+  "normal_deviation": [
+   {
+    "object": "Icosphere",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 5.0,
+    "p90": 10.06,
+    "p99": 16.33,
+    "flat_share_under_3deg": 0.232,
+    "concave_share": 0.293,
+    "cv": 0.602
+   },
+   {
+    "object": "Icosphere",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 13.52,
+    "p90": 25.95,
+    "p99": 38.18,
+    "flat_share_under_3deg": 0.031,
+    "concave_share": 0.112,
+    "cv": 0.547
+   }
+  ]
+ },
+ {
+  "name": "fake_faceted_ico",
+  "objects": 1,
+  "triangles": 20,
+  "axes": [
+   0.8362,
+   0.6693,
+   0.5384
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 0.972,
+    "solidity": 1.0
+   },
+   "right": {
+    "box_dimension": 0.968,
+    "solidity": 1.0
+   },
+   "top": {
+    "box_dimension": 0.976,
+    "solidity": 1.0
+   }
+  },
+  "normal_deviation": [
+   {
+    "object": "Icosphere",
+    "radius_fraction": 0.0312,
+    "samples": 4000,
+    "p50": 0.01,
+    "p90": 13.92,
+    "p99": 28.59,
+    "flat_share_under_3deg": 0.689,
+    "concave_share": 0.321,
+    "cv": 1.764
+   },
+   {
+    "object": "Icosphere",
+    "radius_fraction": 0.125,
+    "samples": 4000,
+    "p50": 11.7,
+    "p90": 26.47,
+    "p99": 39.77,
+    "flat_share_under_3deg": 0.107,
+    "concave_share": 0.013,
+    "cv": 0.685
+   }
+  ]
+ },
+ {
+  "name": "fake_cylinder_tree",
+  "objects": 40,
+  "triangles": 1760,
+  "axes": [
+   2.8493,
+   2.115,
+   1.9619
+  ],
+  "silhouette": {
+   "front": {
+    "box_dimension": 1.099,
+    "solidity": 0.263
+   },
+   "right": {
+    "box_dimension": 1.099,
+    "solidity": 0.274
+   },
+   "top": {
+    "box_dimension": 1.117,
+    "solidity": 0.185
+   }
+  }
+ }
+]
