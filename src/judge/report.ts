@@ -4,6 +4,7 @@ import type { RuleResult } from "./rules.js";
 import type { Isolation } from "./sandbox.js";
 import type { Validation } from "./validator.js";
 import { motionLines } from "./motion-summary.js";
+import { naturalLines } from "./natural.js";
 import { referenceLines, type ReferenceRecord } from "./reference.js";
 import { visualLines, type VisualRecord } from "./visual/record.js";
 import { packageLines, type PackageReport } from "../package/report.js";
@@ -152,6 +153,7 @@ export function summarize(report: Omit<Report, "summary">): string {
   if (report.validation !== undefined) lines.push(...validationLines(report.validation));
   if (report.package) lines.push(...packageLines(report.package));
   if (report.measurements) lines.push(...integrityLines(report.measurements), ...motionLines(report.measurements));
+  if (report.measurements) lines.push(...naturalLines(report.measurements.natural));
   if (report.reference) lines.push(...referenceLines(report.reference));
   if (report.visual) lines.push(...visualLines(report.visual));
   if (report.device) lines.push(`  render: ${describeDevice(report.device)}`);

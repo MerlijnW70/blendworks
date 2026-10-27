@@ -1057,6 +1057,85 @@
         "views"
       ],
       "additionalProperties": false
+    },
+    "natural": {
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": [
+            "rock",
+            "tree",
+            "plant"
+          ]
+        },
+        "silhouetteDimension": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "additionalProperties": false
+        },
+        "solidity": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "surfaceRoughness": {
+          "type": "object",
+          "properties": {
+            "p90Min": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 180
+            },
+            "flatShareMax": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "albedoVariation": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "class"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [

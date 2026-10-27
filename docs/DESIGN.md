@@ -393,6 +393,54 @@ The hirer can deliver the intended shape as silhouette masks beside the spec, pi
 - **Rules.** `reference.minIoU` and `reference.maxBoundaryDistance` judge the worst of the views that have no limit of their own. A view's own `minIoU` or `maxBoundaryDistance` gives the rule `reference[<view>].minIoU` or `reference[<view>].maxBoundaryDistance`. They prevent a delivery whose proportions or outline differ from what was ordered, which size and triangle limits cannot see.
 - **Making masks.** `blendworks silhouettes <blockout> --out <dir> [--views front,left] [--size px] [--up-axis z|y]` renders the masks of a blockout of the intended shape with the same rig and prints the `reference` group, with each mask's sha256 and the framing `bounds`.
 
+### Natural assets
+
+The optional `natural` group checks what tells a rock, a tree or a plant from a displaced primitive (`docs/research/natural-shapes.md`, sections 2 and 5):
+
+```json
+"natural": {
+  "class": "rock",
+  "solidity": {},
+  "surfaceRoughness": { "p90Min": 20 },
+  "albedoVariation": {}
+}
+```
+
+- **`class`:** `rock`, `tree` (trees and logs) or `plant` (plants and shrubs). It picks the calibrated defaults.
+- **Limits.** A rule given as `{}` takes the calibrated defaults of its class, and the report names them with `"source": "calibrated"`. A rule that gives any limit uses only the limits it gives (`"source": "spec"`). A rule with no calibrated default for the class must give its limits, or the spec is refused.
+
+| Rule | Measure | Limits |
+|---|---|---|
+| `natural.silhouetteDimension` | box-counting dimension `D` of the silhouette edge, the lowest of the front and right views | `min`, `max` |
+| `natural.solidity` | silhouette area over the area of its convex hull, the lowest of the front, right and top views | `min`, `max` |
+| `natural.surfaceRoughness` | per object, the angle between each sampled face normal and the area-weighted mean normal within `extent/32`; the lowest 90th percentile and the highest share under 3° over the objects | `p90Min`, `flatShareMax` |
+| `natural.albedoVariation` | the luminance coefficient of variation of the base-colour texels inside the UV islands | `min`, `max` |
+
+**Defaults.** `npm run calibrate:natural` judged 35 CC0 Poly Haven scans at 1k (12 rocks, 11 trees and logs, 12 plants and shrubs) and the stand-ins of the research (a UV sphere with a single-colour texture, an ico sphere displaced by Clouds, a jittered 20-face ico sphere and a 40-cylinder tree) with these rules. A lower limit starts from the 5th percentile of the class's scans and an upper limit from the 95th. When the nearest stand-in lies beyond it by at least the measure's step (0.01 for `D`, 0.001 for solidity, shares and CV, 0.1° for p90), the default is the midpoint between the two; otherwise the measure does not separate the class and gets no default. The values, every scan and the separation of each measure are in `docs/research/natural-shapes.md` (section 2.8) and `docs/research/natural-shapes/calibration.json`; `src/judge/natural-defaults.ts` is written from them.
+
+| Class | Default | Scans | Nearest stand-in |
+|---|---|---|---|
+| `rock` | `solidity.max` 0.976 | 95th percentile 0.969, range 0.465–0.969 | clouds-displaced ico sphere 0.983 |
+| `rock` | `surfaceRoughness.p90Min` 14 | 5th percentile 18.7°, range 16.6–68.3° | clouds-displaced ico sphere 9.4° |
+| `rock` | `albedoVariation.min` 0.026 | 5th percentile 0.051, range 0.047–0.384 | single-colour sphere 0 |
+| `tree` | `surfaceRoughness.flatShareMax` 0.365 | 95th percentile 0.255, range 0.000–0.330 | cylinder tree 0.476 |
+
+Four rocks made with `noise_displace` are measured as a third group and scored against these defaults without setting them; three pass, and a rock of one billow layer fails solidity and roughness. No other measure separates its class, so none has a default: `D` does not separate rocks (the scans' 5th percentile 1.004 against 1.003 for the displaced sphere, below the step), and the cylinder tree reaches the tree and plant scans on `D` (1.227 against 5th percentiles of 1.016 and 1.168), solidity and p90. The rock flat share overlaps (95th percentile 0.312 against 0.290). No stand-in for trees or plants has a texture, so albedo variation is not calibrated for them.
+
+A measurement that cannot be made (no silhouette, no faces, no base-colour texture on the faces) is `null`, and its rule fails. Section 4 says how each is measured. These rules see shape and texture statistics only; a spec for a natural asset should also carry the visual rubric below, beside them and never instead of them.
+
+**Template.** `docs/templates/natural-rock.spec.json`, `natural-tree.spec.json` and `natural-plant.spec.json` are spec templates: the `natural` group of the class with its calibrated defaults, and a `visual` rule whose rubric holds the five criteria of section 5 of the research:
+
+| `id` | Question |
+|---|---|
+| `no-primitive` | Is the asset free of any recognisable base primitive (sphere, box, cylinder or cone) in its silhouette and its surface? |
+| `multi-scale` | Does the surface show detail at large, medium and small scale in the close-ups, at a size that fits the object's real size? |
+| `no-repetition` | Is the asset free of visibly repeated features, copies or tiling? |
+| `weathering` | Do wear, dirt, moss or erosion follow exposure and cavities, rather than a uniform noise? |
+| `material-variation` | Does the colour vary believably, without looking noisy or flat? |
+
+Replace the brief, the format and the size with the asset's own. The rubric is advisory unless `required` is set to `true`.
+
 ### LODs and packages
 
 Two optional groups make the judge build a game-ready package from the delivery and judge it (section 7):
@@ -510,6 +558,18 @@ A loose part is a connected piece of a mesh, after merging vertices closer than 
 3. **IoU** is `|A ∩ B| / |A ∪ B|` over pixels, and 1 when both are empty. A 200 px square against its inscribed circle scores about π/4.
 4. **Boundary distance.** An edge pixel is an inside pixel with a 4-neighbour outside; the image border is not an edge. The distance from every edge pixel of one silhouette to the nearest edge pixel of the other is exact (the Euclidean distance transform of Felzenszwalb and Huttenlocher, 2012). The boundary distance is their mean over the edge pixels of both silhouettes (the average symmetric surface distance), divided by the side of the view in pixels. It is 0 when neither silhouette has edges, and null, which fails its rule, when only one has. Two half-planes 32 and 40 columns wide in a 64 px view are 8 px apart: 0.125.
 5. **Record.** `report.json` gives `reference.frame` and, per view, the mask's sha256 and channel, the pixel counts, the IoU and the boundary distance, in pixels and as a fraction. The asset's silhouette and an overlay (white for both, red for the asset only, blue for the reference only) are written to `reference/` with their sha256, and `blendworks diff` compares them.
+
+### Natural measures
+
+The `natural` group is measured in the one judge process, by the stages that already exist:
+
+1. **Silhouettes.** When the spec has `natural.silhouetteDimension` or `natural.solidity`, the `reference` stage also renders the front, right and top silhouettes at 1024 px, with the settings of the reference silhouettes (CPU, 1 sample, one ray per pixel centre, a transparent film), in its own scene copy. They are framed on the asset's measured bounds, centred on them rather than on the origin. They keep the asset's own materials instead of the opaque override, with 64 transparent bounces, so an alpha cut-out (a leaf card) is outside where its alpha is below a half, as it renders. A pixel is inside when its alpha is at least 128. They go to `silhouettes/natural-<view>.png`, inside the reference stage's checksum, and the judge writes each as a white-on-black mask to `natural/<view>-silhouette.png` beside the report, with the mask's sha256 in `measurements.natural.silhouettes`. The mask, not the rendered colour, is hashed, because only the alpha is a measurement.
+2. **Box-counting dimension.** The edge is every inside pixel with one of its 8 neighbours outside (outside the image counts as outside), which makes a 4-connected curve. For boxes of 2, 4, 8, 16, 32 and 64 px, `N(s)` is the number of boxes that hold an edge pixel, averaged over the grid offsets `0, s/8, 2s/8, …` in both directions (every offset for `s` of 8 or less). `D` is minus the least-squares slope of `ln N(s)` against `ln s`. A circle gives 1.00; a Koch snowflake of depth 7 gives 1.23 against the exact 1.262, because the smallest boxes are near the pixel size. An empty silhouette has no `D`.
+3. **Solidity.** The inside pixel count over the area of the convex hull of the corners of the boundary pixels, so a square scores exactly 1 and a 100 px L-shape that misses a 50 px quadrant scores 7500 / 8750.
+4. **Surface roughness.** The `measure` stage takes each placed object's evaluated triangles in world space, drops those of no area, and builds a KD-tree of their centres. The radius is the object's longest side over 32. 4,096 samples are placed by area, at `(k + 0.5) / 4096` of the running sum of triangle areas, so they are the same on every run. For each sample, the angle between its triangle's normal and the area-weighted mean normal of the triangles whose centres lie within the radius is measured; the object records its median, its 90th percentile and its share under 3°. The mesh is not subdivided: a face larger than the radius is its own neighbourhood and counts as flat.
+5. **Albedo variation.** The `measure` stage finds every base-colour image as the texture rules do, and the faces that use it through their material. Their triangles in the active UV map are wrapped into the unit square and rasterised at the image's size; a texel is used when its centre lies inside one (identical UV triangles are rasterised once). An image over 2,048 px on a side is first scaled to fit 2,048. Texels with an alpha below a half are left out. Luminance is `0.2126 R + 0.7152 G + 0.0722 B` of the stored values, and the CV is the standard deviation over the mean of every used texel of every image together. Shared mesh data counts once. `untexturedShare` is the share of the surface whose material has no base-colour image.
+
+`report.json` carries all of it in `measurements.natural`, so `blendworks diff` compares every value, and the summary prints one `natural:` line.
 
 ### Render device
 

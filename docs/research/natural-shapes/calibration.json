@@ -1,0 +1,5966 @@
+{
+  "version": 1,
+  "blender": "5.2.3",
+  "resolution": "1k",
+  "thresholdRule": "For a lower limit, take the 5th percentile of the class's scans; for an upper limit, the 95th. When the measured stand-in nearest to the scans lies beyond that percentile by at least the measure's step (0.01 for D, 0.001 for solidity and shares, 0.1 degrees for p90), the threshold is the midpoint between the two, rounded to the step, and the measure separates the class. Otherwise the threshold is the percentile and the measure does not separate the class: a stand-in reaches the scans, or no stand-in has a value. Only separating measures become defaults.",
+  "assets": [
+    {
+      "id": "rock_09",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/rock_09",
+      "licence": "CC0-1.0",
+      "setSha256": "043f9cc1d25547018facb52fbc91d20dac439e926d0b5e22b69c4658493a072d",
+      "values": {
+        "dimension": 1.005518,
+        "solidity": 0.93235,
+        "p90": 39.1249,
+        "flatShare": 0.1111,
+        "albedoCv": 0.265617
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 39.1249,
+          "highestFlatShare": 0.1111,
+          "items": [
+            {
+              "object": "rock_09_LOD0",
+              "faces": 12416,
+              "samples": 4096,
+              "radius": 0.00452,
+              "p50": 12.1545,
+              "p90": 39.1249,
+              "flatShare": 0.1111
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.265617,
+          "texels": 554535,
+          "mean": 0.234829,
+          "images": [
+            {
+              "image": "rock_09_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 554535,
+              "mean": 0.234829,
+              "cv": 0.265617
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.016874,
+              "boxCounts": [
+                674,
+                336.4375,
+                166.90625,
+                82.40625,
+                40.375,
+                19.9375
+              ],
+              "edgePixels": 1349,
+              "solidity": 0.953681,
+              "area": 66081,
+              "hullArea": 69290.5,
+              "sha256": "2d47cc57c84bdbf97aa1885dd9201b88262a3efd53951b0ef70691f8c87fb86e"
+            },
+            "right": {
+              "dimension": 1.005518,
+              "boxCounts": [
+                1103.75,
+                551.125,
+                274.75,
+                136.8125,
+                67.9375,
+                33.890625
+              ],
+              "edgePixels": 2208,
+              "solidity": 0.943427,
+              "area": 126264,
+              "hullArea": 133835.5,
+              "sha256": "adbedc415fc4fa49790bd6ca065fb9663c4e83b26f0c44c8505b05bb4c1a96e8"
+            },
+            "top": {
+              "dimension": 1.006807,
+              "boxCounts": [
+                1394,
+                696.25,
+                347.03125,
+                172.421875,
+                85.90625,
+                42.53125
+              ],
+              "edgePixels": 2789,
+              "solidity": 0.93235,
+              "area": 283916,
+              "hullArea": 304516.5,
+              "sha256": "35086cf06c3eca6696a484ae76197b81614c98ec9091012f6e46cee06f27f75a"
+            }
+          },
+          "dimension": 1.005518,
+          "solidity": 0.93235,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "coast_rocks_01",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/coast_rocks_01",
+      "licence": "CC0-1.0",
+      "setSha256": "2f5e4a2eec621d2d641f5af559937fcc1eee53befd9744fce35a44e86be93d8d",
+      "values": {
+        "dimension": 1.127443,
+        "solidity": 0.624128,
+        "p90": 59.0662,
+        "flatShare": 0.0952,
+        "albedoCv": 0.244907
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 59.0662,
+          "highestFlatShare": 0.0952,
+          "items": [
+            {
+              "object": "coast_rocks_01",
+              "faces": 679936,
+              "samples": 4096,
+              "radius": 1.85959,
+              "p50": 12.0796,
+              "p90": 59.0662,
+              "flatShare": 0.0952
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.244907,
+          "texels": 785255,
+          "mean": 0.32309,
+          "images": [
+            {
+              "image": "coast_rocks_01_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 785255,
+              "mean": 0.32309,
+              "cv": 0.244907
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.127443,
+              "boxCounts": [
+                1053.5,
+                520.8125,
+                253.328125,
+                119.859375,
+                51.515625,
+                20.640625
+              ],
+              "edgePixels": 2116,
+              "solidity": 0.669829,
+              "area": 21249,
+              "hullArea": 31723,
+              "sha256": "591605a153487a4df586dff7e536e0c985307c72d770b61b1fb9ff5877e3b2df"
+            },
+            "right": {
+              "dimension": 1.143565,
+              "boxCounts": [
+                821.5,
+                400.5,
+                192.03125,
+                90.4375,
+                37.84375,
+                15.3125
+              ],
+              "edgePixels": 1658,
+              "solidity": 0.624128,
+              "area": 15083,
+              "hullArea": 24166.5,
+              "sha256": "046900aefd5815880b9c78790e3676beaf78503b90e79cb381cc446f479ed8b3"
+            },
+            "top": {
+              "dimension": 1.005742,
+              "boxCounts": [
+                1650.75,
+                825.1875,
+                412.203125,
+                206.015625,
+                102.40625,
+                50.390625
+              ],
+              "edgePixels": 3302,
+              "solidity": 0.742775,
+              "area": 243499,
+              "hullArea": 327823.5,
+              "sha256": "2ccbc30742b5c3737c0cb819f28f25843c2b901b7edfc1e716b3bfb5b0c4b320"
+            }
+          },
+          "dimension": 1.127443,
+          "solidity": 0.624128,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "coast_rocks_05",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/coast_rocks_05",
+      "licence": "CC0-1.0",
+      "setSha256": "3abc4d22cdb4d90957c1a3e26a977fce69606761909eeed73c25a502ec957a2a",
+      "values": {
+        "dimension": 1.043054,
+        "solidity": 0.733932,
+        "p90": 68.2628,
+        "flatShare": 0.0156,
+        "albedoCv": 0.383925
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 68.2628,
+          "highestFlatShare": 0.0156,
+          "items": [
+            {
+              "object": "coast_rocks_05",
+              "faces": 771724,
+              "samples": 4096,
+              "radius": 0.126209,
+              "p50": 28.5221,
+              "p90": 68.2628,
+              "flatShare": 0.0156
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.383925,
+          "texels": 805772,
+          "mean": 0.318097,
+          "images": [
+            {
+              "image": "coast_rocks_05_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 805772,
+              "mean": 0.318097,
+              "cv": 0.383925
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.055098,
+              "boxCounts": [
+                1480.5,
+                732.25,
+                358.015625,
+                172.8125,
+                82.625,
+                37.921875
+              ],
+              "edgePixels": 2975,
+              "solidity": 0.733932,
+              "area": 117573,
+              "hullArea": 160196,
+              "sha256": "4e80aa62a955c371e8f9465bc46ae213a54d676611b1f165873a7a6b918d544c"
+            },
+            "right": {
+              "dimension": 1.043054,
+              "boxCounts": [
+                1460.5,
+                723.125,
+                355.984375,
+                173.671875,
+                83.28125,
+                39.09375
+              ],
+              "edgePixels": 2929,
+              "solidity": 0.787512,
+              "area": 132469,
+              "hullArea": 168212,
+              "sha256": "0f0b2c82236cf3ee0d28dbf4c5afeb67a5091a20e8e74682027e69151b788b87"
+            },
+            "top": {
+              "dimension": 1.003044,
+              "boxCounts": [
+                1704,
+                851.5625,
+                425.1875,
+                212.421875,
+                105.6875,
+                52.703125
+              ],
+              "edgePixels": 3409,
+              "solidity": 0.980933,
+              "area": 558451,
+              "hullArea": 569306,
+              "sha256": "150547427baecc878cabcdd46dee460190a097e893013064540d3175c5e59530"
+            }
+          },
+          "dimension": 1.043054,
+          "solidity": 0.733932,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "moon_rock_01",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/moon_rock_01",
+      "licence": "CC0-1.0",
+      "setSha256": "f9d33d6e290233df5327c3ec5d27769188afa4a2e0cb9c33aa19067b08378653",
+      "values": {
+        "dimension": 1.004579,
+        "solidity": 0.921024,
+        "p90": 20.5723,
+        "flatShare": 0.4299,
+        "albedoCv": 0.047298
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 4,
+          "lowestP90": 20.5723,
+          "highestFlatShare": 0.4299,
+          "items": [
+            {
+              "object": "moon_rock_01_LOD0",
+              "faces": 9958,
+              "samples": 4096,
+              "radius": 0.006629,
+              "p50": 7.909,
+              "p90": 24.9333,
+              "flatShare": 0.1875
+            },
+            {
+              "object": "moon_rock_01_LOD1",
+              "faces": 4978,
+              "samples": 4096,
+              "radius": 0.006629,
+              "p50": 7.3269,
+              "p90": 23.2237,
+              "flatShare": 0.2358
+            },
+            {
+              "object": "moon_rock_01_LOD2",
+              "faces": 2488,
+              "samples": 4096,
+              "radius": 0.006628,
+              "p50": 5.6766,
+              "p90": 21.9919,
+              "flatShare": 0.3271
+            },
+            {
+              "object": "moon_rock_01_LOD3",
+              "faces": 1244,
+              "samples": 4096,
+              "radius": 0.006621,
+              "p50": 4.2469,
+              "p90": 20.5723,
+              "flatShare": 0.4299
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.047298,
+          "texels": 667503,
+          "mean": 0.498059,
+          "images": [
+            {
+              "image": "moon_rock_01_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 667503,
+              "mean": 0.498059,
+              "cv": 0.047298
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.004579,
+              "boxCounts": [
+                1226.25,
+                612.375,
+                305.375,
+                151.75,
+                75.734375,
+                37.765625
+              ],
+              "edgePixels": 2453,
+              "solidity": 0.921024,
+              "area": 194406,
+              "hullArea": 211076,
+              "sha256": "1446935f06f2a45ef14a95ac3a4e96b7e42c7897022043e4d6c35ba592d3539b"
+            },
+            "right": {
+              "dimension": 1.006043,
+              "boxCounts": [
+                785.75,
+                392.5,
+                196.015625,
+                97.71875,
+                48.53125,
+                24.015625
+              ],
+              "edgePixels": 1572,
+              "solidity": 0.958834,
+              "area": 96254,
+              "hullArea": 100386.5,
+              "sha256": "469d90e55503053156778d192c57d43c2c6fc82d68277e86e6bcdd8f5390fe1a"
+            },
+            "top": {
+              "dimension": 1.004853,
+              "boxCounts": [
+                1376.5,
+                687.8125,
+                343.5,
+                171.03125,
+                84.984375,
+                42.34375
+              ],
+              "edgePixels": 2753,
+              "solidity": 0.948498,
+              "area": 287377,
+              "hullArea": 302981,
+              "sha256": "ead44b584588fdd9f59f667b4ce8536df57522e02a9f464205fc00589c28b510"
+            }
+          },
+          "dimension": 1.004579,
+          "solidity": 0.921024,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "moon_rock_03",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/moon_rock_03",
+      "licence": "CC0-1.0",
+      "setSha256": "ab385d5fd629806de94f6265519aa3a4b7a96cc97c2d4818f357969facd74a3f",
+      "values": {
+        "dimension": 1.003944,
+        "solidity": 0.969173,
+        "p90": 20.5196,
+        "flatShare": 0.209,
+        "albedoCv": 0.054448
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 20.5196,
+          "highestFlatShare": 0.209,
+          "items": [
+            {
+              "object": "moon_rock_03_LOD0",
+              "faces": 5598,
+              "samples": 4096,
+              "radius": 0.003501,
+              "p50": 6.5695,
+              "p90": 20.5196,
+              "flatShare": 0.209
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.054448,
+          "texels": 702157,
+          "mean": 0.504681,
+          "images": [
+            {
+              "image": "moon_rock_03_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 702157,
+              "mean": 0.504681,
+              "cv": 0.054448
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.004034,
+              "boxCounts": [
+                1349,
+                674.125,
+                336.75,
+                168.078125,
+                83.71875,
+                41.515625
+              ],
+              "edgePixels": 2698,
+              "solidity": 0.973069,
+              "area": 269361,
+              "hullArea": 276816,
+              "sha256": "524783d8646ed9f4412aa54eeb2009cc8ae08136caee08a88d6a98ad0f27a6e1"
+            },
+            "right": {
+              "dimension": 1.003944,
+              "boxCounts": [
+                1144.5,
+                572,
+                285.671875,
+                142.734375,
+                70.96875,
+                35.25
+              ],
+              "edgePixels": 2289,
+              "solidity": 0.969173,
+              "area": 237616,
+              "hullArea": 245174,
+              "sha256": "ec1ba3de7e603965052090fc260b12b0cc5cbb51cac01ac5b215730a6e3a115e"
+            },
+            "top": {
+              "dimension": 1.003428,
+              "boxCounts": [
+                1555.75,
+                777.1875,
+                388.09375,
+                193.640625,
+                96.59375,
+                48
+              ],
+              "edgePixels": 3113,
+              "solidity": 0.97281,
+              "area": 383079,
+              "hullArea": 393786,
+              "sha256": "46906b43d1bb4d34045f991faf514d3ca1249da8cb99dfe48f4ef3cf40ef9edc"
+            }
+          },
+          "dimension": 1.003944,
+          "solidity": 0.969173,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "namaqualand_boulder_02",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/namaqualand_boulder_02",
+      "licence": "CC0-1.0",
+      "setSha256": "cdcaa7f74291873fd635ce70e6946c8f4583019533310b7145456f63933aece5",
+      "values": {
+        "dimension": 1.018403,
+        "solidity": 0.836128,
+        "p90": 66.7343,
+        "flatShare": 0.0273,
+        "albedoCv": 0.322573
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 66.7343,
+          "highestFlatShare": 0.0273,
+          "items": [
+            {
+              "object": "boulder_02",
+              "faces": 97964,
+              "samples": 4096,
+              "radius": 0.079129,
+              "p50": 22.6044,
+              "p90": 66.7343,
+              "flatShare": 0.0273
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.322573,
+          "texels": 742842,
+          "mean": 0.329628,
+          "images": [
+            {
+              "image": "boulder_02_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 742842,
+              "mean": 0.329628,
+              "cv": 0.322573
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.0289,
+              "boxCounts": [
+                1422,
+                704.5625,
+                347.5625,
+                170.15625,
+                82.90625,
+                40.21875
+              ],
+              "edgePixels": 2851,
+              "solidity": 0.836128,
+              "area": 168086,
+              "hullArea": 201029,
+              "sha256": "e3f21159af7aeac971aaca31e7160ce7daa81389d33633a6eb0c758aa770912d"
+            },
+            "right": {
+              "dimension": 1.018403,
+              "boxCounts": [
+                782,
+                388.5625,
+                192.140625,
+                94.703125,
+                46.84375,
+                22.90625
+              ],
+              "edgePixels": 1565,
+              "solidity": 0.928907,
+              "area": 90947,
+              "hullArea": 97907.5,
+              "sha256": "af948b08c122a6e59ddcc75b6a13eb537080678009816d527164d5614991de7c"
+            },
+            "top": {
+              "dimension": 1.013401,
+              "boxCounts": [
+                1552.25,
+                772.1875,
+                382.75,
+                189.28125,
+                93.640625,
+                46.390625
+              ],
+              "edgePixels": 3107,
+              "solidity": 0.838709,
+              "area": 268228,
+              "hullArea": 319810.5,
+              "sha256": "d4f397b63e18efa3b160e6a46e00356fab51e6d917ac47e0b1de4cc28cae8b7c"
+            }
+          },
+          "dimension": 1.018403,
+          "solidity": 0.836128,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "namaqualand_boulder_03",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/namaqualand_boulder_03",
+      "licence": "CC0-1.0",
+      "setSha256": "e4fc4d03bda1627c04572e0bd92d5ca727c8e0f406efbb143fc404341bed0ba0",
+      "values": {
+        "dimension": 1.011929,
+        "solidity": 0.943587,
+        "p90": 28.4661,
+        "flatShare": 0.0547,
+        "albedoCv": 0.321811
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 28.4661,
+          "highestFlatShare": 0.0547,
+          "items": [
+            {
+              "object": "boulder_03_LOD0",
+              "faces": 64826,
+              "samples": 4096,
+              "radius": 0.095794,
+              "p50": 12.161,
+              "p90": 28.4661,
+              "flatShare": 0.0547
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.321811,
+          "texels": 674617,
+          "mean": 0.337638,
+          "images": [
+            {
+              "image": "boulder_03_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 674617,
+              "mean": 0.337638,
+              "cv": 0.321811
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.011929,
+              "boxCounts": [
+                1167.5,
+                581.4375,
+                288.71875,
+                142.9375,
+                71.171875,
+                34.9375
+              ],
+              "edgePixels": 2338,
+              "solidity": 0.968609,
+              "area": 238117,
+              "hullArea": 245834,
+              "sha256": "443b28c5c413dc5e31b0097bbddb229d19237523d10ee6b7b02d7478e2ae5379"
+            },
+            "right": {
+              "dimension": 1.013485,
+              "boxCounts": [
+                1368,
+                681,
+                338.265625,
+                167.203125,
+                82.78125,
+                40.8125
+              ],
+              "edgePixels": 2740,
+              "solidity": 0.943587,
+              "area": 275377,
+              "hullArea": 291840.5,
+              "sha256": "53bc3ad5d48bbba9d00e9eca7a77550f4324a58c077ae602ebffff5623520627"
+            },
+            "top": {
+              "dimension": 1.001637,
+              "boxCounts": [
+                1555.5,
+                777.6875,
+                388.59375,
+                193.984375,
+                96.96875,
+                48.3125
+              ],
+              "edgePixels": 3111,
+              "solidity": 0.970822,
+              "area": 358892,
+              "hullArea": 369678.5,
+              "sha256": "aa62c9d8ae8fa9e1c00ae057329499cd216ceddaf20dc2f3d3fe6e9587ef0d52"
+            }
+          },
+          "dimension": 1.011929,
+          "solidity": 0.943587,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "namaqualand_boulder_04",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/namaqualand_boulder_04",
+      "licence": "CC0-1.0",
+      "setSha256": "410a3a1610d0fc0f34d03a4e0c630b59dd7cad58b59692f50f9e7b518c09d1be",
+      "values": {
+        "dimension": 1.010159,
+        "solidity": 0.968251,
+        "p90": 31.7515,
+        "flatShare": 0.043,
+        "albedoCv": 0.259966
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 31.7515,
+          "highestFlatShare": 0.043,
+          "items": [
+            {
+              "object": "boulder_04",
+              "faces": 59066,
+              "samples": 4096,
+              "radius": 0.078817,
+              "p50": 14.1523,
+              "p90": 31.7515,
+              "flatShare": 0.043
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.259966,
+          "texels": 638684,
+          "mean": 0.365248,
+          "images": [
+            {
+              "image": "boulder_04_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 638684,
+              "mean": 0.365248,
+              "cv": 0.259966
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.012778,
+              "boxCounts": [
+                1642.75,
+                818.25,
+                406.203125,
+                201.1875,
+                99.3125,
+                49.203125
+              ],
+              "edgePixels": 3290,
+              "solidity": 0.968251,
+              "area": 446813,
+              "hullArea": 461464,
+              "sha256": "e382e4d8951e8560ea48611b832e9c86a1c6e4bffa3112b34b71eee160799acf"
+            },
+            "right": {
+              "dimension": 1.010159,
+              "boxCounts": [
+                1590,
+                792.625,
+                394.03125,
+                195.765625,
+                96.984375,
+                47.96875
+              ],
+              "edgePixels": 3182,
+              "solidity": 0.971285,
+              "area": 436422,
+              "hullArea": 449324.5,
+              "sha256": "9914fb98cf5d49b85d8496b2f8107d74c15abe46f3d20da734686ce5edba0a9b"
+            },
+            "top": {
+              "dimension": 1.007158,
+              "boxCounts": [
+                1775.25,
+                885.4375,
+                440.609375,
+                218.5,
+                108.875,
+                54.203125
+              ],
+              "edgePixels": 3553,
+              "solidity": 0.98475,
+              "area": 506609,
+              "hullArea": 514454.5,
+              "sha256": "581fe607749fb34d09411d04ce043b749ac834e2e6f8a16bf4dd8c8824500df9"
+            }
+          },
+          "dimension": 1.010159,
+          "solidity": 0.968251,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "namaqualand_boulder_05",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/namaqualand_boulder_05",
+      "licence": "CC0-1.0",
+      "setSha256": "560ce74eb2117501ee4cfa0e3ab0f3bbe69daf26dc94767363a96c9390aa8a4e",
+      "values": {
+        "dimension": 1.01301,
+        "solidity": 0.949438,
+        "p90": 48.3616,
+        "flatShare": 0.0193,
+        "albedoCv": 0.146461
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 48.3616,
+          "highestFlatShare": 0.0193,
+          "items": [
+            {
+              "object": "namaqualand_boulder_05",
+              "faces": 89618,
+              "samples": 4096,
+              "radius": 0.042626,
+              "p50": 19.7852,
+              "p90": 48.3616,
+              "flatShare": 0.0193
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.146461,
+          "texels": 654787,
+          "mean": 0.554056,
+          "images": [
+            {
+              "image": "namaqualand_boulder_05_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 654787,
+              "mean": 0.554056,
+              "cv": 0.146461
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.013112,
+              "boxCounts": [
+                1272.25,
+                633.125,
+                314.21875,
+                155.15625,
+                76.703125,
+                38.109375
+              ],
+              "edgePixels": 2546,
+              "solidity": 0.949438,
+              "area": 206873,
+              "hullArea": 217890,
+              "sha256": "a892feb166d955f38e0942afe66d7fdc64fd293707e9a0e0b5d8eddc031dae6e"
+            },
+            "right": {
+              "dimension": 1.01301,
+              "boxCounts": [
+                852.75,
+                423.5,
+                209.859375,
+                103.5625,
+                51.453125,
+                25.515625
+              ],
+              "edgePixels": 1707,
+              "solidity": 0.970194,
+              "area": 125219,
+              "hullArea": 129066,
+              "sha256": "a05a83d7bda5302bfc578290bbb9dddb7d29d5e79929f22698de2c281565b370"
+            },
+            "top": {
+              "dimension": 1.011099,
+              "boxCounts": [
+                1397.25,
+                696.1875,
+                345.703125,
+                171.1875,
+                84.78125,
+                42.109375
+              ],
+              "edgePixels": 2799,
+              "solidity": 0.964235,
+              "area": 301992,
+              "hullArea": 313193.5,
+              "sha256": "dad02cd39a30007c1f5c1fdcb6fbeb97403044507117259b188787cb2822c6f3"
+            }
+          },
+          "dimension": 1.01301,
+          "solidity": 0.949438,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "namaqualand_boulder_06",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/namaqualand_boulder_06",
+      "licence": "CC0-1.0",
+      "setSha256": "41f1fa9455557439a7662424450a23463f87f4fe278f135f9fb0695fdf8c5f11",
+      "values": {
+        "dimension": 1.013105,
+        "solidity": 0.957891,
+        "p90": 41.8282,
+        "flatShare": 0.0776,
+        "albedoCv": 0.245014
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 41.8282,
+          "highestFlatShare": 0.0776,
+          "items": [
+            {
+              "object": "namaqualand_boulder_06",
+              "faces": 109114,
+              "samples": 4096,
+              "radius": 0.037871,
+              "p50": 15.4696,
+              "p90": 41.8282,
+              "flatShare": 0.0776
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.245014,
+          "texels": 787916,
+          "mean": 0.356173,
+          "images": [
+            {
+              "image": "namaqualand_boulder_06_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 787916,
+              "mean": 0.356173,
+              "cv": 0.245014
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.019075,
+              "boxCounts": [
+                1034,
+                512.9375,
+                253.59375,
+                125.21875,
+                61.59375,
+                30.25
+              ],
+              "edgePixels": 2070,
+              "solidity": 0.957891,
+              "area": 184692,
+              "hullArea": 192811,
+              "sha256": "d0e7af78c39742d5966c1514f30e78b2819fd716dda091efd727b7be76c77869"
+            },
+            "right": {
+              "dimension": 1.013105,
+              "boxCounts": [
+                1430.5,
+                711.1875,
+                352.609375,
+                174.46875,
+                86.546875,
+                42.71875
+              ],
+              "edgePixels": 2864,
+              "solidity": 0.962631,
+              "area": 308207,
+              "hullArea": 320171.5,
+              "sha256": "ec70224a660fb1645787424f45dd70c07dfefa261c8b1d9ff11042f32144546f"
+            },
+            "top": {
+              "dimension": 1.01179,
+              "boxCounts": [
+                1431.5,
+                712.25,
+                353.078125,
+                174.09375,
+                86.484375,
+                43.109375
+              ],
+              "edgePixels": 2867,
+              "solidity": 0.976395,
+              "area": 327185,
+              "hullArea": 335095,
+              "sha256": "697fb7139dbb0f72ce85edf49315f9b57581c42dadd14d6d24971921d5f754b1"
+            }
+          },
+          "dimension": 1.013105,
+          "solidity": 0.957891,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "rock_moss_set_01",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/rock_moss_set_01",
+      "licence": "CC0-1.0",
+      "setSha256": "dab7f081e8cf4eeedd15d33e92334670b96c8157df3ca2e9f476d8b42965939c",
+      "values": {
+        "dimension": 1.018562,
+        "solidity": 0.465152,
+        "p90": 16.5501,
+        "flatShare": 0.2153,
+        "albedoCv": 0.244988
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 6,
+          "lowestP90": 16.5501,
+          "highestFlatShare": 0.2153,
+          "items": [
+            {
+              "object": "rock_moss_set_01_rock01",
+              "faces": 11000,
+              "samples": 4096,
+              "radius": 0.105275,
+              "p50": 12.2861,
+              "p90": 30.3402,
+              "flatShare": 0.0566
+            },
+            {
+              "object": "rock_moss_set_01_rock02",
+              "faces": 10996,
+              "samples": 4096,
+              "radius": 0.101991,
+              "p50": 9.6752,
+              "p90": 29.2811,
+              "flatShare": 0.1018
+            },
+            {
+              "object": "rock_moss_set_01_rock03",
+              "faces": 5000,
+              "samples": 4096,
+              "radius": 0.065893,
+              "p50": 6.4084,
+              "p90": 17.4827,
+              "flatShare": 0.2153
+            },
+            {
+              "object": "rock_moss_set_01_rock04",
+              "faces": 10589,
+              "samples": 4096,
+              "radius": 0.066488,
+              "p50": 7.5228,
+              "p90": 18.9547,
+              "flatShare": 0.1465
+            },
+            {
+              "object": "rock_moss_set_01_rock05",
+              "faces": 16548,
+              "samples": 4096,
+              "radius": 0.093708,
+              "p50": 7.0453,
+              "p90": 16.5501,
+              "flatShare": 0.1506
+            },
+            {
+              "object": "rock_moss_set_01_rock06",
+              "faces": 8994,
+              "samples": 4096,
+              "radius": 0.086166,
+              "p50": 9.0091,
+              "p90": 24.6233,
+              "flatShare": 0.1296
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.244988,
+          "texels": 432112,
+          "mean": 0.306049,
+          "images": [
+            {
+              "image": "rock_moss_set_01_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 432112,
+              "mean": 0.306049,
+              "cv": 0.244988
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.026329,
+              "boxCounts": [
+                1349.5,
+                672.25,
+                334.234375,
+                165.53125,
+                81.328125,
+                37.921875
+              ],
+              "edgePixels": 2701,
+              "solidity": 0.680429,
+              "area": 90923,
+              "hullArea": 133626,
+              "sha256": "b91dd326cbb6412f0a386ef463185ae2da8ca0454a24033ae7dbeb3f52342e31"
+            },
+            "right": {
+              "dimension": 1.018562,
+              "boxCounts": [
+                1108.25,
+                552.125,
+                274.046875,
+                135.578125,
+                66.640625,
+                32.390625
+              ],
+              "edgePixels": 2217,
+              "solidity": 0.74462,
+              "area": 86835,
+              "hullArea": 116616.5,
+              "sha256": "8b599e5e569cd1af2851c94bc0a459b9ba178cbc842bcef3c1eb89bf829037b2"
+            },
+            "top": {
+              "dimension": 1.009639,
+              "boxCounts": [
+                3259.5,
+                1625.875,
+                809.46875,
+                403.375,
+                199.921875,
+                98.234375
+              ],
+              "edgePixels": 6526,
+              "solidity": 0.465152,
+              "area": 267977,
+              "hullArea": 576106,
+              "sha256": "7eb153820e7d0652c0fbd6362246fabf4d9493c10525860e1ede36ddda62bc28"
+            }
+          },
+          "dimension": 1.018562,
+          "solidity": 0.465152,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "stone_01",
+      "kind": "scan",
+      "classes": [
+        "rock"
+      ],
+      "source": "https://polyhaven.com/a/stone_01",
+      "licence": "CC0-1.0",
+      "setSha256": "6151284317d9ec21c9fee0dd021a5b96290728a4d04d512898b712a8f2c703e2",
+      "values": {
+        "dimension": 1.012615,
+        "solidity": 0.856307,
+        "p90": 39.1879,
+        "flatShare": 0.022,
+        "albedoCv": 0.320889
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 39.1879,
+          "highestFlatShare": 0.022,
+          "items": [
+            {
+              "object": "stone_01",
+              "faces": 53520,
+              "samples": 4096,
+              "radius": 0.00459,
+              "p50": 17.6739,
+              "p90": 39.1879,
+              "flatShare": 0.022
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.320889,
+          "texels": 677747,
+          "mean": 0.380542,
+          "images": [
+            {
+              "image": "stone_01_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 677747,
+              "mean": 0.380542,
+              "cv": 0.320889
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.012615,
+              "boxCounts": [
+                1453,
+                724.5625,
+                359.890625,
+                178.1875,
+                88.1875,
+                43.484375
+              ],
+              "edgePixels": 2908,
+              "solidity": 0.856307,
+              "area": 226086,
+              "hullArea": 264024.5,
+              "sha256": "da08c73d05cbc99142dbcefaae96d80f59eee6796f45bebffe0bee43b0ab3809"
+            },
+            "right": {
+              "dimension": 1.016482,
+              "boxCounts": [
+                1019.75,
+                507.9375,
+                252.265625,
+                124.65625,
+                61.109375,
+                30.171875
+              ],
+              "edgePixels": 2043,
+              "solidity": 0.957918,
+              "area": 170383,
+              "hullArea": 177868,
+              "sha256": "610d2bd565a63fa021b3d0d403c2aa44ace0ae0299909a046c47e83f99f12a61"
+            },
+            "top": {
+              "dimension": 1.017173,
+              "boxCounts": [
+                1556,
+                774.625,
+                384.515625,
+                189.78125,
+                93.6875,
+                45.75
+              ],
+              "edgePixels": 3119,
+              "solidity": 0.922395,
+              "area": 328101,
+              "hullArea": 355705.5,
+              "sha256": "323367ceaefb7caa87e0e2d636935dcc73b277924940903344abf47ada5f671e"
+            }
+          },
+          "dimension": 1.012615,
+          "solidity": 0.856307,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "dead_quiver_trunk",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/dead_quiver_trunk",
+      "licence": "CC0-1.0",
+      "setSha256": "1d7f4d921a9f75bf191658307a79ecdccce225bc377219779738b5f4b720229b",
+      "values": {
+        "dimension": 1.017882,
+        "solidity": 0.633611,
+        "p90": 40.8014,
+        "flatShare": 0.146,
+        "albedoCv": 0.175658
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 40.8014,
+          "highestFlatShare": 0.146,
+          "items": [
+            {
+              "object": "dead_quiver_trunk_LOD0",
+              "faces": 17978,
+              "samples": 4096,
+              "radius": 0.062316,
+              "p50": 9.2833,
+              "p90": 40.8014,
+              "flatShare": 0.146
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.175658,
+          "texels": 696176,
+          "mean": 0.591841,
+          "images": [
+            {
+              "image": "dead_quiver_trunk_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 696176,
+              "mean": 0.591841,
+              "cv": 0.175658
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.02099,
+              "boxCounts": [
+                1089.5,
+                543.8125,
+                270.921875,
+                134.21875,
+                65.828125,
+                31.40625
+              ],
+              "edgePixels": 2180,
+              "solidity": 0.633611,
+              "area": 59037,
+              "hullArea": 93175.5,
+              "sha256": "8675489d2d8585976d37870d67157dae77d732f74072218a5131f9999aeefbd0"
+            },
+            "right": {
+              "dimension": 1.017882,
+              "boxCounts": [
+                1078.5,
+                538,
+                268.046875,
+                132.828125,
+                65.65625,
+                31.40625
+              ],
+              "edgePixels": 2159,
+              "solidity": 0.692424,
+              "area": 62734,
+              "hullArea": 90600.5,
+              "sha256": "14187f17e7128e89c8bfbeef58fe8c675245321c0f5ec9f4a58d6cf7f769f237"
+            },
+            "top": {
+              "dimension": 1.041127,
+              "boxCounts": [
+                272.75,
+                136.1875,
+                67.5,
+                33.09375,
+                15.75,
+                7.34375
+              ],
+              "edgePixels": 546,
+              "solidity": 0.875914,
+              "area": 9526,
+              "hullArea": 10875.5,
+              "sha256": "e9e84bc076d4a02e01ba13d0e338517918999fa5de1b829d1b8465e26704c352"
+            }
+          },
+          "dimension": 1.017882,
+          "solidity": 0.633611,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "dead_tree_trunk",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/dead_tree_trunk",
+      "licence": "CC0-1.0",
+      "setSha256": "44828bdb7cef3b677e615a64d54e92aeb150a86c4c3e32e55c8769142729e886",
+      "values": {
+        "dimension": 1.040573,
+        "solidity": 0.775469,
+        "p90": 48.9582,
+        "flatShare": 0.0933,
+        "albedoCv": 0.268243
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 48.9582,
+          "highestFlatShare": 0.0933,
+          "items": [
+            {
+              "object": "dead_tree_trunk",
+              "faces": 101802,
+              "samples": 4096,
+              "radius": 0.095344,
+              "p50": 12.5648,
+              "p90": 48.9582,
+              "flatShare": 0.0933
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.268243,
+          "texels": 843583,
+          "mean": 0.193711,
+          "images": [
+            {
+              "image": "dead_tree_trunk_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 843583,
+              "mean": 0.193711,
+              "cv": 0.268243
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.049755,
+              "boxCounts": [
+                1062.25,
+                528.125,
+                260.4375,
+                127.84375,
+                62.015625,
+                27.171875
+              ],
+              "edgePixels": 2127,
+              "solidity": 0.775469,
+              "area": 44534,
+              "hullArea": 57428.5,
+              "sha256": "430ba4df4cd3f2337a5911b57ad82777ba1d9e1a9779232262974c778bf54cb5"
+            },
+            "right": {
+              "dimension": 1.040573,
+              "boxCounts": [
+                170.5,
+                83.9375,
+                41.046875,
+                20.109375,
+                9.6875,
+                4.609375
+              ],
+              "edgePixels": 343,
+              "solidity": 0.930979,
+              "area": 4613,
+              "hullArea": 4955,
+              "sha256": "1d451d828517817ec14bf0290ace5c5aafd7f76abd6c36a501dbadc81613694a"
+            },
+            "top": {
+              "dimension": 1.047459,
+              "boxCounts": [
+                1051,
+                517.4375,
+                252.75,
+                122.515625,
+                59.40625,
+                27.625
+              ],
+              "edgePixels": 2106,
+              "solidity": 0.894857,
+              "area": 48350,
+              "hullArea": 54031,
+              "sha256": "411a48d539e6bd069de56e115c26e126efee90bab42a96ad14f58d6f4158009c"
+            }
+          },
+          "dimension": 1.040573,
+          "solidity": 0.775469,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "dead_tree_trunk_02",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/dead_tree_trunk_02",
+      "licence": "CC0-1.0",
+      "setSha256": "f2015715446fb95623ed60fe2f25bb61680c2dadaf32d2453d03aff234c73961",
+      "values": {
+        "dimension": 1.069328,
+        "solidity": 0.532567,
+        "p90": 68.0187,
+        "flatShare": 0.0264,
+        "albedoCv": 0.324578
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 68.0187,
+          "highestFlatShare": 0.0264,
+          "items": [
+            {
+              "object": "dead_tree_trunk_02",
+              "faces": 83128,
+              "samples": 4096,
+              "radius": 0.126605,
+              "p50": 25.3549,
+              "p90": 68.0187,
+              "flatShare": 0.0264
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.324578,
+          "texels": 794308,
+          "mean": 0.332469,
+          "images": [
+            {
+              "image": "dead_tree_trunk_02_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 794308,
+              "mean": 0.332469,
+              "cv": 0.324578
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.069328,
+              "boxCounts": [
+                1498.75,
+                737.3125,
+                359.78125,
+                171.859375,
+                79.96875,
+                36.765625
+              ],
+              "edgePixels": 3006,
+              "solidity": 0.532567,
+              "area": 71585,
+              "hullArea": 134415,
+              "sha256": "287ac6f1a8c899b0fe880c6f697ef66be0e2d1fcaa3c3dcf7217e9b0c92302b7"
+            },
+            "right": {
+              "dimension": 1.102691,
+              "boxCounts": [
+                618.5,
+                301.0625,
+                144.359375,
+                67.796875,
+                30.34375,
+                13.53125
+              ],
+              "edgePixels": 1246,
+              "solidity": 0.716923,
+              "area": 22311,
+              "hullArea": 31120.5,
+              "sha256": "46e280ba1228632add57713cc85d5c751e2b3ce3658863e47188e09e91fe5d50"
+            },
+            "top": {
+              "dimension": 1.061116,
+              "boxCounts": [
+                1478,
+                726.25,
+                353.9375,
+                169.296875,
+                80.828125,
+                37.140625
+              ],
+              "edgePixels": 2964,
+              "solidity": 0.538135,
+              "area": 72313,
+              "hullArea": 134377,
+              "sha256": "f64260fcf8f4ebfaa43ce9356802ee831914c27d7b251f980387e306c943eb31"
+            }
+          },
+          "dimension": 1.069328,
+          "solidity": 0.532567,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "dry_branches_medium_01",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/dry_branches_medium_01",
+      "licence": "CC0-1.0",
+      "setSha256": "d0e11c52ff3a874181af675ff6cb5585232e4a086530393740e62ed6735f9d0e",
+      "values": {
+        "dimension": 1.15711,
+        "solidity": 0.142293,
+        "p90": 54.6521,
+        "flatShare": 0.0818,
+        "albedoCv": 0.291396
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 3,
+          "lowestP90": 54.6521,
+          "highestFlatShare": 0.0818,
+          "items": [
+            {
+              "object": "dry_branches_medium_01_a",
+              "faces": 5933,
+              "samples": 4096,
+              "radius": 0.040599,
+              "p50": 22.056,
+              "p90": 79.8124,
+              "flatShare": 0.0391
+            },
+            {
+              "object": "dry_branches_medium_01_b",
+              "faces": 5254,
+              "samples": 4096,
+              "radius": 0.032453,
+              "p50": 20.6472,
+              "p90": 64.2304,
+              "flatShare": 0.0325
+            },
+            {
+              "object": "dry_branches_medium_01_c",
+              "faces": 5616,
+              "samples": 4096,
+              "radius": 0.024285,
+              "p50": 15.6341,
+              "p90": 54.6521,
+              "flatShare": 0.0818
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.291396,
+          "texels": 725319,
+          "mean": 0.278792,
+          "images": [
+            {
+              "image": "dry_branches_medium_01_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 725319,
+              "mean": 0.278792,
+              "cv": 0.291396
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.15711,
+              "boxCounts": [
+                1307,
+                637.875,
+                299.203125,
+                133.03125,
+                56.765625,
+                23.921875
+              ],
+              "edgePixels": 2623,
+              "solidity": 0.196543,
+              "area": 22019,
+              "hullArea": 112031.5,
+              "sha256": "157e8c4ef674d87feb9d0320264d7ffa1a6abc53febfecbe9aae8e5b415f0923"
+            },
+            "right": {
+              "dimension": 1.162459,
+              "boxCounts": [
+                2144.75,
+                1053.5,
+                498.1875,
+                227.203125,
+                97.15625,
+                37.25
+              ],
+              "edgePixels": 4302,
+              "solidity": 0.401729,
+              "area": 48099,
+              "hullArea": 119730,
+              "sha256": "9288cff79c419ba121a7bafeb3fdba01a9500b0aba5e943c775ab45106639210"
+            },
+            "top": {
+              "dimension": 1.124425,
+              "boxCounts": [
+                3367,
+                1670.6875,
+                808.09375,
+                378.015625,
+                162.21875,
+                67.84375
+              ],
+              "edgePixels": 6745,
+              "solidity": 0.142293,
+              "area": 69106,
+              "hullArea": 485659,
+              "sha256": "13ee79298fe6bcad2b6f41cf359e27659a3a0cb9ecfdc185637f853de0bac621"
+            }
+          },
+          "dimension": 1.15711,
+          "solidity": 0.142293,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "fir_sapling",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/fir_sapling",
+      "licence": "CC0-1.0",
+      "setSha256": "9c52584c3adaf33330279dc9c82897a4495e1b34b0b1dd88e64224e9109c212b",
+      "values": {
+        "dimension": 1.573134,
+        "solidity": 0.174721,
+        "p90": 95.6354,
+        "flatShare": 0.0002,
+        "albedoCv": 0.170743
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 3,
+          "lowestP90": 95.6354,
+          "highestFlatShare": 0.0002,
+          "items": [
+            {
+              "object": "fir_sapling_a",
+              "faces": 157402,
+              "samples": 4096,
+              "radius": 0.040648,
+              "p50": 59.5631,
+              "p90": 99.9898,
+              "flatShare": 0.0002
+            },
+            {
+              "object": "fir_sapling_b",
+              "faces": 150876,
+              "samples": 4096,
+              "radius": 0.029737,
+              "p50": 56.7769,
+              "p90": 98.318,
+              "flatShare": 0.0002
+            },
+            {
+              "object": "fir_sapling_c",
+              "faces": 124743,
+              "samples": 4096,
+              "radius": 0.022991,
+              "p50": 54.401,
+              "p90": 95.6354,
+              "flatShare": 0.0002
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.170743,
+          "texels": 207198,
+          "mean": 0.287379,
+          "images": [
+            {
+              "image": "fir_sapling_branches_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 77711,
+              "mean": 0.258155,
+              "cv": 0.162833
+            },
+            {
+              "image": "fir_sapling_twigs_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 129487,
+              "mean": 0.304918,
+              "cv": 0.145635
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.573134,
+              "boxCounts": [
+                12899.25,
+                4602.5625,
+                1521.453125,
+                494.234375,
+                163.890625,
+                57.859375
+              ],
+              "edgePixels": 28431,
+              "solidity": 0.174721,
+              "area": 44354,
+              "hullArea": 253856.5,
+              "sha256": "b92fa63f62ed798c190574bcd12238d8d7a91e5e46158a2e287f5085383b0bff"
+            },
+            "right": {
+              "dimension": 1.616667,
+              "boxCounts": [
+                6952,
+                2466.125,
+                802.953125,
+                251.953125,
+                79.578125,
+                26.96875
+              ],
+              "edgePixels": 15403,
+              "solidity": 0.405041,
+              "area": 30694,
+              "hullArea": 75780,
+              "sha256": "004225cb61f8e2cca2e83532ecbf004602bfbcdf8cb2368621032808811fddc7"
+            },
+            "top": {
+              "dimension": 1.657819,
+              "boxCounts": [
+                14725,
+                4989.25,
+                1551.3125,
+                467.75,
+                146.109375,
+                49.984375
+              ],
+              "edgePixels": 33453,
+              "solidity": 0.263283,
+              "area": 52445,
+              "hullArea": 199196.5,
+              "sha256": "be24857386c17e27bd81e062a69ddc819d018c961d9cd6e26b8daae9940078f4"
+            }
+          },
+          "dimension": 1.573134,
+          "solidity": 0.174721,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "othonna_cerarioides",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/othonna_cerarioides",
+      "licence": "CC0-1.0",
+      "setSha256": "0ff6a3b79cd274b83aa574c00defa0376015347c2c9d55b428e29c93e551dc0c",
+      "values": {
+        "dimension": 1.469664,
+        "solidity": 0.270114,
+        "p90": 95.1783,
+        "flatShare": 0.3298,
+        "albedoCv": 0.197016
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 7,
+          "lowestP90": 95.1783,
+          "highestFlatShare": 0.3298,
+          "items": [
+            {
+              "object": "othonna_cerarioides_a",
+              "faces": 57067,
+              "samples": 4096,
+              "radius": 0.06155,
+              "p50": 66.1672,
+              "p90": 113.503,
+              "flatShare": 0.002
+            },
+            {
+              "object": "othonna_cerarioides_b",
+              "faces": 29175,
+              "samples": 4096,
+              "radius": 0.055181,
+              "p50": 61.8597,
+              "p90": 113.3249,
+              "flatShare": 0.0044
+            },
+            {
+              "object": "othonna_cerarioides_c",
+              "faces": 12491,
+              "samples": 4096,
+              "radius": 0.044853,
+              "p50": 54.2341,
+              "p90": 113.3702,
+              "flatShare": 0.0132
+            },
+            {
+              "object": "othonna_cerarioides_d",
+              "faces": 9320,
+              "samples": 4096,
+              "radius": 0.036004,
+              "p50": 47.1611,
+              "p90": 108.8539,
+              "flatShare": 0.0239
+            },
+            {
+              "object": "othonna_cerarioides_e",
+              "faces": 3834,
+              "samples": 4096,
+              "radius": 0.029954,
+              "p50": 37.2491,
+              "p90": 106.3295,
+              "flatShare": 0.075
+            },
+            {
+              "object": "othonna_cerarioides_f",
+              "faces": 3138,
+              "samples": 4096,
+              "radius": 0.021278,
+              "p50": 29.6108,
+              "p90": 103.3762,
+              "flatShare": 0.1743
+            },
+            {
+              "object": "othonna_cerarioides_g",
+              "faces": 3124,
+              "samples": 4096,
+              "radius": 0.015546,
+              "p50": 15.9811,
+              "p90": 95.1783,
+              "flatShare": 0.3298
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.197016,
+          "texels": 750224,
+          "mean": 0.394946,
+          "images": [
+            {
+              "image": "othonna_cerarioides_diff-othonna_cerarioides_alpha",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 750224,
+              "mean": 0.394946,
+              "cv": 0.197016
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.533152,
+              "boxCounts": [
+                13472,
+                5316.25,
+                1853.71875,
+                611.421875,
+                201.796875,
+                70.390625
+              ],
+              "edgePixels": 28937,
+              "solidity": 0.40489,
+              "area": 123316,
+              "hullArea": 304567,
+              "sha256": "be2b439b4b2adf54fc08d4b7a455004b66c488f586c0a1d69900f514b0b8aa95"
+            },
+            "right": {
+              "dimension": 1.469664,
+              "boxCounts": [
+                5742,
+                2265.8125,
+                808.9375,
+                279.453125,
+                99.5,
+                37.0625
+              ],
+              "edgePixels": 12343,
+              "solidity": 0.575593,
+              "area": 72765,
+              "hullArea": 126417.5,
+              "sha256": "85c597478bd473721374bd35c4826d2a61862342e986dc8ef905e639fc385152"
+            },
+            "top": {
+              "dimension": 1.402259,
+              "boxCounts": [
+                8315.25,
+                3431.75,
+                1300.796875,
+                473.28125,
+                173.875,
+                67.609375
+              ],
+              "edgePixels": 17639,
+              "solidity": 0.270114,
+              "area": 85467,
+              "hullArea": 316410.5,
+              "sha256": "1dd06eda18f8cd4a5ce2485661fc284be38736c1d9c54421a8f30bf7d18d0b07"
+            }
+          },
+          "dimension": 1.469664,
+          "solidity": 0.270114,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "pine_sapling_small",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/pine_sapling_small",
+      "licence": "CC0-1.0",
+      "setSha256": "a70442a7f93aa5d4c082ca442e3e18333858cdbe39ffcf133ffef1f51d48e000",
+      "values": {
+        "dimension": 1.649446,
+        "solidity": 0.166976,
+        "p90": 113.5845,
+        "flatShare": 0.0071,
+        "albedoCv": 0.17751
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 3,
+          "lowestP90": 113.5845,
+          "highestFlatShare": 0.0071,
+          "items": [
+            {
+              "object": "pine_sapling_small_a",
+              "faces": 142506,
+              "samples": 4096,
+              "radius": 0.040592,
+              "p50": 55.3825,
+              "p90": 115.87,
+              "flatShare": 0.0071
+            },
+            {
+              "object": "pine_sapling_small_b",
+              "faces": 122235,
+              "samples": 4096,
+              "radius": 0.032675,
+              "p50": 54.6125,
+              "p90": 114.2081,
+              "flatShare": 0.0027
+            },
+            {
+              "object": "pine_sapling_small_c",
+              "faces": 133403,
+              "samples": 4096,
+              "radius": 0.030041,
+              "p50": 53.2178,
+              "p90": 113.5845,
+              "flatShare": 0.0039
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.17751,
+          "texels": 566457,
+          "mean": 0.22756,
+          "images": [
+            {
+              "image": "pine_sapling_small_bark_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 534041,
+              "mean": 0.22485,
+              "cv": 0.160947
+            },
+            {
+              "image": "pine_sapling_small_twig_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 32416,
+              "mean": 0.272208,
+              "cv": 0.255129
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.649446,
+              "boxCounts": [
+                16844.75,
+                5638.8125,
+                1712.890625,
+                524.140625,
+                168.96875,
+                58.5625
+              ],
+              "edgePixels": 37349,
+              "solidity": 0.166976,
+              "area": 50177,
+              "hullArea": 300504.5,
+              "sha256": "f56f1e9d90a613f3fcae86e232140f45add856dc201780805ef5c04c4811a312"
+            },
+            "right": {
+              "dimension": 1.701569,
+              "boxCounts": [
+                8689,
+                2904.6875,
+                882.859375,
+                256.46875,
+                77.296875,
+                25.453125
+              ],
+              "edgePixels": 19636,
+              "solidity": 0.505355,
+              "area": 34896,
+              "hullArea": 69052.5,
+              "sha256": "c2d7843148573794a749236684ecef16488ec53f4a34b627c12eed352945ce04"
+            },
+            "top": {
+              "dimension": 1.697389,
+              "boxCounts": [
+                14137.75,
+                4582.6875,
+                1337.21875,
+                388.96875,
+                121.0625,
+                42.4375
+              ],
+              "edgePixels": 32095,
+              "solidity": 0.244166,
+              "area": 44301,
+              "hullArea": 181438,
+              "sha256": "8a8ada6feaa7eb99979f0c501f86ee4ac45589100de5f0b4d232edc5a2bcdb13"
+            }
+          },
+          "dimension": 1.649446,
+          "solidity": 0.166976,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "quiver_tree_01",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/quiver_tree_01",
+      "licence": "CC0-1.0",
+      "setSha256": "0d1c586462bc1b1770db93ac7f503f189fe413da62bad7a46265f04def0dcd8e",
+      "values": {
+        "dimension": 1.283275,
+        "solidity": 0.314936,
+        "p90": 108.6607,
+        "flatShare": 0.0447,
+        "albedoCv": 0.243567
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 108.6607,
+          "highestFlatShare": 0.0447,
+          "items": [
+            {
+              "object": "quiver_tree_01",
+              "faces": 150124,
+              "samples": 4096,
+              "radius": 0.084857,
+              "p50": 61.3011,
+              "p90": 108.6607,
+              "flatShare": 0.0447
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.243567,
+          "texels": 1453424,
+          "mean": 0.408368,
+          "images": [
+            {
+              "image": "quiver_tree_01_leaf_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 712634,
+              "mean": 0.452839,
+              "cv": 0.238749
+            },
+            {
+              "image": "quiver_tree_01_trunk_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 740790,
+              "mean": 0.365587,
+              "cv": 0.182124
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.31341,
+              "boxCounts": [
+                3771.25,
+                1703.875,
+                714.828125,
+                285.46875,
+                109.09375,
+                40.25
+              ],
+              "edgePixels": 7812,
+              "solidity": 0.314936,
+              "area": 59754,
+              "hullArea": 189734,
+              "sha256": "90c28b2c9e6023ad110b24a331a632893a749d39bb959c1fbac0ef298f9d59da"
+            },
+            "right": {
+              "dimension": 1.283275,
+              "boxCounts": [
+                3304.25,
+                1515.625,
+                644.625,
+                263.578125,
+                103.1875,
+                39.15625
+              ],
+              "edgePixels": 6767,
+              "solidity": 0.368003,
+              "area": 60554,
+              "hullArea": 164547.5,
+              "sha256": "3a6758b496891d6d9b07ce71f94b70d328f273e5af19a155753057c4b4796761"
+            },
+            "top": {
+              "dimension": 1.365399,
+              "boxCounts": [
+                2797.75,
+                1305.375,
+                559.4375,
+                210.9375,
+                73.84375,
+                25.28125
+              ],
+              "edgePixels": 5691,
+              "solidity": 0.492223,
+              "area": 35332,
+              "hullArea": 71780.5,
+              "sha256": "73c2bc72cc4ae25b2cc35dda8be6018ba712fa57cac7b9226040e198b7da8b1f"
+            }
+          },
+          "dimension": 1.283275,
+          "solidity": 0.314936,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "quiver_tree_02",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/quiver_tree_02",
+      "licence": "CC0-1.0",
+      "setSha256": "2fe2be45b7462bcbf7b0368e61e8fc9240a083f175634496411b9021d8a560f1",
+      "values": {
+        "dimension": 1.212979,
+        "solidity": 0.48375,
+        "p90": 110.0906,
+        "flatShare": 0.0339,
+        "albedoCv": 0.28274
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 110.0906,
+          "highestFlatShare": 0.0339,
+          "items": [
+            {
+              "object": "quiver_tree_02",
+              "faces": 82074,
+              "samples": 4096,
+              "radius": 0.045902,
+              "p50": 63.9356,
+              "p90": 110.0906,
+              "flatShare": 0.0339
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.28274,
+          "texels": 649173,
+          "mean": 0.329093,
+          "images": [
+            {
+              "image": "quiver_tree_02_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 649173,
+              "mean": 0.329093,
+              "cv": 0.28274
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.212979,
+              "boxCounts": [
+                4342,
+                2106.5,
+                979.921875,
+                423.171875,
+                167.6875,
+                65.171875
+              ],
+              "edgePixels": 8743,
+              "solidity": 0.48375,
+              "area": 151171,
+              "hullArea": 312498,
+              "sha256": "02aea196b7f7d20a47069d7f45d1197fe4f6fc5bd2a054db4985c849dfe70240"
+            },
+            "right": {
+              "dimension": 1.216453,
+              "boxCounts": [
+                4409,
+                2135.25,
+                985.921875,
+                427.359375,
+                169.328125,
+                65.171875
+              ],
+              "edgePixels": 8857,
+              "solidity": 0.487816,
+              "area": 147829,
+              "hullArea": 303042.5,
+              "sha256": "8d0d47964a66440eda93d00510052b469adbf1e0d34ecb66a9ed938e265f5b15"
+            },
+            "top": {
+              "dimension": 1.142795,
+              "boxCounts": [
+                2410.75,
+                1185.5625,
+                569.9375,
+                260.921875,
+                111.578125,
+                45.46875
+              ],
+              "edgePixels": 4841,
+              "solidity": 0.632619,
+              "area": 128323,
+              "hullArea": 202844,
+              "sha256": "3e5a5a5efbabfca445667c66497f4dc4c2788badb7314c6f26663343ef68c892"
+            }
+          },
+          "dimension": 1.212979,
+          "solidity": 0.48375,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "tree_stump_01",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/tree_stump_01",
+      "licence": "CC0-1.0",
+      "setSha256": "7a99dbad760c16bf055176359ccffa9fb5b76399058edafa2610e57e345638ae",
+      "values": {
+        "dimension": 1.026483,
+        "solidity": 0.881755,
+        "p90": 51.889,
+        "flatShare": 0.1143,
+        "albedoCv": 0.291578
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 51.889,
+          "highestFlatShare": 0.1143,
+          "items": [
+            {
+              "object": "tree_stump_01",
+              "faces": 41046,
+              "samples": 4096,
+              "radius": 0.049697,
+              "p50": 15.0044,
+              "p90": 51.889,
+              "flatShare": 0.1143
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.291578,
+          "texels": 740655,
+          "mean": 0.317669,
+          "images": [
+            {
+              "image": "tree_stump_01_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 740655,
+              "mean": 0.317669,
+              "cv": 0.291578
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.026483,
+              "boxCounts": [
+                1195.75,
+                592.5,
+                292.71875,
+                143.734375,
+                69.96875,
+                34.125
+              ],
+              "edgePixels": 2396,
+              "solidity": 0.93286,
+              "area": 150557,
+              "hullArea": 161393,
+              "sha256": "3c294a83c4c1ee7451e10d7c1f2281dd914b5dda1b54510a307ee898b14aab1f"
+            },
+            "right": {
+              "dimension": 1.028718,
+              "boxCounts": [
+                1297.5,
+                643.9375,
+                317.28125,
+                155.046875,
+                75.375,
+                36.859375
+              ],
+              "edgePixels": 2601,
+              "solidity": 0.881755,
+              "area": 153517,
+              "hullArea": 174104,
+              "sha256": "864a24f5ef3a1cb8c0f2da06f43f41928bd236a9ce314a86e4af521dec5cdde8"
+            },
+            "top": {
+              "dimension": 1.000978,
+              "boxCounts": [
+                1666.5,
+                833.1875,
+                416.46875,
+                207.71875,
+                103.828125,
+                51.953125
+              ],
+              "edgePixels": 3333,
+              "solidity": 0.993314,
+              "area": 615315,
+              "hullArea": 619456.5,
+              "sha256": "7e0f11a506c240b2410822097ecb4c8792d60e5c72cc3748a208affc4946d275"
+            }
+          },
+          "dimension": 1.026483,
+          "solidity": 0.881755,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "tree_stump_02",
+      "kind": "scan",
+      "classes": [
+        "tree"
+      ],
+      "source": "https://polyhaven.com/a/tree_stump_02",
+      "licence": "CC0-1.0",
+      "setSha256": "3d8b323c7a5cc252b8fe7db89891448196910f9c2aac133058e466145f7d9f1e",
+      "values": {
+        "dimension": 1.013954,
+        "solidity": 0.930773,
+        "p90": 34.3851,
+        "flatShare": 0.1794,
+        "albedoCv": 0.209209
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 34.3851,
+          "highestFlatShare": 0.1794,
+          "items": [
+            {
+              "object": "tree_stump_02",
+              "faces": 62345,
+              "samples": 4096,
+              "radius": 0.047553,
+              "p50": 8.0432,
+              "p90": 34.3851,
+              "flatShare": 0.1794
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.209209,
+          "texels": 772254,
+          "mean": 0.3159,
+          "images": [
+            {
+              "image": "tree_stump_02_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 772254,
+              "mean": 0.3159,
+              "cv": 0.209209
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.013954,
+              "boxCounts": [
+                1203,
+                598.875,
+                297.625,
+                147.4375,
+                72.625,
+                35.84375
+              ],
+              "edgePixels": 2409,
+              "solidity": 0.938247,
+              "area": 151800,
+              "hullArea": 161791,
+              "sha256": "fda95dca93b057971019bb292a07721f36fb6186040639ac201a19888c823952"
+            },
+            "right": {
+              "dimension": 1.014329,
+              "boxCounts": [
+                1139,
+                567.875,
+                282.09375,
+                139.5,
+                68.90625,
+                33.875
+              ],
+              "edgePixels": 2281,
+              "solidity": 0.930773,
+              "area": 143769,
+              "hullArea": 154462,
+              "sha256": "39ca678f26a5325041f08730905b30892f385095b62e1a6bbebd2564d945cff7"
+            },
+            "top": {
+              "dimension": 0.999393,
+              "boxCounts": [
+                1661,
+                830.5,
+                415.25,
+                207.6875,
+                104,
+                52
+              ],
+              "edgePixels": 3322,
+              "solidity": 0.996755,
+              "area": 587949,
+              "hullArea": 589863,
+              "sha256": "570f5a7a752be1268397ae045e4bbe8e400172fe4c7dc105f69405cf959bc3be"
+            }
+          },
+          "dimension": 1.013954,
+          "solidity": 0.930773,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "didelta_spinosa",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/didelta_spinosa",
+      "licence": "CC0-1.0",
+      "setSha256": "0b17322105247f57e200ec156f330b2cd5270c09c779175a3b81325b9fa75770",
+      "values": {
+        "dimension": 1.454525,
+        "solidity": 0.383217,
+        "p90": 92.6694,
+        "flatShare": 0.0063,
+        "albedoCv": 0.268205
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 3,
+          "lowestP90": 92.6694,
+          "highestFlatShare": 0.0063,
+          "items": [
+            {
+              "object": "didelta_spinosa_large_LOD0",
+              "faces": 233988,
+              "samples": 4096,
+              "radius": 0.066342,
+              "p50": 34.2411,
+              "p90": 97.5968,
+              "flatShare": 0.0029
+            },
+            {
+              "object": "didelta_spinosa_medium_LOD0",
+              "faces": 143401,
+              "samples": 4096,
+              "radius": 0.049127,
+              "p50": 33.8762,
+              "p90": 92.6929,
+              "flatShare": 0.0063
+            },
+            {
+              "object": "didelta_spinosa_small_LOD0",
+              "faces": 38795,
+              "samples": 4096,
+              "radius": 0.033037,
+              "p50": 27.8367,
+              "p90": 92.6694,
+              "flatShare": 0.0049
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.268205,
+          "texels": 409061,
+          "mean": 0.545697,
+          "images": [
+            {
+              "image": "didelta_spinosa_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 409061,
+              "mean": 0.545697,
+              "cv": 0.268205
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.454525,
+              "boxCounts": [
+                5592.5,
+                2368.125,
+                932.546875,
+                336.53125,
+                111.875,
+                36.859375
+              ],
+              "edgePixels": 11827,
+              "solidity": 0.618833,
+              "area": 68149,
+              "hullArea": 110125,
+              "sha256": "b61ae8e6825f7efc879b18782247fa3eeaf24fd0c885ec77f7089e62e92b89df"
+            },
+            "right": {
+              "dimension": 1.480146,
+              "boxCounts": [
+                9629.5,
+                4079.0625,
+                1577.765625,
+                550.25,
+                178.296875,
+                59.125
+              ],
+              "edgePixels": 20496,
+              "solidity": 0.383217,
+              "area": 88565,
+              "hullArea": 231109.5,
+              "sha256": "a82f3298c26dde114c9c7a0f092c3e089be1cd840b83c89c7e692299579d798d"
+            },
+            "top": {
+              "dimension": 1.297875,
+              "boxCounts": [
+                5853.25,
+                2658.0625,
+                1150.046875,
+                473.53125,
+                180.15625,
+                64.703125
+              ],
+              "edgePixels": 12140,
+              "solidity": 0.582424,
+              "area": 130217,
+              "hullArea": 223577.5,
+              "sha256": "76b5c6cfb02e092f4acdf34e85b83019ad40a64312eb2d63fe2db177b4878655"
+            }
+          },
+          "dimension": 1.454525,
+          "solidity": 0.383217,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "fern_02",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/fern_02",
+      "licence": "CC0-1.0",
+      "setSha256": "d3add36adb0f68a2e13ba52149f9fc5916fc0329eafa7ba04b763cb4912f9896",
+      "values": {
+        "dimension": 1.176369,
+        "solidity": 0.292991,
+        "p90": 35.6421,
+        "flatShare": 0.1372,
+        "albedoCv": 0.135806
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 4,
+          "lowestP90": 35.6421,
+          "highestFlatShare": 0.1372,
+          "items": [
+            {
+              "object": "fern_02_a",
+              "faces": 784,
+              "samples": 4096,
+              "radius": 0.019169,
+              "p50": 12.8477,
+              "p90": 35.6421,
+              "flatShare": 0.0947
+            },
+            {
+              "object": "fern_02_b",
+              "faces": 2384,
+              "samples": 4096,
+              "radius": 0.03093,
+              "p50": 16.3138,
+              "p90": 42.5412,
+              "flatShare": 0.0298
+            },
+            {
+              "object": "fern_02_c",
+              "faces": 2248,
+              "samples": 4096,
+              "radius": 0.027323,
+              "p50": 16.4655,
+              "p90": 41.9754,
+              "flatShare": 0.0317
+            },
+            {
+              "object": "fern_02_d",
+              "faces": 816,
+              "samples": 4096,
+              "radius": 0.01854,
+              "p50": 11.5636,
+              "p90": 38.841,
+              "flatShare": 0.1372
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.135806,
+          "texels": 343655,
+          "mean": 0.338067,
+          "images": [
+            {
+              "image": "fern_02_diff-fern_02_alpha",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 343655,
+              "mean": 0.338067,
+              "cv": 0.135806
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.176369,
+              "boxCounts": [
+                2140.75,
+                1036.3125,
+                483.078125,
+                211.53125,
+                88.328125,
+                36.734375
+              ],
+              "edgePixels": 4304,
+              "solidity": 0.479781,
+              "area": 56114,
+              "hullArea": 116957.5,
+              "sha256": "9906664eaebc11d1b40d688b8c7a607e50cf7f0ede1443f2c12548f142e17ec1"
+            },
+            "right": {
+              "dimension": 1.201611,
+              "boxCounts": [
+                2083.5,
+                1002.5,
+                462.828125,
+                199,
+                81.515625,
+                32.65625
+              ],
+              "edgePixels": 4208,
+              "solidity": 0.506444,
+              "area": 52063,
+              "hullArea": 102801,
+              "sha256": "41bd1ec19fff1aefb6aef0978872156f448fc19beb6472f31a697d1cc0dd84f8"
+            },
+            "top": {
+              "dimension": 1.141665,
+              "boxCounts": [
+                5024.25,
+                2476.5625,
+                1201.75,
+                560.03125,
+                240.25,
+                93.234375
+              ],
+              "edgePixels": 10077,
+              "solidity": 0.292991,
+              "area": 160402,
+              "hullArea": 547464,
+              "sha256": "f81317b00e20a08b9b164524321d7d9d91240db2d43c8722dcfbd9ae3874895c"
+            }
+          },
+          "dimension": 1.176369,
+          "solidity": 0.292991,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "leipoldtia_schultzei",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/leipoldtia_schultzei",
+      "licence": "CC0-1.0",
+      "setSha256": "8485c8ab459a5ed5932a155744f513577aed4d005165ead1b4d6a4ced544eaa2",
+      "values": {
+        "dimension": 1.487833,
+        "solidity": 0.149367,
+        "p90": 128.3002,
+        "flatShare": 0.0022,
+        "albedoCv": 0.305357
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 3,
+          "lowestP90": 128.3002,
+          "highestFlatShare": 0.0022,
+          "items": [
+            {
+              "object": "leipoldtia_schultzei_Large_LOD0",
+              "faces": 228992,
+              "samples": 4096,
+              "radius": 0.029202,
+              "p50": 72.6934,
+              "p90": 132.4311,
+              "flatShare": 0.0022
+            },
+            {
+              "object": "leipoldtia_schultzei_Medium_LOD0",
+              "faces": 102592,
+              "samples": 4096,
+              "radius": 0.020137,
+              "p50": 68.8251,
+              "p90": 128.3002,
+              "flatShare": 0.002
+            },
+            {
+              "object": "leipoldtia_schultzei_Small_LOD0",
+              "faces": 53920,
+              "samples": 4096,
+              "radius": 0.019037,
+              "p50": 80.3122,
+              "p90": 133.467,
+              "flatShare": 0.0007
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.305357,
+          "texels": 271381,
+          "mean": 0.462612,
+          "images": [
+            {
+              "image": "leipoldtia_schultzei_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 271381,
+              "mean": 0.462612,
+              "cv": 0.305357
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.487833,
+              "boxCounts": [
+                4672.75,
+                1825.4375,
+                640.703125,
+                216.0625,
+                74.953125,
+                28.890625
+              ],
+              "edgePixels": 10181,
+              "solidity": 0.295282,
+              "area": 22626,
+              "hullArea": 76625,
+              "sha256": "3826baa1698f5781b4fd85be96ff4dd95d1f901c6ec60dee1994c80c79d878be"
+            },
+            "right": {
+              "dimension": 1.516332,
+              "boxCounts": [
+                2306.25,
+                898.0625,
+                313.875,
+                103.65625,
+                35.03125,
+                12.859375
+              ],
+              "edgePixels": 5013,
+              "solidity": 0.543639,
+              "area": 14130,
+              "hullArea": 25991.5,
+              "sha256": "f7956670a90df1a7cb34cc5583906a359dfa771a2bf1e088a5d831adff885b16"
+            },
+            "top": {
+              "dimension": 1.480943,
+              "boxCounts": [
+                8221.5,
+                3172,
+                1126.40625,
+                392.15625,
+                138.03125,
+                50.4375
+              ],
+              "edgePixels": 18392,
+              "solidity": 0.149367,
+              "area": 30571,
+              "hullArea": 204670,
+              "sha256": "052dd4dc874e0118a98031433b6314145a7b700bbec70d36eca2b3916421d358"
+            }
+          },
+          "dimension": 1.487833,
+          "solidity": 0.149367,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "nettle_plant",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/nettle_plant",
+      "licence": "CC0-1.0",
+      "setSha256": "f415e9acc1705f3fd4545267b09e16f1752f7e1336ec46a91cfca9ae655e7bb3",
+      "values": {
+        "dimension": 1.322466,
+        "solidity": 0.110458,
+        "p90": 15.9547,
+        "flatShare": 0.5701,
+        "albedoCv": 0.56919
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 6,
+          "lowestP90": 15.9547,
+          "highestFlatShare": 0.5701,
+          "items": [
+            {
+              "object": "nettle_plant_medium_a_LOD0",
+              "faces": 5896,
+              "samples": 4096,
+              "radius": 0.004109,
+              "p50": 5.2001,
+              "p90": 46.6268,
+              "flatShare": 0.3691
+            },
+            {
+              "object": "nettle_plant_medium_b_LOD0",
+              "faces": 5664,
+              "samples": 4096,
+              "radius": 0.003268,
+              "p50": 4.8978,
+              "p90": 52.4704,
+              "flatShare": 0.3977
+            },
+            {
+              "object": "nettle_plant_small_a_LOD0",
+              "faces": 3592,
+              "samples": 4096,
+              "radius": 0.002006,
+              "p50": 4.0895,
+              "p90": 40.031,
+              "flatShare": 0.3765
+            },
+            {
+              "object": "nettle_plant_small_b_LOD0",
+              "faces": 1088,
+              "samples": 4096,
+              "radius": 0.001866,
+              "p50": 2.3385,
+              "p90": 15.9547,
+              "flatShare": 0.5701
+            },
+            {
+              "object": "nettle_plant_tall_a_LOD0",
+              "faces": 6984,
+              "samples": 4096,
+              "radius": 0.006774,
+              "p50": 9.2299,
+              "p90": 62.2127,
+              "flatShare": 0.2129
+            },
+            {
+              "object": "nettle_plant_tall_b_LOD0",
+              "faces": 8080,
+              "samples": 4096,
+              "radius": 0.006023,
+              "p50": 8.4573,
+              "p90": 63.0283,
+              "flatShare": 0.2598
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.56919,
+          "texels": 314284,
+          "mean": 0.248775,
+          "images": [
+            {
+              "image": "nettle_plant_diff-nettle_plant_alpha",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 314284,
+              "mean": 0.248775,
+              "cv": 0.56919
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.322466,
+              "boxCounts": [
+                2351.75,
+                1024.5,
+                406.921875,
+                152,
+                58.546875,
+                26.0625
+              ],
+              "edgePixels": 4913,
+              "solidity": 0.110458,
+              "area": 9719,
+              "hullArea": 87988,
+              "sha256": "ec3194c3ae8aaca43b3d2948124f503d8005b8975963c91e625c6b3a4d213c52"
+            },
+            "right": {
+              "dimension": 1.474493,
+              "boxCounts": [
+                1082.5,
+                451.75,
+                168.296875,
+                54.828125,
+                18.359375,
+                7.234375
+              ],
+              "edgePixels": 2287,
+              "solidity": 0.570755,
+              "area": 6290,
+              "hullArea": 11020.5,
+              "sha256": "c5f6e4cd4f7031117e89ea982e1dd303515ef147a61c8bad81f34c4e01b9a0ec"
+            },
+            "top": {
+              "dimension": 1.192962,
+              "boxCounts": [
+                1147.75,
+                527.5625,
+                229.921875,
+                95.078125,
+                39.421875,
+                19.890625
+              ],
+              "edgePixels": 2339,
+              "solidity": 0.226761,
+              "area": 11580,
+              "hullArea": 51067,
+              "sha256": "50f3fbc895b2f5dd45b1998d5d6baf528d6ecae974819ef5652599488657cf6c"
+            }
+          },
+          "dimension": 1.322466,
+          "solidity": 0.110458,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "periwinkle_plant",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/periwinkle_plant",
+      "licence": "CC0-1.0",
+      "setSha256": "851d8694c6eeb654934e6cb216d3c1f79924e8fedfe96b4e0e0d1946594cf2ee",
+      "values": {
+        "dimension": 1.373085,
+        "solidity": 0.099254,
+        "p90": 73.4883,
+        "flatShare": 0.3037,
+        "albedoCv": 0.340684
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 6,
+          "lowestP90": 73.4883,
+          "highestFlatShare": 0.3037,
+          "items": [
+            {
+              "object": "periwinkle_plant_01_LOD0",
+              "faces": 11252,
+              "samples": 4096,
+              "radius": 0.012412,
+              "p50": 9.7443,
+              "p90": 73.4883,
+              "flatShare": 0.1021
+            },
+            {
+              "object": "periwinkle_plant_02_LOD0",
+              "faces": 9096,
+              "samples": 4096,
+              "radius": 0.012835,
+              "p50": 11.3636,
+              "p90": 89.4512,
+              "flatShare": 0.0684
+            },
+            {
+              "object": "periwinkle_plant_03_LOD0",
+              "faces": 5338,
+              "samples": 4096,
+              "radius": 0.009383,
+              "p50": 8.1173,
+              "p90": 88.6097,
+              "flatShare": 0.1392
+            },
+            {
+              "object": "periwinkle_plant_04_LOD0",
+              "faces": 4108,
+              "samples": 4096,
+              "radius": 0.00828,
+              "p50": 6.9465,
+              "p90": 91.11,
+              "flatShare": 0.1863
+            },
+            {
+              "object": "periwinkle_plant_05_LOD0",
+              "faces": 3078,
+              "samples": 4096,
+              "radius": 0.006431,
+              "p50": 5.9122,
+              "p90": 76.6558,
+              "flatShare": 0.2344
+            },
+            {
+              "object": "periwinkle_plant_06_LOD0",
+              "faces": 1478,
+              "samples": 4096,
+              "radius": 0.004992,
+              "p50": 5.1989,
+              "p90": 88.6603,
+              "flatShare": 0.3037
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.340684,
+          "texels": 318504,
+          "mean": 0.408328,
+          "images": [
+            {
+              "image": "periwinkle_plant_diff-periwinkle_plant_opacity",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 318504,
+              "mean": 0.408328,
+              "cv": 0.340684
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.373085,
+              "boxCounts": [
+                5655.25,
+                2453.375,
+                972.84375,
+                358.578125,
+                132.9375,
+                50.75
+              ],
+              "edgePixels": 11973,
+              "solidity": 0.099254,
+              "area": 18645,
+              "hullArea": 187852,
+              "sha256": "127ad326cdf5ce5b44c7cc412a9fe18fe725aea6e9c65ea420778d542931f443"
+            },
+            "right": {
+              "dimension": 1.552713,
+              "boxCounts": [
+                3316.25,
+                1330.375,
+                459.9375,
+                146.203125,
+                47.203125,
+                16.53125
+              ],
+              "edgePixels": 7141,
+              "solidity": 0.357165,
+              "area": 14138,
+              "hullArea": 39584,
+              "sha256": "97f8a6e00f6a110b6a8ad3563733c302d41bb5675a922d3ebde34554ba85e445"
+            },
+            "top": {
+              "dimension": 1.268557,
+              "boxCounts": [
+                3194,
+                1526.75,
+                696.625,
+                286,
+                106.015625,
+                40.140625
+              ],
+              "edgePixels": 6481,
+              "solidity": 0.278181,
+              "area": 37137,
+              "hullArea": 133499.5,
+              "sha256": "4cfc4e4acdc351cfdeb9da432c75540cb85401ee0ff9228b64a0eafac94363c6"
+            }
+          },
+          "dimension": 1.373085,
+          "solidity": 0.099254,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "searsia_lucida",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/searsia_lucida",
+      "licence": "CC0-1.0",
+      "setSha256": "d3ce9fbb203d8e9f41ca99c32b7bb5f1a66ab132b92a7a350197cfcf2d0bbe49",
+      "values": {
+        "dimension": 1.585111,
+        "solidity": 0.333468,
+        "p90": 95.8613,
+        "flatShare": 0.0139,
+        "albedoCv": 0.490997
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 7,
+          "lowestP90": 95.8613,
+          "highestFlatShare": 0.0139,
+          "items": [
+            {
+              "object": "searsia_lucida_a_LOD0",
+              "faces": 113405,
+              "samples": 4096,
+              "radius": 0.073091,
+              "p50": 50.5234,
+              "p90": 109.063,
+              "flatShare": 0.0034
+            },
+            {
+              "object": "searsia_lucida_b_LOD0",
+              "faces": 88629,
+              "samples": 4096,
+              "radius": 0.062316,
+              "p50": 48.1234,
+              "p90": 101.111,
+              "flatShare": 0.0015
+            },
+            {
+              "object": "searsia_lucida_c_LOD0",
+              "faces": 77603,
+              "samples": 4096,
+              "radius": 0.052495,
+              "p50": 42.061,
+              "p90": 98.4826,
+              "flatShare": 0.0054
+            },
+            {
+              "object": "searsia_lucida_d_LOD0",
+              "faces": 56320,
+              "samples": 4096,
+              "radius": 0.044487,
+              "p50": 38.8802,
+              "p90": 97.4162,
+              "flatShare": 0.0029
+            },
+            {
+              "object": "searsia_lucida_e_LOD0",
+              "faces": 27701,
+              "samples": 4096,
+              "radius": 0.032311,
+              "p50": 32.3144,
+              "p90": 101.1706,
+              "flatShare": 0.0061
+            },
+            {
+              "object": "searsia_lucida_f_LOD0",
+              "faces": 7232,
+              "samples": 4096,
+              "radius": 0.023081,
+              "p50": 19.3305,
+              "p90": 102.675,
+              "flatShare": 0.0139
+            },
+            {
+              "object": "searsia_lucida_g_LOD0",
+              "faces": 6302,
+              "samples": 4096,
+              "radius": 0.024589,
+              "p50": 23.4987,
+              "p90": 95.8613,
+              "flatShare": 0.0127
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.490997,
+          "texels": 173381,
+          "mean": 0.369809,
+          "images": [
+            {
+              "image": "searsia_lucida_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 173381,
+              "mean": 0.369809,
+              "cv": 0.490997
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.672788,
+              "boxCounts": [
+                24616.25,
+                9106.3125,
+                2940.5,
+                868.65625,
+                256.296875,
+                79.90625
+              ],
+              "edgePixels": 53330,
+              "solidity": 0.450101,
+              "area": 127786,
+              "hullArea": 283905,
+              "sha256": "d77b58afa7cf108476f7845f48ce94f97f2c59f6e4ff423bfeddac60ec703a76"
+            },
+            "right": {
+              "dimension": 1.585111,
+              "boxCounts": [
+                11455,
+                4338.8125,
+                1490.96875,
+                488.859375,
+                153.421875,
+                48.59375
+              ],
+              "edgePixels": 24695,
+              "solidity": 0.545855,
+              "area": 86917,
+              "hullArea": 159231,
+              "sha256": "d87825142a5c4bee06526a8fe2c45674b583b9c0a343b022634de3dcf6086335"
+            },
+            "top": {
+              "dimension": 1.569318,
+              "boxCounts": [
+                19852.75,
+                8131.375,
+                2893.390625,
+                922.28125,
+                285.34375,
+                91.859375
+              ],
+              "edgePixels": 41430,
+              "solidity": 0.333468,
+              "area": 121003,
+              "hullArea": 362862.5,
+              "sha256": "797886746913af37f39ac2cfa15dcd0bf9701b6c6be99e616a00c0dc2f19879b"
+            }
+          },
+          "dimension": 1.585111,
+          "solidity": 0.333468,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "shrub_01",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/shrub_01",
+      "licence": "CC0-1.0",
+      "setSha256": "004ff37e4aaad376ccd5cb42cd04162e192779061ce14f6414f30e1b90014173",
+      "values": {
+        "dimension": 1.336052,
+        "solidity": 0.092283,
+        "p90": 84.5724,
+        "flatShare": 0.0037,
+        "albedoCv": 0.247882
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 84.5724,
+          "highestFlatShare": 0.0037,
+          "items": [
+            {
+              "object": "shrub_01_a",
+              "faces": 156012,
+              "samples": 4096,
+              "radius": 0.080833,
+              "p50": 37.0347,
+              "p90": 84.5724,
+              "flatShare": 0.0037
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.247882,
+          "texels": 344138,
+          "mean": 0.485673,
+          "images": [
+            {
+              "image": "shrub_01_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 344138,
+              "mean": 0.485673,
+              "cv": 0.247882
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.336052,
+              "boxCounts": [
+                3145.5,
+                1334.4375,
+                512.640625,
+                189.5625,
+                75.46875,
+                32.90625
+              ],
+              "edgePixels": 6660,
+              "solidity": 0.092283,
+              "area": 9973,
+              "hullArea": 108069.5,
+              "sha256": "8693c826d6027c0379f5c64642caffd54d5effbc4a4f5725fb17bfd6c39e8a77"
+            },
+            "right": {
+              "dimension": 1.433506,
+              "boxCounts": [
+                758.75,
+                299.375,
+                109.734375,
+                37.625,
+                13.390625,
+                5.78125
+              ],
+              "edgePixels": 1623,
+              "solidity": 0.603012,
+              "area": 4424,
+              "hullArea": 7336.5,
+              "sha256": "ae88af361bc560b8f29bea167b11ac77677ba8a5f7905822825ec8ae95bd807f"
+            },
+            "top": {
+              "dimension": 1.17241,
+              "boxCounts": [
+                1348.75,
+                621.6875,
+                277.6875,
+                118.28125,
+                51.25,
+                24.203125
+              ],
+              "edgePixels": 2768,
+              "solidity": 0.235818,
+              "area": 13427,
+              "hullArea": 56938,
+              "sha256": "b170e7a2df9ea83513b41fb1890713a4d190f121bc4b61077cc0b36544bfb981"
+            }
+          },
+          "dimension": 1.336052,
+          "solidity": 0.092283,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "shrub_02",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/shrub_02",
+      "licence": "CC0-1.0",
+      "setSha256": "b3233214813ffe0e7d6c58fa567689f9dec5e3fd7400f4ace8a629506eabb50c",
+      "values": {
+        "dimension": 1.40346,
+        "solidity": 0.087122,
+        "p90": 78.1432,
+        "flatShare": 0.0027,
+        "albedoCv": 0.226776
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 4,
+          "lowestP90": 78.1432,
+          "highestFlatShare": 0.0027,
+          "items": [
+            {
+              "object": "shrub_02_a",
+              "faces": 7590,
+              "samples": 4096,
+              "radius": 0.052781,
+              "p50": 21.2206,
+              "p90": 83.5177,
+              "flatShare": 0.0022
+            },
+            {
+              "object": "shrub_02_b",
+              "faces": 5242,
+              "samples": 4096,
+              "radius": 0.047072,
+              "p50": 19.4312,
+              "p90": 78.1432,
+              "flatShare": 0.0015
+            },
+            {
+              "object": "shrub_02_c",
+              "faces": 9234,
+              "samples": 4096,
+              "radius": 0.071408,
+              "p50": 27.6261,
+              "p90": 85.5776,
+              "flatShare": 0.0027
+            },
+            {
+              "object": "shrub_02_d",
+              "faces": 5188,
+              "samples": 4096,
+              "radius": 0.038414,
+              "p50": 20.3698,
+              "p90": 83.5189,
+              "flatShare": 0.0024
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.226776,
+          "texels": 198354,
+          "mean": 0.398695,
+          "images": [
+            {
+              "image": "shrub_02_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 198354,
+              "mean": 0.398695,
+              "cv": 0.226776
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.40346,
+              "boxCounts": [
+                5485.75,
+                2300.8125,
+                876.421875,
+                321.25,
+                116.015625,
+                44.40625
+              ],
+              "edgePixels": 11442,
+              "solidity": 0.087846,
+              "area": 14948,
+              "hullArea": 170160.5,
+              "sha256": "3dbf878e4f6cb8c9e179cdd95953e1b2ed427a8ccb4e64e6f182a82f8e2be450"
+            },
+            "right": {
+              "dimension": 1.507722,
+              "boxCounts": [
+                3170,
+                1266.125,
+                449.609375,
+                151.703125,
+                50.5625,
+                18.09375
+              ],
+              "edgePixels": 6701,
+              "solidity": 0.228805,
+              "area": 10566,
+              "hullArea": 46179,
+              "sha256": "5554aba713b26be07186e029ef3f0cf92cbefc6f89921dae1a4aa5c2f9760301"
+            },
+            "top": {
+              "dimension": 1.416474,
+              "boxCounts": [
+                5940.5,
+                2457.6875,
+                925.859375,
+                332.453125,
+                119.984375,
+                46.21875
+              ],
+              "edgePixels": 12742,
+              "solidity": 0.087122,
+              "area": 18257,
+              "hullArea": 209557.5,
+              "sha256": "4f4d97811cf0893c2d51428e69696e4d29210fa88555a15060352f95eac912c1"
+            }
+          },
+          "dimension": 1.40346,
+          "solidity": 0.087122,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "shrub_03",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/shrub_03",
+      "licence": "CC0-1.0",
+      "setSha256": "a8dc1e8d4081a4d60808b33fa5f1a1c54cc93cf091d89c3b6ea8749818fa5e0e",
+      "values": {
+        "dimension": 1.301155,
+        "solidity": 0.070905,
+        "p90": 65.1469,
+        "flatShare": 0.0522,
+        "albedoCv": 0.183852
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 4,
+          "lowestP90": 65.1469,
+          "highestFlatShare": 0.0522,
+          "items": [
+            {
+              "object": "shrub_03_a",
+              "faces": 2385,
+              "samples": 4096,
+              "radius": 0.012587,
+              "p50": 33.8882,
+              "p90": 70.0611,
+              "flatShare": 0.0269
+            },
+            {
+              "object": "shrub_03_b",
+              "faces": 2134,
+              "samples": 4096,
+              "radius": 0.011016,
+              "p50": 31.9201,
+              "p90": 65.1469,
+              "flatShare": 0.022
+            },
+            {
+              "object": "shrub_03_c",
+              "faces": 1790,
+              "samples": 4096,
+              "radius": 0.009512,
+              "p50": 32.1324,
+              "p90": 75.9126,
+              "flatShare": 0.0354
+            },
+            {
+              "object": "shrub_03_d",
+              "faces": 1978,
+              "samples": 4096,
+              "radius": 0.007986,
+              "p50": 17.2441,
+              "p90": 74.5379,
+              "flatShare": 0.0522
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.183852,
+          "texels": 344390,
+          "mean": 0.470838,
+          "images": [
+            {
+              "image": "shrub_03_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 344390,
+              "mean": 0.470838,
+              "cv": 0.183852
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.301155,
+              "boxCounts": [
+                2621.75,
+                1173.6875,
+                488.984375,
+                188.140625,
+                72.09375,
+                30.671875
+              ],
+              "edgePixels": 5602,
+              "solidity": 0.070905,
+              "area": 12460,
+              "hullArea": 175728.5,
+              "sha256": "6299f75a75e35538e60d0420b0eedf17e4a5596e02170043574399db64fb93ee"
+            },
+            "right": {
+              "dimension": 1.413867,
+              "boxCounts": [
+                1170.75,
+                504.5,
+                190.015625,
+                67.421875,
+                23.9375,
+                9.40625
+              ],
+              "edgePixels": 2465,
+              "solidity": 0.485564,
+              "area": 7896,
+              "hullArea": 16261.5,
+              "sha256": "0148a0c772e5dda90fd6cc99cccfb1830cafad218349575d4f6127b76a7e1bba"
+            },
+            "top": {
+              "dimension": 1.172681,
+              "boxCounts": [
+                969.25,
+                464.625,
+                212.125,
+                90.8125,
+                37.15625,
+                17.671875
+              ],
+              "edgePixels": 1964,
+              "solidity": 0.173873,
+              "area": 11227,
+              "hullArea": 64570,
+              "sha256": "269673c92c216396234f99e6ab21344503dc80145a9405849cc23f77faf5f123"
+            }
+          },
+          "dimension": 1.301155,
+          "solidity": 0.070905,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "shrub_04",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/shrub_04",
+      "licence": "CC0-1.0",
+      "setSha256": "d22039deba8a75c09f0431ae49f7de4cf62677a635f66b7d1bb10bda9e6e5489",
+      "values": {
+        "dimension": 1.481882,
+        "solidity": 0.202872,
+        "p90": 95.6551,
+        "flatShare": 0.0039,
+        "albedoCv": 0.207588
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 95.6551,
+          "highestFlatShare": 0.0039,
+          "items": [
+            {
+              "object": "shrub_04",
+              "faces": 27327,
+              "samples": 4096,
+              "radius": 0.01824,
+              "p50": 44.2577,
+              "p90": 95.6551,
+              "flatShare": 0.0039
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.207588,
+          "texels": 139047,
+          "mean": 0.45346,
+          "images": [
+            {
+              "image": "shrub_04_diff",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 139047,
+              "mean": 0.45346,
+              "cv": 0.207588
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.481882,
+              "boxCounts": [
+                8822.25,
+                3776.9375,
+                1425.640625,
+                470.953125,
+                155.734375,
+                56.234375
+              ],
+              "edgePixels": 18714,
+              "solidity": 0.202872,
+              "area": 48559,
+              "hullArea": 239358,
+              "sha256": "f8a91a5c920c48eacd69aff6412c3696201af062f460affabe80b6a9614c5173"
+            },
+            "right": {
+              "dimension": 1.508177,
+              "boxCounts": [
+                3565.75,
+                1512.25,
+                575.265625,
+                193.296875,
+                60.296875,
+                20.34375
+              ],
+              "edgePixels": 7522,
+              "solidity": 0.594274,
+              "area": 31238,
+              "hullArea": 52565,
+              "sha256": "a797c5a1b6727d100405d40c805632922012e885a13c9e4b7872d3f224269489"
+            },
+            "top": {
+              "dimension": 1.457792,
+              "boxCounts": [
+                6516.75,
+                2880.75,
+                1141.390625,
+                387.140625,
+                125.78125,
+                44.875
+              ],
+              "edgePixels": 13594,
+              "solidity": 0.316654,
+              "area": 50460,
+              "hullArea": 159353.5,
+              "sha256": "4a0ec2aab890fc41c58dd35abac25596a756af506612ed385568042061866420"
+            }
+          },
+          "dimension": 1.481882,
+          "solidity": 0.202872,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "weed_plant_02",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/weed_plant_02",
+      "licence": "CC0-1.0",
+      "setSha256": "462775509fb926f6ddd1feed450a64c205e5811d7d070822149c8bece8737b27",
+      "values": {
+        "dimension": 1.156966,
+        "solidity": 0.123659,
+        "p90": 16.8296,
+        "flatShare": 0.2798,
+        "albedoCv": 0.342237
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 5,
+          "lowestP90": 16.8296,
+          "highestFlatShare": 0.2798,
+          "items": [
+            {
+              "object": "weed_plant_02_a_LOD0",
+              "faces": 2967,
+              "samples": 4096,
+              "radius": 0.009091,
+              "p50": 9.8467,
+              "p90": 25.1512,
+              "flatShare": 0.0815
+            },
+            {
+              "object": "weed_plant_02_b_LOD0",
+              "faces": 2273,
+              "samples": 4096,
+              "radius": 0.006204,
+              "p50": 8.6215,
+              "p90": 26.0874,
+              "flatShare": 0.1296
+            },
+            {
+              "object": "weed_plant_02_c_LOD0",
+              "faces": 1766,
+              "samples": 4096,
+              "radius": 0.004483,
+              "p50": 4.9186,
+              "p90": 16.8296,
+              "flatShare": 0.2798
+            },
+            {
+              "object": "weed_plant_02_d_LOD0",
+              "faces": 1928,
+              "samples": 4096,
+              "radius": 0.004815,
+              "p50": 7.1928,
+              "p90": 21.287,
+              "flatShare": 0.1526
+            },
+            {
+              "object": "weed_plant_02_e_LOD0",
+              "faces": 2182,
+              "samples": 4096,
+              "radius": 0.003727,
+              "p50": 8.0023,
+              "p90": 24.6625,
+              "flatShare": 0.1287
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.342237,
+          "texels": 563571,
+          "mean": 0.273363,
+          "images": [
+            {
+              "image": "weed_plant_02_diff-weed_plant_02_alpha",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 563571,
+              "mean": 0.273363,
+              "cv": 0.342237
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.156966,
+              "boxCounts": [
+                642,
+                290.125,
+                120.546875,
+                49.09375,
+                22.671875,
+                12.9375
+              ],
+              "edgePixels": 1322,
+              "solidity": 0.16023,
+              "area": 3350,
+              "hullArea": 20907.5,
+              "sha256": "c65cadf32e262e7b49b6150b3dd3640d77501499b01e59debdc59214ee8672cf"
+            },
+            "right": {
+              "dimension": 1.18406,
+              "boxCounts": [
+                208.5,
+                95,
+                40.78125,
+                17.265625,
+                7.265625,
+                3.703125
+              ],
+              "edgePixels": 429,
+              "solidity": 0.66764,
+              "area": 1600,
+              "hullArea": 2396.5,
+              "sha256": "bf423da222cfa9864192504cb5b3dcbb188e70dcb97e078fe4a07ab6d312cd3c"
+            },
+            "top": {
+              "dimension": 1.210257,
+              "boxCounts": [
+                1115.5,
+                520.5625,
+                224.84375,
+                90,
+                37.15625,
+                18.390625
+              ],
+              "edgePixels": 2248,
+              "solidity": 0.123659,
+              "area": 8135,
+              "hullArea": 65785.5,
+              "sha256": "6dc1d2cf115dfdb8237fbde8ffd2f48afbe9dbfe40a9f3fe0db03070a9f4ca45"
+            }
+          },
+          "dimension": 1.156966,
+          "solidity": 0.123659,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "wild_rooibos_bush",
+      "kind": "scan",
+      "classes": [
+        "plant"
+      ],
+      "source": "https://polyhaven.com/a/wild_rooibos_bush",
+      "licence": "CC0-1.0",
+      "setSha256": "5439ae34f07ebb621be3eb6b86f3ef2a67a66d4de9d0f6a1ea6cb32d5878c2bf",
+      "values": {
+        "dimension": 1.29493,
+        "solidity": 0.393922,
+        "p90": 76.9995,
+        "flatShare": 0.4585,
+        "albedoCv": 0.659136
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 5,
+          "lowestP90": 76.9995,
+          "highestFlatShare": 0.4585,
+          "items": [
+            {
+              "object": "wild_rooibos_bush_a",
+              "faces": 13151,
+              "samples": 4096,
+              "radius": 0.026357,
+              "p50": 38.7119,
+              "p90": 110.5342,
+              "flatShare": 0.0205
+            },
+            {
+              "object": "wild_rooibos_bush_b",
+              "faces": 6287,
+              "samples": 4096,
+              "radius": 0.016915,
+              "p50": 18.9132,
+              "p90": 78.5471,
+              "flatShare": 0.1243
+            },
+            {
+              "object": "wild_rooibos_bush_c",
+              "faces": 4204,
+              "samples": 4096,
+              "radius": 0.014753,
+              "p50": 21.1344,
+              "p90": 87.0811,
+              "flatShare": 0.1467
+            },
+            {
+              "object": "wild_rooibos_bush_d",
+              "faces": 2684,
+              "samples": 4096,
+              "radius": 0.013123,
+              "p50": 13.4077,
+              "p90": 76.9995,
+              "flatShare": 0.2585
+            },
+            {
+              "object": "wild_rooibos_bush_e",
+              "faces": 1193,
+              "samples": 4096,
+              "radius": 0.009568,
+              "p50": 3.2939,
+              "p90": 77.7418,
+              "flatShare": 0.4585
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.659136,
+          "texels": 116033,
+          "mean": 0.205458,
+          "images": [
+            {
+              "image": "wild_rooibos_bush_diff-wild_rooibos_bush_alpha",
+              "size": [
+                1024,
+                1024
+              ],
+              "texels": 116033,
+              "mean": 0.205458,
+              "cv": 0.659136
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.385431,
+              "boxCounts": [
+                5638.75,
+                2362.0625,
+                937.328125,
+                358.671875,
+                131.625,
+                46.515625
+              ],
+              "edgePixels": 11941,
+              "solidity": 0.459841,
+              "area": 68259,
+              "hullArea": 148440.5,
+              "sha256": "65d2774fb8a924f611c5528cef25d9cbac416cd69e1cbe4d82b97960d00c383a"
+            },
+            "right": {
+              "dimension": 1.29493,
+              "boxCounts": [
+                1536,
+                672.25,
+                283.25,
+                113.375,
+                43.9375,
+                17.703125
+              ],
+              "edgePixels": 3171,
+              "solidity": 0.665798,
+              "area": 31158,
+              "hullArea": 46798,
+              "sha256": "a7b9bee6714de5693176e561411ef2613cadff3c349ab482d8e89a529ab5ef89"
+            },
+            "top": {
+              "dimension": 1.359338,
+              "boxCounts": [
+                5491.75,
+                2512.8125,
+                1087.296875,
+                422.984375,
+                146.96875,
+                49.78125
+              ],
+              "edgePixels": 11228,
+              "solidity": 0.393922,
+              "area": 70619,
+              "hullArea": 179271.5,
+              "sha256": "77e8825929e8407444dce1b40c3475d7e9e8d3395b38c53ee77efa0ddc390d01"
+            }
+          },
+          "dimension": 1.29493,
+          "solidity": 0.393922,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "uv-sphere",
+      "kind": "stand-in",
+      "classes": [
+        "rock"
+      ],
+      "source": "test/judge/natural_fixtures.py: UV sphere, 128 x 64 segments, with a single-colour texture",
+      "licence": "generated",
+      "setSha256": "7d22e553c1181ccccf58a95ac60f3100348b7ab71aaa3ea6d82b170de185e24d",
+      "values": {
+        "dimension": 0.99872,
+        "solidity": 0.997611,
+        "p90": 0.8817,
+        "flatShare": 1,
+        "albedoCv": 0
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 0.8817,
+          "highestFlatShare": 1,
+          "items": [
+            {
+              "object": "Sphere",
+              "faces": 16128,
+              "samples": 4096,
+              "radius": 0.03125,
+              "p50": 0.6756,
+              "p90": 0.8817,
+              "flatShare": 1
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0,
+          "texels": 3968,
+          "mean": 0.501961,
+          "images": [
+            {
+              "image": "sphere-colour",
+              "size": [
+                64,
+                64
+              ],
+              "texels": 3968,
+              "mean": 0.501961,
+              "cv": 0
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 0.99872,
+              "boxCounts": [
+                1734,
+                867,
+                433.5,
+                216.5,
+                108.5,
+                54.5
+              ],
+              "edgePixels": 3468,
+              "solidity": 0.997611,
+              "area": 591212,
+              "hullArea": 592628,
+              "sha256": "f760fb8c010c2b73997d7a7b71e30f80b991875277730982b24f9313b24cfd36"
+            },
+            "right": {
+              "dimension": 0.99872,
+              "boxCounts": [
+                1734,
+                867,
+                433.5,
+                216.5,
+                108.5,
+                54.5
+              ],
+              "edgePixels": 3468,
+              "solidity": 0.997611,
+              "area": 591212,
+              "hullArea": 592628,
+              "sha256": "f760fb8c010c2b73997d7a7b71e30f80b991875277730982b24f9313b24cfd36"
+            },
+            "top": {
+              "dimension": 0.99872,
+              "boxCounts": [
+                1734,
+                867,
+                433.5,
+                216.5,
+                108.5,
+                54.5
+              ],
+              "edgePixels": 3468,
+              "solidity": 0.997611,
+              "area": 591212,
+              "hullArea": 592628,
+              "sha256": "f760fb8c010c2b73997d7a7b71e30f80b991875277730982b24f9313b24cfd36"
+            }
+          },
+          "dimension": 0.99872,
+          "solidity": 0.997611,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "clouds-ico",
+      "kind": "stand-in",
+      "classes": [
+        "rock"
+      ],
+      "source": "test/judge/natural_fixtures.py: ico sphere (5 subdivisions) displaced by Clouds (size 0.4, strength 0.25), scaled (1, 0.8, 0.6)",
+      "licence": "generated",
+      "setSha256": "f89d7b894e9bbb245f749c25fe477e1dbd186cf86623102d1bf345d21aebdae0",
+      "values": {
+        "dimension": 1.002524,
+        "solidity": 0.983246,
+        "p90": 9.3526,
+        "flatShare": 0.2898,
+        "albedoCv": null
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 9.3526,
+          "highestFlatShare": 0.2898,
+          "items": [
+            {
+              "object": "CloudsIco",
+              "faces": 5120,
+              "samples": 4096,
+              "radius": 0.032694,
+              "p50": 4.479,
+              "p90": 9.3526,
+              "flatShare": 0.2898
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": null,
+          "texels": 0,
+          "mean": null,
+          "images": [],
+          "untexturedShare": 1
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.002524,
+              "boxCounts": [
+                1401,
+                700.3125,
+                350.046875,
+                174.546875,
+                87.140625,
+                43.390625
+              ],
+              "edgePixels": 2802,
+              "solidity": 0.983246,
+              "area": 342850,
+              "hullArea": 348692,
+              "sha256": "e7447306df53f55c373c982b0a2c8d421b4010b0df04c49908e29f9ccf726ba7"
+            },
+            "right": {
+              "dimension": 1.003223,
+              "boxCounts": [
+                1200.75,
+                600.3125,
+                299.9375,
+                149.71875,
+                74.671875,
+                37.0625
+              ],
+              "edgePixels": 2402,
+              "solidity": 0.985551,
+              "area": 277131,
+              "hullArea": 281194,
+              "sha256": "6616971eef3e9f25a04ca7c9c43e792e91276cc42f3d3059a18fe28e05cee216"
+            },
+            "top": {
+              "dimension": 1.001457,
+              "boxCounts": [
+                1536,
+                767.875,
+                383.734375,
+                191.4375,
+                95.5,
+                47.828125
+              ],
+              "edgePixels": 3072,
+              "solidity": 0.983715,
+              "area": 425934,
+              "hullArea": 432985,
+              "sha256": "db52bfe8b45b4f6f10d0da3259c05852b57ba7f2ab6c59f573ade750d99ac593"
+            }
+          },
+          "dimension": 1.002524,
+          "solidity": 0.983246,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "jittered-ico",
+      "kind": "stand-in",
+      "classes": [
+        "rock"
+      ],
+      "source": "test/judge/natural_fixtures.py: ico sphere (1 subdivision), vertices jittered by up to 15 %, scaled (1, 0.75, 0.55)",
+      "licence": "generated",
+      "setSha256": "32ab5d37c65710f22664cb86f4a62a4f2c42ef0c42a2b898036e390692d72339",
+      "values": {
+        "dimension": 1.000185,
+        "solidity": 0.996079,
+        "p90": 0,
+        "flatShare": 1,
+        "albedoCv": null
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 0,
+          "highestFlatShare": 1,
+          "items": [
+            {
+              "object": "JitteredIco",
+              "faces": 20,
+              "samples": 4096,
+              "radius": 0.025426,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": null,
+          "texels": 0,
+          "mean": null,
+          "images": [],
+          "untexturedShare": 1
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.00153,
+              "boxCounts": [
+                1478,
+                738.8125,
+                369.21875,
+                184.28125,
+                92.046875,
+                45.953125
+              ],
+              "edgePixels": 2956,
+              "solidity": 0.996079,
+              "area": 348502,
+              "hullArea": 349874,
+              "sha256": "3adcaa8474c4f076ff96d14c44c5ba67c6e7acdaef85bf8acc578a9eedea8048"
+            },
+            "right": {
+              "dimension": 1.000185,
+              "boxCounts": [
+                1380.5,
+                690.1875,
+                344.984375,
+                172.453125,
+                86.203125,
+                43.125
+              ],
+              "edgePixels": 2761,
+              "solidity": 0.996305,
+              "area": 345558,
+              "hullArea": 346839.5,
+              "sha256": "5ca04c3f572ffd152423562a286b4f292fe80b4da8cdb30d928088fc8ec4b4de"
+            },
+            "top": {
+              "dimension": 0.999712,
+              "boxCounts": [
+                1635.75,
+                817.75,
+                408.796875,
+                204.328125,
+                102.234375,
+                51.1875
+              ],
+              "edgePixels": 3272,
+              "solidity": 0.997214,
+              "area": 519407,
+              "hullArea": 520858,
+              "sha256": "86285b46e99be9122f2bf6f2b3fc433fd139e006b4b454a365da13fcf2db8d29"
+            }
+          },
+          "dimension": 1.000185,
+          "solidity": 0.996079,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "cylinder-tree",
+      "kind": "stand-in",
+      "classes": [
+        "tree",
+        "plant"
+      ],
+      "source": "test/judge/natural_fixtures.py: three-level tree of 40 tapered cylinders",
+      "licence": "generated",
+      "setSha256": "bcd841e4812e24c84eb71e5afee9d83740fe737b6582f65791a997adc7ccf404",
+      "values": {
+        "dimension": 1.226624,
+        "solidity": 0.236564,
+        "p90": 105.5112,
+        "flatShare": 0.4763,
+        "albedoCv": null
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 105.5112,
+          "highestFlatShare": 0.4763,
+          "items": [
+            {
+              "object": "CylinderTree",
+              "faces": 1760,
+              "samples": 4096,
+              "radius": 0.060514,
+              "p50": 11.0542,
+              "p90": 105.5112,
+              "flatShare": 0.4763
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": null,
+          "texels": 0,
+          "mean": null,
+          "images": [],
+          "untexturedShare": 1
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.226624,
+              "boxCounts": [
+                3505.5,
+                1714.75,
+                766.734375,
+                324.21875,
+                129.9375,
+                50.9375
+              ],
+              "edgePixels": 7050,
+              "solidity": 0.243489,
+              "area": 71166,
+              "hullArea": 292276,
+              "sha256": "a2d253c430c80ca3eb44f90ad4d4b2c4580214964c8cd5aca4cdfe7482ec3987"
+            },
+            "right": {
+              "dimension": 1.236775,
+              "boxCounts": [
+                3745,
+                1834.75,
+                815.65625,
+                339.15625,
+                134.453125,
+                53.03125
+              ],
+              "edgePixels": 7506,
+              "solidity": 0.256055,
+              "area": 76642,
+              "hullArea": 299318.5,
+              "sha256": "bae65d45cfd4f9a779a229e6ac93c9edc9029ba1da2e6338e3508a258c7e7e0b"
+            },
+            "top": {
+              "dimension": 1.301704,
+              "boxCounts": [
+                4490,
+                2225.6875,
+                984.125,
+                391.421875,
+                143.890625,
+                50.46875
+              ],
+              "edgePixels": 8989,
+              "solidity": 0.236564,
+              "area": 52969,
+              "hullArea": 223910,
+              "sha256": "606508705756cd1dec446983dd434b83d6bbb2a9231775bbf8139620ca46e0d5"
+            }
+          },
+          "dimension": 1.226624,
+          "solidity": 0.236564,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "noise-rock-example",
+      "kind": "procedural",
+      "classes": [
+        "rock"
+      ],
+      "source": "scripts/lib/natural-sources.ts: the rock of docs/examples/noise_terrain.py: billow, warped ridged Worley and fine fBm layers on a 6-subdivision ico sphere, base colour baked from the boulder stone material",
+      "licence": "generated",
+      "setSha256": "02787872a5b13094cd8eab64becdfb2740368be5cc55c26f2d9dde816539dea2",
+      "values": {
+        "dimension": 1.00766,
+        "solidity": 0.974859,
+        "p90": 26.3235,
+        "flatShare": 0.0237,
+        "albedoCv": 0.05409
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 26.3235,
+          "highestFlatShare": 0.0237,
+          "items": [
+            {
+              "object": "noise_rock_example",
+              "faces": 20480,
+              "samples": 4096,
+              "radius": 0.144597,
+              "p50": 14.9475,
+              "p90": 26.3235,
+              "flatShare": 0.0237
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.05409,
+          "texels": 25838,
+          "mean": 0.572115,
+          "images": [
+            {
+              "image": "noise_rock_example_base_color",
+              "size": [
+                512,
+                512
+              ],
+              "texels": 25838,
+              "mean": 0.572115,
+              "cv": 0.05409
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.00766,
+              "boxCounts": [
+                1477,
+                737.8125,
+                367.859375,
+                182.921875,
+                90.859375,
+                44.921875
+              ],
+              "edgePixels": 2956,
+              "solidity": 0.974859,
+              "area": 366978,
+              "hullArea": 376442,
+              "sha256": "bbe35b50a0064878be40babdf28843fcd46075feb2bb2566aed3a4bf23a07895"
+            },
+            "right": {
+              "dimension": 1.009233,
+              "boxCounts": [
+                1260.75,
+                629.125,
+                313.484375,
+                155.859375,
+                77.078125,
+                38.171875
+              ],
+              "edgePixels": 2523,
+              "solidity": 0.982366,
+              "area": 287537,
+              "hullArea": 292698.5,
+              "sha256": "9fc8d72637f489cb7b1c26180cba4ef584acdc987bed54212b3282341840a91f"
+            },
+            "top": {
+              "dimension": 1.006385,
+              "boxCounts": [
+                1576.75,
+                786.9375,
+                392.203125,
+                195.5625,
+                97.09375,
+                48.171875
+              ],
+              "edgePixels": 3154,
+              "solidity": 0.980696,
+              "area": 442220,
+              "hullArea": 450924.5,
+              "sha256": "2b5a18f323f6c986bba5c9cd86c786c8cf8c61e3cffe66a1a48b0e57f1020aca"
+            }
+          },
+          "dimension": 1.00766,
+          "solidity": 0.974859,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "noise-rock-billow",
+      "kind": "procedural",
+      "classes": [
+        "rock"
+      ],
+      "source": "scripts/lib/natural-sources.ts: the example's first layer alone: billow perlin, 3 octaves",
+      "licence": "generated",
+      "setSha256": "0bf55ae9e85dbef67d81b9fa6e2cd64c1e6e8a3b2d8defb3ee48e16a55d6516a",
+      "values": {
+        "dimension": 0.998998,
+        "solidity": 0.993428,
+        "p90": 5.1083,
+        "flatShare": 0.72,
+        "albedoCv": 0.055912
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 5.1083,
+          "highestFlatShare": 0.72,
+          "items": [
+            {
+              "object": "noise_rock_billow",
+              "faces": 20480,
+              "samples": 4096,
+              "radius": 0.142596,
+              "p50": 1.6122,
+              "p90": 5.1083,
+              "flatShare": 0.72
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.055912,
+          "texels": 140117,
+          "mean": 0.572075,
+          "images": [
+            {
+              "image": "noise_rock_billow_base_color",
+              "size": [
+                512,
+                512
+              ],
+              "texels": 140117,
+              "mean": 0.572075,
+              "cv": 0.055912
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 0.999744,
+              "boxCounts": [
+                1421,
+                710.3125,
+                355.078125,
+                177.40625,
+                88.890625,
+                44.4375
+              ],
+              "edgePixels": 2842,
+              "solidity": 0.993428,
+              "area": 360673,
+              "hullArea": 363059,
+              "sha256": "c3921b5714d78bab1144401bbab3171d225a0bd94339b495a740fba12523b2a6"
+            },
+            "right": {
+              "dimension": 0.998998,
+              "boxCounts": [
+                1191,
+                595.5,
+                297.75,
+                149,
+                74.5,
+                37.375
+              ],
+              "edgePixels": 2382,
+              "solidity": 0.995461,
+              "area": 281040,
+              "hullArea": 282321.5,
+              "sha256": "391287935ee8054c75cebe3455091aa990b1dfd05cee5bfffb6d3d0294f605bb"
+            },
+            "top": {
+              "dimension": 0.999455,
+              "boxCounts": [
+                1512,
+                756,
+                378,
+                189,
+                94.5,
+                47.375
+              ],
+              "edgePixels": 3024,
+              "solidity": 0.994909,
+              "area": 438426,
+              "hullArea": 440669.5,
+              "sha256": "aa34a7816e0cf852c043de23c9d2bdff99b894c466ea139c07ccef1500b61c8a"
+            }
+          },
+          "dimension": 0.998998,
+          "solidity": 0.993428,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "noise-rock-ridged",
+      "kind": "procedural",
+      "classes": [
+        "rock"
+      ],
+      "source": "scripts/lib/natural-sources.ts: one ridged Worley layer, 5 octaves",
+      "licence": "generated",
+      "setSha256": "c6e3b859501385414f0991ad061e0be11513bfa90a71d76fd2853764381c15df",
+      "values": {
+        "dimension": 1.016626,
+        "solidity": 0.960182,
+        "p90": 40.8299,
+        "flatShare": 0.0098,
+        "albedoCv": 0.064032
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 40.8299,
+          "highestFlatShare": 0.0098,
+          "items": [
+            {
+              "object": "noise_rock_ridged",
+              "faces": 20480,
+              "samples": 4096,
+              "radius": 0.13749,
+              "p50": 25.2635,
+              "p90": 40.8299,
+              "flatShare": 0.0098
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.064032,
+          "texels": 2231,
+          "mean": 0.571866,
+          "images": [
+            {
+              "image": "noise_rock_ridged_base_color",
+              "size": [
+                512,
+                512
+              ],
+              "texels": 2231,
+              "mean": 0.571866,
+              "cv": 0.064032
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.016626,
+              "boxCounts": [
+                1524.25,
+                759.0625,
+                376.046875,
+                185.015625,
+                91.3125,
+                45.109375
+              ],
+              "edgePixels": 3054,
+              "solidity": 0.965934,
+              "area": 361803,
+              "hullArea": 374563,
+              "sha256": "60741c2b44197e13144c99aac55c1211af1fb8cf4e16770254d22a322e3b8abb"
+            },
+            "right": {
+              "dimension": 1.025914,
+              "boxCounts": [
+                1369.25,
+                681.875,
+                337.421875,
+                165.46875,
+                80.28125,
+                39.265625
+              ],
+              "edgePixels": 2742,
+              "solidity": 0.960182,
+              "area": 284237,
+              "hullArea": 296024,
+              "sha256": "6de28b894c915f2eb045452a929c3235deec7820173732dff556a4914a5cf94f"
+            },
+            "top": {
+              "dimension": 1.015653,
+              "boxCounts": [
+                1687,
+                840.9375,
+                417.765625,
+                206.28125,
+                101.640625,
+                49.984375
+              ],
+              "edgePixels": 3378,
+              "solidity": 0.96782,
+              "area": 457099,
+              "hullArea": 472297.5,
+              "sha256": "e6170f34444b1c083d6e188288d6b040ff9f9bcb1fff12c443d42fcd5683efea"
+            }
+          },
+          "dimension": 1.016626,
+          "solidity": 0.960182,
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "noise-rock-fine",
+      "kind": "procedural",
+      "classes": [
+        "rock"
+      ],
+      "source": "scripts/lib/natural-sources.ts: the example with a fourth, 8 cm fBm layer",
+      "licence": "generated",
+      "setSha256": "592494be1692941b421cbb99f450e07e49ef729924dbe7d55f155406dd79f762",
+      "values": {
+        "dimension": 1.008384,
+        "solidity": 0.974875,
+        "p90": 26.9648,
+        "flatShare": 0.0269,
+        "albedoCv": 0.053777
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 26.9648,
+          "highestFlatShare": 0.0269,
+          "items": [
+            {
+              "object": "noise_rock_fine",
+              "faces": 20480,
+              "samples": 4096,
+              "radius": 0.144602,
+              "p50": 15.207,
+              "p90": 26.9648,
+              "flatShare": 0.0269
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.053777,
+          "texels": 22126,
+          "mean": 0.572116,
+          "images": [
+            {
+              "image": "noise_rock_fine_base_color",
+              "size": [
+                512,
+                512
+              ],
+              "texels": 22126,
+              "mean": 0.572116,
+              "cv": 0.053777
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 1.009138,
+              "boxCounts": [
+                1482,
+                739.75,
+                368.59375,
+                183.125,
+                90.65625,
+                44.890625
+              ],
+              "edgePixels": 2966,
+              "solidity": 0.974875,
+              "area": 367072,
+              "hullArea": 376532.5,
+              "sha256": "b841a2c4ea7f7440762ecba31c2edae6fa7521b1379124fb728727b38bad093f"
+            },
+            "right": {
+              "dimension": 1.008384,
+              "boxCounts": [
+                1257.75,
+                627.9375,
+                313.078125,
+                155.84375,
+                77.125,
+                38.171875
+              ],
+              "edgePixels": 2517,
+              "solidity": 0.982713,
+              "area": 287530,
+              "hullArea": 292588,
+              "sha256": "c20ed05d7192e33a94d8fe1c20c9a0ba68177e8e05efe4f5a7443fd9de3fc9fb"
+            },
+            "top": {
+              "dimension": 1.005336,
+              "boxCounts": [
+                1571.5,
+                784.75,
+                391.578125,
+                195.171875,
+                97.015625,
+                48.203125
+              ],
+              "edgePixels": 3144,
+              "solidity": 0.980797,
+              "area": 442255,
+              "hullArea": 450914,
+              "sha256": "22e7464c46872807c5e54af8ea25583e7a336352c03a3415f8604d3c1ed17a05"
+            }
+          },
+          "dimension": 1.008384,
+          "solidity": 0.974875,
+          "failure": null
+        }
+      },
+      "failure": null
+    }
+  ],
+  "procedural": [
+    {
+      "id": "noise-rock-example",
+      "status": "built",
+      "reason": null
+    },
+    {
+      "id": "noise-rock-billow",
+      "status": "built",
+      "reason": null
+    },
+    {
+      "id": "noise-rock-ridged",
+      "status": "built",
+      "reason": null
+    },
+    {
+      "id": "noise-rock-fine",
+      "status": "built",
+      "reason": null
+    }
+  ],
+  "percentiles": {
+    "rock": {
+      "dimension": {
+        "n": 12,
+        "values": {
+          "p5": 1.004293,
+          "p25": 1.008999,
+          "p50": 1.012812,
+          "p75": 1.018443,
+          "p95": 1.081029
+        }
+      },
+      "solidity": {
+        "n": 12,
+        "values": {
+          "p5": 0.552589,
+          "p25": 0.810579,
+          "p50": 0.926687,
+          "p75": 0.951551,
+          "p95": 0.968666
+        }
+      },
+      "p90": {
+        "n": 12,
+        "values": {
+          "p5": 18.733325,
+          "p25": 26.49265,
+          "p50": 39.1564,
+          "p75": 51.03775,
+          "p95": 67.422125
+        }
+      },
+      "flatShare": {
+        "n": 12,
+        "values": {
+          "p5": 0.017635,
+          "p25": 0.025975,
+          "p50": 0.06615,
+          "p75": 0.135575,
+          "p95": 0.31187
+        }
+      },
+      "albedoCv": {
+        "n": 12,
+        "values": {
+          "p5": 0.051231,
+          "p25": 0.220296,
+          "p50": 0.25249,
+          "p75": 0.32112,
+          "p95": 0.350181
+        }
+      }
+    },
+    "tree": {
+      "dimension": {
+        "n": 11,
+        "values": {
+          "p5": 1.015918,
+          "p25": 1.033528,
+          "p50": 1.15711,
+          "p75": 1.37647,
+          "p95": 1.61129
+        }
+      },
+      "solidity": {
+        "n": 11,
+        "values": {
+          "p5": 0.154635,
+          "p25": 0.222418,
+          "p50": 0.48375,
+          "p75": 0.70454,
+          "p95": 0.906264
+        }
+      },
+      "p90": {
+        "n": 11,
+        "values": {
+          "p5": 37.59325,
+          "p25": 50.4236,
+          "p50": 68.0187,
+          "p75": 102.14805,
+          "p95": 111.83755
+        }
+      },
+      "flatShare": {
+        "n": 11,
+        "values": {
+          "p5": 0.00365,
+          "p25": 0.03015,
+          "p50": 0.0818,
+          "p75": 0.13015,
+          "p95": 0.2546
+        }
+      },
+      "albedoCv": {
+        "n": 11,
+        "values": {
+          "p5": 0.173201,
+          "p25": 0.187263,
+          "p50": 0.243567,
+          "p75": 0.287068,
+          "p95": 0.308078
+        }
+      }
+    },
+    "plant": {
+      "dimension": {
+        "n": 12,
+        "values": {
+          "p5": 1.167638,
+          "p25": 1.299599,
+          "p50": 1.354569,
+          "p75": 1.461364,
+          "p95": 1.531608
+        }
+      },
+      "solidity": {
+        "n": 12,
+        "values": {
+          "p5": 0.079824,
+          "p25": 0.097511,
+          "p50": 0.136513,
+          "p75": 0.30311,
+          "p95": 0.388034
+        }
+      },
+      "p90": {
+        "n": 12,
+        "values": {
+          "p5": 16.435895,
+          "p25": 57.7707,
+          "p50": 77.57135,
+          "p75": 93.415825,
+          "p95": 110.458805
+        }
+      },
+      "flatShare": {
+        "n": 12,
+        "values": {
+          "p5": 0.002475,
+          "p25": 0.00385,
+          "p50": 0.03305,
+          "p75": 0.285775,
+          "p95": 0.50872
+        }
+      },
+      "albedoCv": {
+        "n": 12,
+        "values": {
+          "p5": 0.162231,
+          "p25": 0.221979,
+          "p50": 0.286781,
+          "p75": 0.379427,
+          "p95": 0.609666
+        }
+      }
+    }
+  },
+  "thresholds": [
+    {
+      "measure": "dimension",
+      "class": "rock",
+      "direction": "min",
+      "scans": 12,
+      "standIns": 3,
+      "standInsMeasured": 3,
+      "realP5": 1.004293,
+      "realRange": [
+        1.003944,
+        1.127443
+      ],
+      "worstStandIn": 1.002524,
+      "threshold": 1.004293,
+      "separates": false,
+      "realPassShare": 0.9167,
+      "standInFailShare": 1,
+      "rule": "5th percentile of the scans"
+    },
+    {
+      "measure": "solidity",
+      "class": "rock",
+      "direction": "max",
+      "scans": 12,
+      "standIns": 3,
+      "standInsMeasured": 3,
+      "realP5": 0.968666,
+      "realRange": [
+        0.465152,
+        0.969173
+      ],
+      "worstStandIn": 0.983246,
+      "threshold": 0.976,
+      "separates": true,
+      "realPassShare": 1,
+      "standInFailShare": 1,
+      "rule": "midpoint between the 95th percentile of the scans and the worst stand-in"
+    },
+    {
+      "measure": "p90",
+      "class": "rock",
+      "direction": "min",
+      "scans": 12,
+      "standIns": 3,
+      "standInsMeasured": 3,
+      "realP5": 18.733325,
+      "realRange": [
+        16.5501,
+        68.2628
+      ],
+      "worstStandIn": 9.3526,
+      "threshold": 14,
+      "separates": true,
+      "realPassShare": 1,
+      "standInFailShare": 1,
+      "rule": "midpoint between the 5th percentile of the scans and the worst stand-in"
+    },
+    {
+      "measure": "flatShare",
+      "class": "rock",
+      "direction": "max",
+      "scans": 12,
+      "standIns": 3,
+      "standInsMeasured": 3,
+      "realP5": 0.31187,
+      "realRange": [
+        0.0156,
+        0.4299
+      ],
+      "worstStandIn": 0.2898,
+      "threshold": 0.31187,
+      "separates": false,
+      "realPassShare": 0.9167,
+      "standInFailShare": 0.6667,
+      "rule": "95th percentile of the scans"
+    },
+    {
+      "measure": "albedoCv",
+      "class": "rock",
+      "direction": "min",
+      "scans": 12,
+      "standIns": 3,
+      "standInsMeasured": 1,
+      "realP5": 0.051231,
+      "realRange": [
+        0.047298,
+        0.383925
+      ],
+      "worstStandIn": 0,
+      "threshold": 0.026,
+      "separates": true,
+      "realPassShare": 1,
+      "standInFailShare": 1,
+      "rule": "midpoint between the 5th percentile of the scans and the worst stand-in"
+    },
+    {
+      "measure": "dimension",
+      "class": "tree",
+      "direction": "min",
+      "scans": 11,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": 1.015918,
+      "realRange": [
+        1.013954,
+        1.649446
+      ],
+      "worstStandIn": 1.226624,
+      "threshold": 1.015918,
+      "separates": false,
+      "realPassShare": 0.9091,
+      "standInFailShare": 0,
+      "rule": "5th percentile of the scans"
+    },
+    {
+      "measure": "solidity",
+      "class": "tree",
+      "direction": "max",
+      "scans": 11,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": 0.906264,
+      "realRange": [
+        0.142293,
+        0.930773
+      ],
+      "worstStandIn": 0.236564,
+      "threshold": 0.906264,
+      "separates": false,
+      "realPassShare": 0.9091,
+      "standInFailShare": 0,
+      "rule": "95th percentile of the scans"
+    },
+    {
+      "measure": "p90",
+      "class": "tree",
+      "direction": "min",
+      "scans": 11,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": 37.59325,
+      "realRange": [
+        34.3851,
+        113.5845
+      ],
+      "worstStandIn": 105.5112,
+      "threshold": 37.59325,
+      "separates": false,
+      "realPassShare": 0.9091,
+      "standInFailShare": 0,
+      "rule": "5th percentile of the scans"
+    },
+    {
+      "measure": "flatShare",
+      "class": "tree",
+      "direction": "max",
+      "scans": 11,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": 0.2546,
+      "realRange": [
+        0.0002,
+        0.3298
+      ],
+      "worstStandIn": 0.4763,
+      "threshold": 0.365,
+      "separates": true,
+      "realPassShare": 1,
+      "standInFailShare": 1,
+      "rule": "midpoint between the 95th percentile of the scans and the worst stand-in"
+    },
+    {
+      "measure": "albedoCv",
+      "class": "tree",
+      "direction": "min",
+      "scans": 11,
+      "standIns": 1,
+      "standInsMeasured": 0,
+      "realP5": 0.173201,
+      "realRange": [
+        0.170743,
+        0.324578
+      ],
+      "worstStandIn": null,
+      "threshold": 0.173201,
+      "separates": false,
+      "realPassShare": 0.9091,
+      "standInFailShare": 1,
+      "rule": "5th percentile of the scans"
+    },
+    {
+      "measure": "dimension",
+      "class": "plant",
+      "direction": "min",
+      "scans": 12,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": 1.167638,
+      "realRange": [
+        1.156966,
+        1.585111
+      ],
+      "worstStandIn": 1.226624,
+      "threshold": 1.167638,
+      "separates": false,
+      "realPassShare": 0.9167,
+      "standInFailShare": 0,
+      "rule": "5th percentile of the scans"
+    },
+    {
+      "measure": "solidity",
+      "class": "plant",
+      "direction": "max",
+      "scans": 12,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": 0.388034,
+      "realRange": [
+        0.070905,
+        0.393922
+      ],
+      "worstStandIn": 0.236564,
+      "threshold": 0.388034,
+      "separates": false,
+      "realPassShare": 0.9167,
+      "standInFailShare": 0,
+      "rule": "95th percentile of the scans"
+    },
+    {
+      "measure": "p90",
+      "class": "plant",
+      "direction": "min",
+      "scans": 12,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": 16.435895,
+      "realRange": [
+        15.9547,
+        128.3002
+      ],
+      "worstStandIn": 105.5112,
+      "threshold": 16.435895,
+      "separates": false,
+      "realPassShare": 0.9167,
+      "standInFailShare": 0,
+      "rule": "5th percentile of the scans"
+    },
+    {
+      "measure": "flatShare",
+      "class": "plant",
+      "direction": "max",
+      "scans": 12,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": 0.50872,
+      "realRange": [
+        0.0022,
+        0.5701
+      ],
+      "worstStandIn": 0.4763,
+      "threshold": 0.50872,
+      "separates": false,
+      "realPassShare": 0.9167,
+      "standInFailShare": 0,
+      "rule": "95th percentile of the scans"
+    },
+    {
+      "measure": "albedoCv",
+      "class": "plant",
+      "direction": "min",
+      "scans": 12,
+      "standIns": 1,
+      "standInsMeasured": 0,
+      "realP5": 0.162231,
+      "realRange": [
+        0.135806,
+        0.659136
+      ],
+      "worstStandIn": null,
+      "threshold": 0.162231,
+      "separates": false,
+      "realPassShare": 0.9167,
+      "standInFailShare": 1,
+      "rule": "5th percentile of the scans"
+    }
+  ],
+  "defaults": {
+    "rock": {
+      "solidity": {
+        "max": 0.976
+      },
+      "surfaceRoughness": {
+        "p90Min": 14
+      },
+      "albedoVariation": {
+        "min": 0.026
+      }
+    },
+    "tree": {
+      "surfaceRoughness": {
+        "flatShareMax": 0.365
+      }
+    },
+    "plant": {}
+  },
+  "proceduralScores": [
+    {
+      "id": "noise-rock-example",
+      "class": "rock",
+      "limits": [
+        {
+          "limit": "natural.solidity.max",
+          "threshold": 0.976,
+          "value": 0.974859,
+          "pass": true
+        },
+        {
+          "limit": "natural.surfaceRoughness.p90Min",
+          "threshold": 14,
+          "value": 26.3235,
+          "pass": true
+        },
+        {
+          "limit": "natural.albedoVariation.min",
+          "threshold": 0.026,
+          "value": 0.05409,
+          "pass": true
+        }
+      ],
+      "passes": true
+    },
+    {
+      "id": "noise-rock-billow",
+      "class": "rock",
+      "limits": [
+        {
+          "limit": "natural.solidity.max",
+          "threshold": 0.976,
+          "value": 0.993428,
+          "pass": false
+        },
+        {
+          "limit": "natural.surfaceRoughness.p90Min",
+          "threshold": 14,
+          "value": 5.1083,
+          "pass": false
+        },
+        {
+          "limit": "natural.albedoVariation.min",
+          "threshold": 0.026,
+          "value": 0.055912,
+          "pass": true
+        }
+      ],
+      "passes": false
+    },
+    {
+      "id": "noise-rock-ridged",
+      "class": "rock",
+      "limits": [
+        {
+          "limit": "natural.solidity.max",
+          "threshold": 0.976,
+          "value": 0.960182,
+          "pass": true
+        },
+        {
+          "limit": "natural.surfaceRoughness.p90Min",
+          "threshold": 14,
+          "value": 40.8299,
+          "pass": true
+        },
+        {
+          "limit": "natural.albedoVariation.min",
+          "threshold": 0.026,
+          "value": 0.064032,
+          "pass": true
+        }
+      ],
+      "passes": true
+    },
+    {
+      "id": "noise-rock-fine",
+      "class": "rock",
+      "limits": [
+        {
+          "limit": "natural.solidity.max",
+          "threshold": 0.976,
+          "value": 0.974875,
+          "pass": true
+        },
+        {
+          "limit": "natural.surfaceRoughness.p90Min",
+          "threshold": 14,
+          "value": 26.9648,
+          "pass": true
+        },
+        {
+          "limit": "natural.albedoVariation.min",
+          "threshold": 0.026,
+          "value": 0.053777,
+          "pass": true
+        }
+      ],
+      "passes": true
+    }
+  ]
+}

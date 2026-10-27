@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { motionMeasurements } from "./motion-measurements.js";
+import { naturalMeasurementsSchema, scriptNaturalSchema } from "./natural-schema.js";
 import { FORMATS, TEXTURE_KINDS } from "./spec.js";
 
 const finite = z.number().finite();
@@ -101,9 +102,9 @@ const measured = {
 
 const optional = { textures: texturesSchema.optional(), floating: floatingSchema.optional(), objectList: objectListSchema.optional(), ...motionMeasurements };
 
-export const scriptMeasurementsSchema = z.object({ format: z.enum(FORMATS), ...measured, ...optional });
+export const scriptMeasurementsSchema = z.object({ format: z.enum(FORMATS), ...measured, ...optional, natural: scriptNaturalSchema.optional() });
 
-export const measurementsSchema = z.object({ format: z.enum(FORMATS), fileBytes: count, ...measured, references: referencesSchema, ...optional });
+export const measurementsSchema = z.object({ format: z.enum(FORMATS), fileBytes: count, ...measured, references: referencesSchema, ...optional, natural: naturalMeasurementsSchema.optional() });
 
 export type Measurements = z.infer<typeof measurementsSchema>;
 

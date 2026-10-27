@@ -1,6 +1,7 @@
 import { manifoldRules, selfContainedRules, surfaceRules } from "./integrity-rules.js";
 import type { Measurements } from "./measurements.js";
 import { motionRules } from "./motion-rules.js";
+import { naturalRules } from "./natural.js";
 import { objectRules } from "./object-rules.js";
 import { bounded, originResult, sizeRules, upAxis, type RuleResult } from "./shape-rules.js";
 import type { AssetSpec } from "./spec.js";
@@ -45,5 +46,6 @@ export function evaluateRules(spec: AssetSpec, measurements: Measurements, valid
   results.push(...selfContainedRules(spec, measurements));
   results.push(...textureRules(spec, measurements), ...partsRules(spec, measurements), ...validatorRules(spec, validation));
   results.push(...motionRules(spec, measurements));
+  results.push(...naturalRules(spec.natural, measurements.natural));
   return results;
 }

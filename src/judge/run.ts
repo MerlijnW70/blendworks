@@ -7,6 +7,8 @@ import { copyDelivery, DeliveryError, type Delivery } from "./delivery.js";
 import type { DeviceMode } from "./device.js";
 import { renderRules } from "./integrity-rules.js";
 import { deviceArgs, measuredFrom, planPass, stageSeconds, type PassPlan } from "./judge-pass.js";
+import { NATURAL_FOLDER, naturalSilhouettes } from "./natural.js";
+import { wantsNaturalSilhouettes } from "./natural-spec.js";
 import { runPass, type PassRequest, type PassResult, type PassStage } from "./onepass.js";
 import { loadReferences, referenceStage, REFERENCE_FOLDER, silhouettesFrom, type LoadedReference } from "./reference.js";
 import { hashRenders, interpretRenders, overBudget, renderBudget, type RenderAttempt } from "./render-stage.js";
@@ -48,7 +50,7 @@ export type JudgeOptions = {
   visual?: VisualOptions;
 };
 
-const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "sheet.json", "contact-sheet.png", "views", "visual.json", "visual", "closeups", "package", REFERENCE_FOLDER];
+const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "sheet.json", "contact-sheet.png", "views", "visual.json", "visual", "closeups", "package", REFERENCE_FOLDER, NATURAL_FOLDER];
 const STAGE_OUTPUTS = ["measurements.json", "render.json", "sheet.json", "contact-sheet.png"];
 
 function prepareOutDir(outDir: string): void {
@@ -155,13 +157,14 @@ async function blenderStages(draft: Draft, spec: AssetSpec, delivery: Delivery, 
     draft.sandbox = first.isolation;
     draft.timings.measure = measured;
   });
+  if (wantsNaturalSilhouettes(spec.natural)) measurements.natural = { ...measurements.natural, silhouettes: naturalSilhouettes(first, sandbox, outDir) };
   draft.measurements = measurements;
   draft.rules = evaluateRules(spec, measurements, validation);
+  const referenceSeconds = stageSeconds(first, "reference");
+  if (referenceSeconds !== null) draft.timings.reference = referenceSeconds;
   if (spec.reference !== undefined && references !== null) {
     draft.reference = null;
     const output = silhouettesFrom(first, sandbox);
-    const referenceSeconds = stageSeconds(first, "reference");
-    if (referenceSeconds !== null) draft.timings.reference = referenceSeconds;
     referenceStage(draft, spec.reference, references, output, sandbox, outDir);
   }
   const views = (spec.views ?? DEFAULT_VIEWS).length;

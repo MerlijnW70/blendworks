@@ -282,6 +282,85 @@ The sample is small: 10 rock objects, 1 shrub set and 4 stand-ins. Every thresho
 
 *Figure 2. The measurement silhouettes (Workbench, 1024 px, orthographic front view) of `searsia_lucida` (box dimension 1.65), the 40-cylinder tree (1.10), `rock_09` (0.995) and the displaced ico sphere (0.954). Each is reduced to 256 px and set side by side with Pillow.*
 
+### 2.8 Calibration set (P12)
+
+`npm run calibrate:natural` downloads the scans pinned in `scripts/lib/natural-calibration.ts` (Poly Haven, CC0, 1k glTF) through the library client into the cache (`.cache/natural-calibration`), builds the stand-ins of section 2.7 with the fixture script `test/judge/natural_fixtures.py` in headless Blender, judges every asset with the four `natural` rules of the judge in preview mode, and writes the tables below, `natural-shapes/calibration.json` (per asset: id, class, source page, licence, the sha256 of the delivery set and every measured value) and the judge's defaults (`src/judge/natural-defaults.ts`). Nothing downloaded is committed. A second run gives the same values: every measure is deterministic, and the delivery set sha256 pins the files that were measured.
+
+Notes on the run:
+- **Choice of scans.** 12 rocks, 11 trees and logs, 12 plants and shrubs. `boulder_01`, `rock_07` and `root_cluster_01` are left out because the library client refuses their file listings (an 8k file without a valid md5), and `tree_small_02` because its 2.06 million triangles are over the judge's cap.
+- **Procedural assets.** A third group, beside the scans and the primitive stand-ins: four rocks built through the bridge with `noise_displace` (`scripts/lib/natural-sources.ts`). One is the rock of `docs/examples/noise_terrain.py` (billow, warped ridged Worley and fine fBm layers on a 6-subdivision ico sphere); the others are its billow layer alone, one ridged Worley layer, and the example with a fourth, 8 cm layer. Each gets the example's `boulder` stone material, baked to a 512 px base-colour texture. They are measured and scored against the defaults, but they set no threshold. The script asks the bridge which commands it has and lists a recipe as not built when one is missing. Three of the four pass the rock defaults; the billow-only rock fails solidity (0.993) and roughness (p90 5.1°). The example rock passes solidity only narrowly (0.975 against 0.976), and every procedural albedo CV (0.054–0.064) sits near the moon rocks at the bottom of the scans, far below the typical scan (median 0.25).
+- **Changes from section 2.7.** The silhouettes keep alpha cut-outs (most plant scans are leaf cards), the box count averages over grid offsets on an 8-neighbour edge (a circle gives 1.00, see `docs/DESIGN.md`), and the mesh is not subdivided before the roughness is measured. The numbers are close to the earlier sample (`rock_09`: solidity 0.932 against 0.936, p90 39.1° against 40.0°).
+- **What it changed.** Solidity (`max` 0.976 for rocks) and the p90 roughness (`p90Min` 14 for rocks) keep their starting values. The rock flat share does not separate: the coarse `moon_rock_01` has a flat share of 0.43, above the displaced sphere's 0.29. The albedo lower bound falls from 0.15 to 0.026, because the moon rock scans vary little (0.047 and 0.054). The plant `D` of 1.4 is not a default: the 40-cylinder tree built here has a `D` of 1.23, above the plant scans' 5th percentile (1.17, the fern and the weed), so `D` separates bushy plants only with a limit the hirer chooses.
+- **Check.** `npm run calibrate:natural -- --verify` judges `rock_09` and `namaqualand_boulder_02` and the stand-ins `clouds-ico` and `jittered-ico` with a rock spec built from the defaults, and exits 0 when the scans pass and the stand-ins fail.
+
+<!-- natural-calibration:start -->
+
+Measured by `npm run calibrate:natural` in Blender 5.2.3 on 35 Poly Haven scans at 1k (12 rock, 11 tree, 12 plant), 4 primitive stand-ins and 4 procedural assets. Every value per asset is in `natural-shapes/calibration.json`.
+
+**Percentiles of the scans per class.**
+
+| Class | Measure | n | P5 | P25 | P50 | P75 | P95 |
+|---|---|---|---|---|---|---|---|
+| rock | box-counting D (lowest of front, right) | 12 | 1.004 | 1.009 | 1.013 | 1.018 | 1.081 |
+| rock | solidity (lowest of front, right, top) | 12 | 0.5526 | 0.8106 | 0.9267 | 0.9516 | 0.9687 |
+| rock | normal deviation p90, degrees (lowest object) | 12 | 18.73 | 26.49 | 39.16 | 51.04 | 67.42 |
+| rock | flat share under 3 degrees (highest object) | 12 | 0.0176 | 0.0260 | 0.0662 | 0.1356 | 0.3119 |
+| rock | albedo luminance CV | 12 | 0.0512 | 0.2203 | 0.2525 | 0.3211 | 0.3502 |
+| tree | box-counting D (lowest of front, right) | 11 | 1.016 | 1.034 | 1.157 | 1.376 | 1.611 |
+| tree | solidity (lowest of front, right, top) | 11 | 0.1546 | 0.2224 | 0.4838 | 0.7045 | 0.9063 |
+| tree | normal deviation p90, degrees (lowest object) | 11 | 37.59 | 50.42 | 68.02 | 102.15 | 111.84 |
+| tree | flat share under 3 degrees (highest object) | 11 | 0.0037 | 0.0301 | 0.0818 | 0.1301 | 0.2546 |
+| tree | albedo luminance CV | 11 | 0.1732 | 0.1873 | 0.2436 | 0.2871 | 0.3081 |
+| plant | box-counting D (lowest of front, right) | 12 | 1.168 | 1.300 | 1.355 | 1.461 | 1.532 |
+| plant | solidity (lowest of front, right, top) | 12 | 0.0798 | 0.0975 | 0.1365 | 0.3031 | 0.3880 |
+| plant | normal deviation p90, degrees (lowest object) | 12 | 16.44 | 57.77 | 77.57 | 93.42 | 110.46 |
+| plant | flat share under 3 degrees (highest object) | 12 | 0.0025 | 0.0039 | 0.0331 | 0.2858 | 0.5087 |
+| plant | albedo luminance CV | 12 | 0.1622 | 0.2220 | 0.2868 | 0.3794 | 0.6097 |
+
+**Stand-ins.**
+
+| Asset | Stands in for | dimension | solidity | p90 | flatShare | albedoCv |
+|---|---|---|---|---|---|---|
+| uv-sphere (stand-in) | rock | 0.999 | 0.9976 | 0.88 | 1.0000 | 0.0000 |
+| clouds-ico (stand-in) | rock | 1.003 | 0.9832 | 9.35 | 0.2898 | n/a |
+| jittered-ico (stand-in) | rock | 1.000 | 0.9961 | 0.00 | 1.0000 | n/a |
+| cylinder-tree (stand-in) | tree, plant | 1.227 | 0.2366 | 105.51 | 0.4763 | n/a |
+| noise-rock-example (procedural) | rock | 1.008 | 0.9749 | 26.32 | 0.0237 | 0.0541 |
+| noise-rock-billow (procedural) | rock | 0.999 | 0.9934 | 5.11 | 0.7200 | 0.0559 |
+| noise-rock-ridged (procedural) | rock | 1.017 | 0.9602 | 40.83 | 0.0098 | 0.0640 |
+| noise-rock-fine (procedural) | rock | 1.008 | 0.9749 | 26.96 | 0.0269 | 0.0538 |
+
+**Thresholds and separation.** For a lower limit, take the 5th percentile of the class's scans; for an upper limit, the 95th. When the measured stand-in nearest to the scans lies beyond that percentile by at least the measure's step (0.01 for D, 0.001 for solidity and shares, 0.1 degrees for p90), the threshold is the midpoint between the two, rounded to the step, and the measure separates the class. Otherwise the threshold is the percentile and the measure does not separate the class: a stand-in reaches the scans, or no stand-in has a value. Only separating measures become defaults.
+
+| Limit | Class | Scans P5 or P95 | Scan range | Nearest stand-in | Threshold | Scans passing | Stand-ins failing | Separates | Default |
+|---|---|---|---|---|---|---|---|---|---|
+| `natural.silhouetteDimension.min` | rock | 1.004 | 1.004–1.127 | 1.003 | 1.004 | 92 % | 100 % | no | none |
+| `natural.solidity.max` | rock | 0.9687 | 0.4652–0.9692 | 0.9832 | 0.9760 | 100 % | 100 % | yes | 0.976 |
+| `natural.surfaceRoughness.p90Min` | rock | 18.73 | 16.55–68.26 | 9.35 | 14.00 | 100 % | 100 % | yes | 14 |
+| `natural.surfaceRoughness.flatShareMax` | rock | 0.3119 | 0.0156–0.4299 | 0.2898 | 0.3119 | 92 % | 67 % | no | none |
+| `natural.albedoVariation.min` | rock | 0.0512 | 0.0473–0.3839 | 0.0000 | 0.0260 | 100 % | 100 % | yes | 0.026 |
+| `natural.silhouetteDimension.min` | tree | 1.016 | 1.014–1.649 | 1.227 | 1.016 | 91 % | 0 % | no | none |
+| `natural.solidity.max` | tree | 0.9063 | 0.1423–0.9308 | 0.2366 | 0.9063 | 91 % | 0 % | no | none |
+| `natural.surfaceRoughness.p90Min` | tree | 37.59 | 34.39–113.58 | 105.51 | 37.59 | 91 % | 0 % | no | none |
+| `natural.surfaceRoughness.flatShareMax` | tree | 0.2546 | 0.0002–0.3298 | 0.4763 | 0.3650 | 100 % | 100 % | yes | 0.365 |
+| `natural.albedoVariation.min` | tree | 0.1732 | 0.1707–0.3246 | no value | 0.1732 | 91 % | 100 % | no (no stand-in has a value) | none |
+| `natural.silhouetteDimension.min` | plant | 1.168 | 1.157–1.585 | 1.227 | 1.168 | 92 % | 0 % | no | none |
+| `natural.solidity.max` | plant | 0.3880 | 0.0709–0.3939 | 0.2366 | 0.3880 | 92 % | 0 % | no | none |
+| `natural.surfaceRoughness.p90Min` | plant | 16.44 | 15.95–128.30 | 105.51 | 16.44 | 92 % | 0 % | no | none |
+| `natural.surfaceRoughness.flatShareMax` | plant | 0.5087 | 0.0022–0.5701 | 0.4763 | 0.5087 | 92 % | 0 % | no | none |
+| `natural.albedoVariation.min` | plant | 0.1622 | 0.1358–0.6591 | no value | 0.1622 | 92 % | 100 % | no (no stand-in has a value) | none |
+
+**Procedural assets against the defaults.** They are a third group: measured and listed with the stand-ins above, but not used to set any threshold.
+
+| Procedural asset | Class | Against the defaults | Verdict |
+|---|---|---|---|
+| noise-rock-example | rock | solidity.max 0.9749 passes 0.976; surfaceRoughness.p90Min 26.3235 passes 14; albedoVariation.min 0.0541 passes 0.026 | pass |
+| noise-rock-billow | rock | solidity.max 0.9934 fails 0.976; surfaceRoughness.p90Min 5.1083 fails 14; albedoVariation.min 0.0559 passes 0.026 | fail |
+| noise-rock-ridged | rock | solidity.max 0.9602 passes 0.976; surfaceRoughness.p90Min 40.8299 passes 14; albedoVariation.min 0.0640 passes 0.026 | pass |
+| noise-rock-fine | rock | solidity.max 0.9749 passes 0.976; surfaceRoughness.p90Min 26.9648 passes 14; albedoVariation.min 0.0538 passes 0.026 | pass |
+
+<!-- natural-calibration:end -->
+
 ## 3. Gap analysis against Blendworks
 
 The bridge has 29 command modules (`bridge/blendworks_bridge/commands/`) and nine material presets (`bridge/blendworks_bridge/presets.py`, with `brass.py` and `marble.py`). The judge rules are in `docs/DESIGN.md` sections 3 and 4 and in `src/judge/`. These are what the natural assets would use today:
@@ -575,7 +654,7 @@ Each rule has fixtures generated in Blender: a sphere, a displaced sphere, a cyl
 
 ## 5. Judge rules for natural assets
 
-These rules would form an optional `natural` group in the asset spec, in the style of the existing groups. Every threshold below is a starting value. The source is a paper or a measurement from section 2.7 on a small sample, so the values should be recalibrated with P12 before a hirer relies on them.
+The first four rules (P11 job A) are now in the judge as the optional `natural` group, with defaults from the calibration of section 2.8; `docs/DESIGN.md` documents them. The thresholds below are the starting values. The source is a paper or a measurement from section 2.7 on a small sample, so the values should be recalibrated with P12 before a hirer relies on them.
 
 | Rule | Measure | Starting threshold | Justification |
 |---|---|---|---|

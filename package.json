@@ -23,7 +23,8 @@
     "fixtures": "tsx scripts/fixtures.mjs",
     "equivalence": "tsx scripts/judge-equivalence.mjs",
     "install-claude": "npm run build && node dist/mcp/install-claude.js",
-    "bench:tools": "tsx bench/tool-selection/run.ts"
+    "bench:tools": "tsx bench/tool-selection/run.ts",
+    "calibrate:natural": "tsx scripts/calibrate-natural.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "1.3.0",

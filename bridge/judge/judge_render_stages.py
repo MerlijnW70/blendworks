@@ -18,6 +18,8 @@ FILTER_WIDTH = 0.01
 CLOSEUP_LIMITS = {"res": 4096, "samples": 4096}
 CLOSEUPS_FOLDER = "closeups"
 CLOSEUP_SHEET = "closeup-sheet.png"
+NATURAL_PREFIX = "natural-"
+NATURAL_TRANSPARENT_BOUNCES = 64
 
 
 def chosen_views(text):
@@ -42,8 +44,6 @@ def silhouette_views(text):
         if not low <= pixels <= high:
             raise JudgeError("usage", f"the size of the {view} view must be {low} to {high} pixels")
         views.append((view, pixels))
-    if not views:
-        raise JudgeError("usage", "--reference-views names no view")
     return views
 
 
@@ -103,26 +103,54 @@ def configure_silhouettes(scene):
     scene.frame_set(MEASURE_FRAME)
 
 
+def render_silhouettes(scene, rig, views, folder, prefix):
+    rendered = []
+    for view, size in views:
+        scene.render.resolution_x = size
+        scene.render.resolution_y = size
+        path = os.path.join(folder, f"{prefix}{view}.png")
+        rig.render(view, path)
+        if not os.path.isfile(path) or os.path.getsize(path) == 0:
+            raise JudgeError("render_failed", f"the {prefix}{view} silhouette did not render")
+        rendered.append({"view": view, "path": path, "size": size})
+    return rendered
+
+
+def honour_cutouts(scene):
+    scene.view_layers[0].material_override = None
+    scene.cycles.transparent_max_bounces = NATURAL_TRANSPARENT_BOUNCES
+
+
+def natural_rig(context, scene):
+    framing = context.framing()
+    centre = [(framing["low"][axis] + framing["high"][axis]) / 2 for axis in range(3)]
+    return Rig(scene, framing["low"], framing["high"], centre)
+
+
 def reference_stage(context):
     options = context.options
     views = silhouette_views(options["reference-views"])
+    natural = silhouette_views(options["natural-views"])
+    if not views and not natural:
+        raise JudgeError("usage", "--reference-views and --natural-views name no view")
     triangle_cap = positive_int(options["max-triangles"], "max-triangles")
     with stage_scene(context.scene, "judge-silhouettes") as scene:
-        low, high, origin = reference_framing(context, options["reference-frame"], options["reference-origin"], triangle_cap)
         configure_silhouettes(scene)
-        rig = Rig(scene, low, high, origin)
         folder = os.path.join(context.out_dir, "silhouettes")
         os.makedirs(folder, exist_ok=True)
-        rendered = []
-        for view, size in views:
-            scene.render.resolution_x = size
-            scene.render.resolution_y = size
-            path = os.path.join(folder, f"{view}.png")
-            rig.render(view, path)
-            if not os.path.isfile(path) or os.path.getsize(path) == 0:
-                raise JudgeError("render_failed", f"the {view} silhouette did not render")
-            rendered.append({"view": view, "path": path, "size": size})
-        return {"views": rendered, "frame": {"min": rounded(list(rig.low)), "max": rounded(list(rig.high))}}
+        result = {"views": []}
+        if views:
+            low, high, origin = reference_framing(context, options["reference-frame"], options["reference-origin"], triangle_cap)
+            rig = Rig(scene, low, high, origin)
+            result["views"] = render_silhouettes(scene, rig, views, folder, "")
+            result["frame"] = {"min": rounded(list(rig.low)), "max": rounded(list(rig.high))}
+        if natural:
+            rig = natural_rig(context, scene)
+            honour_cutouts(scene)
+            result["natural"] = render_silhouettes(scene, rig, natural, folder, NATURAL_PREFIX)
+            result["naturalFrame"] = {"min": rounded(list(rig.low)), "max": rounded(list(rig.high))}
+            result.setdefault("frame", result["naturalFrame"])
+        return result
 
 
 def chosen_device(context):

@@ -4,6 +4,8 @@ import type { Delivery } from "./delivery.js";
 import type { DeviceMode } from "./device.js";
 import { measureOutputSchema, measurementsSchema, type Measurements } from "./measurements.js";
 import { motionExtras, withBoneScheme } from "./motion-rules.js";
+import { naturalViewArgs } from "./natural.js";
+import { naturalMeasureParts, wantsNaturalSilhouettes } from "./natural-spec.js";
 import { weightTolerance } from "./motion-spec.js";
 import { wantsObjectList } from "./object-rules.js";
 import { passOutput, type PassResult, type PassStage, type StageGroup } from "./onepass.js";
@@ -45,6 +47,8 @@ function measureArgs(spec: AssetSpec): string[] {
   if (wantsObjectList(spec)) args.push("--objects", "yes");
   const extras = motionExtras(spec);
   if (extras.length > 0) args.push("--extras", extras.join(","), "--weight-tolerance", String(weightTolerance(spec.skin)));
+  const natural = naturalMeasureParts(spec.natural);
+  if (natural.length > 0) args.push("--natural", natural.join(","));
   return args;
 }
 
@@ -65,10 +69,10 @@ export function planPass(input: PlanInput): PassPlan {
   const views = render.preview !== true && !samplesOverBudget(viewCount, render);
   const stages: PassStage[] = ["measure"];
   const args = ["--max-triangles", String(input.maxTriangles), ...measureArgs(spec)];
-  if (spec.reference !== undefined && input.references !== null) {
-    stages.push("reference");
-    args.push(...silhouetteArgs(input.references, referencePassFrame(spec.reference, upAxis(spec))));
-  }
+  const references = spec.reference !== undefined && input.references !== null;
+  if (references || wantsNaturalSilhouettes(spec.natural)) stages.push("reference");
+  if (spec.reference !== undefined && input.references !== null) args.push(...silhouetteArgs(input.references, referencePassFrame(spec.reference, upAxis(spec))));
+  args.push(...naturalViewArgs(spec.natural));
   if (views) stages.push("views");
   stages.push("sheet");
   args.push(...renderArgs(spec, input.delivery.main, render.renderMaxTriangles ?? RENDER_BUDGET.maxTriangles));

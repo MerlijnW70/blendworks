@@ -42,6 +42,7 @@ const silhouetteOutput = z.union([
     ok: z.literal(true),
     views: z.array(z.object({ view: z.enum(VIEWS), path: z.string(), size: z.number().int().positive() })).max(VIEWS.length),
     frame: z.object({ min: z.tuple([z.number(), z.number(), z.number()]), max: z.tuple([z.number(), z.number(), z.number()]) }),
+    natural: z.array(z.object({ view: z.enum(VIEWS), path: z.string(), size: z.number().int().positive() })).max(VIEWS.length).optional(),
   }),
   z.object({ ok: z.literal(false), error: z.object({ code: z.string().max(64), message: z.string().max(2000) }) }),
 ]);

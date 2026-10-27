@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { z } from "zod";
 import { animationRule, MOTION_FORMATS, rigRule, skinRule, vertexColorsRule } from "./motion-spec.js";
+import { naturalRule } from "./natural-spec.js";
 import { referenceRule } from "./reference-spec.js";
 import { count, countRange, glob, length, minNotOverMax, ordered, point, ratio, sizeRule, VIEWS } from "./spec-shapes.js";
 import { visualRule } from "./visual/spec.js";
@@ -128,6 +129,7 @@ const baseSchema = z.strictObject({
   animation: animationRule.optional(),
   vertexColors: vertexColorsRule.optional(),
   reference: referenceRule.optional(),
+  natural: naturalRule.optional(),
 });
 
 export const assetSpecSchema = baseSchema

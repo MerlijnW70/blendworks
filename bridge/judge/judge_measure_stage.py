@@ -8,6 +8,7 @@ from judge_common import JudgeError, positive_int
 from judge_geometry import Measurer
 from judge_load import load_asset
 from judge_motion import measure_motion
+from judge_natural import measure_natural, natural_parts
 from judge_skin import measure_skin
 from judge_textures import measure_textures
 
@@ -69,6 +70,7 @@ def measure(asset, options, limits, uv_grid_path):
     objects = objects_wanted(options["objects"])
     extras = extras_wanted(options["extras"])
     weights = weight_tolerance(options["weight-tolerance"])
+    natural = natural_parts(options["natural"])
     loaded = load_asset(asset, triangle_cap)
     scene = bpy.context.scene
     measurer = Measurer(triangle_cap, tolerance, integrity=True, objects=objects, colours="colours" in extras)
@@ -80,6 +82,8 @@ def measure(asset, options, limits, uv_grid_path):
     measurements["textures"] = measure_textures(measurer.material_blocks, measurer.faces_without_material, loaded["externalFilesRefused"])
     measurements["objectsAll"] = len(scene.objects)
     measure_extras(measurements, asset, loaded["format"], extras, weights, depsgraph)
+    if natural:
+        measurements["natural"] = measure_natural(depsgraph, natural)
     return {"measurements": measurements, "limits": {**limits, "maxTriangles": triangle_cap}}
 
 
