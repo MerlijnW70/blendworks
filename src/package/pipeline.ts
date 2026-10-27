@@ -15,9 +15,11 @@ import {
   type RenderAttempt,
   type StageOptions,
 } from "./blender-stages.js";
-import { compress, gltfpackVersion } from "./compress.js";
+import { compress } from "./compress.js";
 import { compareAnalyses, floatTolerance, quantisationTolerance, type Check } from "./equivalence.js";
 import { parseGlb, type GlbParts } from "./glb.js";
+import { readImages, type ImageDetail } from "./textures.js";
+import { selectGltfpack } from "./tool.js";
 import { gpuMemory } from "./memory.js";
 import type { LodReport, Ktx2Status, PackageConfig, PackageFile, PackageReport, PackedFile, RenderRecord, Totals } from "./report.js";
 import type { Level } from "./schemas.js";
@@ -35,19 +37,20 @@ export type PackageContext = StageOptions & {
 export const PACKAGE_FOLDERS = { uncompressed: "uncompressed", compressed: "compressed", lods: "lods" } as const;
 const LOD0_BOUNDS_FRACTION = 1e-4;
 
-type Inspected = { parts: GlbParts; analysis: Analysis; validation: Validation; info: ValidationInfo; bytes: number; sha256: string };
+export type Inspected = { parts: GlbParts; analysis: Analysis; images: ImageDetail[]; validation: Validation; info: ValidationInfo; bytes: number; sha256: string };
 
-async function inspect(path: string, sandbox: Sandbox): Promise<Inspected> {
+export async function inspect(path: string, timeoutMs: number): Promise<Inspected> {
   const data = new Uint8Array(readFileSync(path));
   let result;
   try {
-    result = await validateGltfDetailed(path, "glb", { maxBytes: VALIDATOR_DEFAULTS.maxBytes, heapMb: VALIDATOR_DEFAULTS.heapMb, timeoutMs: sandbox.limits.timeoutMs });
+    result = await validateGltfDetailed(path, "glb", { maxBytes: VALIDATOR_DEFAULTS.maxBytes, heapMb: VALIDATOR_DEFAULTS.heapMb, timeoutMs });
   } catch (error) {
     if (error instanceof ValidationError) throw new StageFailure({ stage: "package", code: error.code, message: `validating ${path}: ${error.message}` });
     throw error;
   }
   const parts = parseGlb(data);
-  return { parts, analysis: analyse(parts.json), validation: result.validation, info: result.info, bytes: data.byteLength, sha256: sha256(path) };
+  const analysis = analyse(parts.json);
+  return { parts, analysis, images: readImages(parts, analysis, result.info), validation: result.validation, info: result.info, bytes: data.byteLength, sha256: sha256(path) };
 }
 
 function packedFile(relative: string, inspected: Inspected): PackedFile {
@@ -168,11 +171,11 @@ export async function runPackage(config: PackageConfig, ctx: PackageContext): Pr
   let compression: Awaited<ReturnType<typeof compress>> | null = null;
   for (const entry of lods.files) {
     const name = entry.path.split("/").pop() ?? entry.path;
-    const source = await inspect(join(ctx.outDir, PACKAGE_FOLDERS.uncompressed, name), ctx.sandbox);
-    compression = await (ctx.compressor ?? compress)(new Uint8Array(readFileSync(join(ctx.outDir, PACKAGE_FOLDERS.uncompressed, name))), { meshopt, ktx2: ktx2Wanted, hasImages: source.analysis.images.length > 0 });
+    const source = await inspect(join(ctx.outDir, PACKAGE_FOLDERS.uncompressed, name), ctx.sandbox.limits.timeoutMs);
+    compression = await (ctx.compressor ?? compress)(new Uint8Array(readFileSync(join(ctx.outDir, PACKAGE_FOLDERS.uncompressed, name))), { meshopt, ktx2: ktx2Wanted, hasImages: source.analysis.images.length > 0, sandbox: { limits: ctx.sandbox.limits, tools: ctx.sandbox.tools } });
     const target = join(ctx.outDir, PACKAGE_FOLDERS.compressed, name);
     writeFileSync(target, compression.output);
-    const packed = await inspect(target, ctx.sandbox);
+    const packed = await inspect(target, ctx.sandbox.limits.timeoutMs);
     outputs.push(packed);
     const equivalence = compareAnalyses({
       reference: source.analysis,
@@ -180,6 +183,7 @@ export async function runPackage(config: PackageConfig, ctx: PackageContext): Pr
       tolerance: Math.max(quantisationTolerance(source.analysis.worldBox), floatTolerance(source.analysis.worldBox)),
       referenceInfo: source.info,
       candidateInfo: packed.info,
+      textures: { referenceImages: source.images, candidateImages: packed.images, plan: { ktx2: compression.ktx2.status === "written", colourQuality: "compact" } },
     });
     files.push({
       level: entry.level,
@@ -187,7 +191,7 @@ export async function runPackage(config: PackageConfig, ctx: PackageContext): Pr
       compressed: { ...packedFile(`${PACKAGE_FOLDERS.compressed}/${name}`, packed), equivalence },
     });
   }
-  const final = compression ?? { arguments: [], ktx2: { requested: ktx2Wanted, status: "not requested" as Ktx2Status, reason: null } };
+  const final = compression ?? { arguments: [], gltfpack: (await selectGltfpack({ limits: ctx.sandbox.limits, tools: ctx.sandbox.tools })).info, ktx2: { requested: ktx2Wanted, status: "not requested" as Ktx2Status, reason: null } };
   const ktx2 = ktx2Outcome(ktx2Wanted, final.ktx2.status, final.ktx2.reason, outputs);
   const before = totals(files.map((file) => file.uncompressed));
   const after = totals(files.map((file) => file.compressed));
@@ -198,7 +202,7 @@ export async function runPackage(config: PackageConfig, ctx: PackageContext): Pr
     levels: levelReports(lods, rendering.attempt),
     roundTrip: roundTrip(lods, rendering.attempt, ctx.deliveredTriangles),
     render: rendering.record,
-    compression: { meshopt, ktx2: { requested: ktx2Wanted, ...ktx2 }, arguments: final.arguments, gltfpack: gltfpackVersion() },
+    compression: { meshopt, ktx2: { requested: ktx2Wanted, ...ktx2 }, arguments: final.arguments, gltfpack: final.gltfpack },
     files,
     sizes: { uncompressedBytes: before.files, compressedBytes: after.files, ratio: before.files === 0 ? 1 : after.files / before.files, gpu: { before, after } },
     seconds: seconds(performance.now() - started),

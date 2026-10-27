@@ -11,6 +11,8 @@ export type MaterialInfo = { name: string; alphaMode: string; doubleSided: boole
 
 export type ImageInfo = { mimeType: string; bufferView: number | null };
 
+export type TextureInfo = { source: number | null; basisu: number | null };
+
 export type HolderInfo = { path: string; triangles: number; materials: string[]; localBox: Box | null; worldBox: Box | null };
 
 export type Analysis = {
@@ -21,6 +23,7 @@ export type Analysis = {
   worldBox: Box | null;
   materials: MaterialInfo[];
   images: ImageInfo[];
+  textures: TextureInfo[];
   extensionsUsed: string[];
   extensionsRequired: string[];
   accessorBytes: number;
@@ -237,6 +240,10 @@ export function analyse(json: Json): Analysis {
     triangles: holders.reduce((sum, holder) => sum + holder.triangles, 0),
     worldBox: mergeBoxes(holders.flatMap((holder) => (holder.worldBox === null ? [] : [holder.worldBox]))),
     materials: ((json.materials as Json[] | undefined) ?? []).map((material, index) => materialInfo(material, index, textures)),
+    textures: textures.map((texture) => ({
+      source: typeof texture.source === "number" ? texture.source : null,
+      basisu: typeof texture.extensions?.KHR_texture_basisu?.source === "number" ? texture.extensions.KHR_texture_basisu.source : null,
+    })),
     images: ((json.images as Json[] | undefined) ?? []).map((image) => ({ mimeType: String(image.mimeType ?? ""), bufferView: typeof image.bufferView === "number" ? image.bufferView : null })),
     extensionsUsed: ((json.extensionsUsed as string[] | undefined) ?? []).slice().sort(),
     extensionsRequired: ((json.extensionsRequired as string[] | undefined) ?? []).slice().sort(),

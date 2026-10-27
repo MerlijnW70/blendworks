@@ -4,6 +4,9 @@ import { join } from "node:path";
 import { BLENDER_DOWNLOAD_URL, BLENDER_VERSION, BlenderNotFoundError, blenderJobs, blenderThreads, resolveBlender } from "../../src/blender.js";
 import { DEVICE_VARIABLE, GPU_BACKENDS, parseDeviceMode } from "../../src/judge/device.js";
 import { detectTools, type Tools } from "../../src/judge/sandbox.js";
+import { GLTFPACK_RELEASE, platformKey } from "../../src/package/gltfpack-release.js";
+import { INSTALL_COMMAND } from "../../src/package/native-install.js";
+import { GLTFPACK_VARIABLE, selectNative } from "../../src/package/native.js";
 import { checkedBlender } from "./blender-check.js";
 import { FIXTURE_FOLDER, fixtureKey, fixtureSets } from "./fixtures.js";
 import { isComplete, entryDirectory } from "./entry-cache.js";
@@ -165,6 +168,26 @@ export function checkCache(root: string, blenderVersion: string | undefined): Fi
   return findings;
 }
 
+export async function checkGltfpack(env: NodeJS.ProcessEnv, root: string, tools: Tools): Promise<Finding[]> {
+  const selection = await selectNative({ env, root, tools });
+  if (selection.tool === null) {
+    const supported = GLTFPACK_RELEASE.platforms[platformKey()] !== undefined;
+    return [
+      {
+        status: "warn",
+        label: "gltfpack",
+        detail: `${selection.reason}; packages use the npm build, which cannot write KTX2 textures`,
+        fix: supported ? `run ${INSTALL_COMMAND}, or set ${GLTFPACK_VARIABLE} to a gltfpack ${GLTFPACK_RELEASE.version} binary` : `set ${GLTFPACK_VARIABLE} to a gltfpack ${GLTFPACK_RELEASE.version} binary built with BasisU (no pinned release for ${platformKey()})`,
+      },
+    ];
+  }
+  const { tool } = selection;
+  if (!tool.ktx2.ktx2) {
+    return [{ status: "warn", label: "gltfpack", detail: `native ${tool.version} at ${tool.path} cannot write KTX2 (${tool.ktx2.reason})`, fix: `run ${INSTALL_COMMAND}, or point ${GLTFPACK_VARIABLE} at a build with BasisU` }];
+  }
+  return [{ status: "ok", label: "gltfpack", detail: `native ${tool.version} at ${tool.path} (from ${tool.source}), sha256 ${tool.sha256.slice(0, 12)}, writes KTX2` }];
+}
+
 export async function runDoctor(env: NodeJS.ProcessEnv = process.env): Promise<Finding[]> {
   const root = cacheRoot(env);
   const findings: Finding[] = [checkNode()];
@@ -172,7 +195,9 @@ export async function runDoctor(env: NodeJS.ProcessEnv = process.env): Promise<F
   findings.push(...blender.findings);
   findings.push(checkJobs(env));
   findings.push(...(await checkDevices(env, root, blender.path)));
-  findings.push(...sandboxFindings(detectTools()));
+  const tools = blender.path === undefined ? detectTools() : detectTools(blender.path);
+  findings.push(...sandboxFindings(tools));
+  findings.push(...(await checkGltfpack(env, root, tools)));
   findings.push(...checkCache(root, blender.version));
   return findings;
 }

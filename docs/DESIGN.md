@@ -641,9 +641,34 @@ A level reports the minimum over its views. `lod-sheet.png` shows LOD0 above and
 
 ### Compression
 
-`gltfpack` 1.3.0 (the official npm WebAssembly build, pinned exactly) runs in a worker thread with `-kn -km -ke` (named nodes, named materials and extras kept, so the node tree survives), `-cc` for meshopt when it is on, and the default 14-bit quantisation. It inserts unnamed dequantisation nodes; the checks fold them into their named owner.
+`gltfpack` 1.3 runs with `-kn -km -ke` (named nodes, named materials and extras kept, so the node tree survives), `-cc` for meshopt when it is on, and the default 14-bit quantisation. It inserts unnamed dequantisation nodes; the checks fold them into their named owner. Two builds of the same release can run it, and the report says which (`compression.gltfpack`: `kind`, `version`, `source`, `sha256`, `ktx2`, `meshopt`, `nativeSkipped`, `isolation`).
 
-**KTX2.** The npm build cannot write KTX2: it answers `-tc`, `-tu` and `-tw` with "built without BasisU support", and refuses every texture option. The judge asks the build at run time with a one-triangle probe. When KTX2 is requested and the build cannot write it, the textures are copied unchanged, `compression.ktx2.status` is `unavailable` with the build's reason, and `package.ktx2` fails. Nothing is faked. With a build that can, the arguments are `-tc -tu normal,attrib`: ETC1S for colour maps, UASTC for normal and data maps (metallic-roughness, occlusion). With `colourQuality: "high"`, colour maps use UASTC too.
+- **Native.** The official release binary from the zeux/meshoptimizer GitHub release, which includes BasisU. The version, and the sha256 of every platform archive and of the binary inside it, are pinned in one file, `src/package/gltfpack-release.ts` (Windows x64, Linux x64, macOS arm64; macOS is untested). `npm run tools:gltfpack` downloads the archive into memory, refuses it unless its sha256 is the pinned one, unpacks the single binary, checks that sha256 too, and only then writes `<cache>/tools/gltfpack-1.3/<platform>/gltfpack`. A mismatch installs nothing and runs nothing. An installed binary is hashed again on every use; one that differs from the pin is deleted and not run. The binary is never committed.
+- **Your own binary.** `BLENDWORKS_GLTFPACK` names a gltfpack you installed. It replaces the installed one, its `-v` must say `gltfpack 1.3`, and the same BasisU probe applies. A value that is missing or unusable is reported, never replaced by the installed binary.
+- **npm.** The npm package (WebAssembly, pinned exactly) is the fallback. It cannot write KTX2.
+
+**Selection.** The judge uses the native binary when it is verified and a one-triangle `-tc` probe, run at run time, shows that it writes KTX2. Otherwise it uses the npm build, and `nativeSkipped` says why (not installed, wrong version, built without BasisU, hash mismatch). The npm build answers `-tc`, `-tu` and `-tw` with "built without BasisU support"; when KTX2 is requested and nothing can write it, the textures are copied unchanged, `compression.ktx2.status` is `unavailable` with the reason and the way to install the native binary, and `package.ktx2` fails. Nothing is faked.
+
+**Sandbox.** The native binary gets the limits of the judge's other tools: the stage timeout and memory limit (300 s and 4096 MB by default), and the network cut where the platform allows it. Arguments are an array from the call to the process, never a command string.
+
+| | Linux and WSL | Windows |
+|---|---|---|
+| Network | `unshare` user, mount, PID and network namespaces: no network | Not isolated, as for Blender |
+| Memory | `prlimit --as` | Job object `ProcessMemoryLimit`, one process, killed with the job |
+| Files | Read-only system and binary folder, private writable work folder | Low-integrity token: writes only to the private work folder |
+| Time | Killed at the timeout | Killed at the timeout |
+
+Without `unshare`, `prlimit` or the low-integrity launcher the binary still runs, and `isolation` in the report says what was missing.
+
+**KTX2 textures.** The arguments are `-tc -tu normal,attrib -tq color 8 -tq normal 8 -tq attrib 8 -tj N`, where `N` is the CPU count divided by `BLENDWORKS_JOBS`, at least 1.
+
+| Class | Slots | Codec | Colour space |
+|---|---|---|---|
+| `color` | baseColor, emissive | ETC1S with BasisLZ | sRGB |
+| `normal` | normal | UASTC | linear |
+| `attrib` | metallicRoughness, occlusion | UASTC | linear |
+
+`-tq` sets gltfpack's BasisU quality from 1 to 10 for each class. 8 is gltfpack's own default, written out so that a new gltfpack default cannot change a package silently. gltfpack writes the full mip chain, down to 1 × 1, for every texture. With `colourQuality: "high"` (an option of the compressor, not yet of the spec), colour maps use UASTC too.
 
 ### Validation and equivalence
 
@@ -656,12 +681,28 @@ The Khronos validator checks every output, and `package.validator` needs 0 error
 | `bounds` | each node's box in its own space, and the whole asset's box, differ by at most one quantisation step of the diagonal, `diagonal / (2^14 − 1)` |
 | `materials` | same names, alpha mode, double-sided flag, texture slots and UV sets, same image count, same materials on each node |
 | `validatorCounts` | the validator's triangle count is not above the declared count, and at most 1 % below it (triangles that quantisation collapses) |
+| `textures` | see below |
 
 Boxes come from the accessors' `min` and `max`, decoded for normalised integers, through the node tree.
 
+**The `textures` check.** The validator (2.0.0-dev.3.10) does not know `KHR_texture_basisu`: it reports the extension as unsupported and `image/ktx2` as an unlisted MIME type, both below error level, and it does not read KTX2 files. The repo reads them itself (`src/package/ktx2.ts`): the identifier; a width and height above 0; depth 0, one face, at most one layer; a level count within the full chain of the size; a level index and every level inside the file; a data format descriptor inside the file, with a matching size and a basic block of version 2; BasisLZ for ETC1S; the codec from the colour model (ETC1S `0xA3`, UASTC `0xA6`), the colour space from the transfer function, and whether ETC1S carries an alpha slice. A header that fails any of these fails the check, named by image. For every texture slot that the uncompressed file uses:
+
+- The image has the same width and height (PNG and JPEG sizes come from the validator, KTX2 sizes from the header).
+- With KTX2: the image is KTX2, has `floor(log2(max(width, height))) + 1` mip levels, the codec of its slot (table above), and the colour space of its slot.
+- The textures are as many as before; `KHR_texture_basisu` is in `extensionsUsed` and `extensionsRequired`; every KTX2 image is named by a texture through that extension and by no texture as a plain `source`.
+
 ### Size and GPU memory
 
-`package-report.json` gives each file's bytes, and `sizes.gpu` the estimated GPU memory before and after. Textures count at RGBA8 with a full mip chain, as in section 3 (a KTX2 image counts 16 bytes per 4 × 4 block for UASTC and 8 for ETC1S). Meshes count as the sum of `count × element size` of every accessor the primitives use, which is what the GPU receives after meshopt decoding.
+`package-report.json` gives each file's bytes, and `sizes.gpu` the estimated GPU memory before and after. Textures count by the format the GPU holds, with every mip level the file holds rounded up to whole 4 × 4 blocks:
+
+| Image | Bytes of a level `w × h` |
+|---|---|
+| PNG or JPEG, decoded to RGBA8, full mip chain | `4 × w × h` |
+| KTX2 UASTC (transcoded to BC7 or ASTC 4 × 4) | `16 × ⌈w/4⌉ × ⌈h/4⌉` |
+| KTX2 ETC1S (transcoded to BC1 or ETC1) | `8 × ⌈w/4⌉ × ⌈h/4⌉` |
+| KTX2 ETC1S with an alpha slice (BC3 or ETC2 EAC) | `16 × ⌈w/4⌉ × ⌈h/4⌉` |
+
+A KTX2 image sums the `levelCount` levels of its header. The figures come from the KTX2 header, not from the validator. Meshes count as the sum of `count × element size` of every accessor the primitives use, which is what the GPU receives after meshopt decoding.
 
 ### Agents
 

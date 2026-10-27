@@ -24,8 +24,10 @@ share of the bounds); renders of each LOD against LOD0 at its switch-in distance
 uncompressed package and a gltfpack-compressed package (meshopt, quantised), both checked with the Khronos validator and
 against each other. Writes uncompressed/, compressed/, lods/ and package-report.json to the out dir.
 Give --lods with --ratios (one per LOD, falling) or with --max-screen-error and --distances (one per LOD, rising).
-Without --lods only the compressed package is made. --ktx2 asks for KTX2 textures; the npm gltfpack cannot write them,
-so the report says so and the textures stay unchanged. Exits 0 only when every requested check passes.`;
+Without --lods only the compressed package is made. --ktx2 asks for KTX2 textures: ETC1S for colour maps, UASTC for
+normal and data maps, with full mip chains. The native gltfpack writes them (npm run tools:gltfpack installs it, or set
+BLENDWORKS_GLTFPACK); the npm build cannot, so the report says so and the textures stay unchanged.
+Exits 0 only when every requested check passes.`;
 
 export class PackageUsageError extends Error {}
 

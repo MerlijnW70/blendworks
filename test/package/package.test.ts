@@ -7,10 +7,13 @@ import { packageAsset, parsePackage, type PackageCommand } from "../../src/packa
 import { compress } from "../../src/package/compress.js";
 import { buildGlb, parseGlb } from "../../src/package/glb.js";
 import { imageBytes } from "../../src/package/memory.js";
+import { selectNative } from "../../src/package/native.js";
 import { freshDir, makeFixtureSet } from "../judge/helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
 
 useBlenderSlot();
+
+const NATIVE_KTX2 = (await selectNative()).tool?.ktx2.ktx2 === true;
 
 let assets = "";
 
@@ -30,7 +33,7 @@ function glbOf(path: string) {
 }
 
 describe("packaging a textured asset through the judge", { timeout: 300_000 }, () => {
-  it("builds LODs, renders them against LOD0 and compresses with gltfpack, and says plainly that KTX2 cannot be written", async () => {
+  it("builds LODs, renders them against LOD0 and compresses with gltfpack, writing KTX2 with the native build and saying plainly that it cannot without", async () => {
     const dir = freshDir("package", "judge-ball");
     const specPath = join(dir, "ball.spec.json");
     writeFileSync(
@@ -59,9 +62,14 @@ describe("packaging a textured asset through the judge", { timeout: 300_000 }, (
       "package.meshopt",
     ]);
     for (const name of Object.keys(rules).filter((rule) => rule !== "package.ktx2")) expect(rules[name], name).toMatchObject({ pass: true });
-    expect(rules["package.ktx2"]).toMatchObject({ pass: false });
-    expect(String(rules["package.ktx2"]?.measured)).toContain("unavailable: gltfpack was built without BasisU support");
-    expect(report.passed).toBe(false);
+    if (NATIVE_KTX2) {
+      expect(rules["package.ktx2"]).toMatchObject({ pass: true, measured: "written" });
+      expect(report.passed).toBe(true);
+    } else {
+      expect(rules["package.ktx2"]).toMatchObject({ pass: false });
+      expect(String(rules["package.ktx2"]?.measured)).toContain("unavailable: gltfpack was built without BasisU support");
+      expect(report.passed).toBe(false);
+    }
     const packaged = report.package!;
     expect(packaged.levels.map((level) => level.triangles)).toEqual([3968, expect.any(Number), expect.any(Number)]);
     expect(Math.abs(packaged.levels[1]!.triangles - 1984)).toBeLessThanOrEqual(120);
@@ -82,14 +90,16 @@ describe("packaging a textured asset through the judge", { timeout: 300_000 }, (
     expect(file?.compressed.bytes).toBeLessThan(file!.uncompressed.bytes);
     expect(file?.compressed.extensionsUsed).toContain("EXT_meshopt_compression");
     expect(file?.uncompressed.extensionsUsed).not.toContain("EXT_meshopt_compression");
-    expect(packaged.compression.ktx2).toMatchObject({ requested: true, status: "unavailable" });
+    expect(packaged.compression.ktx2).toMatchObject({ requested: true, status: NATIVE_KTX2 ? "written" : "unavailable" });
+    expect(packaged.compression.gltfpack.kind).toBe(NATIVE_KTX2 ? "native" : "npm");
     const sizes = packaged.sizes.gpu;
     expect(sizes.before.textureBytes).toBe(imageBytes(128, 128, "rgba8") + 2 * imageBytes(64, 64, "rgba8"));
-    expect(sizes.after.textureBytes).toBe(sizes.before.textureBytes);
+    if (NATIVE_KTX2) expect(sizes.after.textureBytes).toBeLessThan(sizes.before.textureBytes);
+    else expect(sizes.after.textureBytes).toBe(sizes.before.textureBytes);
     expect(sizes.after.meshBytes).toBeLessThan(sizes.before.meshBytes);
     const source = analyse(glbOf(join(outDir, "package", file!.uncompressed.path)).json);
     const packed = analyse(glbOf(join(outDir, "package", file!.compressed.path)).json);
-    expect(packed.images.map((image) => image.mimeType)).toEqual(source.images.map((image) => image.mimeType));
+    expect(packed.images.map((image) => image.mimeType)).toEqual(source.images.map((image) => (NATIVE_KTX2 ? "image/ktx2" : image.mimeType)));
     expect(source.paths).toEqual(["/Ball_LOD0", "/Ball_LOD1", "/Ball_LOD2"]);
     expect(packed.paths).toEqual(source.paths);
     expect(JSON.parse(readFileSync(join(outDir, "report.json"), "utf8")).package.files[0].compressed.sha256).toBe(file?.compressed.sha256);

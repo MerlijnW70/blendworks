@@ -52,8 +52,9 @@ Package an asset for games, with LODs and gltfpack compression, checked by the s
 | `BLENDWORKS_JOBS` | Most Blender processes at once, across tests, bridge tests and builds | `2` |
 | `BLENDWORKS_PORT` | Port where the MCP server looks for the desktop add-on | `9876` |
 | `BLENDWORKS_LIVE` | `1` runs the Poly Haven tests against the real API | off |
+| `BLENDWORKS_GLTFPACK` | A gltfpack 1.3 binary built with BasisU, for KTX2 textures in `package`; `npm run tools:gltfpack` installs the official, hash-checked one in the cache folder instead | the installed binary, then the npm build (no KTX2) |
 | `BLENDWORKS_LIBRARY_MAX_MB` | Largest library download, in MB | `300` |
-| `BLENDWORKS_CACHE` | Folder for generated fixtures and locks; `npm run clean` empties it | `.cache` |
+| `BLENDWORKS_CACHE` | Folder for generated fixtures, locks and downloaded tools; `npm run clean` empties it | `.cache` |
 | `BLENDWORKS_VLM_PROVIDER` | Visual judge provider: `anthropic-api`, or `claude-code` (the Claude Code CLI on your own subscription, only for your own machine) | `anthropic-api` when API credentials resolve, else `claude-code` |
 | `BLENDWORKS_VISUAL_MODEL` | Visual judge model when the spec names none | `claude-opus-5-5` |
 | `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` | Credentials for `anthropic-api`; an `ant auth login` profile works too | none |

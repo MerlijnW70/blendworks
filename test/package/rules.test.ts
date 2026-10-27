@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseSpec, SpecError } from "../../src/judge/spec.js";
 import type { PackageFile, PackageReport } from "../../src/package/report.js";
+import type { GltfpackInfo } from "../../src/package/tool.js";
 import { packageResults, wantsPackage } from "../../src/package/rules.js";
 
 const VALIDATION = { validator: "2.0.0", seconds: 0, bytes: 0, errors: 0, warnings: 0, infos: 0, hints: 0, issues: [], refused: [] };
@@ -27,6 +28,8 @@ function level(index: number, ratio: number, extra: Record<string, unknown> = {}
   };
 }
 
+const GLTFPACK: GltfpackInfo = { kind: "npm", version: "1.3.0", source: "npm package", sha256: null, ktx2: false, ktx2Reason: "no encoder", meshopt: true, nativeSkipped: null, isolation: null };
+
 function report(overrides: Partial<PackageReport> = {}): PackageReport {
   return {
     stem: "x",
@@ -35,7 +38,7 @@ function report(overrides: Partial<PackageReport> = {}): PackageReport {
     levels: [{ ...level(0, 1), render: null }, level(1, 0.5), level(2, 0.25)],
     roundTrip: [{ name: "blenderImport", pass: true, detail: "" }],
     render: { status: "rendered", reason: null, device: null, views: ["front"], samples: 16, sheet: null, sheetSha256: null, budget: { samplePixels: 0, maxSamplePixels: 1 } },
-    compression: { meshopt: true, ktx2: { requested: false, status: "not requested", reason: null }, arguments: [], gltfpack: "1.3.0" },
+    compression: { meshopt: true, ktx2: { requested: false, status: "not requested", reason: null }, arguments: [], gltfpack: GLTFPACK },
     files: [file()],
     sizes: { uncompressedBytes: 5000, compressedBytes: 1000, ratio: 0.2, gpu: { before: { files: 0, textureBytes: 0, meshBytes: 0, totalBytes: 0 }, after: { files: 0, textureBytes: 0, meshBytes: 0, totalBytes: 0 } } },
     seconds: 1,
@@ -128,9 +131,9 @@ describe("package rules", () => {
 
   it("fail the size, KTX2 and meshopt rules honestly", () => {
     expect(verdicts({ package: { compressedMaxBytes: 500 } }, report())["package.compressedMaxBytes"]).toBe(false);
-    const unavailable = report({ compression: { meshopt: true, ktx2: { requested: true, status: "unavailable", reason: "no encoder" }, arguments: [], gltfpack: "1.3.0" } });
+    const unavailable = report({ compression: { meshopt: true, ktx2: { requested: true, status: "unavailable", reason: "no encoder" }, arguments: [], gltfpack: GLTFPACK } });
     expect(verdicts({ package: { ktx2: true } }, unavailable)["package.ktx2"]).toBe(false);
-    const written = report({ compression: { meshopt: true, ktx2: { requested: true, status: "written", reason: null }, arguments: [], gltfpack: "1.3.0" } });
+    const written = report({ compression: { meshopt: true, ktx2: { requested: true, status: "written", reason: null }, arguments: [], gltfpack: GLTFPACK } });
     expect(verdicts({ package: { ktx2: true } }, written)["package.ktx2"]).toBe(true);
     expect(verdicts({ package: { ktx2: false } }, unavailable)).not.toHaveProperty("package.ktx2");
     expect(verdicts({ package: { meshopt: false } }, report())["package.meshopt"]).toBe(false);

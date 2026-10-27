@@ -16,6 +16,7 @@
     "check:fast": "tsx scripts/check-fast.mjs",
     "build:addon": "tsx bridge/build-addon.mjs",
     "doctor": "tsx scripts/doctor.mjs",
+    "tools:gltfpack": "tsx scripts/tools.mjs",
     "clean": "tsx scripts/clean.mjs",
     "fixtures": "tsx scripts/fixtures.mjs",
     "install-claude": "npm run build && node dist/mcp/install-claude.js"

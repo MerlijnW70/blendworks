@@ -1,17 +1,22 @@
 import type { ValidationInfo } from "../judge/validator.js";
 import type { Analysis } from "./analysis.js";
 import type { GlbParts } from "./glb.js";
+import type { Ktx2Info } from "./ktx2.js";
+import { readImages } from "./textures.js";
 
-export const IMAGE_FORMATS = ["rgba8", "uastc", "etc1s"] as const;
+export const IMAGE_FORMATS = ["rgba8", "uastc", "etc1s", "other"] as const;
 export type ImageFormat = (typeof IMAGE_FORMATS)[number];
 
-export type ImageMemory = { image: number; width: number; height: number; format: ImageFormat; bytes: number };
+export type ImageMemory = { image: number; width: number; height: number; format: ImageFormat; levels: number; alpha: boolean; bytes: number };
 
 export type GpuMemory = { textureBytes: number; meshBytes: number; totalBytes: number; images: ImageMemory[] };
 
-const KTX2_SUPERCOMPRESSION_OFFSET = 44;
-const BASIS_LZ = 1;
-const BLOCK_BYTES: Record<Exclude<ImageFormat, "rgba8">, number> = { uastc: 16, etc1s: 8 };
+export type BlockOptions = { levels?: number; alpha?: boolean };
+
+const BLOCK_PIXELS = 4;
+const UASTC_BLOCK_BYTES = 16;
+const ETC1S_BLOCK_BYTES = 8;
+const ETC1S_ALPHA_BLOCK_BYTES = 16;
 
 export function mipChain(width: number, height: number): [number, number][] {
   const levels: [number, number][] = [[width, height]];
@@ -25,37 +30,46 @@ export function mipChain(width: number, height: number): [number, number][] {
   return levels;
 }
 
-export function imageBytes(width: number, height: number, format: ImageFormat): number {
+export function blockBytes(format: Exclude<ImageFormat, "rgba8" | "other">, alpha: boolean): number {
+  if (format === "uastc") return UASTC_BLOCK_BYTES;
+  return alpha ? ETC1S_ALPHA_BLOCK_BYTES : ETC1S_BLOCK_BYTES;
+}
+
+export function imageBytes(width: number, height: number, format: Exclude<ImageFormat, "other">, options: BlockOptions = {}): number {
+  const chain = mipChain(width, height).slice(0, options.levels ?? Infinity);
   let total = 0;
-  for (const [w, h] of mipChain(width, height)) {
-    total += format === "rgba8" ? 4 * w * h : Math.ceil(w / 4) * Math.ceil(h / 4) * BLOCK_BYTES[format];
+  for (const [w, h] of chain) {
+    total += format === "rgba8" ? 4 * w * h : Math.ceil(w / BLOCK_PIXELS) * Math.ceil(h / BLOCK_PIXELS) * blockBytes(format, options.alpha === true);
   }
   return total;
 }
 
-function ktx2Format(parts: GlbParts, bufferView: number | null): ImageFormat {
-  const view = bufferView === null ? undefined : (parts.json.bufferViews as { byteOffset?: number }[] | undefined)?.[bufferView];
-  if (view === undefined || parts.bin === null) return "uastc";
-  const at = (view.byteOffset ?? 0) + KTX2_SUPERCOMPRESSION_OFFSET;
-  if (at + 4 > parts.bin.byteLength) return "uastc";
-  return new DataView(parts.bin.buffer, parts.bin.byteOffset).getUint32(at, true) === BASIS_LZ ? "etc1s" : "uastc";
+function compressedMemory(index: number, header: Ktx2Info): ImageMemory {
+  const { width, height, levelCount, alpha, codec } = header;
+  if (codec === "other") {
+    const bytes = header.levels.reduce((sum, level) => sum + level.bytes, 0);
+    return { image: index, width, height, format: "other", levels: levelCount, alpha, bytes };
+  }
+  return { image: index, width, height, format: codec, levels: levelCount, alpha, bytes: imageBytes(width, height, codec, { levels: levelCount, alpha }) };
 }
 
 export function gpuMemory(parts: GlbParts, analysis: Analysis, info: ValidationInfo): GpuMemory {
-  const dimensions = new Map<number, { width: number; height: number }>();
-  for (const resource of info.resources ?? []) {
-    const match = /^\/images\/(\d+)$/.exec(resource.pointer);
-    if (match !== null && resource.image?.width !== undefined && resource.image.height !== undefined) {
-      dimensions.set(Number(match[1]), { width: resource.image.width, height: resource.image.height });
+  const images: ImageMemory[] = [];
+  for (const image of readImages(parts, analysis, info)) {
+    if (image.ktx2 !== null) {
+      images.push(compressedMemory(image.index, image.ktx2));
+    } else if (image.error === null && image.width !== null && image.height !== null) {
+      images.push({
+        image: image.index,
+        width: image.width,
+        height: image.height,
+        format: "rgba8",
+        levels: mipChain(image.width, image.height).length,
+        alpha: true,
+        bytes: imageBytes(image.width, image.height, "rgba8"),
+      });
     }
   }
-  const images: ImageMemory[] = [];
-  analysis.images.forEach((image, index) => {
-    const size = dimensions.get(index);
-    if (size === undefined) return;
-    const format: ImageFormat = image.mimeType === "image/ktx2" ? ktx2Format(parts, image.bufferView) : "rgba8";
-    images.push({ image: index, ...size, format, bytes: imageBytes(size.width, size.height, format) });
-  });
   const textureBytes = images.reduce((sum, entry) => sum + entry.bytes, 0);
   return { textureBytes, meshBytes: analysis.accessorBytes, totalBytes: textureBytes + analysis.accessorBytes, images };
 }

@@ -1,4 +1,6 @@
 import type { ValidationInfo } from "../judge/validator.js";
+import { textureCheck } from "./texture-check.js";
+import type { ImageDetail, TexturePlan } from "./textures.js";
 import { TEXTURE_SLOTS, type Analysis, type Box, type MaterialInfo } from "./analysis.js";
 
 export const POSITION_BITS = 14;
@@ -10,7 +12,9 @@ export type Check = { name: string; pass: boolean; detail: string };
 
 export type Equivalence = { pass: boolean; tolerance: number; checks: Check[] };
 
-export type EquivalenceInput = { reference: Analysis; candidate: Analysis; tolerance: number; referenceInfo?: ValidationInfo; candidateInfo?: ValidationInfo };
+export type TextureEvidence = { referenceImages: ImageDetail[]; candidateImages: ImageDetail[]; plan: TexturePlan };
+
+export type EquivalenceInput = { reference: Analysis; candidate: Analysis; tolerance: number; referenceInfo?: ValidationInfo; candidateInfo?: ValidationInfo; textures?: TextureEvidence };
 
 const LISTED = 5;
 
@@ -156,6 +160,7 @@ export function compareAnalyses(input: EquivalenceInput): Equivalence {
     boundsCheck(input.reference, input.candidate, input.tolerance),
     materialCheck(input.reference, input.candidate),
     validatorCheck(input),
+    ...(input.textures === undefined ? [] : [textureCheck({ reference: input.reference, candidate: input.candidate, ...input.textures })]),
   ];
   return { pass: checks.every((check) => check.pass), tolerance: input.tolerance, checks };
 }

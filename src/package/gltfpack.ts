@@ -98,14 +98,23 @@ export function probeTextureSupport(): Promise<TextureSupport> {
   return probed;
 }
 
-export type CompressOptions = { meshopt: boolean; ktx2: boolean; colourQuality?: "compact" | "high" };
+export const TEXTURE_CLASSES = ["color", "normal", "attrib"] as const;
+export type TextureClass = (typeof TEXTURE_CLASSES)[number];
+export const TEXTURE_QUALITY: Record<TextureClass, number> = { color: 8, normal: 8, attrib: 8 };
+export const UASTC_CLASSES: Record<"compact" | "high", readonly TextureClass[]> = { compact: ["normal", "attrib"], high: ["color", "normal", "attrib"] };
+
+export type CompressOptions = { meshopt: boolean; ktx2: boolean; colourQuality?: "compact" | "high"; threads?: number };
+
+export function textureArguments(colourQuality: "compact" | "high", threads?: number): string[] {
+  const args = ["-tc", "-tu", UASTC_CLASSES[colourQuality].join(",")];
+  for (const textureClass of TEXTURE_CLASSES) args.push("-tq", textureClass, String(TEXTURE_QUALITY[textureClass]));
+  if (threads !== undefined) args.push("-tj", String(threads));
+  return args;
+}
 
 export function compressionArguments(options: CompressOptions, support: TextureSupport): string[] {
   const args = ["-kn", "-km", "-ke"];
   if (options.meshopt) args.push("-cc");
-  if (options.ktx2 && support.ktx2) {
-    args.push("-tc");
-    args.push("-tu", options.colourQuality === "high" ? "color,normal,attrib" : "normal,attrib");
-  }
+  if (options.ktx2 && support.ktx2) args.push(...textureArguments(options.colourQuality ?? "compact", options.threads));
   return args;
 }
