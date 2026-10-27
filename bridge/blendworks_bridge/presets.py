@@ -1,5 +1,6 @@
 from .brass import brass, brass_schema
 from .marble import MARBLE_VEIN_COLOR, finish_schema, marble, vein_mask, veins_schema
+from .natural import natural_presets
 from .procedural import AXES, Preset, preset_vector, stretched
 from .scratches import DIRECTIONS, SCRATCH_DIRECTION_HELP, scratch_axis_schema, scratch_lines
 from .schema import boolean, color, number, string
@@ -71,15 +72,22 @@ def rust(graph, p):
     }
 
 
+def stone_patches(graph, vector, p):
+    if p["hard_cells"]:
+        return graph.voronoi(vector, p["cell_scale"]).outputs["Color"]
+    broad = graph.noise(vector, p["cell_scale"], detail=4.0, roughness=0.6, distortion=0.8).outputs["Factor"]
+    fine = graph.noise(vector, p["cell_scale"] * 3.1, detail=3.0, roughness=0.55, distortion=0.5).outputs["Factor"]
+    return graph.map_range(graph.math("MULTIPLY_ADD", broad, 0.7, graph.math("MULTIPLY", fine, 0.3)), 0.28, 0.72)
+
+
 def stone(graph, p):
     vector = preset_vector(graph, p)
     cracks = 1.0
     if p["cracks"]:
         edges = graph.voronoi(vector, p["cell_scale"], feature="DISTANCE_TO_EDGE")
         cracks = graph.map_range(edges.outputs["Distance"], 0.0, max(p["crack_width"], 0.001))
-    cells = graph.voronoi(vector, p["cell_scale"])
     detail = graph.noise(vector, 14.0, detail=8.0, roughness=0.65).outputs["Factor"]
-    tone = graph.mix(0.45, cells.outputs["Color"], graph.map_range(detail, 0.25, 0.75), "FLOAT")
+    tone = graph.mix(0.45, stone_patches(graph, vector, p), graph.map_range(detail, 0.25, 0.75), "FLOAT")
     surface = graph.mix(graph.map_range(tone, 0.15, 0.85), p["secondary_color"], p["color"])
     low, high = spread(p["roughness"], 0.08, 0.08)
     base_color = graph.mix(graph.math("SUBTRACT", 1.0, graph.math("MULTIPLY", graph.math("SUBTRACT", 1.0, cracks), 0.75)), scaled(p["secondary_color"], 0.3), surface)
@@ -174,10 +182,11 @@ PRESETS = {
             "coverage": amount("Share of the surface covered by rust.", 0.5),
             "metal_roughness": amount("Roughness of the bare metal.", 0.4),
         }, rust),
-        Preset("stone", "Stone with cells, cracks, fine grain and optional veins.", 2.0, {
+        Preset("stone", "Stone with soft colour patches, fine grain, optional hard cells and cracks, and optional veins.", 2.0, {
             "color": color("Main stone colour, linear RGB.", [0.33, 0.31, 0.28], False),
             "secondary_color": color("Second stone colour, linear RGB.", [0.2, 0.19, 0.18], False),
-            "cell_scale": number("Stone cells per metre.", 0.1, 200.0, 4.0),
+            "cell_scale": number("Colour patches (and, with cracks or hard_cells, stone cells) per metre.", 0.1, 200.0, 4.0),
+            "hard_cells": boolean("Colour the patches as flat voronoi cells with hard polygon edges, like separate stones laid side by side; false gives soft, natural patches that follow no cell borders.", False),
             "cracks": boolean("Draw the dark cracks between the cells; false leaves a seamless stone.", True),
             "crack_width": amount("Width of the cracks between cells.", 0.05),
             "veins": veins_schema(),
@@ -212,5 +221,6 @@ PRESETS = {
             "amount": amount("Share of the surface with thick clumps.", 0.5),
             "roughness": amount("Average roughness.", 0.95),
         }, dirt),
+        *natural_presets(),
     )
 }

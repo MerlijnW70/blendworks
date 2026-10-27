@@ -2,6 +2,7 @@ import bpy
 
 from ..errors import bad_args, not_found
 from ..nodes import Graph
+from ..masks import GEOMETRIC, MASK_HELP, MASK_PARAMS, check_geometric_args, combined, geometric_mask, geometric_schema, mask_kinds
 from ..occlusion import occlusion_mask
 from ..pbr import users_of
 from ..presets import PRESETS
@@ -10,7 +11,7 @@ from ..registry import command
 from ..schema import boolean, integer, number, string
 
 BLENDED_INPUTS = (("Base Color", "base_color", "RGBA"), ("Roughness", "roughness", "FLOAT"), ("Metallic", "metallic", "FLOAT"))
-MASKS = ("noise", "edges", "cavity", "vertex_color")
+MASKS = tuple(MASK_PARAMS)
 
 
 def ensure_material(name):
@@ -64,12 +65,12 @@ def viewport_color(params):
 
 @command(
     "material_layer",
-    "Blend a procedural preset over a material through a mask: noise, edges, cavity or a vertex colour.",
+    "Blend a procedural preset over a material through a mask: noise, edges, cavity, a vertex colour, slope, height, up-facing or a named attribute; masks combine.",
     dict(
         {
             "material": string("Material to layer onto; it needs a Principled BSDF feeding its output."),
-            "mask": string("noise: patches; edges: worn convex edges; cavity: crevices; vertex_color: a painted colour attribute.", list(MASKS), "noise"),
-            "amount": number("Share of the surface the overlay covers, 0 to 1.", 0.0, 1.0, 0.5),
+            "mask": string(MASK_HELP, list(MASKS), "noise"),
+            "amount": number("Share of the surface the overlay covers, 0 to 1, for the noise, edges, cavity and vertex_color masks (slope, height, up_facing and attribute set their own edges).", 0.0, 1.0, 0.5),
             "softness": number("Softness of the mask's border, 0 to 1.", 0.0, 1.0, 0.3),
             "mask_scale": number("Patches per metre of the noise mask and of the breakup noise.", 0.01, 1000.0, 8.0),
             "edge_source": string("Edge detection: ao (ambient occlusion from inside, works on low poly) or pointiness (vertex curvature).", ["ao", "pointiness"], "ao"),
@@ -78,12 +79,13 @@ def viewport_color(params):
             "invert": boolean("Invert the mask.", False),
             "breakup": number("Break the edges, cavity or vertex colour mask up with noise, 0 to 1.", 0.0, 1.0, 0.5),
             "seed": integer("Seed of the mask noise.", 0, 1_000_000, 0),
+            **geometric_schema(),
         },
         **preset_properties(),
     ),
     ["material"],
     family="materials",
-    intents=("add rust, dirt or patina on top of a material", "wear on edges or in cavities"),
+    intents=("add rust, dirt or patina on top of a material", "wear on edges or in cavities", "moss or snow on up-facing surfaces", "a layer by slope angle, height or terrain attribute"),
     nearest=(("material_procedural", "for the base material"),),
 )
 def material_layer(ctx, args):
@@ -111,7 +113,9 @@ def material_layer(ctx, args):
 
 
 def check_mask_args(material, args):
-    if args["mask"] != "vertex_color":
+    kinds = mask_kinds(args)
+    check_geometric_args(args, kinds)
+    if "vertex_color" not in kinds:
         if "layer" in args:
             raise bad_args("layer belongs to the vertex_color mask")
         return
@@ -123,8 +127,15 @@ def check_mask_args(material, args):
 
 
 def mask_value(graph, args):
+    values = [single_mask(graph, args, kind) for kind in mask_kinds(args)]
+    return combined(graph, values, args["combine"])
+
+
+def single_mask(graph, args, kind):
+    if kind in GEOMETRIC:
+        raw = geometric_mask(graph, args, kind)
+        return graph.math("SUBTRACT", 1.0, raw) if args["invert"] else raw
     noise_params = {"seed": args["seed"], "scale": args["mask_scale"], "coordinates": "object"}
-    kind = args["mask"]
     if kind == "noise":
         noise = graph.noise(preset_vector(graph, noise_params, salt=1), 1.0, detail=6.0, roughness=0.6)
         raw = graph.map_range(noise.outputs["Factor"], 0.3, 0.7)

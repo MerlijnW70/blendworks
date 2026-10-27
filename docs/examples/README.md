@@ -61,3 +61,18 @@ It runs these steps in order, and stops at the first failing command:
 4. **Renders.** Four views.
 
 `BLENDWORKS_TERRAIN_RESOLUTION`, `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+
+## Natural dressing
+
+`natural_dressing.py` dresses the terrain and rock of `noise_terrain.py` with natural materials, with commands only, and renders close-ups. It is the acceptance build of the `natural-materials` job.
+
+```
+blender --background --factory-startup --python docs/examples/natural_dressing.py -- out
+```
+
+It adds to the terrain and rock:
+- **Soil with moss.** `soil` on the terrain, and a `moss` layer through `up_facing`, `slope` (at most 38 degrees from horizontal) and `noise` masks combined with `with_masks`, so moss grows in patches on the gentle, upward-facing ground.
+- **Stone without patches.** `stone` on the rock with its default soft colour patches, and a moss layer on its top.
+- **A bark log** (`bark`, grain along the cylinder axis) and **a leaf card** (`leaf` with `cutout`, from its UV square). They stand at y -30, beside the terrain tiles and not in front of them: the 110 m tall terrain shades anything close behind it in the preview light, which made the log close-up almost black.
+
+The close-ups are `rock`, `rock-top`, `log`, `leaf`, `ground-close` and the overview views of `noise_terrain.py`.

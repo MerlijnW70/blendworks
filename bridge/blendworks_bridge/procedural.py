@@ -5,6 +5,7 @@ from .schema import integer, number, obj, string
 
 SEED_RANGE = 100.0
 AXES = {"x": "X", "y": "Y", "z": "Z"}
+EXTRA_CHANNELS = (("Alpha", "alpha"), ("Transmission Weight", "translucency"))
 AXIS_VECTORS = {"x": (1.0, 0.0, 0.0), "y": (0.0, 1.0, 0.0), "z": (0.0, 0.0, 1.0)}
 
 
@@ -82,6 +83,11 @@ def wire_channels(graph, material, output, shader, channels, bump):
     graph.set(shader.inputs["Base Color"], channels["base_color"])
     graph.set(shader.inputs["Roughness"], channels["roughness"])
     graph.set(shader.inputs["Metallic"], channels["metallic"])
+    for socket_name, key in EXTRA_CHANNELS:
+        if channels.get(key) is not None:
+            graph.set(shader.inputs[socket_name], channels[key])
+    if channels.get("alpha") is not None:
+        material.surface_render_method = "DITHERED"
     if bump > 0.0 and channels.get("height") is not None:
         graph.set(output.inputs["Displacement"], displacement_of(graph, channels["height"], bump))
         material.displacement_method = "BUMP"

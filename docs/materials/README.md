@@ -63,3 +63,71 @@ The after strip shows `age` new, handled, aged and dull, from left to right.
 | dull | 0.70 |
 
 **Why aged is darkest.** The strokes are about 1.4 mm wide and 0.6 mm deep. From the middle of such a slot, about half of the hemisphere is hidden. That is far past the occlusion at which the mask is full (0.25), so aged grime darkens most of the floor towards the patina colour and the ratio drops below 0.5; the texels next to the walls, which the bake samples at the very edge of the mask, keep it above the patina-to-brass ratio of about 0.2. New brass has no grime and no patina, so its recesses keep the brass colour (ratio at least 0.9).
+
+# Natural presets, layer masks and soft stone
+
+The `natural-materials` job added six presets (`bark`, `moss`, `leaf`, `soil`, `sand`, `grass_ground`), four `material_layer` masks (`slope`, `height`, `up_facing`, `attribute`) and fixed the polygon patches of `stone`. `render_natural.py` renders the images on this page with Blendworks commands only: `blender --background --factory-startup --python docs/materials/render_natural.py -- docs/materials`.
+
+## Stone without patches
+
+![stone before](stone-before.png)
+![stone after](stone-after.png)
+
+**Before** (`main` at 7a34a89, now `hard_cells: true`): hard-edged polygons of flat colour on a curved boulder, which reads as camouflage.
+
+**Root cause.** The colour patches came from the `Color` output of a Voronoi texture. That output is a random colour that is constant inside each cell, so it jumps at every cell border, however the surface bends. The distance metric, the mapping and any threshold were not at fault: the discontinuity is in the output itself. The cracks (`cracks`) use the separate distance-to-edge output and are unchanged.
+
+**After.** The patches are two domain-warped fBm noise fields (`cell_scale` and 3.1 times that frequency), which are continuous, so every boundary is soft at any setting. `hard_cells: true` asks for the old flat cells.
+
+**Measured.** `bridge/tests/natural_stats.py` bakes the base colour of a 1 m sphere at 512 px and looks at the luminance along each row of the equator band. A boundary pixel has a step of more than 0.02 between the pixels three to either side. It is hard when a single one-pixel step makes up at least 70% of that step, which means the whole step happens within one pixel:
+
+| Stone | Hard share of boundary pixels | Boundary pixels |
+|---|---|---|
+| new default (`hard_cells` false) | 0.04 | 14,530 |
+| `hard_cells` true (the old patches) | 0.56 | 16,818 |
+
+`test_natural_materials.py` requires at most 0.12 for the default and at least 0.4 for `hard_cells`, with at least 2,000 boundary pixels in both so that a stone without any patches cannot pass. The limits leave a margin of 0.08 and 0.16 to the measured values. The fine grain of the stone is in both and adds one-pixel steps, which is why the hard share is 0.56 and not close to 1.
+
+## Natural presets
+
+All sizes are in metres at `scale` 1. Base-colour luminance coefficient of variation over a 1 m patch at 256 px (`test_natural_presets_vary_like_scans_over_one_metre` requires at least 0.15; scans measure 0.25 to 0.40, `docs/research/natural-shapes.md` 2.6):
+
+| Preset | CV | Render |
+|---|---|---|
+| `bark` (grain along y) | 0.20 | ![bark](bark.png) |
+| `moss` | 0.23 | ![moss](moss.png) |
+| `leaf` | 0.20 | ![leaf](leaf.png) |
+| `soil` | 0.20 | ![soil](soil.png) |
+| `sand` | 0.18 | ![sand](sand.png) |
+| `grass_ground` | 0.23 | ![grass ground](grass_ground.png) |
+
+**Targets.** The presets were tuned against the structure the following CC0 assets show, not matched pixel by pixel; nothing from them is committed (the listings were checked through the Poly Haven API, the images were not downloaded):
+- **bark:** Poly Haven Bark Brown 02, <https://polyhaven.com/a/bark_brown_02>: plates a few centimetres wide split by deep fissures that run along the trunk.
+- **moss:** Poly Haven Rock Moss Set 01, <https://polyhaven.com/a/rock_moss_set_01>: tufts of bright tips over darker undergrowth, in patches on the tops of rocks.
+- **leaf:** Poly Haven Searsia Lucida, <https://polyhaven.com/a/searsia_lucida>: a pointed blade with a pale midrib, pairs of lateral veins and a fine net.
+- **soil:** Poly Haven Brown Mud Leaves 01, <https://polyhaven.com/a/brown_mud_leaves_01>: dark crumbs and clods with pale pebbles.
+- **sand:** Poly Haven Coast Sand 01, <https://polyhaven.com/a/coast_sand_01> and Aerial Beach 01, <https://polyhaven.com/a/aerial_beach_01>: fine grain, dark flecks and wind ripples.
+- **grass_ground:** Poly Haven Aerial Grass Rock, <https://polyhaven.com/a/aerial_grass_rock>: green and dry tufts over bare soil.
+
+**How each is built.**
+- **`bark`:** a warped, ridged noise (isolines of `|n - 0.5|`) in coordinates squeezed along the grain axis, so the fissures stretch along it, plus finer cracks, plate tone and a pale lichen tint. `fissure_spacing` is the noise wavelength in metres; `fissure_depth` sets both the width of the fissures and the depth of the bump.
+- **`moss`:** `patchiness` shifts a threshold on a broad noise, so 0 covers everything and 1 leaves mostly bare ground; `clump_size` is the tuft size and `height` scales the relief.
+- **`leaf`:** a midrib and lateral veins laid out on one unit square (the UV square by default), a Voronoi vein net and blotches. `cutout` cuts a pointed outline into the alpha, `alpha` scales the opacity, `translucency` is the transmission weight. These two channels go to the Principled BSDF only; `material_layer` blends colour, roughness, metallic and bump.
+- **`soil`:** crumbs and clods at `clod_size`, pebbles of varying size; `moisture` darkens and smooths.
+- **`sand`:** grain, dark flecks and ripples from a warped wave texture whose strength varies; `ripple_spacing`, `ripple_direction`, `moisture`.
+- **`grass_ground`:** `tuft_size` clumps of fine blades, dry patches by `dryness`, bare soil by `density`.
+
+## Layer masks
+
+`material_layer` takes `mask` and more in `with_masks`, combined by `combine`: `all` (product) or `any` (maximum).
+
+| Mask | Settings | Behaviour |
+|---|---|---|
+| `slope` | `angle_min`, `angle_max`, `angle_edge` (degrees, default 5) | The angle between the world up direction and the surface normal: 0 on flat ground facing up, 90 on a vertical wall. 0 outside the limits, 1 inside beyond the soft edge. |
+| `height` | `z_min`, `z_max`, `z_edge` (metres, default 0.5) | World z. 0 below `z_min`, 1 above it beyond the edge. |
+| `up_facing` | `strength` (0 to 1, default 0.5) | A smoothstep of the normal's z component: 1 facing up, 0 where it points down or sideways; `strength` is how far down the slopes it reaches. |
+| `attribute` | `attribute`, `value_min`, `value_max` | The named float point attribute (`slope`, `height` or `curvature` from `heightfield` and `noise_displace`) mapped linearly from `value_min` to `value_max`. |
+
+The soft edges lie inside the limits, so 1 is reached `angle_edge` or `z_edge` past the limit. `amount`, `softness` and `breakup` belong to the noise, edges, cavity and vertex colour masks; the four new masks set their own edges. `invert` flips every mask.
+
+`docs/examples/natural_dressing.py` dresses the terrain and rock of `noise_terrain.py` with these: soil, moss in noise patches on up-facing, gentle slopes, a stone without patches, a bark log and a leaf card.

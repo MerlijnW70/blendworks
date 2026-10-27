@@ -17,9 +17,9 @@ export const WORKFLOWS: Workflow[] = [
   {
     id: "materials",
     goal: "Realistic materials",
-    examples: ["wood, brass, worn metal, stone or marble look", "aged metal with patina", "rust and dirt"],
+    examples: ["wood, brass, worn metal, stone or marble look", "aged metal with patina", "rust and dirt", "bark, moss, soil, sand or leaf", "moss on up-facing slopes"],
     steps: ["blender_material_procedural", "blender_material_layer", "blender_assign_material"],
-    note: "blender_material_procedural has wood, brass, worn metal, stone, marble and more; blender_material_layer adds wear and dirt through a mask. Scratches run around an axis (around_z, or around with scratch_axis) as on turned parts, along UV u or v (v follows sweep rings, u follows lathes), or along an axis for flat stock. Marble finish polished stays optically flat; honed and rough add relief. Edge and cavity masks follow bevels and creases.",
+    note: "blender_material_procedural has wood, brass, worn metal, stone, marble and more; blender_material_layer adds wear and dirt through a mask. Scratches run around an axis (around_z, or around with scratch_axis) as on turned parts, along UV u or v (v follows sweep rings, u follows lathes), or along an axis for flat stock. Marble finish polished stays optically flat; honed and rough add relief. Edge and cavity masks follow bevels and creases. Natural looks: bark, moss, leaf, soil, sand and grass_ground presets, and layer masks slope (angle_min, angle_max), height (z_min, z_max), up_facing (moss or snow on top) and attribute (slope, height or curvature from heightfield), combined with with_masks; stone patches are soft unless hard_cells is set.",
   },
   {
     id: "node-material",

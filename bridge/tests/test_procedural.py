@@ -35,11 +35,11 @@ def output_of(material):
 
 
 def test_every_preset_builds_a_bakeable_material(bridge):
-    assert sorted(PRESETS) == ["brass", "concrete", "dirt", "fabric", "marble", "rust", "stone", "wood", "worn_metal"]
+    assert sorted(PRESETS) == ["bark", "brass", "concrete", "dirt", "fabric", "grass_ground", "leaf", "marble", "moss", "rust", "sand", "soil", "stone", "wood", "worn_metal"]
     for name in PRESETS:
         result = bridge.ok("material_procedural", name=f"M_{name}", **{name: {"seed": 7, "scale": 2.0}})
         assert result["created"] is True and result["preset"] == name and result["nodes"] > 8, result
-        assert result["params"]["seed"] == 7 and result["params"]["coordinates"] == "object"
+        assert result["params"]["seed"] == 7 and result["params"]["coordinates"] == ("uv" if name == "leaf" else "object")
         material = bpy.data.materials[f"M_{name}"]
         shader = principled(material)
         assert linked_from(output_of(material).inputs["Surface"])[0] == shader
