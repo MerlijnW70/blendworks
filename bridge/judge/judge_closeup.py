@@ -36,11 +36,13 @@ def world_points(depsgraph):
                 continue
             coordinates = array("f", [0.0]) * (len(mesh.vertices) * 3)
             mesh.vertices.foreach_get("co", coordinates)
+            loops = array("i", [0]) * len(mesh.loops)
+            mesh.loops.foreach_get("vertex_index", loops)
         finally:
             obj.to_mesh_clear()
         rows = [tuple(matrix[axis]) for axis in range(3)]
-        for start in range(0, len(coordinates), 3):
-            x, y, z = coordinates[start], coordinates[start + 1], coordinates[start + 2]
+        for vertex in sorted(set(loops)):
+            x, y, z = coordinates[vertex * 3], coordinates[vertex * 3 + 1], coordinates[vertex * 3 + 2]
             points.extend(row[0] * x + row[1] * y + row[2] * z + row[3] for row in rows)
     stride = max(1, len(points) // 3 // MAX_POINTS)
     if stride == 1:

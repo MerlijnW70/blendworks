@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import sys
 import time
@@ -154,6 +155,14 @@ def run_guarded(out_path, work):
     except MemoryError:
         payload = {"ok": False, "error": {"code": "memory_cap", "message": "the asset needs more memory than the cap allows"}}
     write_json(out_path, payload)
+
+
+def rounded(values):
+    return [round(value, 6) + 0.0 for value in values]
+
+
+def distance(first, second):
+    return math.sqrt(sum((first[axis] - second[axis]) ** 2 for axis in range(3)))
 
 
 def stopwatch():

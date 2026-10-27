@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { judge } from "../../src/judge/run.js";
 import { freshDir, makeFixtures, writeSpec } from "./helpers.js";
+import { CRATE_MEASUREMENTS } from "./measured.js";
 import { useBlenderSlot } from "../setup/slot.js";
 
 useBlenderSlot();
@@ -17,20 +18,7 @@ beforeAll(() => {
 
 const REPORT_KEYS = ["passed", "preview", "spec", "asset", "blender", "sandbox", "renderSandbox", "device", "failure", "rules", "measurements", "renders", "timings", "summary"];
 
-const MEASUREMENTS = {
-  format: "glb",
-  fileBytes: 2784,
-  triangles: 12,
-  objects: 1,
-  objectsAll: 1,
-  bounds: { min: [-0.5, -0.5, 0], max: [0.5, 0.5, 0.8] },
-  size: [1, 1, 0.8],
-  origin: { point: [0, 0, 0], source: "object Crate", bottomCentreDistance: 0, centreDistance: 0.4 },
-  manifold: { nonManifoldEdges: 0, boundaryEdges: 0, wireEdges: 0, nonManifoldVertices: 0, looseVertices: 0, looseParts: 1 },
-  materials: { count: 2, names: ["metal", "wood"] },
-  uv: { present: true, meshesWithoutUv: 0, coverage: 0.375, overlap: 0 },
-  externalFilesRefused: [],
-};
+const MEASUREMENTS = CRATE_MEASUREMENTS;
 
 const SUMMARY = [
   "PASS  wooden crate  (ASSET)",
@@ -48,14 +36,16 @@ const SUMMARY = [
   "  pass  objects.max        measured 1; required at most 1",
   "  pass  fileSize.maxBytes  measured 2784; required at most 2000000",
   "  13 of 13 rules pass",
+  "  surface: 12 of 12 triangles visible from outside, hidden ratio 0; 0 degenerate, 0 duplicate faces; 1 shells, 1 closed, 0 inside out",
   "  views: skipped (preview); the rules alone decide pass or fail",
   "  contact sheet: SHEET",
+  "  delivery: 1 files, 2784 bytes, set sha256 SET",
   "  sandbox: SANDBOX",
   "  time: TIME",
 ];
 
 describe("a spec without the new rules", { timeout: 120_000 }, () => {
-  it("gives exactly the report the judge gave before them", async () => {
+  it("gives the rules, verdict and summary it gave before, with the new measurements beside them", async () => {
     const outDir = freshDir("old-specs", "report");
     const report = await judge({ specPath: writeSpec(specs, "crate"), assetPath: join(assets, "crate.glb"), outDir, preview: true });
     const written = JSON.parse(readFileSync(join(outDir, "report.json"), "utf8"));
@@ -69,8 +59,9 @@ describe("a spec without the new rules", { timeout: 120_000 }, () => {
     const summary = report.summary
       .split(report.asset.path)
       .join("ASSET")
-      .split(report.renders!.contactSheet)
+      .split(report.renders!.contactSheet!)
       .join("SHEET")
+      .replace(/set sha256 [0-9a-f]{64}/, "set sha256 SET")
       .replace(/sandbox: .*/, "sandbox: SANDBOX")
       .replace(/time: .*/, "time: TIME");
     expect(summary.split("\n")).toEqual(SUMMARY);

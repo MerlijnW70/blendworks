@@ -15,13 +15,13 @@ from judge_common import (
     script_arguments,
     split_arguments,
 )
-from judge_geometry import Measurer, guaranteed_triangles
+from judge_geometry import Measurer
 from judge_load import load_asset
 from judge_textures import measure_textures
 
 USAGE = (
     "measure.py -- <asset> <out.json> [--max-triangles n] [--memory-mb n] [--memory-kind address-space|data] [--uv-grid path]"
-    " [--floating-tolerance metres]"
+    " [--floating-tolerance metres] [--objects yes|no]"
 )
 MAX_FLOATING_TOLERANCE = 1.0
 
@@ -38,16 +38,20 @@ def floating_tolerance(text):
     return value
 
 
+def objects_wanted(text):
+    if text not in ("yes", "no"):
+        raise JudgeError("usage", "--objects must be yes or no")
+    return text == "yes"
+
+
 def measure(asset, options):
     triangle_cap = positive_int(options["max-triangles"], "max-triangles")
     tolerance = floating_tolerance(options["floating-tolerance"])
+    objects = objects_wanted(options["objects"])
     limits = memory_cap_from(options)
-    loaded = load_asset(asset)
+    loaded = load_asset(asset, triangle_cap)
     scene = bpy.context.scene
-    estimate = guaranteed_triangles(scene)
-    if estimate > triangle_cap:
-        raise JudgeError("too_many_triangles", f"the asset makes at least {estimate} triangles, over the judge's cap of {triangle_cap}")
-    measurer = Measurer(triangle_cap, tolerance)
+    measurer = Measurer(triangle_cap, tolerance, integrity=True, objects=objects)
     measurer.measure(bpy.context.evaluated_depsgraph_get())
     measurements = measurer.result()
     if options["uv-grid"]:
@@ -60,7 +64,7 @@ def measure(asset, options):
 
 def main():
     positional, options = split_arguments(
-        script_arguments(), {"max-triangles": str(DEFAULT_MAX_TRIANGLES), "memory-mb": str(DEFAULT_MEMORY_MB), "memory-kind": "address-space", "uv-grid": "", "floating-tolerance": ""}
+        script_arguments(), {"max-triangles": str(DEFAULT_MAX_TRIANGLES), "memory-mb": str(DEFAULT_MEMORY_MB), "memory-kind": "address-space", "uv-grid": "", "floating-tolerance": "", "objects": "no"}
     )
     if len(positional) != 2:
         print(USAGE, file=sys.stderr)

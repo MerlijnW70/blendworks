@@ -57,7 +57,7 @@ describe("judging the fixture assets", { timeout: 120_000 }, () => {
     expect(measurements.origin.centreDistance).toBe(0.4);
     expect(measurements.manifold).toEqual(SOUND);
     expect(measurements.materials).toEqual({ count: 2, names: ["metal", "wood"] });
-    expect(measurements.uv).toEqual({ present: true, meshesWithoutUv: 0, coverage: 0.375, overlap: 0 });
+    expect(measurements.uv).toEqual({ present: true, meshesWithoutUv: 0, coverage: 0.375, overlap: 0, outsideUnitSquare: 0 });
     expect(measurements.fileBytes).toBe(statSync(join(assets, "crate.glb")).size);
     expectRendered(report, 6);
   });
@@ -98,14 +98,14 @@ describe("judging the fixture assets", { timeout: 120_000 }, () => {
 
   it("fails the crate without UVs on uv.required and uv.maxOverlap", async () => {
     const report = await judged("no-uv.glb");
-    expect(report.measurements?.uv).toEqual({ present: false, meshesWithoutUv: 1, coverage: 0, overlap: 0 });
+    expect(report.measurements?.uv).toEqual({ present: false, meshesWithoutUv: 1, coverage: 0, overlap: 0, outsideUnitSquare: 0 });
     expect(failing(report)).toEqual(["uv.required", "uv.maxOverlap"]);
     expectRendered(report, 6);
   });
 
-  it("fails the crate whose 6 faces all fill the whole UV square: coverage 1, overlap 1", async () => {
+  it("fails the crate whose 6 faces all fill the whole UV square: overlap 1, and the 1 x 1 lid counts only its 0.5 / 5.2 surface share of its 0.5 UV half: 49 / 255", async () => {
     const report = await judged("overlap-uv.glb");
-    expect(report.measurements?.uv).toEqual({ present: true, meshesWithoutUv: 0, coverage: 1, overlap: 1 });
+    expect(report.measurements?.uv).toEqual({ present: true, meshesWithoutUv: 0, coverage: 0.192157, overlap: 1, outsideUnitSquare: 0 });
     expect(failing(report)).toEqual(["uv.maxOverlap"]);
     expectRendered(report, 6);
   });

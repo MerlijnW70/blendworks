@@ -189,7 +189,7 @@ describe("texture rules on generated PBR assets", { timeout: 120_000 }, () => {
       "LINE TEXTURES NOT MEASURED",
     ]);
     const report = await judged("textured.glb", { name: "header" });
-    const measured = JSON.parse(readFileSync(join(report.renders!.contactSheet, "..", "measurements.json"), "utf8"));
+    const measured = JSON.parse(readFileSync(join(report.renders!.contactSheet!, "..", "measurements.json"), "utf8"));
     expect(measured.measurements.textures).toMatchObject({ count: 5, gpuBytes: 55_972 });
   });
 });

@@ -95,9 +95,9 @@ def render_views(scene, views, low, high, origin, out_dir, backend, found):
 def uv_grid_for(path, triangle_cap):
     if path:
         return UvGrid.load(os.path.abspath(path))
-    measurer = Measurer(triangle_cap)
+    measurer = Measurer(triangle_cap, integrity=False)
     measurer.measure(bpy.context.evaluated_depsgraph_get())
-    return measurer.uv_grid
+    return measurer.uv_layout()
 
 
 def render(asset, measurements_path, out_dir, options):
@@ -111,7 +111,7 @@ def render(asset, measurements_path, out_dir, options):
     if mode == "full":
         backend, found = resolve_backend(backend, options["backends"])
     if mode == "full" or not options["uv-grid"]:
-        load_asset(asset)
+        load_asset(asset, triangle_cap)
         remove_foreign_rig(bpy.context.scene)
     scene = bpy.context.scene
     uv_grid = uv_grid_for(options["uv-grid"], triangle_cap)

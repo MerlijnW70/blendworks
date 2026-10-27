@@ -1,17 +1,20 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, extname, join, resolve } from "node:path";
 import { blenderPath } from "../blender.js";
-import type { z } from "zod";
+import { copyDelivery, DeliveryError, type Delivery } from "./delivery.js";
 import type { DeviceMode } from "./device.js";
-import { measureOutputSchema, renderOutputSchema, type Measurements } from "./measurements.js";
+import { renderRules } from "./integrity-rules.js";
+import { measureOutputSchema, measurementsSchema, type Measurements } from "./measurements.js";
+import { wantsObjectList } from "./object-rules.js";
+import { hashRenders, renderStage, uvGridPath } from "./render-stage.js";
 import { summarize, type Report, type Timings } from "./report.js";
 import { evaluateRules } from "./rules.js";
+import { detectTools, type Limits, type Tools } from "./sandbox.js";
+import { readSpec, SpecError, type AssetSpec } from "./spec.js";
+import { checkAsset, checkBlender, DEFAULTS, deviceMode, runScript, seconds, sha256, StageFailure, workOut, type Sandbox } from "./stages.js";
 import { floatingTolerance, validatorRules } from "./texture-rules.js";
 import { validateGltf, ValidationError, VALIDATOR_DEFAULTS, type Validation } from "./validator.js";
-import { detectTools, type Limits, type SandboxDevice, type Tools } from "./sandbox.js";
-import { DEFAULT_VIEWS, readSpec, SpecError, type AssetSpec } from "./spec.js";
-import { checkAsset, checkBlender, DEFAULT_BACKENDS, DEFAULTS, deviceMode, onDevice, runScript, seconds, sha256, StageFailure, type Attempt, type Sandbox } from "./stages.js";
 
 export { DEFAULTS, SCRIPTS_DIR } from "./stages.js";
 
@@ -21,6 +24,8 @@ export type JudgeOptions = {
   outDir: string;
   blender?: string;
   timeoutMs?: number;
+  renderTimeoutMs?: number;
+  renderMaxTriangles?: number;
   memoryBytes?: number;
   maxTriangles?: number;
   maxFileBytes?: number;
@@ -29,9 +34,11 @@ export type JudgeOptions = {
   device?: DeviceMode;
   backends?: readonly string[];
   maxValidatorBytes?: number;
+  afterCopy?: (delivery: Delivery) => void;
 };
 
 const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "contact-sheet.png", "views"];
+const STAGE_OUTPUTS = ["measurements.json", "render.json", "contact-sheet.png"];
 
 function prepareOutDir(outDir: string): void {
   mkdirSync(outDir, { recursive: true });
@@ -39,57 +46,6 @@ function prepareOutDir(outDir: string): void {
 }
 
 type Draft = Omit<Report, "summary">;
-
-function uvGridPath(sandbox: Sandbox): string {
-  return join(sandbox.workDir, "uv-grid.bin");
-}
-
-type RenderOutput = Extract<z.infer<typeof renderOutputSchema>, { ok: true }>;
-
-async function renderStage(draft: Draft, spec: AssetSpec, assetPath: string, outDir: string, sandbox: Sandbox, maxTriangles: number, options: JudgeOptions) {
-  const measurementsPath = join(outDir, "measurements.json");
-  const views = (spec.views ?? DEFAULT_VIEWS).join(",");
-  const title = spec.name ?? basename(assetPath);
-  const baseArgs = [assetPath, measurementsPath, outDir, "--views", views, "--title", title, "--max-triangles", String(maxTriangles)];
-  baseArgs.push("--uv-grid", uvGridPath(sandbox));
-  const outputPath = join(outDir, "render.json");
-  let failedGpuSeconds: number | null = null;
-  const run = async (args: string[], device: SandboxDevice): Promise<Attempt<{ output: RenderOutput; seconds: number }>> => {
-    const rendered = await runScript("render", "render.py", args, outputPath, sandbox, device);
-    const parsed = renderOutputSchema.safeParse(rendered.output);
-    if (!parsed.success) throw new StageFailure({ stage: "render", code: "malformed", message: "the render script wrote malformed output" });
-    draft.renderSandbox = rendered.isolation;
-    const output = parsed.data;
-    if (output.ok) return { ok: true, value: { output, seconds: rendered.seconds }, backend: output.device?.backend ?? "CPU", probes: output.probes };
-    if (output.error.code === "gpu_unavailable" && device === "gpu") {
-      failedGpuSeconds = rendered.seconds;
-      return { ok: false, message: output.error.message, probes: output.probes ?? [] };
-    }
-    throw new StageFailure({ stage: "render", ...output.error });
-  };
-  let result: { output: RenderOutput; seconds: number };
-  if (options.preview === true) {
-    const preview = await run([...baseArgs, "--mode", "preview"], "cpu");
-    if (!preview.ok) throw new StageFailure({ stage: "render", code: "gpu_unavailable", message: preview.message });
-    result = preview.value;
-  } else {
-    const chosen = await onDevice(deviceMode(options.device), options.backends ?? DEFAULT_BACKENDS, (request) =>
-      run([...baseArgs, "--device", request.device, "--backends", request.backends.join(",")], request.sandbox),
-    );
-    draft.device = chosen.device;
-    result = chosen.value;
-  }
-  const { output } = result;
-  const probeSeconds = output.timings.device ?? failedGpuSeconds;
-  draft.timings.device = probeSeconds;
-  draft.timings.sheet = output.timings.sheet;
-  draft.timings.render = options.preview === true ? null : Math.max(0, seconds((result.seconds - output.timings.sheet - (output.timings.device ?? 0)) * 1000));
-  draft.renders = {
-    viewsSkipped: options.preview === true,
-    views: output.views.map((entry) => ({ view: entry.view, path: resolve(entry.path) })),
-    contactSheet: join(outDir, "contact-sheet.png"),
-  };
-}
 
 function writeJson(path: string, value: unknown): void {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
@@ -128,6 +84,45 @@ function emptyTimings(): Timings {
   return { measure: null, device: null, render: null, sheet: null, total: 0 };
 }
 
+function deliver(draft: Draft, assetPath: string, format: string, workDir: string, maxFileBytes: number): Delivery {
+  let delivery: Delivery;
+  try {
+    delivery = copyDelivery(assetPath, format, workDir, maxFileBytes);
+  } catch (error) {
+    if (error instanceof DeliveryError) throw new StageFailure({ stage: "asset", code: error.code, message: error.message });
+    throw error;
+  }
+  const main = delivery.files.find((file) => file.path === basename(delivery.main));
+  Object.assign(draft.asset, { sha256: main?.sha256 ?? null, bytes: main?.bytes ?? null, files: delivery.files, setSha256: delivery.sha256, setBytes: delivery.bytes });
+  return delivery;
+}
+
+async function measureStage(draft: Draft, spec: AssetSpec, delivery: Delivery, sandbox: Sandbox, maxTriangles: number): Promise<Measurements> {
+  const measurementsPath = join(workOut(sandbox), "measurements.json");
+  const measureArgs = [delivery.main, measurementsPath, "--max-triangles", String(maxTriangles), "--uv-grid", uvGridPath(sandbox)];
+  const tolerance = floatingTolerance(spec);
+  if (tolerance !== undefined) measureArgs.push("--floating-tolerance", String(tolerance));
+  if (wantsObjectList(spec)) measureArgs.push("--objects", "yes");
+  const measured = await runScript("measure", "measure.py", measureArgs, measurementsPath, sandbox);
+  draft.sandbox = measured.isolation;
+  draft.timings.measure = measured.seconds;
+  const parsed = measureOutputSchema.safeParse(measured.output);
+  if (!parsed.success) throw new StageFailure({ stage: "measure", code: "malformed", message: "the measuring script wrote malformed output" });
+  if (!parsed.data.ok) throw new StageFailure({ stage: "measure", ...parsed.data.error });
+  const { format, ...rest } = parsed.data.measurements;
+  return reported(spec, measurementsSchema.parse({ format, fileBytes: delivery.bytes, ...rest, references: delivery.references }));
+}
+
+function collectOutputs(workDir: string, outDir: string, draft: Draft): void {
+  const out = join(workDir, "out");
+  for (const name of STAGE_OUTPUTS) if (existsSync(join(out, name))) copyFileSync(join(out, name), join(outDir, name));
+  const views = draft.renders?.views ?? [];
+  if (views.length > 0) mkdirSync(join(outDir, "views"), { recursive: true });
+  for (const view of views) cpSync(join(out, "views", basename(view.path)), view.path);
+  if (draft.renders?.contactSheet && !existsSync(draft.renders.contactSheet)) draft.renders.contactSheet = null;
+  hashRenders(draft.renders);
+}
+
 export async function judge(options: JudgeOptions): Promise<Report> {
   const started = performance.now();
   const outDir = resolve(options.outDir);
@@ -140,7 +135,7 @@ export async function judge(options: JudgeOptions): Promise<Report> {
     passed: false,
     preview: options.preview === true,
     spec: { path: specPath, sha256: existsSync(specPath) && statSync(specPath).isFile() ? sha256(specPath) : null, name: null },
-    asset: { path: assetPath, sha256: null, bytes: null },
+    asset: { path: assetPath, sha256: null, bytes: null, files: [], setSha256: null, setBytes: null },
     blender: null,
     sandbox: null,
     renderSandbox: null,
@@ -161,30 +156,29 @@ export async function judge(options: JudgeOptions): Promise<Report> {
       throw error;
     }
     draft.spec.name = spec.name ?? null;
-    draft.asset.bytes = checkAsset(assetPath, options.maxFileBytes ?? DEFAULTS.maxFileBytes);
-    draft.asset.sha256 = sha256(assetPath);
-    const validation = await validationStage(draft, spec, assetPath, outDir, options, limits.timeoutMs);
+    checkAsset(assetPath, options.maxFileBytes ?? DEFAULTS.maxFileBytes);
+    const format = extname(assetPath).slice(1).toLowerCase();
+    const delivery = deliver(draft, assetPath, format, workDir, options.maxFileBytes ?? DEFAULTS.maxFileBytes);
+    options.afterCopy?.(delivery);
+    const validation = await validationStage(draft, spec, delivery.main, outDir, options, limits.timeoutMs);
     const blender = options.blender ?? blenderPath();
     draft.blender = await checkBlender(blender);
     if (options.preview !== true) deviceMode(options.device);
-    const sandbox: Sandbox = { blender, limits, tools: options.tools ?? detectTools(), workDir };
-    const measurementsPath = join(outDir, "measurements.json");
-    const measureArgs = [assetPath, measurementsPath, "--max-triangles", String(maxTriangles), "--uv-grid", uvGridPath(sandbox)];
-    const tolerance = floatingTolerance(spec);
-    if (tolerance !== undefined) measureArgs.push("--floating-tolerance", String(tolerance));
-    const measured = await runScript("measure", "measure.py", measureArgs, measurementsPath, sandbox);
-    draft.sandbox = measured.isolation;
-    draft.timings.measure = measured.seconds;
-    const parsed = measureOutputSchema.safeParse(measured.output);
-    if (!parsed.success) throw new StageFailure({ stage: "measure", code: "malformed", message: "the measuring script wrote malformed output" });
-    if (!parsed.data.ok) throw new StageFailure({ stage: "measure", ...parsed.data.error });
-    const measurements = reported(spec, parsed.data.measurements);
+    const sandbox: Sandbox = { blender, limits, tools: options.tools ?? detectTools(blender), workDir, delivery: delivery.folder };
+    mkdirSync(workOut(sandbox), { recursive: true });
+    const measurements = await measureStage(draft, spec, delivery, sandbox, maxTriangles);
     draft.measurements = measurements;
     draft.rules = evaluateRules(spec, measurements, validation);
-    await renderStage(draft, spec, assetPath, outDir, sandbox, maxTriangles, options);
+    try {
+      await renderStage(draft, spec, delivery.main, outDir, sandbox, maxTriangles, options);
+    } finally {
+      collectOutputs(workDir, outDir, draft);
+    }
+    draft.rules.push(...renderRules(spec, draft.renders));
   } catch (error) {
     if (!(error instanceof StageFailure)) throw error;
     draft.failure = error.failure;
+    collectOutputs(workDir, outDir, draft);
   } finally {
     rmSync(workDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }

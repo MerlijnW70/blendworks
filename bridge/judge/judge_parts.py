@@ -2,33 +2,22 @@ from math import inf
 
 import bmesh
 
+from judge_common import rounded
+from judge_shells import DisjointSet
+
 MAX_LISTED = 64
 LABEL_LENGTH = 120
 
 
 def components(graph):
-    parent = list(range(len(graph.verts)))
-
-    def find(index):
-        while parent[index] != index:
-            parent[index] = parent[parent[index]]
-            index = parent[index]
-        return index
-
+    parts = DisjointSet(len(graph.verts))
     for edge in graph.edges:
-        first = find(edge.verts[0].index)
-        second = find(edge.verts[1].index)
-        if first != second:
-            parent[first] = second
-    return [find(index) for index in range(len(parent))]
+        parts.union(edge.verts[0].index, edge.verts[1].index)
+    return [parts.find(index) for index in range(len(graph.verts))]
 
 
 def overlaps(first, second, tolerance):
     return all(first[0][axis] - tolerance <= second[1][axis] and second[0][axis] <= first[1][axis] + tolerance for axis in range(3))
-
-
-def rounded(values):
-    return [round(value, 6) + 0.0 for value in values]
 
 
 class PartCollector:

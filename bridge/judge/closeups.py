@@ -54,10 +54,10 @@ def closeups(asset, out_dir, options):
     triangle_cap = positive_int(options["max-triangles"], "max-triangles")
     memory_cap_from(options)
     backend, found = resolve_backend(backend, options["backends"])
-    load_asset(asset)
+    load_asset(asset, triangle_cap)
     scene = bpy.context.scene
     remove_foreign_rig(scene)
-    measurer = Measurer(triangle_cap)
+    measurer = Measurer(triangle_cap, integrity=False)
     depsgraph = bpy.context.evaluated_depsgraph_get()
     measurer.measure(depsgraph)
     measured = measurer.result()

@@ -192,16 +192,96 @@ Three optional groups check textures, the glTF file itself and loose parts. For 
 
 The GPU estimate treats every image as uncompressed RGBA8 with a full mip chain, whatever its file format, so a compressed image counts by its decoded size. For an image of `w` × `h` pixels it is 4 bytes times the sum of `w_i × h_i` over the levels, where `w_0 = w`, `w_(i+1) = max(1, floor(w_i / 2))` (the same for `h`), and the chain ends at the first 1 × 1 level. A 4096 × 4096 image takes 4 × (4096² + 2048² + … + 1²) = 89,478,484 bytes. A 48 × 20 image takes 4 × (960 + 240 + 60 + 12 + 3 + 1) = 5,104 bytes.
 
+### Units and axes
+
+All lengths are metres. glTF, FBX and OBJ deliveries are read as metres by their importers. A `.blend` delivery is converted through its scene's `unit_settings.scale_length`: 100 units at a scale of 0.01 measure 1 m, and the origin is scaled with them.
+
+The judge measures in Blender's axes: Z is up, -Y is the front, X is the right. A glTF file is Y-up, and its importer maps glTF +Y to Blender +Z and glTF +Z to Blender -Y. Sizes, bounds and points in `report.json` are always in Blender axes.
+
+A hirer who thinks in glTF axes sets `"upAxis": "y"`. Then the spec's `size.y` is the height (Blender Z), `size.z` is the depth (Blender Y), and a point `[x, y, z]` in an `origin` rule means the Blender point `[x, -z, y]`. Without `upAxis`, or with `"z"`, the spec uses Blender axes.
+
+### Rules that resist gaming
+
+The measurements behind these rules come from faces only: a vertex or edge that belongs to no face never moves the bounds, the size or the origin. For example:
+
+```json
+{
+  "format": "glb",
+  "triangles": { "min": 8000, "max": 60000, "minVisible": 7000 },
+  "size": { "minExtent": 0.85, "maxExtent": 1.0 },
+  "manifold": { "required": true, "noInverted": true },
+  "faces": { "maxDegenerate": 0, "maxDuplicate": 0, "maxHiddenRatio": 0.15 },
+  "shells": { "max": 6 },
+  "selfContained": true,
+  "renders": { "required": true }
+}
+```
+
+| Rule | Passes when | Prevents |
+|---|---|---|
+| `manifold: true` (or `{ "required": true }`) | no boundary, non-manifold or wire edges, no non-manifold or loose vertices | holes, fins, and stray points or wires hidden in the file |
+| `manifold.noInverted` (`{ "noInverted": true }`) | no closed shell has a negative signed volume | a mesh turned inside out, which is closed and manifold but renders dark and breaks booleans and physics |
+| `triangles.minVisible` | at least this many triangles are visible from outside | meeting `triangles.min` with hidden filler |
+| `faces.maxHiddenRatio` | at most this share of the surface area is never visible from outside | padding with interior faces, and texture space spent on surfaces nobody sees |
+| `faces.maxDegenerate` | at most this many faces have an area of at most 1 µm² (the weld distance squared) | zero-area padding, which adds triangles and breaks tangents and normals |
+| `faces.maxDuplicate` | at most this many faces repeat the vertex positions of another face | stacked copies of a face, which add triangles, flicker (z-fighting) and break manifoldness |
+| `shells.max` | the asset has at most this many shells | crumbs and specks scattered over or inside the model |
+| `size.minExtent` / `size.maxExtent` | the longest side is at least / at most this many metres | an asset of the right shape at the wrong scale, whatever its orientation |
+| `origin` as `{ "point": [x, y, z], "tolerance": t }` | the origin (pivot) lies within `t` metres of the point | a pivot away from where the game expects it |
+| `selfContained` | every file the delivery refers to is in the delivery | a texture or material file that exists only on the worker's machine |
+| `renders.required` | the views rendered | a verdict without visual evidence, when the hirer wants one |
+
+How they are measured:
+- **Shells** are connected pieces of faces after welding vertices closer than 1 µm. A shell is closed when every edge has exactly two faces with consistent winding. Its signed volume is the sum of `v0 · (v1 × v2) / 6` over its triangles in the mesh's own space, so a mirrored object (negative scale) is not inverted. A volume within `1e-9 × extent³` of zero counts as flat, not inverted. Every placed instance counts its shells.
+- **Visible from outside** uses a BVH of every face in world space. From each face the judge casts rays from its triangle centroids and three inner points of its largest triangle, in 64 directions: a Fibonacci sphere turned by a fixed seeded rotation, tried in order of how far they point along the face normal. A face is visible when one ray escapes. Degenerate faces are never visible. With more than 20,000 faces, a fixed seeded sample of 20,000 faces is tested and the counts are scaled up; `faces.tested` and `faces.sampled` say so. `faces.hiddenRatio` is the hidden share of the tested area.
+- **Duplicate faces** compare the sorted vertex positions of every non-degenerate face in world space, rounded to 1 µm, across all objects. The glTF importer already drops a face that repeats the vertices of another, so duplicates come mostly in `.blend`, FBX and OBJ files.
+
+### UV coverage and overlap
+
+UVs outside the unit square are reported as `uv.outsideUnitSquare`: the share of the mapped surface area whose faces have a UV corner outside 0–1. For coverage and overlap the UVs are wrapped into the unit square, as a texture with the glTF default `REPEAT` sampling reads them: a face at u = 1.3 covers the same texels as one at u = 0.3. UDIM tiles are wrapped the same way, so faces in different tiles at the same place overlap; glTF cannot carry a set of separate UDIM images.
+
+Coverage is weighted by 3D surface area. Each face may cover the UV square only up to its share of the surface: a face with 10 % of the area counts for at most 0.1 of the square, so a face over that counts each of its texels with the weight `(face area / surface area) / (face UV area)`. Where faces overlap, a texel counts once, with the largest weight. A layout with an even texel density and a total UV area of at most 1 is unchanged by the weighting, but a tiny or hidden face blown up to fill the square no longer buys coverage. Faces with no 3D area are ignored. Coverage is quantised to 1/255 per texel.
+
+Shared mesh data is counted once for UV and topology: four wheels that share one mesh fill the UV square once and do not overlap. Triangles, objects, shells, bounds and visibility count every placed instance.
+
+### Per-object rules
+
+`objects.named` checks objects matched by a name pattern, where `*` matches any run of characters and `?` one character:
+
+```json
+"objects": {
+  "max": 6,
+  "named": [
+    { "name": "Wheel.*", "required": true, "triangles": { "max": 2000 }, "size": { "maxExtent": 0.7 }, "origin": "centre", "materials": { "max": 1 } },
+    { "name": "Body", "origin": { "point": [0, 0, 0.3], "tolerance": 0.005 } }
+  ]
+}
+```
+
+`required` passes when at least one object matches. Every other rule applies to each matching object on its own, with the object's world-space faces for its size and its own origin as its pivot. A rule reports the number of matches and the first ten objects that break it. The objects are listed in `measurements.objectList` only when the spec names objects.
+
 ## 4. The judge
 
-`blendworks judge <spec.json> <asset> [--out <dir>] [--preview]` does the following:
-1. Starts headless Blender in a sandbox with a fresh factory scene (`--factory-startup --disable-autoexec`). In WSL it also has no network.
-2. Imports the asset with the judge's own script. The worker's file never runs code: a `.blend` delivery is opened with auto-run disabled, and only its data is read.
-3. Measures every rule of the spec: triangles, bounds, origin, manifoldness, materials, UV coverage and overlap, object count, file size, textures and, when the spec asks, floating parts.
-4. Renders the spec's views with a fixed camera rig fitted to the asset's bounds, a neutral three-point light, Cycles with a fixed seed, 24 samples and denoising, at 512 px. Outlines come from the compositor (edges in the normal and depth passes), so they cost almost nothing on any device. The result is a contact sheet.
-5. Writes `report.json`, with every rule, its measured value and pass or fail, plus the PNGs. It exits 0 when every rule passes and 1 otherwise.
+`blendworks judge <spec.json> <asset> [--out <dir>] [--preview] [--render-timeout <s>]` does the following:
+1. **Private copy.** Copies the delivery into a private temporary folder and judges only that copy. The delivery is the asset plus the files it refers to inside its folder: the buffers and images of a glTF, the material libraries of an OBJ and the textures they name, and the textures of an FBX. A `.blend` is copied alone. The report lists each file with its size and sha256, and the sha256 of the set (`asset.setSha256`: the sha256 of the lines `<sha256>  <path>`, sorted by path). `fileSize` counts every file of the set. A reference that is not in the folder is listed in `measurements.references.unresolved` and fails `selfContained`.
+2. **Validation.** Runs the Khronos glTF-Validator on every `.glb` and `.gltf` delivery (see below).
+3. **Measurement.** Starts headless Blender in the sandbox with a fresh factory scene (`--factory-startup --disable-autoexec`) and imports the copy with the judge's own script. The worker's file never runs code: a `.blend` delivery is opened with auto-run disabled, and only its data is read. Before Blender evaluates anything, the importer limits below refuse what could exhaust memory. The scene is evaluated at frame 1, the frame the render uses too, so the frame an animated asset was saved on does not matter; an armature is measured in its pose at frame 1. Then every rule of the spec is measured.
+4. **Verdict.** The rules decide pass or fail from the measurements and the validation alone.
+5. **Evidence.** Renders the spec's views with a fixed camera rig fitted to the asset's bounds, a neutral three-point light, Cycles with a fixed seed, 24 samples and denoising, at 512 px. Outlines come from the compositor (edges in the normal and depth passes), so they cost almost nothing on any device. The result is a contact sheet.
+6. **Report.** Writes `report.json` with every rule, its measured value and pass or fail, plus the PNGs and the sha256 of each. It exits 0 when every rule passes and 1 otherwise.
 
-Before Blender starts, the judge runs the Khronos glTF-Validator on every `.glb` and `.gltf` delivery (see below).
+### Renders are evidence
+
+A render that fails, crashes or runs out of time is reported in `renders` (`status` `failed`, with the failure) and in the summary, and the verdict stands. The judge then still draws a contact sheet with the header and the UV layout, without views. A spec with `"renders": { "required": true }` adds the rule `renders.required`, which fails unless the views rendered.
+
+Render cost is bounded before rendering starts, not only by the clock: at most 2,000,000 triangles (`renderMaxTriangles` in the judge's options) and at most 64 Mi sample-pixels (views × 512² × 24 samples). Over the budget the views are skipped with the reason (`status` `skipped`), and the verdict stands. `--render-timeout` sets the render stage's own timeout (the judge's `--timeout` when left out). Two judges on machines of different speed give the same verdict for the same asset and spec: a slower machine can only lose evidence.
+
+Close-ups have their own budget: 9 × resolution² × samples at most 1.5 G sample-pixels; a request over it is refused before Blender starts.
+
+### Importer limits
+
+- **glTF.** Before import, the judge reads the glTF JSON. It adds up the triangles the accessors declare (the indices, or the positions without indices, of triangle lists, strips and fans) for every node that places a mesh, through the whole node hierarchy and `EXT_mesh_gpu_instancing`. Over the triangle cap it refuses the file with `too_many_triangles`. It reads every image's size from its header (PNG, JPEG, WebP, KTX2) and refuses an image over 16,384 pixels on a side, or over 256 Mi pixels for all images together, with `image_too_large`. Draco (`KHR_draco_mesh_compression`) is allowed: its accessors declare the decoded counts, which are checked like any other, and the decoded mesh is counted again after import. A file that requires meshopt (`EXT_meshopt_compression`) is refused with `unsupported_extension`, because Blender's importer cannot decode it; a file that only uses it, with an uncompressed fallback, is read through the fallback.
+- **Modifiers and instances.** Before evaluation, the judge bounds the triangles each object can make from its mesh, curve, text, surface or metaball data, its modifiers (subdivision, array, mirror, screw, solidify, bevel, triangulate, edge split, wireframe, skin, explode and boolean grow it; deform modifiers keep it; decimate, mask, build and weld shrink it), and its collection, vertex, face and particle instances, nested up to 16 levels. Over the triangle cap the asset fails with `too_many_triangles` before anything runs. Geometry nodes, fluid, remesh, ocean, mesh-sequence caches, volume-to-mesh and any modifier the judge does not know cannot be bounded, and fail with `unbounded_geometry`: apply them before delivery. After evaluation the triangles are counted again against the cap.
 
 ### Textures
 
@@ -222,7 +302,7 @@ glTF files are imported without packing, so an image that is a file beside a `.g
 
 Base colour and emission must be in `sRGB`, and data maps in `Non-Color`. Each wrong pair is listed in `colourSpaceMismatches` and in the summary. It is a measurement, not a rule, so it does not decide pass or fail.
 
-The contact sheet header always shows the texture count and the GPU estimate. `report.json` carries `measurements.textures` only when the spec has texture rules, and `measurements.floating` only when it has `parts`. A spec without the new rules gets exactly the report it got before.
+The contact sheet header always shows the texture count and the GPU estimate. `report.json` carries `measurements.textures` only when the spec has texture rules, and `measurements.floating` only when it has `parts`.
 
 ### glTF validation
 
@@ -256,13 +336,26 @@ The denoiser is the OptiX denoiser on OptiX and OpenImageDenoise elsewhere. A re
 ### Sandbox with a GPU
 
 - **The address-space limit.** It stays on the measuring stage and on CPU renders. It is not used for GPU renders: CUDA reserves a large virtual address space, and under `prlimit --as` the GPU render of a large asset crashes.
-- **GPU renders.** They run under `unshare -rn` with a data-segment limit (`prlimit --data`, and `RLIMIT_DATA` inside Blender) of the same size, plus the same timeout. The summary prints a separate `render sandbox:` line naming that limit.
+- **GPU renders.** They run in the same namespaces (see Isolation) with a data-segment limit (`prlimit --data`, and `RLIMIT_DATA` inside Blender) of the same size, plus the same timeout. The summary prints a separate `render sandbox:` line naming that limit.
 - **No GPU in the sandbox.** If no GPU starts inside the sandbox, or Blender crashes there, `auto` renders on the CPU under the original limits. The summary says why.
 - **Windows.** A job object caps memory for both devices.
 
+### Isolation
+
+The summary's `sandbox:` line names every mechanism in use, and says plainly when one is missing.
+
+- **Linux and WSL.** When `unshare` can create user namespaces, Blender runs in its own user, mount, PID and network namespaces (`unshare --user --map-root-user --mount --pid --fork --kill-child --net`). A small script, `bridge/judge/sandbox.sh`, builds a new root on a tmpfs. `/usr`, `/bin`, `/sbin`, `/lib*`, `/etc` and `/sys`, the Blender folder, the judge's scripts and the delivery copy are bound read-only. The stage's output folder is the only writable folder besides a fresh `/tmp` and `/dev/shm`. `/dev` holds only `null`, `zero`, `full`, `random`, `urandom` and `tty`, plus the GPU devices for a GPU render. The script then calls `pivot_root` and detaches the old root, so the home folder, the original delivery and every other file are not there at all, and `/proc` shows only the sandbox's own processes. The memory limit (`prlimit`) and the timeout apply as before. Without user namespaces the judge falls back to `unshare -rn` (no network only) or to nothing, and the summary says `files not isolated`. The script needs only `util-linux`, so the judge does not depend on `bwrap`.
+- **Windows.** Blender runs at low integrity, started by `bridge/judge/low_integrity.py` with Blender's own Python: a copy of the user's token without privileges, lowered to the low mandatory level, in a job object that kills Blender when the judge stops it. Only the stage's output folder, labelled low with `icacls`, is writable, so a judged asset cannot change any other file. Reads are not limited: a low-integrity process can read what the user can, and the network is not isolated. The job object inside Blender caps memory and forbids child processes as before. If Blender's Python is missing or the token cannot be lowered, Blender runs at the user's integrity and the summary says why. An AppContainer would also limit reads, but it needs access rules on the Blender folder and on the GPU driver, which the judge cannot set without changing the machine, so it is not used.
+
+Blender gets the thread cap of `BLENDWORKS_JOBS` (the CPU count divided by it, 2 when unset), as everywhere else in Blendworks.
+
+### Comparing reports
+
+`blendworks diff <reportA.json> <reportB.json> [--json]` compares two reports for revision rounds and disputes: the verdict, the input hashes (spec, asset and delivery set), every rule with its measured value and limit, every measurement down to its leaves, and the sha256 of each rendered view and of the contact sheet. It exits 0 when they match, 1 when they differ and 2 when a file is not a report.
+
 ### Preview mode
 
-With `--preview`, the judge measures and checks every rule and draws the UV layout, but renders no views. The report marks the views as skipped (`renders.viewsSkipped`), and the exit code depends on the rules alone.
+With `--preview`, the judge measures and checks every rule and draws the UV layout, but renders no views. The report marks the views as skipped (`renders.viewsSkipped`, `renders.status` `preview`), and the exit code depends on the rules alone, as it always does.
 
 ### Close-ups
 
@@ -271,13 +364,14 @@ With `--preview`, the judge measures and checks every rule and draws the UV layo
 - a 2 × 2 grid of zoomed tiles from the front-right;
 - a 2 × 2 grid of zoomed tiles from the back-left.
 
-Each framing is fitted to the asset's vertices, and the four tiles of a grid together make up the whole view. The command also writes a labelled `closeup-sheet.png`. It uses the judge's light rig, device choice and sandbox, without outlines. The defaults are 1200 px and 16 samples with denoising, and the command prints its total time.
+Each framing is fitted to the asset's vertices, and the four tiles of a grid together make up the whole view. The command also writes a labelled `closeup-sheet.png`. It uses the judge's light rig, device choice, private copy and sandbox, without outlines. The defaults are 1200 px and 16 samples with denoising, and the command prints its total time.
 
 Its use with Solive is `intent-engine judge … --sandbox none --run "blendworks judge spec.json work.glb"`. Visual quality beyond the rules is for a judge agent viewing the contact sheet and the close-up sheet against the brief, or a committee.
 
 ## 5. Determinism
 
-- Measurements are exact and repeatable.
+- Measurements are exact and repeatable. The visibility estimate uses fixed directions and a fixed seed, so it is repeatable too, and it never depends on time.
+- The verdict depends on the measurements only, never on whether or how fast the views render, so judges on fast and slow machines agree.
 - Renders use a fixed seed, samples and resolution, so the same asset on the same device gives the same report and the same images (byte-identical on the CPU; on a GPU, at most one level out of 255 apart in a small share of pixels).
 - The judge pins the Blender version and refuses others.
 

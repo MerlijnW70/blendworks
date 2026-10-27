@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { blenderPath } from "../../src/blender.js";
+import { blenderPath, blenderThreadArguments } from "../../src/blender.js";
 import { SCRIPTS_DIR } from "../../src/judge/run.js";
 import { BLENDER_FLAGS, detectTools, planSandbox, runSandboxed, sandboxEnvironment, type SandboxDevice, type Tools } from "../../src/judge/sandbox.js";
 import { freshDir } from "./helpers.js";
@@ -16,7 +16,7 @@ const BARE_LINUX: Tools = { platform: "linux", unshare: false, prlimit: false };
 const PROBE = resolve("test", "judge", "sandbox_probe.py");
 
 describe("the sandbox plan", () => {
-  it("always starts Blender headless, from factory settings, with auto-run off, and passes the memory cap to the script", () => {
+  it("always starts Blender headless, from factory settings, with auto-run off and the thread cap, and passes the memory cap to the script", () => {
     for (const tools of [WINDOWS, LINUX, BARE_LINUX]) {
       const plan = planSandbox("blender", "measure.py", ["asset.glb", "out.json"], LIMITS, tools);
       const blenderAt = plan.args.indexOf("blender");
@@ -24,7 +24,7 @@ describe("the sandbox plan", () => {
       expect(blenderArgs.slice(0, BLENDER_FLAGS.length)).toEqual([...BLENDER_FLAGS]);
       expect(blenderArgs).toContain("--disable-autoexec");
       expect(blenderArgs).not.toContain("--enable-autoexec");
-      expect(blenderArgs.slice(BLENDER_FLAGS.length)).toEqual(["--python", "measure.py", "--", "asset.glb", "out.json", "--memory-mb", "2048"]);
+      expect(blenderArgs.slice(BLENDER_FLAGS.length)).toEqual([...blenderThreadArguments(), "--python", "measure.py", "--", "asset.glb", "out.json", "--memory-mb", "2048"]);
     }
   });
 

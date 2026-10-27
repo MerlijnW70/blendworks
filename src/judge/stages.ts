@@ -10,6 +10,8 @@ import { blenderVersion, BlenderVersionError } from "./version.js";
 
 export const SCRIPTS_DIR = fileURLToPath(new URL("../../bridge/judge/", import.meta.url));
 
+const LOW_INTEGRITY_LAUNCH_FAILED = 120;
+
 export const DEFAULTS = { timeoutMs: 300_000, memoryBytes: 4096 * 1024 * 1024, maxTriangles: 2_000_000, maxFileBytes: 256 * 1024 * 1024 };
 
 export class StageFailure extends Error {
@@ -18,7 +20,11 @@ export class StageFailure extends Error {
   }
 }
 
-export type Sandbox = { blender: string; limits: Limits; tools: Tools; workDir: string };
+export type Sandbox = { blender: string; limits: Limits; tools: Tools; workDir: string; delivery: string };
+
+export function workOut(sandbox: Sandbox): string {
+  return join(sandbox.workDir, "out");
+}
 
 export type StageResult = { output: unknown; isolation: Isolation; seconds: number };
 
@@ -71,7 +77,8 @@ export async function runScript(
   device: SandboxDevice = "cpu",
 ): Promise<StageResult> {
   const { blender, limits, tools, workDir } = sandbox;
-  const plan = planSandbox(blender, join(SCRIPTS_DIR, script), scriptArgs, limits, tools, device);
+  const view = { workDir, writable: [workOut(sandbox)], readOnly: [SCRIPTS_DIR, sandbox.delivery] };
+  const plan = planSandbox(blender, join(SCRIPTS_DIR, script), scriptArgs, limits, tools, device, view);
   const started = performance.now();
   const result = await runSandboxed(plan, workDir);
   const elapsed = seconds(performance.now() - started);
@@ -79,6 +86,9 @@ export async function runScript(
     throw new StageFailure({ stage, code: "timeout", message: `Blender took longer than ${limits.timeoutMs / 1000} s and was stopped` });
   }
   const output = readOutput(outputPath);
+  if (output === undefined && result.code === LOW_INTEGRITY_LAUNCH_FAILED && plan.lowIntegrity) {
+    throw new StageFailure({ stage, code: "sandbox", message: `the low-integrity launcher could not start Blender: ${result.output.trim().slice(-300)}` });
+  }
   if (output === undefined) {
     const tail = result.output.trim().split("\n").slice(-3).join(" | ").slice(0, 400);
     throw new StageFailure({

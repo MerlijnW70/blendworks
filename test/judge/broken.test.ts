@@ -84,18 +84,16 @@ describe("broken deliveries fail cleanly with a reason", { timeout: 120_000 }, (
     expect(failure(await judged("absolute.gltf", { format: "gltf" }))).toMatchObject({ stage: "measure", code: "external_reference" });
   });
 
-  it("a mesh over the triangle cap after its modifiers run", async () => {
+  it("a mesh whose modifiers may make more triangles than the cap, refused before they run: 6 faces x 4^2 quads x 2 = 192", async () => {
     copyFileSync(join(assets, "over-budget.blend"), join(work, "over-budget.blend"));
-    const report = await judged("over-budget.blend", { format: "blend" }, { maxTriangles: 100 });
-    expect(failure(report)).toMatchObject({ stage: "measure", code: "too_many_triangles" });
-    expect(report.failure?.message).toContain("more than 100 triangles");
-  });
-
-  it("a mesh whose modifiers guarantee more triangles than the cap, refused before they run", async () => {
-    copyFileSync(join(assets, "over-budget.blend"), join(work, "over-budget-early.blend"));
-    const report = await judged("over-budget-early.blend", { format: "blend" }, { maxTriangles: 50 });
-    expect(failure(report)).toMatchObject({ stage: "measure", code: "too_many_triangles" });
-    expect(report.failure?.message).toContain("at least 96 triangles");
+    for (const maxTriangles of [100, 191]) {
+      const report = await judged("over-budget.blend", { format: "blend" }, { maxTriangles });
+      expect(failure(report)).toMatchObject({ stage: "measure", code: "too_many_triangles" });
+      expect(report.failure?.message).toContain(`may make up to 192 triangles once its modifiers and instances run, over the judge's cap of ${maxTriangles}; refused before evaluating it`);
+    }
+    const exact = await judge({ specPath: writeSpec(work, "exact-cap", { format: "blend", views: ["front"] }), assetPath: join(work, "over-budget.blend"), outDir: freshDir("broken", "reports", "exact-cap"), maxTriangles: 192, preview: true });
+    expect(exact.failure).toBeNull();
+    expect(exact.measurements?.triangles).toBe(192);
   });
 
   it("a file over the size cap", async () => {

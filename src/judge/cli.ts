@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { CLOSEUP_DEFAULTS, closeups, closeupsSummary } from "./closeups.js";
 import { DeviceError, deviceModeFromEnvironment, type DeviceMode } from "./device.js";
+import { diffReports, diffText, readReport, ReportError } from "./diff.js";
 import { DEFAULTS, judge } from "./run.js";
 import { StageFailure } from "./stages.js";
 
@@ -10,13 +11,20 @@ const DEVICE_HELP = `Rendering uses BLENDWORKS_DEVICE: auto (default) tries Opti
 inside the sandbox and falls back to the CPU; gpu fails with a reason when no GPU works; cpu never uses one.`;
 
 export const JUDGE_USAGE = `usage: blendworks judge <spec.json> <asset> [--out dir] [--preview]
-  [--timeout seconds] [--memory-mb n] [--max-triangles n] [--max-file-mb n]
+  [--timeout seconds] [--render-timeout seconds] [--memory-mb n] [--max-triangles n] [--max-file-mb n]
 
 Measures the asset in a sandboxed headless Blender 5.2, renders the spec's views
 (24 samples, denoised, fixed seed and resolution), writes report.json, summary.txt
 and contact-sheet.png to the out dir (default artifacts/judge), and exits 0 only when every rule passes.
 --preview measures and checks every rule and draws the UV layout, but renders no views.
+The verdict depends on the measurements alone: a render that fails or times out is reported
+and leaves the verdict as it is, unless the spec sets renders.required.
 ${DEVICE_HELP}`;
+
+export const DIFF_USAGE = `usage: blendworks diff <reportA.json> <reportB.json> [--json]
+
+Compares two judge reports: verdict, inputs, every rule, every measurement and the sha256 of
+each rendered view, for revision rounds and disputes. Exits 0 when they match and 1 when they differ.`;
 
 export const CLOSEUPS_USAGE = `usage: blendworks closeups <asset> --out <dir> [--res px] [--samples n]
   [--timeout seconds] [--memory-mb n] [--max-triangles n] [--max-file-mb n]
@@ -27,7 +35,7 @@ to the asset's bounds, and writes them with a labelled closeup-sheet.png to the 
 Defaults: --res ${CLOSEUP_DEFAULTS.resolution} px, --samples ${CLOSEUP_DEFAULTS.samples} with denoising, --timeout ${CLOSEUP_DEFAULTS.timeoutMs / 1000} s.
 ${DEVICE_HELP}`;
 
-export const USAGE = `${JUDGE_USAGE}\n\n${CLOSEUPS_USAGE}`;
+export const USAGE = `${JUDGE_USAGE}\n\n${CLOSEUPS_USAGE}\n\n${DIFF_USAGE}`;
 
 export class UsageError extends Error {}
 
@@ -58,7 +66,7 @@ const SHARED_OPTIONS = {
 } as const;
 
 function parseJudge(argv: string[]) {
-  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true, options: { ...SHARED_OPTIONS, preview: { type: "boolean" } } });
+  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true, options: { ...SHARED_OPTIONS, preview: { type: "boolean" }, "render-timeout": { type: "string" } } });
   if (values.help) return { help: JUDGE_USAGE };
   const [specPath, assetPath, ...extra] = positionals;
   if (specPath === undefined || assetPath === undefined || extra.length > 0) throw new UsageError(JUDGE_USAGE);
@@ -70,10 +78,19 @@ function parseJudge(argv: string[]) {
     preview: values.preview === true,
     device: deviceFromEnvironment(),
     timeoutMs: positive(values.timeout, "timeout", DEFAULTS.timeoutMs, 1000),
+    renderTimeoutMs: positive(values["render-timeout"], "render-timeout", positive(values.timeout, "timeout", DEFAULTS.timeoutMs, 1000), 1000),
     memoryBytes: positive(values["memory-mb"], "memory-mb", DEFAULTS.memoryBytes, MEGABYTE),
     maxTriangles: positive(values["max-triangles"], "max-triangles", DEFAULTS.maxTriangles, 1),
     maxFileBytes: positive(values["max-file-mb"], "max-file-mb", DEFAULTS.maxFileBytes, MEGABYTE),
   };
+}
+
+function parseDiff(argv: string[]) {
+  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true, options: { json: { type: "boolean" }, help: { type: "boolean", short: "h" } } });
+  if (values.help) return { help: DIFF_USAGE };
+  const [before, after, ...extra] = positionals;
+  if (before === undefined || after === undefined || extra.length > 0) throw new UsageError(DIFF_USAGE);
+  return { command: "diff" as const, before, after, json: values.json === true };
 }
 
 function parseCloseups(argv: string[]) {
@@ -108,8 +125,25 @@ export function parseCommand(argv: string[]) {
   const [command, ...rest] = argv;
   if (command === "judge") return parseJudge(rest);
   if (command === "closeups") return parseCloseups(rest);
+  if (command === "diff") return parseDiff(rest);
   if (command === "--help" || command === "-h") return { help: USAGE };
   throw new UsageError(USAGE);
+}
+
+function runDiff(beforePath: string, afterPath: string, json: boolean): number {
+  let before;
+  let after;
+  try {
+    before = readReport(beforePath);
+    after = readReport(afterPath);
+  } catch (error) {
+    if (!(error instanceof ReportError)) throw error;
+    console.error(error.message);
+    return 2;
+  }
+  const changes = diffReports(before, after);
+  console.log(json ? JSON.stringify({ same: changes.length === 0, changes }, null, 2) : diffText(before, after, changes));
+  return changes.length === 0 ? 0 : 1;
 }
 
 export async function main(argv: string[]): Promise<number> {
@@ -124,6 +158,7 @@ export async function main(argv: string[]): Promise<number> {
     console.log(command.help);
     return 0;
   }
+  if (command.command === "diff") return runDiff(command.before, command.after, command.json);
   if (command.command === "judge") {
     const { command: _, ...options } = command;
     const report = await judge(options);

@@ -36,9 +36,9 @@ describe("preview mode", { timeout: 120_000 }, () => {
     expect(report.timings.render).toBeNull();
     expect(report.timings.measure).toBeGreaterThan(0);
     expect(report.timings.sheet).toBeGreaterThan(0);
-    const outDir = join(report.renders!.contactSheet, "..");
+    const outDir = join(report.renders!.contactSheet!, "..");
     expect(existsSync(join(outDir, "views"))).toBe(false);
-    expect(isPng(report.renders!.contactSheet)).toBe(true);
+    expect(isPng(report.renders!.contactSheet!)).toBe(true);
     expect(report.summary).toContain("views: skipped (preview); the rules alone decide pass or fail");
     expect(JSON.parse(readFileSync(join(outDir, "report.json"), "utf8")).renders.viewsSkipped).toBe(true);
   });
@@ -73,12 +73,14 @@ describe("the render device on this machine", { timeout: 120_000 }, () => {
     expect(report.timings.device).toBeGreaterThan(0);
   });
 
-  it("fails cleanly under gpu when no GPU backend works", async () => {
+  it("reports cleanly under gpu when no GPU backend works, and the verdict stands on the measurements", async () => {
     const report = await judged("gpu-only", "crate.glb", { device: "gpu", backends: [] }, { views: ["front"] });
-    expect(report.passed).toBe(false);
-    expect(report.failure).toMatchObject({ stage: "device", code: "no_gpu" });
-    expect(report.failure?.message).toBe("BLENDWORKS_DEVICE=gpu, but no usable GPU (no backend was probed)");
-    expect(report.renders).toBeNull();
+    expect(report.passed).toBe(true);
+    expect(report.failure).toBeNull();
+    expect(report.renders).toMatchObject({ status: "failed", views: [], failure: { stage: "device", code: "no_gpu" } });
+    expect(report.renders?.failure?.message).toBe("BLENDWORKS_DEVICE=gpu, but no usable GPU (no backend was probed)");
+    expect(isPng(report.renders!.contactSheet!)).toBe(true);
+    expect(report.summary).toContain("views: not rendered (device failed: BLENDWORKS_DEVICE=gpu, but no usable GPU (no backend was probed)); the rules alone decide pass or fail");
   });
 
   it("gives the same image when re-run on the CPU", async () => {

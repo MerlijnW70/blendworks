@@ -9,20 +9,59 @@ export const TEXTURE_KINDS = ["baseColor", "metallicRoughness", "normal", "emiss
 export const GLTF_FORMATS: readonly string[] = ["glb", "gltf"];
 export const DEFAULT_FLOATING_TOLERANCE = 0.001;
 export const MAX_FLOATING_TOLERANCE = 1;
+export const UP_AXES = ["z", "y"] as const;
+export const MAX_NAMED_OBJECTS = 64;
 
 const count = z.number().int().nonnegative();
 const ratio = z.number().min(0).max(1);
 const length = z.number().nonnegative();
 
-const countRange = z
-  .strictObject({ min: count.optional(), max: count.optional() })
-  .refine((value) => value.min === undefined || value.max === undefined || value.min <= value.max, {
-    message: "min must not exceed max",
-  });
+const minNotOverMax = { message: "min must not exceed max" };
+const ordered = (value: { min?: number | undefined; max?: number | undefined }) => value.min === undefined || value.max === undefined || value.min <= value.max;
+
+const countRange = z.strictObject({ min: count.optional(), max: count.optional() }).refine(ordered, minNotOverMax);
+
+const triangleRange = z.strictObject({ min: count.optional(), max: count.optional(), minVisible: count.optional() }).refine(ordered, minNotOverMax);
 
 const lengthRange = z
   .tuple([length, length])
   .refine(([low, high]) => low <= high, { message: "the first number (minimum) must not exceed the second (maximum)" });
+
+const sizeRule = z
+  .strictObject({ x: lengthRange.optional(), y: lengthRange.optional(), z: lengthRange.optional(), minExtent: length.optional(), maxExtent: length.optional() })
+  .refine((value) => value.minExtent === undefined || value.maxExtent === undefined || value.minExtent <= value.maxExtent, {
+    message: "minExtent must not exceed maxExtent",
+  });
+
+const point = z.tuple([z.number().finite(), z.number().finite(), z.number().finite()]);
+
+const originRule = z.union([z.enum(ORIGINS), z.strictObject({ point, tolerance: length })]);
+
+const manifoldRule = z.union([z.boolean(), z.strictObject({ required: z.boolean().optional(), noInverted: z.boolean().optional() })]);
+
+const glob = z
+  .string()
+  .min(1)
+  .max(200)
+  .regex(/^[^\x00-\x1f]+$/, { message: "a name pattern has no control characters" });
+
+const namedObject = z.strictObject({
+  name: glob,
+  required: z.boolean().optional(),
+  triangles: countRange.optional(),
+  size: sizeRule.optional(),
+  origin: originRule.optional(),
+  materials: countRange.optional(),
+});
+
+const objectsRule = z
+  .strictObject({ min: count.optional(), max: count.optional(), named: z.array(namedObject).min(1).max(MAX_NAMED_OBJECTS).optional() })
+  .refine(ordered, minNotOverMax)
+  .refine((value) => value.named === undefined || new Set(value.named.map((entry) => entry.name)).size === value.named.length, {
+    message: "named object patterns must not repeat",
+  });
+
+const facesRule = z.strictObject({ maxDegenerate: count.optional(), maxDuplicate: count.optional(), maxHiddenRatio: ratio.optional() });
 
 const pixels = z.number().int().positive();
 
@@ -52,14 +91,19 @@ const baseSchema = z.strictObject({
   $schema: z.string().optional(),
   name: z.string().min(1).max(200).optional(),
   format: z.enum(FORMATS),
-  triangles: countRange.optional(),
-  size: z.strictObject({ x: lengthRange.optional(), y: lengthRange.optional(), z: lengthRange.optional() }).optional(),
-  origin: z.enum(ORIGINS).optional(),
-  manifold: z.boolean().optional(),
+  upAxis: z.enum(UP_AXES).optional(),
+  triangles: triangleRange.optional(),
+  size: sizeRule.optional(),
+  origin: originRule.optional(),
+  manifold: manifoldRule.optional(),
+  faces: facesRule.optional(),
+  shells: z.strictObject({ max: count }).optional(),
   materials: countRange.optional(),
   uv: z.strictObject({ required: z.boolean().optional(), maxOverlap: ratio.optional(), minCoverage: ratio.optional() }).optional(),
-  objects: countRange.optional(),
+  objects: objectsRule.optional(),
   fileSize: z.strictObject({ maxBytes: z.number().int().positive() }).optional(),
+  selfContained: z.boolean().optional(),
+  renders: z.strictObject({ required: z.boolean() }).optional(),
   views: z
     .array(z.enum(VIEWS))
     .min(1)
@@ -77,6 +121,9 @@ export const assetSpecSchema = baseSchema.refine((spec) => spec.gltf === undefin
 });
 
 export type AssetSpec = z.infer<typeof assetSpecSchema>;
+export type NamedObject = z.infer<typeof namedObject>;
+export type SizeRule = z.infer<typeof sizeRule>;
+export type OriginRule = z.infer<typeof originRule>;
 
 export class SpecError extends Error {
   constructor(readonly problems: string[]) {

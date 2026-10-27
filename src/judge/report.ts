@@ -6,6 +6,30 @@ import type { Validation } from "./validator.js";
 
 export type Failure = { stage: "spec" | "asset" | "validate" | "blender" | "measure" | "device" | "render" | "closeups"; code: string; message: string };
 
+export type RenderedView = { view: string; path: string; sha256: string };
+
+export type RenderBudget = { triangles: number; samplePixels: number; maxTriangles: number; maxSamplePixels: number };
+
+export type Renders = {
+  status: "rendered" | "preview" | "skipped" | "failed";
+  reason: string | null;
+  failure: Failure | null;
+  viewsSkipped: boolean;
+  views: RenderedView[];
+  contactSheet: string | null;
+  contactSheetSha256: string | null;
+  budget: RenderBudget;
+};
+
+export type AssetRecord = {
+  path: string;
+  sha256: string | null;
+  bytes: number | null;
+  files: { path: string; bytes: number; sha256: string }[];
+  setSha256: string | null;
+  setBytes: number | null;
+};
+
 export const STAGES = ["measure", "device", "render", "sheet"] as const;
 
 export type Timings = Record<(typeof STAGES)[number], number | null> & { total: number };
@@ -14,7 +38,7 @@ export type Report = {
   passed: boolean;
   preview: boolean;
   spec: { path: string; sha256: string | null; name: string | null };
-  asset: { path: string; sha256: string | null; bytes: number | null };
+  asset: AssetRecord;
   blender: string | null;
   sandbox: Isolation | null;
   renderSandbox: Isolation | null;
@@ -22,7 +46,7 @@ export type Report = {
   failure: Failure | null;
   rules: RuleResult[];
   measurements: Measurements | null;
-  renders: { viewsSkipped: boolean; views: { view: string; path: string }[]; contactSheet: string } | null;
+  renders: Renders | null;
   timings: Timings;
   validation?: Validation | null;
   summary: string;
@@ -55,7 +79,16 @@ function comparison(rule: string): string {
 }
 
 export function isolationText(isolation: Isolation): string {
-  return `network ${isolation.network}; memory ${isolation.memory}; timeout ${isolation.timeoutMs / 1000} s`;
+  return `network ${isolation.network}; memory ${isolation.memory}; timeout ${isolation.timeoutMs / 1000} s; files ${isolation.filesystem}; processes ${isolation.processes}`;
+}
+
+function renderLines(renders: Renders): string[] {
+  const lines: string[] = [];
+  if (renders.status === "preview") lines.push("  views: skipped (preview); the rules alone decide pass or fail");
+  if (renders.status === "skipped") lines.push(`  views: skipped (${renders.reason}); the rules alone decide pass or fail`);
+  if (renders.status === "failed") lines.push(`  views: not rendered (${renders.failure?.stage ?? "render"} failed: ${renders.reason}); the rules alone decide pass or fail`);
+  if (renders.contactSheet !== null) lines.push(`  contact sheet: ${renders.contactSheet}`);
+  return lines;
 }
 
 export function timingText(timings: Timings): string {
@@ -83,6 +116,17 @@ function validationLines(validation: Validation | null): string[] {
   return lines;
 }
 
+function integrityLines(measurements: Measurements): string[] {
+  const { faces, shells } = measurements;
+  const lines = [
+    `  surface: ${measurements.visibleTriangles} of ${measurements.triangles} triangles visible from outside, hidden ratio ${faces.hiddenRatio}${faces.sampled ? ` (estimated from ${faces.tested} faces)` : ""}; ${faces.degenerate} degenerate, ${faces.duplicate} duplicate faces; ${shells.count} shells, ${shells.closed} closed, ${shells.inverted} inside out`,
+  ];
+  if (measurements.uv.outsideUnitSquare > 0) lines.push(`  uv: ${measurements.uv.outsideUnitSquare} of the mapped surface has UVs outside 0-1, wrapped for coverage and overlap`);
+  if (measurements.unitScale !== 1) lines.push(`  units: the .blend scale ${measurements.unitScale} converted to metres`);
+  if (measurements.references.unresolved.length > 0) lines.push(`  unresolved references: ${measurements.references.unresolved.slice(0, LISTED_ISSUES).join("; ")}`);
+  return lines;
+}
+
 export function summarize(report: Omit<Report, "summary">): string {
   const title = report.spec.name ?? "asset";
   const lines = [`${report.passed ? "PASS" : "FAIL"}  ${title}  (${report.asset.path})`];
@@ -95,9 +139,10 @@ export function summarize(report: Omit<Report, "summary">): string {
   lines.push(`  ${passed} of ${report.rules.length} rules pass`);
   if (report.measurements?.textures) lines.push(...textureLines(report.measurements.textures));
   if (report.validation !== undefined) lines.push(...validationLines(report.validation));
-  if (report.preview) lines.push("  views: skipped (preview); the rules alone decide pass or fail");
+  if (report.measurements) lines.push(...integrityLines(report.measurements));
   if (report.device) lines.push(`  render: ${describeDevice(report.device)}`);
-  if (report.renders) lines.push(`  contact sheet: ${report.renders.contactSheet}`);
+  if (report.renders) lines.push(...renderLines(report.renders));
+  if (report.asset.setSha256 !== null) lines.push(`  delivery: ${report.asset.files.length} files, ${report.asset.setBytes} bytes, set sha256 ${report.asset.setSha256}`);
   if (report.sandbox) lines.push(`  sandbox: ${isolationText(report.sandbox)}`);
   if (report.renderSandbox && (!report.sandbox || isolationText(report.renderSandbox) !== isolationText(report.sandbox))) {
     lines.push(`  render sandbox: ${isolationText(report.renderSandbox)}`);

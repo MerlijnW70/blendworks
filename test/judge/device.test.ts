@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { assetRecord, isolation } from "./measured.js";
 import { chooseDevice, DeviceError, describeDevice, fallBackToCpu, parseDeviceMode, type BackendProbe } from "../../src/judge/device.js";
 import { summarize, type Report } from "../../src/judge/report.js";
 import { onDevice, StageFailure, type Attempt, type DeviceRequest } from "../../src/judge/stages.js";
@@ -124,12 +125,11 @@ describe("rendering on the chosen device", () => {
 });
 
 describe("the summary", () => {
-  const isolation = (memory: string) => ({ network: "isolated" as const, memory, timeoutMs: 300_000, platform: "linux" });
   const draft: Omit<Report, "summary"> = {
     passed: true,
     preview: false,
     spec: { path: "spec.json", sha256: null, name: "steam drill rig" },
-    asset: { path: "rig.glb", sha256: null, bytes: 1 },
+    asset: assetRecord("rig.glb"),
     blender: "5.2.3",
     sandbox: isolation("prlimit address space, 4096 MB"),
     renderSandbox: isolation("prlimit data segment, 4096 MB"),
@@ -144,8 +144,8 @@ describe("the summary", () => {
   it("names the GPU, both sandboxes and the stage times", () => {
     const lines = summarize(draft).split("\n");
     expect(lines).toContain("  render: gpu CUDA (NVIDIA GeForce RTX 4080)");
-    expect(lines).toContain("  sandbox: network isolated; memory prlimit address space, 4096 MB; timeout 300 s");
-    expect(lines).toContain("  render sandbox: network isolated; memory prlimit data segment, 4096 MB; timeout 300 s");
+    expect(lines).toContain("  sandbox: network isolated; memory prlimit address space, 4096 MB; timeout 300 s; files mount namespace; processes own PID namespace");
+    expect(lines).toContain("  render sandbox: network isolated; memory prlimit data segment, 4096 MB; timeout 300 s; files mount namespace; processes own PID namespace");
     expect(lines).toContain("  time: measure 2.50 s, device 0.80 s, render 5.20 s, sheet 0.25 s, total 9.00 s");
   });
 

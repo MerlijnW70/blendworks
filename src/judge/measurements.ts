@@ -48,13 +48,33 @@ export const floatingSchema = z.object({
   items: z.array(z.object({ object: name, index: count, bounds: z.object({ min: vector, max: vector }) })).max(64),
 });
 
-export const measurementsSchema = z.object({
-  format: z.enum(FORMATS),
-  fileBytes: count,
+const bounds = z.object({ min: vector, max: vector });
+
+export const objectListSchema = z.object({
+  count,
+  items: z
+    .array(
+      z.object({
+        name,
+        instances: count,
+        triangles: count,
+        bounds,
+        size: vector,
+        origin: z.object({ point: vector, bottomCentreDistance: finite, centreDistance: finite }),
+        materials: z.array(name).max(64),
+      }),
+    )
+    .max(1024),
+});
+
+export const referencesSchema = z.object({ files: count, unresolved: z.array(z.string().max(400)).max(1000) });
+
+const measured = {
   triangles: count,
+  visibleTriangles: count,
   objects: count,
   objectsAll: count,
-  bounds: z.object({ min: vector, max: vector }),
+  bounds,
   size: vector,
   origin: z.object({
     point: vector,
@@ -70,12 +90,19 @@ export const measurementsSchema = z.object({
     looseVertices: count,
     looseParts: count,
   }),
+  shells: z.object({ count, closed: count, inverted: count }),
+  faces: z.object({ degenerate: count, duplicate: count, hiddenRatio: z.number().min(0).max(1), hiddenFaces: count, tested: count, sampled: z.boolean() }),
   materials: z.object({ count, names: z.array(z.string().max(200)).max(64) }),
-  uv: z.object({ present: z.boolean(), meshesWithoutUv: count, coverage: finite, overlap: finite }),
+  uv: z.object({ present: z.boolean(), meshesWithoutUv: count, coverage: finite, overlap: finite, outsideUnitSquare: finite }),
+  unitScale: z.number().positive().finite(),
   externalFilesRefused: z.array(z.string().max(200)).max(1000),
-  textures: texturesSchema.optional(),
-  floating: floatingSchema.optional(),
-});
+};
+
+const optional = { textures: texturesSchema.optional(), floating: floatingSchema.optional(), objectList: objectListSchema.optional() };
+
+export const scriptMeasurementsSchema = z.object({ format: z.enum(FORMATS), ...measured, ...optional });
+
+export const measurementsSchema = z.object({ format: z.enum(FORMATS), fileBytes: count, ...measured, references: referencesSchema, ...optional });
 
 export type Measurements = z.infer<typeof measurementsSchema>;
 
@@ -84,7 +111,7 @@ export const scriptErrorSchema = z.object({ code: z.string().max(64), message: z
 export const measureOutputSchema = z.union([
   z.object({
     ok: z.literal(true),
-    measurements: measurementsSchema,
+    measurements: scriptMeasurementsSchema,
     limits: z.object({ memoryBytes: count, childProcesses: z.string().max(32), maxTriangles: count }),
   }),
   z.object({ ok: z.literal(false), error: scriptErrorSchema }),

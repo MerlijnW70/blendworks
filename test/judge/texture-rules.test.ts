@@ -6,6 +6,7 @@ import { evaluateRules } from "../../src/judge/rules.js";
 import { parseSpec, SpecError, specJsonSchema } from "../../src/judge/spec.js";
 import type { Validation } from "../../src/judge/validator.js";
 import { CRATE_SPEC } from "./helpers.js";
+import { assetRecord, CRATE_MEASUREMENTS } from "./measured.js";
 
 const NONE = { count: 0, names: [] };
 
@@ -26,20 +27,7 @@ const TEXTURES: NonNullable<Measurements["textures"]> = {
   colourSpaceMismatches: { count: 0, items: [] },
 };
 
-const CRATE: Measurements = {
-  format: "glb",
-  fileBytes: 2784,
-  triangles: 12,
-  objects: 1,
-  objectsAll: 1,
-  bounds: { min: [-0.5, -0.5, 0], max: [0.5, 0.5, 0.8] },
-  size: [1, 1, 0.8],
-  origin: { point: [0, 0, 0], source: "object Crate", bottomCentreDistance: 0, centreDistance: 0.4 },
-  manifold: { nonManifoldEdges: 0, boundaryEdges: 0, wireEdges: 0, nonManifoldVertices: 0, looseVertices: 0, looseParts: 1 },
-  materials: { count: 2, names: ["hickory", "steel"] },
-  uv: { present: true, meshesWithoutUv: 0, coverage: 0.375, overlap: 0 },
-  externalFilesRefused: [],
-};
+const CRATE: Measurements = { ...CRATE_MEASUREMENTS, materials: { count: 2, names: ["hickory", "steel"] } };
 
 const VALIDATION: Validation = { validator: "2.0.0-dev.3.10", seconds: 0.1, bytes: 2784, errors: 0, warnings: 2, infos: 0, hints: 0, issues: [], refused: [] };
 
@@ -62,7 +50,7 @@ function report(rules: Report["rules"], measurements: Measurements, validation?:
     passed: false,
     preview: false,
     spec: { path: "spec.json", sha256: null, name: "pickaxe" },
-    asset: { path: "pickaxe.glb", sha256: null, bytes: 1 },
+    asset: assetRecord("pickaxe.glb"),
     blender: "5.2.3",
     sandbox: null,
     renderSandbox: null,
@@ -190,7 +178,7 @@ describe("old specs", () => {
     expect(plain.map((rule) => rule.rule)).toEqual(["format", "triangles.max", "size.x", "size.y", "size.z", "origin", "manifold", "materials.min", "materials.max", "uv.required", "uv.maxOverlap", "objects.max", "fileSize.maxBytes"]);
     const text = summarize(report(plain, CRATE));
     expect(text).not.toMatch(/textures|validator|colour/);
-    expect(text.split("\n")).toHaveLength(16);
+    expect(text.split("\n")).toHaveLength(17);
   });
 });
 
