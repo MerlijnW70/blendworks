@@ -157,6 +157,8 @@ describe.skipIf(!existsSync(SESSION))("a detailed prop built with the modelling 
     const asset = join(workspace, "prop.glb");
     expect(readFileSync(asset).subarray(0, 4).toString("ascii")).toBe("glTF");
 
+    await client.close();
+
     const out = freshDir("modeling-kit");
     const specPath = join(out, "prop.spec.json");
     writeFileSync(specPath, JSON.stringify(PROP_SPEC, null, 2));

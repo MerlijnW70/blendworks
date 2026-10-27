@@ -65,7 +65,7 @@ def apply_transform(ctx, args):
     keep_scale = Matrix.Identity(4) if args["scale"] else Matrix.Diagonal(scale.to_4d())
     new_basis = keep_location @ keep_rotation @ keep_scale
     data_matrix = new_basis.inverted() @ obj.matrix_basis
-    bake(ctx, obj, data_matrix)
+    bake(obj, data_matrix)
     obj.matrix_basis = new_basis
     compensate_children(obj, data_matrix)
     ctx.view_layer.update()
@@ -111,7 +111,7 @@ def set_origin(ctx, args):
         world_point = Vector(args["point"]) if "point" in args else ctx.scene.cursor.location.copy()
         local_point = world.inverted() @ world_point
     shift = Matrix.Translation(-local_point)
-    bake(ctx, obj, shift)
+    bake(obj, shift)
     obj.matrix_basis = obj.matrix_basis @ Matrix.Translation(local_point)
     compensate_children(obj, shift)
     ctx.view_layer.update()
@@ -127,8 +127,6 @@ def editable_data_object(name, mesh_only=False):
     return obj
 
 
-def bake(ctx, obj, matrix):
-    if obj.type == "MESH":
-        ctx.txn.touch_mesh(obj.data)
+def bake(obj, matrix):
     obj.data.transform(matrix)
     obj.data.update()

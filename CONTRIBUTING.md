@@ -41,7 +41,7 @@ Blender is heavy, and the owner's PC froze once under parallel load. At most `BL
 
 ### Writing tests
 
-- **Blender in vitest:** a test file that starts Blender calls `useBlenderSlot()` from `test/setup/slot.ts` once at the top, before anything else. It holds one Blender slot for the whole file. `test/tooling/guard.test.ts` fails when a file that starts Blender does not.
+- **Blender in vitest:** a test file that starts Blender calls `useBlenderSlot()` from `test/setup/slot.ts` once at the top, before anything else. Each Blender process then holds one slot from its spawn to its exit, never between processes; the setup wraps the shared spawn helpers for this. `test/tooling/guard.test.ts` fails when a file that starts Blender does not.
 - **Judge fixtures:** never generate them in a test. A vitest `globalSetup` makes them once per fixture script and Blender version in `.cache/fixtures`. Every `test/judge/fixtures.py` or `test/judge/<name>_fixtures.py` is a fixture set. It receives the assets folder and the markers folder after `--`. Tests call `makeFixtures(name)` or `makeTextureFixtures(name)` from `test/judge/helpers.ts` and get a private copy of the assets, so they may write next to them. Fixtures are generated, never committed binaries.
 - **Where tests write:** only under the cache folder (`freshDir` in `test/judge/helpers.ts`) or the OS temp folder, never in a tracked path.
 - **Unit tests without Blender:** `BLENDWORKS_FIXTURES=skip npx vitest run <files>` skips fixture generation.

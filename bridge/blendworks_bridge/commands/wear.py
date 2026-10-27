@@ -42,6 +42,7 @@ def allowed_vertices(bm, obj, args):
         **EXTENDED_FACE_PROPERTIES,
     },
     ["name", "amplitude"],
+    slow=True,
 )
 def displace_noise(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -51,7 +52,7 @@ def displace_noise(ctx, args):
         raise bad_args("radius works only with dents")
     weights = vertex_weights(obj, args.get("vertex_group"))
     inverse = obj.matrix_world.to_3x3().inverted_safe()
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         bm.verts.ensure_lookup_table()
         bm.normal_update()
         allowed = allowed_vertices(bm, obj, args)

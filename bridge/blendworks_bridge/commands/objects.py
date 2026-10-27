@@ -166,7 +166,6 @@ def join(ctx, args):
     if target.name not in args["names"]:
         raise bad_args("target must be one of names")
     check_vertex_cap(sum(len(obj.data.vertices) for obj in objects))
-    ctx.txn.touch_mesh(target.data)
     with only_selected(ctx.view_layer, target, objects):
         with bpy.context.temp_override(**operator_context(target, objects)):
             bpy.ops.object.join()

@@ -30,6 +30,7 @@ WHEEL = obj({"centre": point3("Wheel centre [x, y, z] in metres."), "radius": le
         "plate_height": length("Width of a link plate across the chain; default 0.8 times the pitch.", maximum=10.0),
     },
     ["pitch"],
+    slow=True,
 )
 def roller_chain(ctx, args):
     require_free_name(args["name"])

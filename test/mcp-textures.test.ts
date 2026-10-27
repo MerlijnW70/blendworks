@@ -39,8 +39,8 @@ const MAX_BAKE_SECONDS = Number(/MAX_BAKE_SECONDS = ([\d.]+)/.exec(readFileSync(
 
 describe("texture tool limits and hints", () => {
   it("gives bake more time than its own cap", () => {
-    const policy = readFileSync(join("bridge", "blendworks_bridge", "policy.py"), "utf8");
-    const bakeTimeout = Number(/"bake": \{[^}]*"timeout": (\d+)/.exec(policy)?.[1]);
+    const declaration = readFileSync(join("bridge", "blendworks_bridge", "commands", "bake.py"), "utf8");
+    const bakeTimeout = Number(/^    timeout=(\d+),$/m.exec(declaration)?.[1]);
     expect(MAX_BAKE_SECONDS).toBe(600);
     expect(bakeTimeout).toBeGreaterThanOrEqual(MAX_BAKE_SECONDS + 30);
   });

@@ -55,6 +55,9 @@ def samples_schema():
         "time_limit": number("Seconds; the bake fails and is undone once it runs longer.", 1.0, limits.MAX_BAKE_SECONDS, limits.DEFAULT_BAKE_SECONDS),
     },
     ["names"],
+    slow=True,
+    timeout=660,
+    max_timeout=1200,
 )
 def bake(ctx, args):
     mode = device.requested_mode(args.get("device"))
@@ -94,7 +97,7 @@ def bake(ctx, args):
     final = finish_images(images, args)
     for entry in report:
         entry["image"] = final[entry["channel"]].name
-    material = rewire(ctx, plan, final, args, swap.strength) if args["rewire"] else None
+    material = rewire(plan, final, args, swap.strength) if args["rewire"] else None
     return {
         "names": [obj.name for obj in plan["targets"]],
         "source": [obj.name for obj in plan["sources"]],
@@ -139,8 +142,6 @@ def make_plan(ctx, args):
     materials = baking.shading_materials(shading, ", ".join(emission)) if emission else []
     if emission:
         baking.EmissionSwap(materials).check()
-    for material in materials + [slot.material for obj in targets for slot in obj.material_slots if slot.material]:
-        ctx.txn.touch_material_tree(material)
     for channel in args.get("samples", {}):
         if channel not in args["channels"]:
             raise bad_args(f"samples names {channel}, which is not baked")
@@ -209,14 +210,12 @@ def finish_images(images, args):
     return final
 
 
-def rewire(ctx, plan, images, args, strength):
+def rewire(plan, images, args, strength):
     name = args.get("material", f"{plan['prefix']}_baked")
     material = bpy.data.materials.get(name)
     if material is None:
         material = bpy.data.materials.new(name)
         material.use_fake_user = True
-    else:
-        ctx.txn.touch_material_tree(material)
     maps = {PBR_KEYS[channel]: image for channel, image in images.items()}
     options = dict(DEFAULT_OPTIONS)
     options["uv_map"] = args.get("uv_map")
@@ -224,7 +223,6 @@ def rewire(ctx, plan, images, args, strength):
         options["emission_strength"] = strength
     build_pbr(material, maps, options)
     for obj in plan["targets"]:
-        ctx.txn.touch_mesh(obj.data)
         obj.data.materials.clear()
         obj.data.materials.append(material)
         for polygon in obj.data.polygons:

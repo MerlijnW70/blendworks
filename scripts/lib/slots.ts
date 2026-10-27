@@ -13,19 +13,44 @@ export function slotsDirectory(root: string): string {
   return join(root, "slots");
 }
 
-export async function acquireSlot(options: SlotOptions = {}): Promise<Slot> {
+const SLEEP_CELL = new Int32Array(new SharedArrayBuffer(4));
+
+function prepare(options: SlotOptions): { directory: string; jobs: number; deadline: number; pollMs: number } {
   const root = ensureCacheRoot(options.root ?? cacheRoot());
-  const jobs = options.jobs ?? blenderJobs();
   const directory = slotsDirectory(root);
   mkdirSync(directory, { recursive: true });
-  const deadline = Date.now() + (options.timeoutMs ?? 30 * 60_000);
+  return { directory, jobs: options.jobs ?? blenderJobs(), deadline: Date.now() + (options.timeoutMs ?? 30 * 60_000), pollMs: options.pollMs ?? 40 };
+}
+
+function takeFree(directory: string, jobs: number): Slot | undefined {
+  for (let index = 0; index < jobs; index += 1) {
+    const lock: FileLock | undefined = tryLock(join(directory, `slot-${index}.lock`));
+    if (lock !== undefined) return { index, release: () => lock.release() };
+  }
+  return undefined;
+}
+
+function timeout(jobs: number, directory: string): Error {
+  return new Error(`timed out waiting for one of ${jobs} Blender slots in ${directory}`);
+}
+
+export async function acquireSlot(options: SlotOptions = {}): Promise<Slot> {
+  const { directory, jobs, deadline, pollMs } = prepare(options);
   for (;;) {
-    for (let index = 0; index < jobs; index += 1) {
-      const lock: FileLock | undefined = tryLock(join(directory, `slot-${index}.lock`));
-      if (lock !== undefined) return { index, release: () => lock.release() };
-    }
-    if (Date.now() > deadline) throw new Error(`timed out waiting for one of ${jobs} Blender slots in ${directory}`);
-    await sleep(options.pollMs ?? 40);
+    const slot = takeFree(directory, jobs);
+    if (slot !== undefined) return slot;
+    if (Date.now() > deadline) throw timeout(jobs, directory);
+    await sleep(pollMs);
+  }
+}
+
+export function acquireSlotSync(options: SlotOptions = {}): Slot {
+  const { directory, jobs, deadline, pollMs } = prepare(options);
+  for (;;) {
+    const slot = takeFree(directory, jobs);
+    if (slot !== undefined) return slot;
+    if (Date.now() > deadline) throw timeout(jobs, directory);
+    Atomics.wait(SLEEP_CELL, 0, 0, pollMs);
   }
 }
 
@@ -33,6 +58,15 @@ export async function withSlot<T>(task: (slot: Slot) => Promise<T>, options: Slo
   const slot = await acquireSlot(options);
   try {
     return await task(slot);
+  } finally {
+    slot.release();
+  }
+}
+
+export function withSlotSync<T>(task: (slot: Slot) => T, options: SlotOptions = {}): T {
+  const slot = acquireSlotSync(options);
+  try {
+    return task(slot);
   } finally {
     slot.release();
   }

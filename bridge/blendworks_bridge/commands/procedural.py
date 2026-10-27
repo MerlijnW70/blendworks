@@ -32,8 +32,6 @@ def material_procedural(ctx, args):
     if created:
         material = bpy.data.materials.new(args["name"])
         material.use_fake_user = True
-    else:
-        ctx.txn.touch_material_tree(material)
     material.use_nodes = True
     tree = material.node_tree
     tree.nodes.clear()
@@ -83,7 +81,6 @@ def material_layer(ctx, args):
     preset, params = chosen_preset(PRESETS, args)
     check_mask_args(material, args)
     output, shader = surface_principled(material)
-    ctx.txn.touch_material_tree(material)
     graph = Graph(material.node_tree)
     channels = preset.build(graph, params)
     mask = mask_value(graph, args)

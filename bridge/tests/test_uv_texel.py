@@ -72,33 +72,47 @@ def two_boxes(bridge):
         bridge.ok("uv_smart_project", name=name, island_margin=0.0)
 
 
+def two_sheets(bridge):
+    bridge.ok("add_primitive", type="plane", name="Small", size=1.0)
+    bridge.ok("add_primitive", type="plane", name="Large", size=2.0)
+    bridge.ok("transform", name="Large", location=[3.0, 0.0, 0.0])
+    for name in ("Small", "Large"):
+        bridge.ok("uv_smart_project", name=name, island_margin=0.0)
+
+
 def test_uv_pack_shares_one_atlas_at_one_density(bridge):
-    two_boxes(bridge)
+    two_sheets(bridge)
     result = bridge.ok("uv_pack", names=["Small", "Large"], margin=0.01)
     assert result["shared"] is True
     small, large = result["objects"]
     close(small["texel_density"]["mean"], large["texel_density"]["mean"], large["texel_density"]["mean"] * 0.01)
     assert not small["outside"] and not large["outside"]
     overlap, coverage = shared_overlap(["Small", "Large"])
-    assert overlap == 0.0 and coverage > 0.6, (overlap, coverage)
+    assert overlap == 0.0 and coverage > 0.45, (overlap, coverage)
     loose = bridge.ok("uv_pack", names=["Small", "Large"], margin=0.08)["objects"]
     assert loose[0]["uv_area"] + loose[1]["uv_area"] < small["uv_area"] + large["uv_area"]
 
 
-def test_uv_pack_separately_and_at_a_fixed_density(bridge):
+def test_uv_pack_separately_packs_each_cube_on_its_own(bridge):
     two_boxes(bridge)
     result = bridge.ok("uv_pack", names=["Small", "Large"], shared=False, rotate=False)
     for entry in result["objects"]:
         assert entry["overlap"] == 0.0 and entry["coverage"] > 0.5, entry
     assert shared_overlap(["Small", "Large"])[0] > 0.5
-    result = bridge.ok("uv_pack", names=["Small", "Large"], texel_density=100.0)
+
+
+def test_uv_pack_at_a_fixed_density(bridge):
+    two_sheets(bridge)
+    result = bridge.ok("uv_pack", names=["Small", "Large"], shared=False, rotate=False)
+    assert shared_overlap(["Small", "Large"])[0] > 0.5
+    result = bridge.ok("uv_pack", names=["Small", "Large"], texel_density=100.0, rotate=False)
     for entry in result["objects"]:
         close(entry["texel_density"]["mean"], 100.0, 0.5)
     assert shared_overlap(["Small", "Large"])[0] == 0.0
 
 
 def test_uv_pack_refusals_and_failures_leave_the_uvs(bridge):
-    two_boxes(bridge)
+    two_sheets(bridge)
     bridge.ok("add_primitive", type="cube", name="Shared")
     bridge.ok("duplicate", name="Shared", new_name="Twin", linked=True)
     bridge.ok("mesh_from_data", name="Bare", vertices=[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]], faces=[[0, 1, 2]])
@@ -120,7 +134,7 @@ def test_uv_pack_refusals_and_failures_leave_the_uvs(bridge):
 
     uv_pack_command.pack = broken
     try:
-        bridge.refuse("uv_pack", "failed", names=["Small", "Large"])
+        bridge.refuse("uv_pack", "failed", names=["Small", "Large"], rotate=False)
     finally:
         uv_pack_command.pack = original
     assert (snapshot(), uv_coordinates("Small"), uv_coordinates("Large")) == before

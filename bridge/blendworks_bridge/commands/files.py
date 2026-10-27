@@ -144,6 +144,7 @@ def load_blend(ctx, args):
         "select": boolean("Leave only the imported objects selected.", True),
     },
     ["path"],
+    slow=True,
 )
 def import_command(ctx, args):
     path = ctx.workspace.existing(args["path"], IMPORT_EXTENSIONS)

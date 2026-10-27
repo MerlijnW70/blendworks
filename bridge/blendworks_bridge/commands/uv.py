@@ -24,7 +24,6 @@ def uv_mesh_object(name):
 
 
 def run_in_edit_mode(ctx, obj, operator):
-    ctx.txn.touch_mesh(obj.data)
     if len(obj.data.uv_layers) == 0:
         obj.data.uv_layers.new(name="UVMap")
     with edit_mode(ctx.view_layer, obj):
@@ -97,7 +96,7 @@ def uv_unwrap(ctx, args):
     obj = uv_mesh_object(args["name"])
     if "seam_angle" in args or args["clear_seams"]:
         threshold = math.radians(args.get("seam_angle", 360.0))
-        with EditMesh(ctx, obj) as bm:
+        with EditMesh(obj) as bm:
             for edge in bm.edges:
                 sharp = len(edge.link_faces) == 2 and edge.calc_face_angle(0.0) > threshold
                 edge.seam = sharp or (edge.seam and not args["clear_seams"])

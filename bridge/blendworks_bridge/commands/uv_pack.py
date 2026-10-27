@@ -23,6 +23,7 @@ from .uv import uv_mesh_object, uv_report
         "texture_size": integer("Texture size in pixels that texel densities refer to.", 1, limits.MAX_TEXTURE_SIZE, 1024),
     },
     ["names"],
+    slow=True,
 )
 def uv_pack(ctx, args):
     objects = [uv_mesh_object(name) for name in args["names"]]
@@ -34,8 +35,6 @@ def uv_pack(ctx, args):
         if obj.data.uv_layers.active is None:
             raise bad_args(f"{obj.name} has no UV map; unwrap it first")
     size = args["texture_size"]
-    for obj in objects:
-        ctx.txn.touch_mesh(obj.data)
     fixed = "texel_density" in args
     if fixed:
         for obj in objects:

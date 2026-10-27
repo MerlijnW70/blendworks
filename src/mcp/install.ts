@@ -36,7 +36,7 @@ export function findClaude(env: NodeJS.ProcessEnv = process.env, platform: NodeJ
 export function planInstall(input: InstallInput): InstallPlan {
   const env = input.blender === undefined ? [] : ["-e", `BLENDER=${input.blender}`];
   const serverArgs = ["--workspace", input.workspace, ...(input.allowPython ? ["--allow-python"] : [])];
-  return { claude: input.claude, args: ["mcp", "add", "--scope", "user", ...env, MCP_NAME, "--", "node", input.serverPath, ...serverArgs] };
+  return { claude: input.claude, args: ["mcp", "add", MCP_NAME, "--scope", "user", ...env, "--", "node", input.serverPath, ...serverArgs] };
 }
 
 export function explain(plan: InstallPlan, input: InstallInput): string {

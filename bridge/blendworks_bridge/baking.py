@@ -143,7 +143,6 @@ class TargetNodes:
             if any(material is None for material in slots):
                 raise bad_args(f"{obj.name} has an empty material slot; fill or remove it before baking")
             if not slots:
-                self.ctx.txn.touch_mesh(obj.data)
                 if self.temporary is None:
                     self.temporary = bpy.data.materials.new(TEMPORARY_MATERIAL)
                 obj.data.materials.append(self.temporary)

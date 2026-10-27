@@ -12,18 +12,6 @@ NOT_PIXELS = ("RENDER_RESULT", "COMPOSITING")
 class NoSnapshot:
     snapshots = 0
 
-    def touch_mesh(self, mesh):
-        pass
-
-    def touch_all_meshes(self):
-        pass
-
-    def touch_material(self, material, restore):
-        pass
-
-    def touch_material_tree(self, material):
-        pass
-
     def on_rollback(self, restore):
         pass
 

@@ -31,7 +31,7 @@ describe("npm run install-claude", () => {
     expect(setup.runs).toEqual([
       {
         claude: "/usr/bin/claude",
-        args: ["mcp", "add", "--scope", "user", "blendworks", "--", "node", setup.deps.serverPath, "--workspace", resolve(setup.deps.cwd, "workspace")],
+        args: ["mcp", "add", "blendworks", "--scope", "user", "--", "node", setup.deps.serverPath, "--workspace", resolve(setup.deps.cwd, "workspace")],
       },
     ]);
   });
@@ -40,9 +40,28 @@ describe("npm run install-claude", () => {
     const setup = deps({ blender: "/opt/blender/blender" });
     expect(install(["--workspace", "assets", "--allow-python"], setup.deps)).toBe(0);
     expect(setup.runs[0]?.args).toEqual([
-      "mcp", "add", "--scope", "user", "-e", "BLENDER=/opt/blender/blender", "blendworks", "--",
+      "mcp", "add", "blendworks", "--scope", "user", "-e", "BLENDER=/opt/blender/blender", "--",
       "node", setup.deps.serverPath, "--workspace", resolve(setup.deps.cwd, "assets"), "--allow-python",
     ]);
+  });
+
+  it("puts the server name before every variadic option so -e cannot consume it", () => {
+    for (const blender of [undefined, "/opt/blender/blender"]) {
+      const setup = deps({ blender });
+      install([], setup.deps);
+      const args = setup.runs[0]?.args ?? [];
+      const name = args.indexOf("blendworks");
+      expect(name).toBe(2);
+      expect(args.slice(0, 2)).toEqual(["mcp", "add"]);
+      const separator = args.indexOf("--");
+      expect(separator).toBeGreaterThan(name);
+      const envFlags = args.flatMap((arg, index) => (arg === "-e" || arg === "--env" ? [index] : []));
+      expect(envFlags.length).toBe(blender === undefined ? 0 : 1);
+      for (const flag of envFlags) {
+        expect(flag).toBeGreaterThan(name);
+        expect(args.slice(flag + 1, separator)).toEqual([`BLENDER=${blender}`]);
+      }
+    }
   });
 
   it("explains itself before running", () => {
@@ -51,7 +70,7 @@ describe("npm run install-claude", () => {
     const text = setup.lines.join("\n");
     expect(text).toContain('adds the Blendworks MCP server to Claude Code for your user, under the name "blendworks"');
     expect(text).toContain(`Imports, exports and saves stay inside ${resolve(setup.deps.cwd, "workspace")}`);
-    expect(text).toContain("Running: claude mcp add --scope user blendworks -- node");
+    expect(text).toContain("Running: claude mcp add blendworks --scope user -- node");
   });
 
   it("refuses when claude is missing, without running anything", () => {

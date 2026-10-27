@@ -4,6 +4,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 
 const UNREADABLE_GRACE_MS = 5_000;
 const RECLAIM_GRACE_MS = 10_000;
+const BUSY_CODES = new Set(["EEXIST", "EPERM", "EACCES", "EBUSY"]);
 
 export type Owner = { pid: number; token: string; since: number };
 
@@ -48,7 +49,7 @@ function createExclusive(path: string, owner: Owner): boolean {
     writeFileSync(path, JSON.stringify(owner), { flag: "wx" });
     return true;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "EEXIST") return false;
+    if (BUSY_CODES.has((error as NodeJS.ErrnoException).code ?? "")) return false;
     throw error;
   }
 }

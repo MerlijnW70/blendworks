@@ -24,6 +24,7 @@ The error for a missing Blender lists the places it looked and the download link
 - **Errors:** every command validates its arguments and refuses unknown fields. A failing command never leaves the scene half-changed.
 - **Rollback:** before a mutating command the bridge pushes a step on Blender's own undo stack (memory undo, which also works in background mode). When the command fails, it pushes the failed state and undoes back to that step. This restores every data-block, including deleted ones: objects, meshes, materials and their node trees, images, worlds, lights, cameras, curves, collections, modifiers and custom properties.
   - Unsaved image pixels are not part of undo. Images that a failing command made dirty are reloaded. `run_python` also keeps a copy of the pixels of images that are already dirty, up to 1 GiB, or it refuses to run.
+  - Commands declare their metadata (`mutates`, `destructive`, `destructive_when`, `slow`, `timeout`) in their own `@command`; no table elsewhere.
   - Read-only commands take no snapshot. A snapshot costs time in proportion to the data that changed, not to the number of meshes.
   - The desktop add-on also pushes a named undo step after each successful command. It needs global undo with at least 2 steps, and refuses mutating commands otherwise.
 - **Discovery:** `"cmd": "describe"` returns every command with its argument schema, a one-line description and its metadata. The MCP server builds its tool list from it.
@@ -119,6 +120,7 @@ All lengths are in metres, and all angles in degrees.
   - `normals`: world-space normals as colours;
   - `uv_checker`: a colour grid on the active UV map, and the result lists meshes without UVs;
   - `material_id`: one flat colour per material, with the legend in `material_colors`.
+- **Light:** a scene without lights gets a key, a fill and a rim sun that follow the camera, aimed from its own right, up and back, so every view and every `focus.direction` is lit alike. `bottom` is as bright as `top`. Lights the scene already has stay as they are.
 - **Output:** PNG, or JPEG with `format` jpeg and a `quality` (default 85). The scene is left exactly as it was.
 
 ## 2. The MCP server
@@ -139,7 +141,7 @@ All lengths are in metres, and all angles in degrees.
   - If reloading fails or crashes Blender again, the server starts one empty session and says so. A session that cannot start at all is not restarted in a loop.
 - **Result size:** a text result is cut at 64 000 characters. The cut ends with a note on how to ask for less, for example with the paging fields of `scene_info`. Images do not count.
 - **Workspace:** a working folder (`--workspace`) holds every import, export and save. Paths outside it are refused.
-- **Install:** `node dist/mcp/index.js` is the server. `npm run install-claude` adds it to Claude Code (`claude mcp add`).
+- **Install:** `node dist/mcp/index.js` is the server. `npm run install-claude` adds it to Claude Code with `claude mcp add blendworks --scope user [-e BLENDER=<path>] -- node <server> ...`. The name comes first because `-e` takes several values and would read it as an environment entry.
 
 ## 3. Asset specs
 

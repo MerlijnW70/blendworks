@@ -13,9 +13,9 @@ VIEW_DIRECTIONS = {
 }
 
 STUDIO_LIGHTS = (
-    ("Key", Vector((1.0, -1.2, 1.5)), 3.0),
-    ("Fill", Vector((-1.2, -0.6, 0.6)), 1.2),
-    ("Rim", Vector((0.2, 1.2, 1.2)), 2.0),
+    ("Key", Vector((0.6, 0.8, 1.0)), 3.0),
+    ("Fill", Vector((-1.0, 0.1, 0.8)), 1.2),
+    ("Rim", Vector((0.2, 1.0, -0.8)), 2.0),
 )
 
 LENS = 50.0
@@ -30,6 +30,7 @@ class PreviewRig:
         self.data = []
         self.world = None
         self.camera = None
+        self.lights = []
 
     def __enter__(self):
         return self
@@ -73,8 +74,13 @@ class PreviewRig:
             light = bpy.data.lights.new(TEMPORARY_PREFIX + name, "SUN")
             light.energy = strength
             light.angle = math.radians(10.0)
-            obj = self.add_object(name, light)
-            obj.matrix_world = direction.normalized().to_track_quat("Z", "Y").to_matrix().to_4x4()
+            self.lights.append((self.add_object(name, light), direction))
+        self.light_from(Matrix.Identity(3))
+
+    def light_from(self, camera_rotation):
+        for obj, direction in self.lights:
+            world_direction = camera_rotation @ direction.normalized()
+            obj.matrix_world = world_direction.to_track_quat("Z", "Y").to_matrix().to_4x4()
 
     def add_grey_world(self):
         world = bpy.data.worlds.new(TEMPORARY_PREFIX + "world")
@@ -99,6 +105,7 @@ class PreviewRig:
             bpy.data.worlds.remove(self.world)
         self.objects = []
         self.data = []
+        self.lights = []
         self.world = None
 
 

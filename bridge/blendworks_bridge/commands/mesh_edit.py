@@ -62,7 +62,7 @@ def extrude(ctx, args):
     obj = get_mesh_object(args["name"])
     if args["distance"] == 0:
         raise bad_args("distance must not be zero")
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         faces = select_faces(bm, obj, args)
         if args["individual"]:
             extruded = bmesh.ops.extrude_discrete_faces(bm, faces=faces)["faces"]
@@ -97,7 +97,7 @@ def inset(ctx, args):
     obj = get_mesh_object(args["name"])
     thickness = local_length(obj, args["thickness"])
     depth = local_length(obj, args["depth"])
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         faces = select_faces(bm, obj, args)
         if args["individual"]:
             bmesh.ops.inset_individual(bm, faces=faces, thickness=thickness, depth=depth, use_even_offset=True)
@@ -128,7 +128,7 @@ def bevel(ctx, args):
     obj = get_mesh_object(args["name"])
     width = local_length(obj, args["width"])
     normals = None
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         edges = bevel_edges(bm, obj, args)
         verts = list({vert for edge in edges for vert in edge.verts})
         created = bmesh.ops.bevel(
@@ -193,7 +193,7 @@ def subdivide(ctx, args):
     estimate = len(obj.data.vertices) + len(obj.data.polygons) * (args["cuts"] + 1) ** 2
     if estimate > MAX_MESH_VERTICES:
         raise failed(f"subdividing would give about {estimate} vertices; the cap is {MAX_MESH_VERTICES}")
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         faces = select_faces(bm, obj, args)
         edges = list({edge for face in faces for edge in face.edges})
         bmesh.ops.subdivide_edges(bm, edges=edges, cuts=args["cuts"], use_grid_fill=True, smooth=args["smooth"])
@@ -208,7 +208,7 @@ def subdivide(ctx, args):
 )
 def shade_smooth(ctx, args):
     obj = get_mesh_object(args["name"])
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         faces = select_faces(bm, obj, args)
         for face in faces:
             face.smooth = True
@@ -221,7 +221,7 @@ def shade_smooth(ctx, args):
 @command("shade_flat", "Shade faces flat.", with_faces({}), ["name"])
 def shade_flat(ctx, args):
     obj = get_mesh_object(args["name"])
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         faces = select_faces(bm, obj, args)
         for face in faces:
             face.smooth = False
@@ -236,7 +236,7 @@ def shade_flat(ctx, args):
 )
 def recalc_normals(ctx, args):
     obj = get_mesh_object(args["name"])
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         if args["inside"]:
             bmesh.ops.reverse_faces(bm, faces=bm.faces)
@@ -252,6 +252,6 @@ def recalc_normals(ctx, args):
 def merge_by_distance(ctx, args):
     obj = get_mesh_object(args["name"])
     before = len(obj.data.vertices)
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=local_length(obj, args["distance"]))
     return edit_result(obj, {"removed_vertices": before - len(obj.data.vertices)})

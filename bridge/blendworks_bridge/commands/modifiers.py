@@ -61,15 +61,14 @@ def apply_modifiers(ctx, obj, names):
         if len(result.polygons) == 0 and len(obj.data.polygons) > 0:
             raise failed(f"applying {', '.join(names)} leaves {obj.name} with no faces")
         check_vertex_cap(len(result.vertices))
-        replace_geometry(ctx, obj, result)
+        replace_geometry(obj, result)
     finally:
         bpy.data.meshes.remove(result)
     for name in names:
         obj.modifiers.remove(obj.modifiers[name])
 
 
-def replace_geometry(ctx, obj, source):
-    ctx.txn.touch_mesh(obj.data)
+def replace_geometry(obj, source):
     bm = bmesh.new()
     try:
         bm.from_mesh(source)
@@ -87,6 +86,7 @@ def replace_geometry(ctx, obj, source):
     "Apply one modifier (or, without modifier, the whole stack in order) to the mesh.",
     {"name": OBJECT, "modifier": string("Modifier name, as listed by scene_info.")},
     ["name"],
+    slow=True,
 )
 def apply_modifier(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -132,8 +132,8 @@ def remove_stand_in(stand_in):
     bpy.data.meshes.remove(mesh)
 
 
-def clean_boolean_result(ctx, obj, distance):
-    with EditMesh(ctx, obj) as bm:
+def clean_boolean_result(obj, distance):
+    with EditMesh(obj) as bm:
         bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=local_length(obj, distance))
         if manifold_report(bm)["manifold"]:
             bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
@@ -167,6 +167,8 @@ def dispose_cutters(ctx, cutters, action):
         "merge_distance": length("Cleanup merge distance in metres.", 0.00001, 1.0),
     },
     ["name"],
+    slow=True,
+    destructive_when="cutter_action is delete",
 )
 def boolean_command(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -193,7 +195,7 @@ def boolean_command(ctx, args):
         if stand_in is not None:
             remove_stand_in(stand_in)
     if args["apply"] and args["cleanup"]:
-        clean_boolean_result(ctx, obj, args["merge_distance"])
+        clean_boolean_result(obj, args["merge_distance"])
     report = mesh_report(obj.data) if args["apply"] else evaluated_report(ctx, obj)
     if args["manifold"] and not report["manifold"]:
         raise failed(f"the boolean result is not manifold: {describe_problems(report)}")
@@ -294,6 +296,7 @@ def solidify(ctx, args):
         "apply": APPLY,
     },
     ["name", "ratio"],
+    slow=True,
 )
 def decimate(ctx, args):
     obj = get_mesh_object(args["name"])

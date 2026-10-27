@@ -80,7 +80,7 @@ def render_preview(ctx, args):
             configure(scene, engine, args)
             shots, distance = plan_shots(ctx, rig, camera, args, subjects, report)
             shading.apply([obj for obj in subjects if obj.visible_get(view_layer=ctx.view_layer)], pixel_size(distance, args["resolution"]) * 0.8)
-            images, choice = render_all(scene, shots, folder, args, choice)
+            images, choice = render_all(scene, shots, folder, args, choice, rig)
             report.update(shading.report)
     finally:
         settings.restore()
@@ -201,26 +201,27 @@ def configure(scene, engine, args):
         scene.eevee.taa_render_samples = args["samples"]
 
 
-def render_all(scene, shots, folder, args, choice):
+def render_all(scene, shots, folder, args, choice, rig):
     if choice is None:
-        return [render_view(scene, shot, folder, args) for shot in shots], None
+        return [render_view(scene, shot, folder, args, rig) for shot in shots], None
     try:
         with device.DeviceScope(scene, choice):
-            return [render_view(scene, shot, folder, args) for shot in shots], choice
+            return [render_view(scene, shot, folder, args, rig) for shot in shots], choice
     except RuntimeError as error:
         if choice.device != "gpu" or device.requested_mode(args.get("device")) != "auto":
             raise failed(f"rendering on {choice.label()} failed: {error}") from error
         fallback = device.Choice("cpu", fallback=f"{choice.backend} did not render: {error}")
         with device.DeviceScope(scene, fallback):
-            return [render_view(scene, shot, folder, args) for shot in shots], fallback
+            return [render_view(scene, shot, folder, args, rig) for shot in shots], fallback
 
 
-def render_view(scene, shot, folder, args):
+def render_view(scene, shot, folder, args, rig):
     camera, label, aim_at = shot
     if aim_at is not None:
         centre, direction, distance = aim_at
         aim(camera, centre, direction, distance)
     scene.camera = camera
+    rig.light_from(camera.matrix_world.to_3x3().normalized())
     file_format, mime_type, extension = FORMATS[args["format"]]
     path = os.path.join(folder, f"{len(os.listdir(folder))}{extension}")
     scene.render.filepath = path

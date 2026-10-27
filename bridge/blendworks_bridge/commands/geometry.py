@@ -155,6 +155,7 @@ def mesh_data_from(data):
         }
     ),
     [],
+    slow=True,
 )
 def mesh_from_data(ctx, args):
     require_free_name(args["name"])

@@ -82,6 +82,7 @@ def sweep_path(args):
         },
         "Sweep",
     ),
+    slow=True,
 )
 def sweep(ctx, args):
     require_free_name(args["name"])
@@ -132,6 +133,7 @@ SECTION = obj(
         "Loft",
     ),
     ["sections"],
+    slow=True,
 )
 def loft(ctx, args):
     require_free_name(args["name"])

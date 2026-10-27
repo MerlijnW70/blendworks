@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { spawn } from "node:child_process";
 import { blenderPath } from "../src/blender.js";
 import { BridgeCommandError, sessionArguments, startSession, type Session } from "../src/session.js";
-import { useBlenderSlot } from "./setup/slot.js";
+import { useBlenderSlot, whileProcessRuns } from "./setup/slot.js";
 
 useBlenderSlot();
 
@@ -96,17 +96,19 @@ describe("the headless session", () => {
   });
 
   it("keeps stdout to protocol lines and exits cleanly at the end of its input", async () => {
-    const child = spawn(blenderPath(), sessionArguments(workspace(), false), { stdio: ["pipe", "pipe", "pipe"] });
     let stdout = "";
     let stderr = "";
-    child.stdout.on("data", (chunk: Buffer) => (stdout += chunk.toString("utf8")));
-    child.stderr.on("data", (chunk: Buffer) => (stderr += chunk.toString("utf8")));
-    const requests = [
-      { id: 1, cmd: "add_primitive", args: { type: "cube" } },
-      { id: 2, cmd: "export", args: { path: "cube.fbx" } },
-    ];
-    child.stdin.end(`${requests.map((request) => JSON.stringify(request)).join("\n")}\nnot json\n`);
-    const code = await new Promise<number | null>((resolveExit) => child.once("exit", resolveExit));
+    const code = await whileProcessRuns(async () => {
+      const child = spawn(blenderPath(), sessionArguments(workspace(), false), { stdio: ["pipe", "pipe", "pipe"] });
+      child.stdout.on("data", (chunk: Buffer) => (stdout += chunk.toString("utf8")));
+      child.stderr.on("data", (chunk: Buffer) => (stderr += chunk.toString("utf8")));
+      const requests = [
+        { id: 1, cmd: "add_primitive", args: { type: "cube" } },
+        { id: 2, cmd: "export", args: { path: "cube.fbx" } },
+      ];
+      child.stdin.end(`${requests.map((request) => JSON.stringify(request)).join("\n")}\nnot json\n`);
+      return new Promise<number | null>((resolveExit) => child.once("exit", resolveExit));
+    });
     expect(code).toBe(0);
     const lines = stdout
       .trim()

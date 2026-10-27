@@ -83,6 +83,56 @@ def test_rollback_restores_every_kind_of_data_one_at_a_time(bridge):
         assert after == before, (line, differences(before, after))
 
 
+LATE_FAILURES = [
+    ("add_material", {"name": "Paint", "base_color": [0.1, 0.9, 0.1], "roughness": 0.9}),
+    ("assign_material", {"name": "Pipe", "material": "Paint"}),
+    ("set_world", {"color": [0.9, 0.9, 0.1], "strength": 3.0}),
+    ("transform", {"name": "Box", "location": [5.0, 5.0, 5.0], "scale": [2.0, 2.0, 2.0]}),
+    ("apply_transform", {"name": "Box"}),
+    ("set_origin", {"name": "Pipe", "to": "bottom_centre"}),
+    ("uv_smart_project", {"name": "Box"}),
+    ("uv_unwrap", {"name": "Pipe"}),
+    ("uv_pack", {"names": ["Box", "Pipe"], "margin": 0.02}),
+    ("join", {"names": ["Box", "Pipe"]}),
+    ("apply_modifier", {"name": "Pipe"}),
+    ("bevel", {"name": "Box", "width": 0.1, "segments": 2}),
+    ("subdivide", {"name": "Box", "cuts": 1}),
+    ("material_procedural", {"name": "Paint", "wood": {}}),
+    ("material_layer", {"material": "Paint", "dirt": {"amount": 0.5}, "mask": "noise"}),
+    ("material_pbr", {"name": "Paint", "base_color": "Stickers"}),
+    ("bake", {"names": ["Box"], "channels": ["base_color"], "size": 16, "device": "cpu", "samples": {"base_color": 1}, "rewire": True, "material": "Paint"}),
+]
+
+
+def fail_after_running(command):
+    original = command.run
+
+    def run(ctx, args):
+        original(ctx, args)
+        raise RuntimeError("late failure")
+
+    command.run = run
+    return original
+
+
+def test_every_formerly_snapshotting_command_rolls_back_when_it_fails_late(bridge):
+    rich_scene(bridge)
+    bridge.ok("uv_smart_project", name="Box")
+    bridge.ok("uv_smart_project", name="Pipe")
+    bridge.ok("solidify", name="Pipe", thickness=0.05, apply=False)
+    before = fingerprint()
+    for name, args in LATE_FAILURES:
+        command = bridge.handler.registry.get(name)
+        original = fail_after_running(command)
+        try:
+            message = bridge.refuse(name, "failed", **args)
+        finally:
+            command.run = original
+        assert "late failure" in message, (name, message)
+        after = fingerprint()
+        assert after == before, (name, differences(before, after))
+
+
 def test_a_successful_command_after_a_rollback_keeps_working(bridge):
     rich_scene(bridge)
     python = allowed(bridge)

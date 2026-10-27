@@ -116,7 +116,7 @@ def transform_selection(ctx, args):
     if any(value == 0 for value in args["scale"]):
         raise bad_args("scale must not be zero on any axis")
     inverse = obj.matrix_world.inverted_safe()
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         verts, faces = selected_vertices(bm, obj, args)
         push = Vector((0.0, 0.0, 0.0))
         if args["push"] != 0:

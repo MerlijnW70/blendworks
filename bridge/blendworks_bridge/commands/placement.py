@@ -123,6 +123,7 @@ def place_copies(ctx, args, mesh, matrices):
         "circle": CIRCLE,
     },
     ["source"],
+    slow=True,
 )
 def instances(ctx, args):
     source = get_mesh_object(args["source"])
@@ -154,6 +155,7 @@ def rivet_mesh(name, radius, height):
         "head_height": length("Built-in rivet head height in metres.", 0.006, 1.0),
     },
     ["start", "end"],
+    slow=True,
 )
 def rivet_line(ctx, args):
     start, end = Vector(args["start"]), Vector(args["end"])

@@ -25,6 +25,14 @@ DESIGN_COMMANDS = {
     "load_blend", "checkpoint", "restore_checkpoint",
 }
 ASSET_LIBRARY_COMMANDS = {"set_world_hdri"}
+SLOW = {"slow": True, "timeout": 300, "max_timeout": 1800}
+DECLARED_METADATA = {
+    "bake": {"slow": True, "timeout": 660, "max_timeout": 1200},
+    "boolean": dict(SLOW, destructive=True, destructive_when="cutter_action is delete"),
+    "image_save": {"writes_files": True, "destructive": True, "destructive_when": "the file already exists", "slow": False},
+    **{name: SLOW for name in ("decimate", "import", "uv_pack", "set_world_hdri", "apply_modifier", "sweep", "loft", "instances",
+                               "rivet_line", "roller_chain", "displace_noise", "mesh_from_data")},
+}
 SCHEMA_KEYS = {"type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",
                "maximum", "exclusiveMinimum", "minItems", "maxItems", "minLength", "maxLength", "default"}
 
@@ -93,10 +101,26 @@ def test_metadata_marks_mutation_destruction_and_time(bridge):
     assert run_python["slow"] and run_python["destructive"] and run_python["mutates"] and run_python["timeout"] == 300
 
 
-def test_policy_overrides_name_real_commands(bridge):
-    from blendworks_bridge.policy import OVERRIDES
+def test_metadata_lives_with_each_command_declaration(bridge):
+    described = {entry["name"]: entry for entry in bridge.ok("describe")["commands"]}
+    for name, expected in DECLARED_METADATA.items():
+        for key, value in expected.items():
+            assert described[name].get(key) == value, (name, key, described[name].get(key), value)
+    slow_defaults = {(entry["timeout"], entry["max_timeout"]) for entry in described.values() if entry["slow"]}
+    assert (300, 1800) in slow_defaults
 
-    assert set(OVERRIDES) <= set(COMMANDS), sorted(set(OVERRIDES) - set(COMMANDS))
+
+def test_no_override_table_remains_in_the_policy(bridge):
+    folder = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "blendworks_bridge")
+    with open(os.path.join(folder, "policy.py"), encoding="utf-8") as handle:
+        tree = ast.parse(handle.read())
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            assert isinstance(node.value, ast.Constant), (node.targets[0].id, "only constants may be assigned at module level")
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            assert node.value not in COMMANDS, f"policy.py names the command {node.value}"
+        assert not (isinstance(node, ast.Name) and "OVERRIDE" in node.id.upper()), node.id
 
 
 def test_every_command_refuses_unknown_fields(bridge):

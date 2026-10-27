@@ -37,6 +37,44 @@ def spread(values):
     return max(grey) - min(grey), len({round(value, 2) for value in grey})
 
 
+LIT_SHADINGS = ["shaded", "clay", "uv_checker"]
+ALL_VIEWS = ["front", "back", "left", "right", "top", "bottom", "three-quarter"]
+FOCUS_DIRECTIONS = [[0.0, 0.0, -1.0], [0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [-1.0, -1.0, -1.0], [1.0, 0.3, -0.2], [0.0, -1.0, 0.0]]
+DARKEST_SHARE = 0.7
+FLAT_TEXEL = (0.3, 0.3)
+
+
+def centre_luminance(values, size):
+    width, height = size
+    margin_x, margin_y = width // 3, height // 3
+    total = count = 0
+    for y in range(margin_y, height - margin_y):
+        for x in range(margin_x, width - margin_x):
+            offset = (y * width + x) * 4
+            total += 0.2126 * values[offset] + 0.7152 * values[offset + 1] + 0.0722 * values[offset + 2]
+            count += 1
+    return total / count
+
+
+def grey_cube(bridge):
+    bridge.ok("add_primitive", type="cube", name="Cube", size=1.0)
+    bridge.ok("add_material", name="Grey", base_color=[0.5, 0.5, 0.5])
+    bridge.ok("assign_material", name="Cube", material="Grey")
+    bridge.ok("uv_smart_project", name="Cube")
+    for layer in bpy.data.objects["Cube"].data.uv_layers:
+        for loop_uv in layer.uv:
+            loop_uv.vector = FLAT_TEXEL
+
+
+def luminances(bridge, shading, **arguments):
+    result = bridge.ok("render_preview", shading=shading, resolution=96, samples=4, device="cpu", **arguments)
+    by_view = {}
+    for image in result["images"]:
+        _, size, values = decoded(image, f"cube-{shading}-{image['view']}.png")
+        by_view[image["view"]] = centre_luminance(values, size)
+    return by_view
+
+
 def prop(bridge):
     bridge.ok("add_primitive", type="cube", name="Body", size=1.0)
     bridge.ok("add_primitive", type="cylinder", name="Knob", radius=0.15, depth=0.3, segments=16, location=[0.0, -0.6, 0.2], rotation=[90.0, 0.0, 0.0])
@@ -87,6 +125,32 @@ def test_focus_on_a_point_with_a_direction_and_the_bottom_view(bridge):
     assert top_data != bottom_data and spread(bottom_values)[0] > 0.05
     around = bridge.ok("render_preview", focus={"object": "Body"}, views=["front", "left"], resolution=64, samples=1, device="cpu")
     assert [image["view"] for image in around["images"]] == ["front", "left"]
+
+
+def test_every_turntable_view_is_lit_evenly(bridge):
+    grey_cube(bridge)
+    for shading in LIT_SHADINGS:
+        by_view = luminances(bridge, shading, views=ALL_VIEWS)
+        assert sorted(by_view) == sorted(ALL_VIEWS)
+        assert min(by_view.values()) >= DARKEST_SHARE * max(by_view.values()), (shading, by_view)
+
+
+def test_every_focus_direction_is_lit_evenly(bridge):
+    grey_cube(bridge)
+    for shading in LIT_SHADINGS:
+        by_direction = []
+        for direction in FOCUS_DIRECTIONS:
+            by_direction.append(luminances(bridge, shading, focus={"object": "Cube", "direction": direction})["focus"])
+        assert min(by_direction) >= DARKEST_SHARE * max(by_direction), (shading, by_direction)
+
+
+def test_flat_shadings_do_not_depend_on_the_view(bridge):
+    grey_cube(bridge)
+    for shading in ("normals", "material_id"):
+        by_view = luminances(bridge, shading, views=["front", "bottom", "top"])
+        assert min(by_view.values()) > 0.0, (shading, by_view)
+    ids = luminances(bridge, "material_id", views=ALL_VIEWS)
+    assert max(ids.values()) - min(ids.values()) < 0.01, ids
 
 
 def test_jpeg_output_is_smaller_than_png(bridge):

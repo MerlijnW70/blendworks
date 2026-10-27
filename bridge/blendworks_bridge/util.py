@@ -189,8 +189,7 @@ def check_vertex_cap(count):
 
 
 class EditMesh:
-    def __init__(self, ctx, obj):
-        self.ctx = ctx
+    def __init__(self, obj):
         self.obj = obj
         self.bm = bmesh.new()
         self.bm.from_mesh(obj.data)
@@ -204,7 +203,6 @@ class EditMesh:
         try:
             if kind is None:
                 check_vertex_cap(len(self.bm.verts))
-                self.ctx.txn.touch_mesh(self.obj.data)
                 self.bm.normal_update()
                 self.bm.to_mesh(self.obj.data)
                 self.obj.data.update()

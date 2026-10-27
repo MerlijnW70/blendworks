@@ -62,8 +62,7 @@ def material_pbr(ctx, args):
     if created:
         material = bpy.data.materials.new(args["name"])
         material.use_fake_user = True
-    else:
-        ctx.txn.touch_material_tree(material)
+    ctx.txn.guard_image_pixels()
     colorspaces = assign_colorspaces(ctx.txn, maps)
     options = {key: args.get(key, default) for key, default in DEFAULT_OPTIONS.items()}
     options["uv_map"] = args.get("uv_map")

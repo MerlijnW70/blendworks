@@ -63,6 +63,8 @@ def image_new(ctx, args):
         "relink": boolean("Point the image at the saved file afterwards, so exports and .blend files use it.", True),
     },
     ["name", "path"],
+    writes_files=True,
+    destructive_when="the file already exists",
 )
 def image_save(ctx, args):
     image = get_image(args["name"])

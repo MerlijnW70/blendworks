@@ -60,8 +60,8 @@ def test_turntable_views_are_fitted_pngs(bridge):
 
 def test_render_is_deterministic(bridge):
     crate(bridge)
-    first = bridge.ok("render_preview", views=["three-quarter"], resolution=64, samples=4)
-    second = bridge.ok("render_preview", views=["three-quarter"], resolution=64, samples=4)
+    first = bridge.ok("render_preview", views=["three-quarter"], resolution=64, samples=4, device="cpu")
+    second = bridge.ok("render_preview", views=["three-quarter"], resolution=64, samples=4, device="cpu")
     assert first["images"][0]["data"] == second["images"][0]["data"]
 
 

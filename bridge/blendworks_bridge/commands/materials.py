@@ -40,7 +40,6 @@ def add_material(ctx, args):
         values = {key: args.get(key, default) for key, default in DEFAULTS.items()}
     else:
         values = {key: args[key] for key in DEFAULTS if key in args}
-        ctx.txn.touch_material(material, snapshot_material(material))
     node = principled_node(material)
     if node is None:
         raise bad_args(f"{material.name} has no Principled BSDF node to set")
@@ -59,24 +58,6 @@ def add_material(ctx, args):
     return summary
 
 
-def snapshot_material(material):
-    node = principled_node(material)
-    saved = {}
-    if node is not None:
-        for key, socket_name in PRINCIPLED_INPUTS.items():
-            value = node.inputs[socket_name].default_value
-            saved[key] = value if isinstance(value, float) else list(value)
-    diffuse = list(material.diffuse_color)
-
-    def restore(target):
-        target.diffuse_color = diffuse
-        restore_node = principled_node(target)
-        for key, value in saved.items():
-            restore_node.inputs[PRINCIPLED_INPUTS[key]].default_value = value
-
-    return restore
-
-
 @command(
     "assign_material",
     "Give an object a material: the whole object, or only the selected faces of a mesh.",
@@ -93,8 +74,6 @@ def assign_material(ctx, args):
     partial = "faces" in args or "facing" in args
     if partial and obj.type != "MESH":
         raise bad_args("faces and facing work only on meshes")
-    if obj.type == "MESH":
-        ctx.txn.touch_mesh(obj.data)
     if not partial:
         obj.data.materials.clear()
         obj.data.materials.append(material)
@@ -106,7 +85,7 @@ def assign_material(ctx, args):
     if material.name not in [slot.name for slot in slots if slot is not None]:
         obj.data.materials.append(material)
     index = [slot.name if slot else None for slot in obj.data.materials].index(material.name)
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         faces = select_faces(bm, obj, args)
         for face in faces:
             face.material_index = index
@@ -134,7 +113,7 @@ def vertex_colors(ctx, args):
     if existing is not None and (existing.domain != "CORNER" or existing.data_type != "BYTE_COLOR"):
         raise bad_args(f"{args['layer']} exists but is not a face-corner byte colour attribute")
     rgba = list(args["color"]) + [1.0] * (4 - len(args["color"]))
-    with EditMesh(ctx, obj) as bm:
+    with EditMesh(obj) as bm:
         faces = select_faces(bm, obj, args)
         layer = bm.loops.layers.color.get(args["layer"])
         if layer is None:

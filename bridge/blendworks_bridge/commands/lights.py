@@ -139,8 +139,6 @@ def set_world(ctx, args):
     elif world.users > 1:
         world = world.copy()
         ctx.scene.world = world
-    else:
-        ctx.txn.touch_material(world, snapshot_world(world))
     background = world_background(world)
     if "color" in args:
         background.inputs["Color"].default_value = list(args["color"]) + [1.0]
@@ -173,23 +171,6 @@ def world_background(world):
     return background
 
 
-def snapshot_world(world):
-    tree_values = None
-    background = next((node for node in world.node_tree.nodes if node.type == "BACKGROUND"), None) if world.node_tree else None
-    if background is not None:
-        tree_values = (list(background.inputs["Color"].default_value), background.inputs["Strength"].default_value)
-    color_value = list(world.color)
-
-    def restore(target):
-        target.color = color_value
-        if tree_values is not None:
-            node = next(node for node in target.node_tree.nodes if node.type == "BACKGROUND")
-            node.inputs["Color"].default_value = tree_values[0]
-            node.inputs["Strength"].default_value = tree_values[1]
-
-    return restore
-
-
 HDRI_EXTENSIONS = (".hdr", ".exr")
 
 
@@ -202,6 +183,7 @@ HDRI_EXTENSIONS = (".hdr", ".exr")
         "rotation": number("Turn the environment about the Z axis, in degrees.", -360.0, 360.0, 0.0),
     },
     ["path"],
+    slow=True,
 )
 def set_world_hdri(ctx, args):
     path = ctx.workspace.existing(args["path"], HDRI_EXTENSIONS)
