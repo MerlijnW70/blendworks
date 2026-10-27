@@ -1,6 +1,7 @@
 from array import array
 from math import inf
 
+from judge_colours import ColourCollector
 from judge_common import JudgeError, distance, rounded
 from judge_objects import ObjectTable
 from judge_parts import PartCollector
@@ -57,11 +58,12 @@ def extend(low, high, points):
 
 
 class Measurer:
-    def __init__(self, triangle_cap, floating_tolerance=None, integrity=True, objects=False):
+    def __init__(self, triangle_cap, floating_tolerance=None, integrity=True, objects=False, colours=False):
         self.triangle_cap = triangle_cap
         self.parts = None if floating_tolerance is None else PartCollector(floating_tolerance, WELD_DISTANCE)
         self.surface = Surface(DEGENERATE_AREA, WELD_DISTANCE) if integrity else None
         self.table = ObjectTable() if objects else None
+        self.colours = ColourCollector() if colours else None
         self.triangles = 0
         self.objects = 0
         self.low = [inf, inf, inf]
@@ -124,6 +126,8 @@ class Measurer:
                 self.topology[key] += value
             if len(mesh.polygons) > 0:
                 self.meshes_with_faces += 1
+                if self.colours is not None:
+                    self.colours.add(label, mesh)
                 if not self.uv_grid.add_mesh(mesh, areas, DEGENERATE_AREA):
                     self.meshes_without_uv += 1
         for key, value in shells.items():
@@ -207,5 +211,7 @@ class Measurer:
             measured["floating"] = self.parts.result()
         if self.table is not None:
             measured["objectList"] = self.table.result()
+        if self.colours is not None:
+            measured["vertexColors"] = self.colours.result()
         return measured
 

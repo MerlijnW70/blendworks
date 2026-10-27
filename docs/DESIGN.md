@@ -305,6 +305,68 @@ Shared mesh data is counted once for UV and topology: four wheels that share one
 - **`model`** (default `claude-opus-5-5`, or `BLENDWORKS_VISUAL_MODEL` when the spec names none), **`effort`** (`low` to `max`, default `high`) and **`provider`** (see the visual judge in §4).
 - **Committee:** `models` (2 to 5, instead of `model`) asks each model for `samples` answers. Each criterion combines the models' medians by `committee`: `min` (the default) takes the lowest; `majority` takes the highest score that a strict majority of the models reach (the middle one of three, the lower of two). The score is then the weighted mean as above.
 
+### Rigs, skins, animation and vertex colours
+
+Four optional groups check characters and props that move, and the colours their vertices carry:
+
+```json
+{
+  "format": "glb",
+  "size": { "x": [0.4, 0.5], "y": [0.1, 0.9], "z": [1.6, 1.75] },
+  "rig": {
+    "required": true,
+    "maxBones": 64,
+    "requiredBones": ["hips", "head", "leftHand"],
+    "boneMap": { "hips": ["Hips", "mixamorig:Hips"], "head": "Head", "leftHand": ["LeftHand", "hand.L"] }
+  },
+  "skin": { "maxInfluences": 4, "maxUnweighted": 0, "normalized": true, "restPose": true },
+  "animation": { "requiredClips": ["walk", "idle"], "loop": { "clips": ["walk"], "tolerance": 0.001 }, "maxDuration": 4, "maxRootMotion": 0.05, "boundsWithin": true },
+  "vertexColors": { "required": true, "domain": "corner" }
+}
+```
+
+| Rule | Passes when | Prevents |
+|---|---|---|
+| `rig.required` | the asset has an armature with at least one bone | a character delivered as a static mesh |
+| `rig.maxBones` | the armatures have at most this many bones together | a skeleton over the bone limit of the target engine |
+| `rig.requiredBones` | each entry is matched by exactly one bone | a rig whose bones game code or retargeting cannot find, or finds twice |
+| `skin.maxInfluences` | no vertex has more bones with a weight above 0 (game engines take 4) | weights the engine cuts down, so the mesh bends differently than delivered |
+| `skin.maxUnweighted` | at most this many vertices of skinned meshes have no weight | vertices that stay behind when the character moves |
+| `skin.normalized` (`true`, or `{ "tolerance": t }`) | the weights of every weighted vertex sum to 1 within `t` (0.01 when left out) | parts that shrink or swell as they move |
+| `skin.restPose` | every joint of every skin sits at its bind pose | a mesh that shows bent or torn until an animation plays |
+| `animation.requiredClips` | every named clip exists | a missing walk or idle |
+| `animation.loop` (`true`, or `{ "clips": [...], "tolerance": t }`) | in every clip (or the named ones), no vertex is more than `t` metres (0.001 when left out) from where it was on the first frame when the last frame plays | a pop where a looping clip wraps around |
+| `animation.maxDuration` | no clip lasts longer, in seconds | clips padded with idle frames |
+| `animation.maxRootMotion` | no root moves further from where it starts its clip, in metres | a clip that walks away when the game plays it in place |
+| `animation.boundsWithin` (`true`, or a size rule) | the bounds over every sampled frame of every clip meet the size rule; `true` takes the spec's `size` | an asset that meets its size at rest and reaches outside it when it moves |
+| `vertexColors.required` | every mesh has a colour attribute | a shader that reads vertex colours some meshes do not carry |
+| `vertexColors.domain` (`point` or `corner`) | there is a colour attribute, and every one has this domain | per-corner colours where the pipeline expects one per vertex, or the other way round |
+
+- **Bone names.** Without `boneMap`, each entry of `requiredBones` is a bone name, matched exactly. With `boneMap`, each entry is a role of the map, and the map gives the name patterns (`*` and `?` as in `objects.named`) of the bones that may fill it. `measurements.rig.scheme` lists the bone found for every role of the map. All armatures count together. Bone names are listed up to 2,048; with more bones the rule fails.
+- **Skins.** A skinned mesh has an Armature modifier or an armature parent. Without one, every skin rule fails with `no skinned mesh`. Only bones that deform count as influences, and only vertices on faces count.
+- **Formats.** The animation rules need `glb`, `gltf` or `blend`: the judge imports FBX without its animation, and OBJ has none. Rig, skin and animation rules cannot be combined with `lods` or `package`, because packaging refuses skinned meshes and shape keys (section 7). With `upAxis: "y"`, the size rule of `boundsWithin` is read in glTF axes, as `size` is.
+
+### Reference silhouettes
+
+The hirer can deliver the intended shape as silhouette masks beside the spec, pinned by sha256:
+
+```json
+"reference": {
+  "views": {
+    "front": { "sha256": "<sha256 of front.png>", "mask": "front.png" },
+    "left": { "sha256": "<sha256 of left.png>", "mask": "masks/left.png", "minIoU": 0.85 }
+  },
+  "bounds": { "min": [-0.25, -0.15, 0], "max": [0.25, 0.15, 1.8] },
+  "minIoU": 0.9,
+  "maxBoundaryDistance": 0.02
+}
+```
+
+- **Masks** are PNG files in the spec's folder or below it, named by a relative path with `/`. They are square, 16 to 2,048 pixels on a side, and at most 8 MiB. An image with transparency is read by its alpha, inside from 128 of 255; an opaque image by its luminance `0.2126 R + 0.7152 G + 0.0722 B`, inside from half of 255. So a white-on-black mask and a cut-out picture both work.
+- **Framing.** The judge renders the asset's silhouette in the same views with the camera rig of its views (section 4), at the mask's size. With `bounds` (in the spec's axes) the rig is fitted to that box, so the comparison sees shape and size. Without it the rig is fitted to the asset's own bounds and origin, as for the views, so it sees shape only, at the asset's scale.
+- **Rules.** `reference.minIoU` and `reference.maxBoundaryDistance` judge the worst of the views that have no limit of their own. A view's own `minIoU` or `maxBoundaryDistance` gives the rule `reference[<view>].minIoU` or `reference[<view>].maxBoundaryDistance`. They prevent a delivery whose proportions or outline differ from what was ordered, which size and triangle limits cannot see.
+- **Making masks.** `blendworks silhouettes <blockout> --out <dir> [--views front,left] [--size px] [--up-axis z|y]` renders the masks of a blockout of the intended shape with the same rig and prints the `reference` group, with each mask's sha256 and the framing `bounds`.
+
 ### LODs and packages
 
 Two optional groups make the judge build a game-ready package from the delivery and judge it (section 7):
@@ -334,7 +396,7 @@ Rules in the report: `lods.count`, `lods.ratios` (each level within 5 % of its t
 `blendworks judge <spec.json> <asset> [--out <dir>] [--preview] [--render-timeout <s>]` does the following:
 1. **Private copy.** Copies the delivery into a private temporary folder and judges only that copy. The delivery is the asset plus the files it refers to inside its folder: the buffers and images of a glTF, the material libraries of an OBJ and the textures they name, and the textures of an FBX. A `.blend` is copied alone. The report lists each file with its size and sha256, and the sha256 of the set (`asset.setSha256`: the sha256 of the lines `<sha256>  <path>`, sorted by path). `fileSize` counts every file of the set. A reference that is not in the folder is listed in `measurements.references.unresolved` and fails `selfContained`.
 2. **Validation.** Runs the Khronos glTF-Validator on every `.glb` and `.gltf` delivery (see below).
-3. **Measurement.** Starts headless Blender in the sandbox with a fresh factory scene (`--factory-startup --disable-autoexec`) and imports the copy with the judge's own script. The worker's file never runs code: a `.blend` delivery is opened with auto-run disabled, and only its data is read. Before Blender evaluates anything, the importer limits below refuse what could exhaust memory. The scene is evaluated at frame 1, the frame the render uses too, so the frame an animated asset was saved on does not matter; an armature is measured in its pose at frame 1. Then every rule of the spec is measured.
+3. **Measurement.** Starts headless Blender in the sandbox with a fresh factory scene (`--factory-startup --disable-autoexec`) and imports the copy with the judge's own script. The worker's file never runs code: a `.blend` delivery is opened with auto-run disabled, and only its data is read. Before Blender evaluates anything, the importer limits below refuse what could exhaust memory. The scene is evaluated at frame 1, the frame the render uses too, so the frame an animated asset was saved on does not matter; an armature is measured in its pose at frame 1. Then every rule of the spec is measured. Animation clips are played afterwards, each on its own (see Rigs and animation), and a `.blend` keeps its scene frame rate.
 4. **Verdict.** The rules decide pass or fail from the measurements and the validation alone.
 5. **Evidence.** Renders the spec's views with a fixed camera rig fitted to the asset's bounds, a neutral three-point light, Cycles with a fixed seed, 24 samples and denoising, at 512 px. Outlines come from the compositor (edges in the normal and depth passes), so they cost almost nothing on any device. The result is a contact sheet.
 6. **Report.** Writes `report.json` with every rule, its measured value and pass or fail, plus the PNGs and the sha256 of each. It exits 0 when every rule passes and 1 otherwise.
@@ -388,6 +450,27 @@ If the validator cannot finish (over the cap, a timeout, a crash), a spec with t
 A loose part is a connected piece of a mesh, after merging vertices closer than 1 µm, as for manifoldness. Each placed instance of a mesh counts on its own. A part is floating when its world-space bounds, grown by the tolerance on every side, overlap neither another part of its own object nor the bounds of another object. An asset of one part has nothing to touch, so it never floats.
 
 `measurements.floating` lists each floating part by object and index, with its bounds. The parts of an object are numbered in order of their lowest corner (x, then y, then z).
+
+### Rigs and animation
+
+- **Rig.** Every armature in the scene, with its bones, the bones that deform, its depth (the most bones on a path from a root; a root alone has depth 1) and its root bones. The glTF importer's display shapes for bones are switched off, so they are never measured as geometry.
+- **Weights.** They are read from each skinned mesh as delivered, before modifiers. For each vertex on a face, the influences are the vertex groups that name a deforming bone of the mesh's armatures, with a weight above 0. A vertex with none is unweighted; one whose weights sum to more than the tolerance away from 1 is not normalized.
+- **Rest pose.** A joint is off when its default pose differs from its bind pose by more than `max(0.1 mm, 1e-5 × the longest side)` in position, 0.01 degrees in rotation or 1e-4 in scale.
+  - glTF: read from the file. The bind pose of joint `j` of a skin on node `n` is `world(n) × inverse(inverseBindMatrix_j)`; its default pose is its world matrix from the node transforms. Inverse bind matrices that cannot be read make the rule fail with the reason.
+  - FBX: the importer builds the armature in its bind pose and poses it as the file does, without animation; the judge compares the pose of each deforming bone with its rest.
+  - `.blend`: Blender binds every Armature modifier to the armature's rest pose, so a `.blend` skin is bound in rest pose by construction.
+- **Clips.** Every action that animates something in the scene is a clip: its name, frame range, duration (frames divided by the frame rate), keyframes, distinct key times and channels. The frame rate is the scene's for a `.blend`. glTF has no frame rate, so a glTF clip reports the rate of its keys: the frame rate divided by the most common gap between key times. The judge's scene runs at 24 fps, which the glTF importer uses to place the keys.
+- **Playing a clip.** Every clip plays alone, after the static measurement: the other actions and the NLA are off, and every object, bone and shape key starts from its state on frame 1. The judge evaluates every whole frame of the clip's range, its first and last frame and every key time between them. It takes at most 240 frames per clip, and at most 40 million triangle-frames over all clips; fewer frames are spread evenly and always keep the first and the last. Each frame's bounds use only vertices on faces, as at rest, and `measurements.animation.size` is the union over every clip and the rest pose.
+  - **Loop error:** the largest distance a vertex moves between the first and the last frame, in world space. A clip that travels does not loop by this measure.
+  - **Root motion:** the largest distance a root moves from where it is on the clip's first frame. Roots are the root bones of every armature and every object without a parent; `horizontal` and `vertical` split the largest move.
+
+### Reference comparison
+
+1. **Inputs.** Before Blender starts, the judge reads each mask: the path must resolve inside the spec's folder (a link out of it is refused), and the file must be a regular file of at most 8 MiB with the pinned sha256. The PNG header must be square and 16 to 2,048 pixels before anything is decoded. The judge's own PNG reader then checks every chunk's checksum and refuses interlaced files. A refused mask fails the judge at the `reference` stage with the view and the reason. Masks are never passed to Blender, run or sent anywhere.
+2. **Silhouettes.** After measuring, the `reference` stage renders the asset in the sandbox on the CPU: Cycles, 1 sample, a 0.01 px box filter (one ray through each pixel centre), a transparent film and one opaque material on every surface, at frame 1. A pixel is inside when its alpha is at least 128. The stage runs in preview mode too, because rules depend on it.
+3. **IoU** is `|A ∩ B| / |A ∪ B|` over pixels, and 1 when both are empty. A 200 px square against its inscribed circle scores about π/4.
+4. **Boundary distance.** An edge pixel is an inside pixel with a 4-neighbour outside; the image border is not an edge. The distance from every edge pixel of one silhouette to the nearest edge pixel of the other is exact (the Euclidean distance transform of Felzenszwalb and Huttenlocher, 2012). The boundary distance is their mean over the edge pixels of both silhouettes (the average symmetric surface distance), divided by the side of the view in pixels. It is 0 when neither silhouette has edges, and null, which fails its rule, when only one has. Two half-planes 32 and 40 columns wide in a 64 px view are 8 px apart: 0.125.
+5. **Record.** `report.json` gives `reference.frame` and, per view, the mask's sha256 and channel, the pixel counts, the IoU and the boundary distance, in pixels and as a fraction. The asset's silhouette and an overlay (white for both, red for the asset only, blue for the reference only) are written to `reference/` with their sha256, and `blendworks diff` compares them.
 
 ### Render device
 
@@ -486,6 +569,7 @@ blendworks visual-eval test/fixtures/visual/labelled.json --dir proof=artifacts/
 - The verdict depends on the measurements only, never on whether or how fast the views render, so judges on fast and slow machines agree.
 - Renders use a fixed seed, samples and resolution, so the same asset on the same device gives the same report and the same images (byte-identical on the CPU; on a GPU, at most one level out of 255 apart in a small share of pixels).
 - The judge pins the Blender version and refuses others.
+- Clips are evaluated at fixed frames, and silhouettes are rendered on the CPU with one ray through each pixel centre, so both repeat exactly. A mask made by `blendworks silhouettes` from an asset scores IoU 1 against that asset.
 - The visual judge is not deterministic: the same renders can score differently on another run. Medians over samples damp that, the record keeps every answer, and an advisory visual result never changes the verdict.
 
 ## 6. Asset library

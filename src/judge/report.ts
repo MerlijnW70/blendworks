@@ -3,10 +3,12 @@ import type { Measurements } from "./measurements.js";
 import type { RuleResult } from "./rules.js";
 import type { Isolation } from "./sandbox.js";
 import type { Validation } from "./validator.js";
+import { motionLines } from "./motion-summary.js";
+import { referenceLines, type ReferenceRecord } from "./reference.js";
 import { visualLines, type VisualRecord } from "./visual/record.js";
 import { packageLines, type PackageReport } from "../package/report.js";
 
-export type Failure = { stage: "spec" | "asset" | "validate" | "blender" | "measure" | "device" | "render" | "closeups" | "package"; code: string; message: string };
+export type Failure = { stage: "spec" | "asset" | "validate" | "blender" | "measure" | "reference" | "device" | "render" | "closeups" | "package"; code: string; message: string };
 
 export type RenderedView = { view: string; path: string; sha256: string };
 
@@ -53,6 +55,7 @@ export type Report = {
   validation?: Validation | null;
   visual?: VisualRecord | null;
   package?: PackageReport | null;
+  reference?: ReferenceRecord | null;
   summary: string;
 };
 
@@ -78,7 +81,7 @@ function show(value: unknown): string {
 function comparison(rule: string): string {
   if (/\.min([A-Z]\w*)?$/.test(rule)) return "at least ";
   if (/\.max([A-Z]\w*)?$/.test(rule)) return "at most ";
-  if (rule.startsWith("size.")) return "between ";
+  if (rule.startsWith("size.") || /^animation\.boundsWithin\.size\.[xyz]$/.test(rule)) return "between ";
   return "";
 }
 
@@ -144,7 +147,8 @@ export function summarize(report: Omit<Report, "summary">): string {
   if (report.measurements?.textures) lines.push(...textureLines(report.measurements.textures));
   if (report.validation !== undefined) lines.push(...validationLines(report.validation));
   if (report.package) lines.push(...packageLines(report.package));
-  if (report.measurements) lines.push(...integrityLines(report.measurements));
+  if (report.measurements) lines.push(...integrityLines(report.measurements), ...motionLines(report.measurements));
+  if (report.reference) lines.push(...referenceLines(report.reference));
   if (report.visual) lines.push(...visualLines(report.visual));
   if (report.device) lines.push(`  render: ${describeDevice(report.device)}`);
   if (report.renders) lines.push(...renderLines(report.renders));

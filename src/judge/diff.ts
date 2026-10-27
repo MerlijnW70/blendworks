@@ -16,6 +16,15 @@ const reportSchema = z.object({
     .object({ views: z.array(viewSchema), contactSheet: z.string().nullable(), contactSheetSha256: z.string().nullable().optional() })
     .passthrough()
     .nullable(),
+  reference: z
+    .object({
+      views: z.array(
+        z.object({ view: z.string(), sha256: z.string(), iou: z.number(), boundaryDistance: z.number().nullable(), silhouetteSha256: z.string(), overlaySha256: z.string() }).passthrough(),
+      ),
+    })
+    .passthrough()
+    .nullable()
+    .optional(),
 });
 
 export type JudgeReport = z.infer<typeof reportSchema>;
@@ -68,6 +77,10 @@ function images(report: JudgeReport): Map<string, unknown> {
   const found = new Map<string, unknown>();
   for (const view of report.renders?.views ?? []) found.set(view.view, view.sha256 ?? "no hash recorded");
   if (report.renders?.contactSheet) found.set("contact sheet", report.renders.contactSheetSha256 ?? "no hash recorded");
+  for (const view of report.reference?.views ?? []) {
+    found.set(`reference ${view.view} silhouette`, view.silhouetteSha256);
+    found.set(`reference ${view.view} overlay`, view.overlaySha256);
+  }
   return found;
 }
 
@@ -87,6 +100,11 @@ export function diffReports(before: JudgeReport, after: JudgeReport): Change[] {
   const measured = (report: JudgeReport) => {
     const found = new Map<string, unknown>();
     if (report.measurements !== null) leaves(report.measurements, "", found);
+    for (const view of report.reference?.views ?? []) {
+      found.set(`reference.${view.view}.mask`, view.sha256);
+      found.set(`reference.${view.view}.iou`, view.iou);
+      found.set(`reference.${view.view}.boundaryDistance`, view.boundaryDistance);
+    }
     return found;
   };
   compareMaps("measurement", measured(before), measured(after), changes);

@@ -6,6 +6,10 @@ import { copyDelivery, DeliveryError, type Delivery } from "./delivery.js";
 import type { DeviceMode } from "./device.js";
 import { renderRules } from "./integrity-rules.js";
 import { measureOutputSchema, measurementsSchema, type Measurements } from "./measurements.js";
+import { motionExtras, withBoneScheme } from "./motion-rules.js";
+import { weightTolerance } from "./motion-spec.js";
+import { loadReferences, referenceStage, REFERENCE_FOLDER, type LoadedReference } from "./reference.js";
+import { upAxis } from "./shape-rules.js";
 import { wantsObjectList } from "./object-rules.js";
 import { hashRenders, renderStage, uvGridPath } from "./render-stage.js";
 import { summarize, type Report, type Timings } from "./report.js";
@@ -43,7 +47,7 @@ export type JudgeOptions = {
   visual?: VisualOptions;
 };
 
-const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "contact-sheet.png", "views", "visual.json", "visual", "closeups", "package"];
+const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "contact-sheet.png", "views", "visual.json", "visual", "closeups", "package", REFERENCE_FOLDER];
 const STAGE_OUTPUTS = ["measurements.json", "render.json", "contact-sheet.png"];
 
 function prepareOutDir(outDir: string): void {
@@ -109,6 +113,8 @@ async function measureStage(draft: Draft, spec: AssetSpec, delivery: Delivery, s
   const tolerance = floatingTolerance(spec);
   if (tolerance !== undefined) measureArgs.push("--floating-tolerance", String(tolerance));
   if (wantsObjectList(spec)) measureArgs.push("--objects", "yes");
+  const extras = motionExtras(spec);
+  if (extras.length > 0) measureArgs.push("--extras", extras.join(","), "--weight-tolerance", String(weightTolerance(spec.skin)));
   const measured = await runScript("measure", "measure.py", measureArgs, measurementsPath, sandbox);
   draft.sandbox = measured.isolation;
   draft.timings.measure = measured.seconds;
@@ -116,7 +122,7 @@ async function measureStage(draft: Draft, spec: AssetSpec, delivery: Delivery, s
   if (!parsed.success) throw new StageFailure({ stage: "measure", code: "malformed", message: "the measuring script wrote malformed output" });
   if (!parsed.data.ok) throw new StageFailure({ stage: "measure", ...parsed.data.error });
   const { format, ...rest } = parsed.data.measurements;
-  return reported(spec, measurementsSchema.parse({ format, fileBytes: delivery.bytes, ...rest, references: delivery.references }));
+  return withBoneScheme(spec, reported(spec, measurementsSchema.parse({ format, fileBytes: delivery.bytes, ...rest, references: delivery.references })));
 }
 
 function collectOutputs(workDir: string, outDir: string, draft: Draft): void {
@@ -162,6 +168,7 @@ export async function judge(options: JudgeOptions): Promise<Report> {
       throw error;
     }
     draft.spec.name = spec.name ?? null;
+    const references: LoadedReference[] | null = spec.reference === undefined ? null : loadReferences(spec.reference, specPath);
     checkAsset(assetPath, options.maxFileBytes ?? DEFAULTS.maxFileBytes);
     const format = extname(assetPath).slice(1).toLowerCase();
     const delivery = deliver(draft, assetPath, format, workDir, options.maxFileBytes ?? DEFAULTS.maxFileBytes);
@@ -175,6 +182,10 @@ export async function judge(options: JudgeOptions): Promise<Report> {
     const measurements = await measureStage(draft, spec, delivery, sandbox, maxTriangles);
     draft.measurements = measurements;
     draft.rules = evaluateRules(spec, measurements, validation);
+    if (spec.reference !== undefined && references !== null) {
+      draft.reference = null;
+      await referenceStage(draft, spec.reference, references, delivery.main, sandbox, outDir, maxTriangles, upAxis(spec));
+    }
     try {
       await renderStage(draft, spec, delivery.main, outDir, sandbox, maxTriangles, options);
     } finally {

@@ -6,6 +6,8 @@ import { DeviceError, deviceModeFromEnvironment, type DeviceMode } from "./devic
 import { diffReports, diffText, readReport, ReportError } from "./diff.js";
 import { PACKAGE_USAGE, PackageUsageError, packageAsset, parsePackage } from "../package/cli.js";
 import { DEFAULTS, judge } from "./run.js";
+import { SILHOUETTE_DEFAULTS, silhouettes, silhouettesSummary } from "./silhouettes.js";
+import { VIEWS } from "./spec-shapes.js";
 import { StageFailure } from "./stages.js";
 import { EvalError, evalText, visualEval } from "./visual/eval.js";
 
@@ -47,7 +49,16 @@ out dir (default artifacts/visual-eval). Every entry calls the model, which cost
 anthropic-api provider and subscription usage on the claude-code provider.
 ${DEVICE_HELP}`;
 
-export const USAGE = `${JUDGE_USAGE}\n\n${CLOSEUPS_USAGE}\n\n${DIFF_USAGE}\n\n${VISUAL_EVAL_USAGE}`;
+export const SILHOUETTES_USAGE = `usage: blendworks silhouettes <asset> --out <dir> [--views front,left] [--size px] [--up-axis z|y]
+  [--timeout seconds] [--memory-mb n] [--max-triangles n] [--max-file-mb n]
+
+Renders the asset's silhouette in each view (default front) with the judge's camera rig, framed on
+the asset's bounds, and writes one mask per view (white is the shape, --size px square, default
+${SILHOUETTE_DEFAULTS.size}) with silhouettes.json to the out dir. It prints the reference group for a spec
+that pins each mask by sha256, with the framing bounds in the spec's axes (--up-axis y for glTF axes).
+Make the masks from a blockout of the shape you want, and save them beside the spec.`;
+
+export const USAGE = `${JUDGE_USAGE}\n\n${CLOSEUPS_USAGE}\n\n${SILHOUETTES_USAGE}\n\n${DIFF_USAGE}\n\n${VISUAL_EVAL_USAGE}`;
 
 export class UsageError extends Error {}
 
@@ -133,6 +144,40 @@ function parseCloseups(argv: string[]) {
   };
 }
 
+function parseViews(text: string | undefined): (typeof VIEWS)[number][] {
+  if (text === undefined) return SILHOUETTE_DEFAULTS.views;
+  const views = text.split(",").filter((view) => view.length > 0);
+  const unknown = views.filter((view) => !(VIEWS as readonly string[]).includes(view));
+  if (views.length === 0 || unknown.length > 0 || new Set(views).size !== views.length) throw new UsageError(`--views takes distinct views from ${VIEWS.join(", ")}`);
+  return views as (typeof VIEWS)[number][];
+}
+
+function parseSilhouettes(argv: string[]) {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    strict: true,
+    options: { ...SHARED_OPTIONS, views: { type: "string" }, size: { type: "string" }, "up-axis": { type: "string" } },
+  });
+  if (values.help) return { help: SILHOUETTES_USAGE };
+  const [assetPath, ...extra] = positionals;
+  if (assetPath === undefined || values.out === undefined || extra.length > 0) throw new UsageError(SILHOUETTES_USAGE);
+  const upAxis = values["up-axis"] ?? "z";
+  if (upAxis !== "z" && upAxis !== "y") throw new UsageError("--up-axis must be z or y");
+  return {
+    command: "silhouettes" as const,
+    assetPath,
+    outDir: values.out,
+    views: parseViews(values.views),
+    size: positive(values.size, "size", SILHOUETTE_DEFAULTS.size, 1),
+    upAxis: upAxis as "z" | "y",
+    timeoutMs: positive(values.timeout, "timeout", SILHOUETTE_DEFAULTS.timeoutMs, 1000),
+    memoryBytes: positive(values["memory-mb"], "memory-mb", DEFAULTS.memoryBytes, MEGABYTE),
+    maxTriangles: positive(values["max-triangles"], "max-triangles", DEFAULTS.maxTriangles, 1),
+    maxFileBytes: positive(values["max-file-mb"], "max-file-mb", DEFAULTS.maxFileBytes, MEGABYTE),
+  };
+}
+
 function parseVisualEval(argv: string[]) {
   const { values, positionals } = parseArgs({
     args: argv,
@@ -168,6 +213,7 @@ export function parseCommand(argv: string[]) {
   if (command === "diff") return parseDiff(rest);
   if (command === "visual-eval") return parseVisualEval(rest);
   if (command === "package") return parsePackageCommand(rest);
+  if (command === "silhouettes") return parseSilhouettes(rest);
   if (command === "--help" || command === "-h") return { help: USAGE };
   throw new UsageError(USAGE);
 }
@@ -219,6 +265,17 @@ export async function main(argv: string[]): Promise<number> {
     const report = await judge(options);
     console.log(report.summary);
     return report.passed ? 0 : 1;
+  }
+  if (command.command === "silhouettes") {
+    const { command: _, ...options } = command;
+    try {
+      console.log(silhouettesSummary(await silhouettes(options)));
+      return 0;
+    } catch (error) {
+      if (!(error instanceof StageFailure)) throw error;
+      console.error(`silhouettes failed: ${error.failure.stage}: ${error.failure.message} [${error.failure.code}]`);
+      return 1;
+    }
   }
   if (command.command === "package") {
     const { command: _, ...options } = command;

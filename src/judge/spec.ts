@@ -1,9 +1,13 @@
 import { readFileSync } from "node:fs";
 import { z } from "zod";
+import { animationRule, MOTION_FORMATS, rigRule, skinRule, vertexColorsRule } from "./motion-spec.js";
+import { referenceRule } from "./reference-spec.js";
+import { count, countRange, glob, length, minNotOverMax, ordered, point, ratio, sizeRule, VIEWS } from "./spec-shapes.js";
 import { visualRule } from "./visual/spec.js";
 
+export { VIEWS } from "./spec-shapes.js";
+
 export const FORMATS = ["glb", "gltf", "fbx", "obj", "blend"] as const;
-export const VIEWS = ["front", "back", "left", "right", "top", "bottom", "three-quarter"] as const;
 export const ORIGINS = ["bottom-centre", "centre"] as const;
 export const DEFAULT_VIEWS = ["front", "back", "left", "right", "top", "three-quarter"] as const;
 export const TEXTURE_KINDS = ["baseColor", "metallicRoughness", "normal", "emissive", "occlusion"] as const;
@@ -13,38 +17,11 @@ export const MAX_FLOATING_TOLERANCE = 1;
 export const UP_AXES = ["z", "y"] as const;
 export const MAX_NAMED_OBJECTS = 64;
 
-const count = z.number().int().nonnegative();
-const ratio = z.number().min(0).max(1);
-const length = z.number().nonnegative();
-
-const minNotOverMax = { message: "min must not exceed max" };
-const ordered = (value: { min?: number | undefined; max?: number | undefined }) => value.min === undefined || value.max === undefined || value.min <= value.max;
-
-const countRange = z.strictObject({ min: count.optional(), max: count.optional() }).refine(ordered, minNotOverMax);
-
 const triangleRange = z.strictObject({ min: count.optional(), max: count.optional(), minVisible: count.optional() }).refine(ordered, minNotOverMax);
-
-const lengthRange = z
-  .tuple([length, length])
-  .refine(([low, high]) => low <= high, { message: "the first number (minimum) must not exceed the second (maximum)" });
-
-const sizeRule = z
-  .strictObject({ x: lengthRange.optional(), y: lengthRange.optional(), z: lengthRange.optional(), minExtent: length.optional(), maxExtent: length.optional() })
-  .refine((value) => value.minExtent === undefined || value.maxExtent === undefined || value.minExtent <= value.maxExtent, {
-    message: "minExtent must not exceed maxExtent",
-  });
-
-const point = z.tuple([z.number().finite(), z.number().finite(), z.number().finite()]);
 
 const originRule = z.union([z.enum(ORIGINS), z.strictObject({ point, tolerance: length })]);
 
 const manifoldRule = z.union([z.boolean(), z.strictObject({ required: z.boolean().optional(), noInverted: z.boolean().optional() })]);
-
-const glob = z
-  .string()
-  .min(1)
-  .max(200)
-  .regex(/^[^\x00-\x1f]+$/, { message: "a name pattern has no control characters" });
 
 const namedObject = z.strictObject({
   name: glob,
@@ -146,6 +123,11 @@ const baseSchema = z.strictObject({
   visual: visualRule.optional(),
   lods: lods.optional(),
   package: packageRule.optional(),
+  rig: rigRule.optional(),
+  skin: skinRule.optional(),
+  animation: animationRule.optional(),
+  vertexColors: vertexColorsRule.optional(),
+  reference: referenceRule.optional(),
 });
 
 export const assetSpecSchema = baseSchema
@@ -153,7 +135,16 @@ export const assetSpecSchema = baseSchema
     message: "the gltf rules need format glb or gltf",
     path: ["gltf"],
   })
-  .refine((spec) => spec.visual === undefined || spec.brief !== undefined, { message: "the visual rule needs a brief", path: ["visual"] });
+  .refine((spec) => spec.visual === undefined || spec.brief !== undefined, { message: "the visual rule needs a brief", path: ["visual"] })
+  .refine((spec) => spec.animation === undefined || MOTION_FORMATS.includes(spec.format), {
+    message: `the animation rules need format ${MOTION_FORMATS.join(", ")}: the judge reads no FBX or OBJ animation`,
+    path: ["animation"],
+  })
+  .refine((spec) => spec.animation?.boundsWithin !== true || spec.size !== undefined, { message: "animation.boundsWithin true applies the size rule, so it needs size", path: ["animation", "boundsWithin"] })
+  .refine((spec) => (spec.rig === undefined && spec.skin === undefined && spec.animation === undefined) || (spec.lods === undefined && spec.package === undefined), {
+    message: "rig, skin and animation rules cannot be combined with lods or package: packaging refuses skinned meshes and shape keys",
+    path: ["lods"],
+  });
 
 export type AssetSpec = z.infer<typeof assetSpecSchema>;
 export type LodsRule = z.infer<typeof lods>;

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { motionMeasurements } from "./motion-measurements.js";
 import { FORMATS, TEXTURE_KINDS } from "./spec.js";
 
 const finite = z.number().finite();
@@ -98,7 +99,7 @@ const measured = {
   externalFilesRefused: z.array(z.string().max(200)).max(1000),
 };
 
-const optional = { textures: texturesSchema.optional(), floating: floatingSchema.optional(), objectList: objectListSchema.optional() };
+const optional = { textures: texturesSchema.optional(), floating: floatingSchema.optional(), objectList: objectListSchema.optional(), ...motionMeasurements };
 
 export const scriptMeasurementsSchema = z.object({ format: z.enum(FORMATS), ...measured, ...optional });
 

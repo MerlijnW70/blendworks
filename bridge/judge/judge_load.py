@@ -102,6 +102,8 @@ def load_blend_data(path):
     if not 0 < unit_scale < float("inf"):
         raise JudgeError("corrupt", f"the .blend scene has an invalid unit scale {unit_scale}")
     judge_scene = bpy.context.scene
+    judge_scene.render.fps = loaded.render.fps
+    judge_scene.render.fps_base = loaded.render.fps_base
     for child in list(loaded.collection.children):
         judge_scene.collection.children.link(child)
     for obj in list(loaded.collection.objects):
@@ -179,7 +181,7 @@ def load_asset(path, triangle_cap):
         document, binary = gltf_document(path, file_format)
         gltf_referenced_files(path, document)
         precheck_gltf(document, os.path.dirname(os.path.abspath(path)), binary, triangle_cap)
-        run_importer(bpy.ops.import_scene.gltf, filepath=path, merge_vertices=True, import_pack_images=False)
+        run_importer(bpy.ops.import_scene.gltf, filepath=path, merge_vertices=True, import_pack_images=False, disable_bone_shape=True)
     elif file_format == "fbx":
         run_importer(bpy.ops.import_scene.fbx, filepath=path, use_image_search=False, use_anim=False)
     elif file_format == "obj":
