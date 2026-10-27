@@ -43,11 +43,18 @@ export const WORKFLOWS: Workflow[] = [
     note: "Text, numbers and zodiac or planet symbols ({aries}, {sun}) go into a surface with blender_engrave: a plane, a face region, a cylinder band or a curve. repeat makes a scale, for example a number every 10 degrees. Brass ageing comes from blender_material_procedural brass and a cavity layer.",
   },
   {
+    id: "terrain-tiles",
+    goal: "Terrain tiles",
+    examples: ["landscape", "mountains", "heightmap ground", "terrain with ridges", "tiles that join"],
+    steps: ["blender_heightfield", "blender_material_procedural"],
+    note: "blender_heightfield samples one noise field at world metres, so tile [1, 0] continues tile [0, 0] with no seam: give every tile the same seed and noise settings and a different tile. Keep the finest octave at least two vertex spacings long. skirt true closes a tile into a solid; attributes slope, height and curvature are kept for masks. Roughen a rock or a cliff with blender_noise_displace.",
+  },
+  {
     id: "rock-set",
     goal: "Rock set",
     examples: ["boulders", "stones", "scatter rocks", "cliff pieces"],
-    steps: ["blender_add_primitive", "blender_displace_noise", "blender_shade_flat", "blender_material_procedural", "blender_instances", "blender_uv_smart_project", "blender_bake", "blender_generate_lods", "blender_export"],
-    note: "Start from an ico sphere, add seeded dents or jitter with blender_displace_noise, give it the stone preset, and place variants with blender_instances at points; realize true merges them for export.",
+    steps: ["blender_add_primitive", "blender_noise_displace", "blender_displace_noise", "blender_shade_flat", "blender_material_procedural", "blender_instances", "blender_uv_smart_project", "blender_bake", "blender_generate_lods", "blender_export"],
+    note: "Start from an ico sphere, shape it with blender_noise_displace (fractal noise in metres: billow for lumps, worley ridged for cracks), add seeded dents or jitter with blender_displace_noise, give it the stone preset, and place variants with blender_instances at points; realize true merges them for export.",
   },
   {
     id: "pipes",

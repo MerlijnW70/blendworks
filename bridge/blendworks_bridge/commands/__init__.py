@@ -14,6 +14,8 @@ MODULES = (
     "roller_chain",
     "mesh_query",
     "wear",
+    "noise_displace",
+    "heightfield",
     "clean",
     "engrave",
     "scales",
