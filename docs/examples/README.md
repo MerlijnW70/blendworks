@@ -40,3 +40,24 @@ It runs these steps in order, and stops at the first failing command:
 3. **Materials and renders.** Stone presets, then the five renders.
 
 `BLENDWORKS_TERRAIN_RESOLUTION`, `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+
+## Scatter rocks
+
+`scatter_rocks.py` scatters a rock set over a 100 m `heightfield` tile with commands only and renders it. It is the acceptance build of the `scatter` job.
+
+```
+blender --background --factory-startup --python docs/examples/scatter_rocks.py -- out
+```
+
+The script writes into `out`:
+- `scatter-rocks.blend`;
+- four PNGs: `overview`, `slope` and `closeup` (shaded), and `top` (clay, looking straight down, where the spacing shows);
+- `summary.json`: every command with its time and, for `scatter`, the count, the smallest pairwise distance, the masked-out share and the fitted exponent.
+
+It runs these steps in order, and stops at the first failing command:
+1. **Terrain.** One `heightfield` tile with a skirt and the `slope` and `height` attributes, and a ground material.
+2. **Rocks.** Three ico spheres, each flattened, shaped by three `noise_displace` passes and given its base at the origin with `set_origin` to `bottom_centre`, so the origin is the point that touches the ground.
+3. **Scatter.** One `scatter` call with the three rocks as `sources`, `min_distance` 0.6 m (the 2 m rock footprint at the smallest scale 0.3), a `slope` mask that keeps faces up to 38 degrees, a `power` size distribution with exponent -2 from scale 0.3 to 2.4, `align` blend, a 6 degree tilt and an `embed` of 0.22. The source rocks are deleted afterwards; the copies keep sharing their meshes.
+4. **Renders.** Four views.
+
+`BLENDWORKS_TERRAIN_RESOLUTION`, `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.

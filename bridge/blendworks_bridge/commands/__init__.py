@@ -11,6 +11,7 @@ MODULES = (
     "shapes",
     "solids",
     "placement",
+    "scatter",
     "roller_chain",
     "mesh_query",
     "wear",

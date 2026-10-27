@@ -50,6 +50,13 @@ export const WORKFLOWS: Workflow[] = [
     note: "blender_heightfield samples one noise field at world metres, so tile [1, 0] continues tile [0, 0] with no seam: give every tile the same seed and noise settings and a different tile. Keep the finest octave at least two vertex spacings long. skirt true closes a tile into a solid; attributes slope, height and curvature are kept for masks. Roughen a rock or a cliff with blender_noise_displace.",
   },
   {
+    id: "scatter-terrain",
+    goal: "Scatter rocks or plants over terrain",
+    examples: ["scatter rocks on terrain", "rubble on a slope", "plants on the ground", "trees over a hillside", "pebbles with natural spacing"],
+    steps: ["blender_heightfield", "blender_noise_displace", "blender_set_origin", "blender_scatter", "blender_material_procedural"],
+    note: "Model each piece with its base at the origin (blender_set_origin to bottom_centre), then blender_scatter over the terrain: min_distance is the spacing of the smallest pieces in metres, measured in 3D so it holds on slopes; density_mask slope with slope_range keeps pieces off steep faces, or attribute with the slope or height that blender_heightfield writes. scale_distribution power with the default exponent -2 gives many small stones and a few large ones, and larger pieces keep proportionally more room. embed 0.2 sinks each piece so it does not float on a slope; align blend leans it with the ground. sources takes several pieces with weights; the same seed gives the same layout. blender_instances stays for points you choose yourself.",
+  },
+  {
     id: "rock-set",
     goal: "Rock set",
     examples: ["boulders", "stones", "scatter rocks", "cliff pieces"],
