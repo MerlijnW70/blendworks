@@ -34,7 +34,7 @@ export class BlenderNotFoundError extends Error {
 
 export function defaultBlenderLocations(os: NodeJS.Platform, env: NodeJS.ProcessEnv, home: string): string[] {
   if (os === "win32") {
-    const programFiles = env["ProgramFiles"] ?? "C:\Program Files";
+    const programFiles = env["ProgramFiles"] ?? "C:\\Program Files";
     const local = env["LOCALAPPDATA"] ?? join(home, "AppData", "Local");
     return [
       join(programFiles, "Blender Foundation", `Blender ${BLENDER_VERSION}`, "blender.exe"),

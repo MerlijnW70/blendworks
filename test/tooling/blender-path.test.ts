@@ -41,6 +41,11 @@ describe("resolving Blender", () => {
     expect(resolveBlender({ env, platform: "win32", home: "C:\\Users\\dev", exists: only(defaults[1] as string) }).path).toBe(defaults[1]);
   });
 
+  it("falls back to C:\\Program Files when ProgramFiles is not set", () => {
+    const defaults = defaultBlenderLocations("win32", {}, "C:\\Users\\dev");
+    expect(defaults[0]?.startsWith("C:\\Program Files\\Blender Foundation")).toBe(true);
+  });
+
   it("knows the macOS app bundle", () => {
     expect(defaultBlenderLocations("darwin", {}, HOME)[0]).toBe("/Applications/Blender.app/Contents/MacOS/Blender");
   });
