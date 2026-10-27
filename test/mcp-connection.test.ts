@@ -30,7 +30,7 @@ describe("requests", () => {
     const result = await call(harness.client, "blender_slow", { ms: 0 });
     expect(Date.now() - started).toBeLessThan(3000);
     expect(result.isError).toBe(true);
-    expect(texts(result)).toMatch(/^timeout: slow got no reply within 0\.2 s\. Stopped the stuck session and restarted it once/);
+    expect(texts(result)).toMatch(/^timeout: slow got no reply within 0\.2 s\. Stopped the session\. Restarted it\. The scene is empty \(there was no autosave yet\)/);
     expect(harness.bridge.sessions).toHaveLength(2);
     const after = await call(harness.client, "blender_add_primitive", { type: "cube" });
     expect(after.isError).toBeFalsy();
@@ -53,17 +53,28 @@ describe("requests", () => {
 });
 
 describe("a crashed headless session", () => {
-  it("is restarted once, and the restart is reported", async () => {
+  it("is restarted once, reloads the autosave, and says which state it restored", async () => {
     harness = await headlessHarness({ crashOn: new Set(["slow"]) });
     await call(harness.client, "blender_add_primitive", { type: "cube" });
     const crashed = await call(harness.client, "blender_slow", { ms: 0 });
     expect(crashed.isError).toBe(true);
-    expect(texts(crashed)).toMatch(/^crashed: Blender stopped while running slow \(the bridge closed the connection\)\. Restarted the session once; the scene is empty now/);
+    expect(texts(crashed)).toBe(
+      "crashed: Blender stopped while running slow (the bridge closed the connection). Restarted it. Reloaded .blendworks/autosave.blend saved at 2026-10-27T12:00:00Z (after add_primitive); the scene has 1 object. Changes after that autosave are lost; check with blender_scene_info before continuing.",
+    );
     expect(harness.bridge.sessions).toHaveLength(2);
     expect(harness.started.connection.restarts).toBe(1);
+    expect(harness.bridge.requests.at(-1)?.cmd).toBe("recover");
     const info = await call(harness.client, "blender_scene_info");
     expect(info.isError).toBeFalsy();
-    expect(JSON.parse(texts(info))).toEqual({ objects: [] });
+    expect(JSON.parse(texts(info))).toEqual({ objects: [{ name: "cube.0" }] });
+  });
+
+  it("starts empty and says so when the bridge offers no recover command", async () => {
+    harness = await headlessHarness({ crashOn: new Set(["slow"]), noRecover: true });
+    await call(harness.client, "blender_add_primitive", { type: "cube" });
+    const crashed = await call(harness.client, "blender_slow", { ms: 0 });
+    expect(texts(crashed)).toMatch(/Started a fresh session; the scene is empty, so rebuild it before continuing\.$/);
+    expect(harness.bridge.requests.map((request) => request.cmd)).not.toContain("recover");
   });
 
   it("that stopped between requests is restarted before the next one, with a notice", async () => {
@@ -72,7 +83,7 @@ describe("a crashed headless session", () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     const result = await call(harness.client, "blender_add_primitive", { type: "cube" });
     expect(result.isError).toBeFalsy();
-    expect(texts(result)).toContain("The Blender session had stopped (the bridge closed the connection). Started a fresh session");
+    expect(texts(result)).toContain("The Blender session had stopped (the bridge closed the connection). Restarted it. The scene is empty (there was no autosave yet)");
     expect(harness.bridge.sessions).toHaveLength(2);
   });
 

@@ -39,6 +39,10 @@ export class LineLink implements BridgeLink {
     this.shutdown();
   }
 
+  kill(): Promise<void> {
+    return this.close();
+  }
+
   onClose(listener: (reason: string) => void): void {
     if (this.closedReason !== undefined) listener(this.closedReason);
     else this.closeListeners.push(listener);

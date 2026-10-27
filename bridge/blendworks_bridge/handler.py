@@ -3,14 +3,17 @@ import json
 import bpy
 
 from . import commands
+from .autosave import Autosave, interval_from_environment
 from .errors import BridgeError, bad_args, forbidden
 from .operators import operator_context
+from .policy import REPLACES_FILE, UNDO
 from .registry import COMMANDS, Registry
 from .schema import validate
-from .transaction import Transaction
+from .transaction import NoSnapshot, Transaction
 from .workspace import Workspace
 
 PYTHON_COMMAND = "run_python"
+FROM_ENVIRONMENT = "environment"
 
 
 class Context:
@@ -31,13 +34,19 @@ class Context:
 
 
 class Handler:
-    def __init__(self, workspace, allow_python=False, desktop=False):
+    def __init__(self, workspace, allow_python=False, desktop=False, autosave_seconds=FROM_ENVIRONMENT):
         commands.load()
         self.workspace = workspace if isinstance(workspace, Workspace) else Workspace(workspace)
         self.allow_python = bool(allow_python)
         self.desktop = bool(desktop)
         available = {name: cmd for name, cmd in COMMANDS.items() if self.allow_python or name != PYTHON_COMMAND}
         self.registry = Registry(available)
+        if self.desktop:
+            autosave_seconds = None
+        elif autosave_seconds == FROM_ENVIRONMENT:
+            autosave_seconds = interval_from_environment()
+        self.autosave = Autosave(self.workspace, autosave_seconds)
+        self.snapshots = 0
 
     def handle_line(self, line):
         if isinstance(line, bytes):
@@ -70,7 +79,8 @@ class Handler:
         cleaned = validate(command.schema, args)
         if command.mutates and self.desktop:
             ensure_object_mode()
-        txn = Transaction(bpy.context.scene, bpy.context.view_layer)
+        self.autosave.before(command)
+        txn = self.transaction(command)
         try:
             result = command.run(Context(self, txn), cleaned)
             json.dumps(result, allow_nan=False)
@@ -80,13 +90,19 @@ class Handler:
         except Exception as error:
             txn.rollback()
             raise BridgeError("failed", f"{name} failed: {type(error).__name__}: {error}") from error
-        if command.mutates:
-            txn.commit()
-            if self.desktop:
-                push_undo(name)
-        else:
-            txn.rollback()
+        txn.commit()
+        if command.snapshot == UNDO:
+            self.autosave.after(command)
+        elif command.snapshot == REPLACES_FILE:
+            self.autosave.replaced(command)
         return result
+
+    def transaction(self, command):
+        if command.snapshot != UNDO:
+            return NoSnapshot()
+        txn = Transaction(command.name, self.desktop).begin()
+        self.snapshots += 1
+        return txn
 
 
 def parse_request(request):
@@ -132,11 +148,3 @@ def ensure_object_mode():
         return
     with bpy.context.temp_override(**operator_context(obj)):
         bpy.ops.object.mode_set(mode="OBJECT")
-
-
-def push_undo(name):
-    try:
-        if bpy.ops.ed.undo_push.poll():
-            bpy.ops.ed.undo_push(message=f"Blendworks: {name}")
-    except RuntimeError:
-        pass

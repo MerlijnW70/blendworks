@@ -2,6 +2,7 @@ import math
 
 import bmesh
 import bpy
+import numpy
 from mathutils import Euler, Matrix, Vector
 
 from .errors import bad_args, failed, not_found
@@ -76,7 +77,12 @@ def place(obj, location=None, rotation=None):
 
 
 def triangle_count(mesh):
-    return sum(len(polygon.vertices) - 2 for polygon in mesh.polygons)
+    faces = len(mesh.polygons)
+    if faces == 0:
+        return 0
+    sizes = numpy.empty(faces, dtype=numpy.int32)
+    mesh.polygons.foreach_get("loop_total", sizes)
+    return int(sizes.sum(dtype=numpy.int64)) - 2 * faces
 
 
 def mesh_counts(mesh):
@@ -117,13 +123,60 @@ def bounds_dict(bounds):
     return {"min": vec(low), "max": vec(high), "size": vec(high - low), "centre": vec((low + high) / 2)}
 
 
-def scene_bounds(ctx, objects=None):
+def local_coordinates(mesh):
+    flat = numpy.empty(len(mesh.vertices) * 3, dtype=numpy.float32)
+    mesh.vertices.foreach_get("co", flat)
+    return flat.reshape(-1, 3).astype(numpy.float64)
+
+
+def world_coordinates(obj, depsgraph):
+    if obj.type not in GEOMETRY_TYPES:
+        return numpy.empty((0, 3))
+    evaluated = obj.evaluated_get(depsgraph)
+    matrix = numpy.array(evaluated.matrix_world, dtype=numpy.float64)
+    if obj.type == "MESH" and obj.mode == "OBJECT" and len(obj.modifiers) == 0 and obj.data.shape_keys is None:
+        local = local_coordinates(obj.data)
+    else:
+        mesh = evaluated.to_mesh()
+        try:
+            local = local_coordinates(mesh) if mesh is not None else numpy.empty((0, 3))
+        finally:
+            evaluated.to_mesh_clear()
+    return local @ matrix[:3, :3].T + matrix[:3, 3]
+
+
+def array_bounds(points):
+    if len(points) == 0:
+        return None
+    return Vector(points.min(axis=0)), Vector(points.max(axis=0))
+
+
+def object_bounds(obj, depsgraph):
+    return array_bounds(world_coordinates(obj, depsgraph))
+
+
+def merge_bounds(bounds):
+    present = [entry for entry in bounds if entry is not None]
+    if not present:
+        return None
+    low = Vector((min(b[0].x for b in present), min(b[0].y for b in present), min(b[0].z for b in present)))
+    high = Vector((max(b[1].x for b in present), max(b[1].y for b in present), max(b[1].z for b in present)))
+    return low, high
+
+
+def scene_bounds(ctx, objects=None, cache=None):
     depsgraph = ctx.depsgraph()
-    points = []
+    found = []
     for obj in objects if objects is not None else ctx.scene.objects:
         if obj.type in GEOMETRY_TYPES and obj.visible_get(view_layer=ctx.view_layer):
-            points.extend(evaluated_points(obj, depsgraph))
-    return bounds_of(points)
+            if cache is not None and obj.name in cache:
+                found.append(cache[obj.name])
+                continue
+            bounds = object_bounds(obj, depsgraph)
+            if cache is not None:
+                cache[obj.name] = bounds
+            found.append(bounds)
+    return merge_bounds(found)
 
 
 def local_bounds(mesh):
@@ -169,7 +222,7 @@ def identity():
     return Matrix.Identity(4)
 
 
-def object_summary(obj, view_layer, depsgraph):
+def object_summary(obj, view_layer, depsgraph, cache=None):
     entry = {
         "name": obj.name,
         "type": obj.type.lower(),
@@ -182,7 +235,13 @@ def object_summary(obj, view_layer, depsgraph):
         "selected": obj.select_get(view_layer=view_layer),
     }
     if obj.type in GEOMETRY_TYPES:
-        entry["bounds"] = bounds_dict(bounds_of(evaluated_points(obj, depsgraph)))
+        if cache is not None and obj.name in cache:
+            bounds = cache[obj.name]
+        else:
+            bounds = object_bounds(obj, depsgraph)
+            if cache is not None:
+                cache[obj.name] = bounds
+        entry["bounds"] = bounds_dict(bounds)
         entry["materials"] = [slot.material.name if slot.material else None for slot in obj.material_slots]
     if obj.type == "MESH":
         entry["mesh"] = mesh_counts(obj.data)

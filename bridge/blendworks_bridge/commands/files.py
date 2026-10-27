@@ -3,12 +3,15 @@ import os
 
 import bpy
 
+from ..blendfile import open_blend, save_atomically
 from ..errors import bad_args, failed, forbidden
 from ..operators import only_selected, operator_context
+from ..policy import REPLACES_FILE
 from ..registry import command
 from ..schema import boolean, names, string
 from ..util import GEOMETRY_TYPES, get_objects
 from ..workspace import IMPORT_EXTENSIONS
+from .checkpoints import DISCARD, ensure_may_replace, opened
 
 EXPORT_FORMATS = {"glb": ".glb", "fbx": ".fbx", "obj": ".obj"}
 EXPORTABLE_TYPES = GEOMETRY_TYPES + ("EMPTY",)
@@ -21,9 +24,13 @@ EXPORTABLE_TYPES = GEOMETRY_TYPES + ("EMPTY",)
         "path": string("File path inside the workspace, relative to it.", max_length=1024),
         "format": string("File format. Default: from the path's extension.", list(EXPORT_FORMATS)),
         "names": names("Objects to export. Default: every visible mesh, curve and text object."),
+        "ancestors": boolean("Also export the empties these objects are parented under, so the hierarchy survives.", True),
     },
     ["path"],
     mutates=False,
+    slow=True,
+    writes_files=True,
+    destructive_when="the file already exists",
 )
 def export(ctx, args):
     extension = os.path.splitext(args["path"])[1].lower()
@@ -40,6 +47,8 @@ def export(ctx, args):
     objects = [obj for obj in objects if obj.type in EXPORTABLE_TYPES]
     if not objects:
         raise bad_args("there is nothing to export")
+    if args["ancestors"]:
+        objects = with_ancestor_empties(objects, ctx.scene)
     active = objects[0]
     with only_selected(ctx.view_layer, active, objects):
         with bpy.context.temp_override(**operator_context(active, objects)):
@@ -52,6 +61,19 @@ def export(ctx, args):
         "bytes": os.path.getsize(path),
         "objects": sorted(obj.name for obj in objects),
     }
+
+
+def with_ancestor_empties(objects, scene):
+    chosen = list(objects)
+    seen = {obj.name for obj in chosen}
+    for obj in objects:
+        parent = obj.parent
+        while parent is not None:
+            if parent.type == "EMPTY" and parent.name not in seen and parent.name in scene.objects:
+                seen.add(parent.name)
+                chosen.append(parent)
+            parent = parent.parent
+    return chosen
 
 
 def run_exporter(file_format, path):
@@ -89,13 +111,29 @@ def run_exporter(file_format, path):
     {"path": string("File path inside the workspace, relative to it.", max_length=1024)},
     ["path"],
     mutates=False,
+    slow=True,
+    writes_files=True,
+    destructive_when="the file already exists",
 )
 def save_blend(ctx, args):
     path = ctx.workspace.output(args["path"], (".blend",))
-    bpy.ops.wm.save_as_mainfile(filepath=path, copy=True, check_existing=False)
-    if not os.path.isfile(path):
-        raise failed("saving wrote no file")
-    return {"path": ctx.workspace.relative(path), "bytes": os.path.getsize(path)}
+    return {"path": ctx.workspace.relative(path), "bytes": save_atomically(path)}
+
+
+@command(
+    "load_blend",
+    "Open a .blend file from the workspace in place of the scene; its scripts and drivers never run.",
+    {"path": string("File path inside the workspace, relative to it.", max_length=1024), "discard_unsaved": DISCARD},
+    ["path"],
+    slow=True,
+    destructive=True,
+    snapshot=REPLACES_FILE,
+)
+def load_blend(ctx, args):
+    path = ctx.workspace.existing(args["path"], (".blend",))
+    ensure_may_replace(ctx, args["discard_unsaved"])
+    open_blend(path)
+    return opened(ctx, path)
 
 
 @command(

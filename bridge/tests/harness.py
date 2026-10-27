@@ -15,8 +15,8 @@ from blendworks_bridge.commands.scene import reset_scene
 
 
 class Bridge:
-    def __init__(self, workspace, allow_python=False, desktop=False):
-        self.handler = Handler(workspace, allow_python=allow_python, desktop=desktop)
+    def __init__(self, workspace, allow_python=False, desktop=False, autosave_seconds=None):
+        self.handler = Handler(workspace, allow_python=allow_python, desktop=desktop, autosave_seconds=autosave_seconds)
         self.workspace = self.handler.workspace.root
         self.next_id = 0
 

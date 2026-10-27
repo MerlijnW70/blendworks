@@ -1,15 +1,16 @@
 import bpy
 
 from .. import limits
-from ..materials_info import material_summary
+from ..inspect_scene import DETAILS, scene_report
 from ..registry import command
-from ..schema import names, string
-from ..util import bounds_dict, get_object, get_objects, object_summary, scene_bounds, triangle_count, vec
+from ..schema import integer, names, string
+from ..util import get_object, get_objects
+from .checkpoints import list_checkpoints
 
-PROTOCOL_VERSION = 1
+PROTOCOL_VERSION = 2
 
 
-@command("describe", "List every command with its argument schema and a one-line description.", mutates=False)
+@command("describe", "List every command with its argument schema, metadata and a one-line description.", mutates=False, internal=True)
 def describe(ctx, args):
     return {
         "protocol": PROTOCOL_VERSION,
@@ -17,6 +18,7 @@ def describe(ctx, args):
         "units": {"length": "metres", "angle": "degrees"},
         "transport": "desktop" if ctx.desktop else "headless",
         "python": ctx.allow_python,
+        "autosave": ctx.handler.autosave.status(),
         "limits": {
             "mesh_from_data_vertices": limits.MAX_MESH_FROM_DATA_VERTICES,
             "mesh_vertices": limits.MAX_MESH_VERTICES,
@@ -25,6 +27,8 @@ def describe(ctx, args):
             "image_size": limits.MAX_IMAGE_SIZE,
             "bake_size": limits.MAX_BAKE_SIZE,
             "bake_seconds": limits.MAX_BAKE_SECONDS,
+            "scene_info_limit": limits.MAX_SCENE_INFO_LIMIT,
+            "checkpoints": limits.MAX_CHECKPOINTS,
         },
         "commands": ctx.registry.describe(),
     }
@@ -32,43 +36,20 @@ def describe(ctx, args):
 
 @command(
     "scene_info",
-    "Report objects, mesh counts (vertices, faces, triangles), materials, cameras, lights, bounds and units.",
+    "Report totals, a page of objects (counts, bounds, materials), materials, cameras, lights, units and checkpoints.",
+    {
+        "detail": string("summary: totals only; objects: plus a page of objects; full: plus custom properties and materials.", DETAILS, "objects"),
+        "names": string("Only objects whose name matches this glob, for example Bolt* or *_low."),
+        "limit": integer("Objects per page.", 1, limits.MAX_SCENE_INFO_LIMIT, limits.DEFAULT_SCENE_INFO_LIMIT),
+        "offset": integer("Objects to skip, for the next page.", 0, None, 0),
+    },
     mutates=False,
 )
 def scene_info(ctx, args):
-    scene = ctx.scene
-    depsgraph = ctx.depsgraph()
-    objects = [object_summary(obj, ctx.view_layer, depsgraph) for obj in sorted(scene.objects, key=lambda o: o.name)]
-    meshes = [obj for obj in scene.objects if obj.type == "MESH"]
-    used_materials = sorted(
-        {slot.material.name for obj in scene.objects for slot in obj.material_slots if slot.material is not None}
-    )
-    return {
-        "objects": objects,
-        "totals": {
-            "objects": len(objects),
-            "meshes": len(meshes),
-            "vertices": sum(len(obj.data.vertices) for obj in meshes),
-            "faces": sum(len(obj.data.polygons) for obj in meshes),
-            "triangles": sum(triangle_count(obj.data) for obj in meshes),
-        },
-        "materials": [material_summary(material) for material in sorted(bpy.data.materials, key=lambda m: m.name)],
-        "used_materials": used_materials,
-        "cameras": sorted(obj.name for obj in scene.objects if obj.type == "CAMERA"),
-        "active_camera": scene.camera.name if scene.camera else None,
-        "lights": sorted(obj.name for obj in scene.objects if obj.type == "LIGHT"),
-        "bounds": bounds_dict(scene_bounds(ctx)),
-        "cursor": vec(scene.cursor.location),
-        "units": {
-            "system": scene.unit_settings.system.lower(),
-            "length": scene.unit_settings.length_unit.lower(),
-            "scale_length": scene.unit_settings.scale_length,
-            "angle": "degrees",
-        },
-    }
+    return scene_report(ctx, args["detail"], args.get("names"), args["limit"], args["offset"], list_checkpoints(ctx.workspace))
 
 
-@command("new_scene", "Clear the scene: remove every object and unused data, metric units in metres.")
+@command("new_scene", "Clear the scene: remove every object and unused data, metric units in metres.", destructive=True)
 def new_scene(ctx, args):
     removed = reset_scene(ctx.scene)
     return {"removed_objects": removed}
@@ -127,6 +108,7 @@ def select(ctx, args):
     "Delete objects by name; their children keep their place in the world.",
     {"names": names("Objects to delete.")},
     ["names"],
+    destructive=True,
 )
 def delete(ctx, args):
     objects = get_objects(args["names"])

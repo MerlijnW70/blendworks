@@ -12,7 +12,10 @@ export interface FakeOptions {
   hang?: Set<string>;
   crashOn?: Set<string>;
   delayMs?: number;
+  noRecover?: boolean;
 }
+
+type Spec = { description: string; schema: Record<string, unknown>; dangerous?: boolean; [meta: string]: unknown };
 
 function object(properties: Record<string, unknown>, required: string[] = []): Record<string, unknown> {
   return { type: "object", properties, required, additionalProperties: false };
@@ -20,10 +23,15 @@ function object(properties: Record<string, unknown>, required: string[] = []): R
 
 const VIEWS = ["front", "back", "left", "right", "top", "three-quarter"];
 
-const BASE_COMMANDS: Record<string, { description: string; schema: Record<string, unknown>; dangerous?: boolean }> = {
-  describe: { description: "List every command with its argument schema and a one-line description.", schema: object({}) },
-  scene_info: { description: "Report objects, meshes, materials, cameras, lights, bounds and units.", schema: object({}) },
+const READ_ONLY = { mutates: false, destructive: false, writes_files: false, timeout: 120, max_timeout: 600 };
+const EDIT = { mutates: true, destructive: false, writes_files: false, timeout: 120, max_timeout: 600 };
+
+const BASE_COMMANDS: Record<string, Spec> = {
+  describe: { description: "List every command with its argument schema and a one-line description.", schema: object({}), ...READ_ONLY, internal: true },
+  scene_info: { description: "Report objects, meshes, materials, cameras, lights, bounds and units.", schema: object({}), ...READ_ONLY },
+  recover: { description: "Reload the newest autosave.", schema: object({}), ...EDIT, internal: true, timeout: 300, max_timeout: 1800 },
   add_primitive: {
+    ...EDIT,
     description: "Add a primitive mesh object.",
     schema: object(
       {
@@ -36,10 +44,19 @@ const BASE_COMMANDS: Record<string, { description: string; schema: Record<string
     ),
   },
   render_preview: {
+    ...READ_ONLY,
+    timeout: 300,
+    max_timeout: 1800,
     description: "Render PNG previews (base64) of the scene.",
     schema: object({ views: { type: "array", description: "Turntable views.", items: { type: "string", enum: VIEWS }, minItems: 1, maxItems: 6 } }),
   },
   export: {
+    ...READ_ONLY,
+    writes_files: true,
+    destructive: true,
+    destructive_when: "the file already exists",
+    timeout: 300,
+    max_timeout: 1800,
     description: "Export the scene to a .glb, .fbx or .obj file in the workspace.",
     schema: object(
       {
@@ -49,10 +66,14 @@ const BASE_COMMANDS: Record<string, { description: string; schema: Record<string
       ["path"],
     ),
   },
-  slow: { description: "Wait before replying.", schema: object({ ms: { type: "integer", description: "Wait in ms.", minimum: 0, maximum: 10000 } }) },
+  slow: { ...EDIT, description: "Wait before replying.", schema: object({ ms: { type: "integer", description: "Wait in ms.", minimum: 0, maximum: 10000 } }) },
 };
 
-const RUN_PYTHON = {
+const RUN_PYTHON: Spec = {
+  ...EDIT,
+  destructive: true,
+  timeout: 300,
+  max_timeout: 1800,
   description: "Run Python code inside Blender.",
   schema: object({ code: { type: "string", description: "Python source.", minLength: 1 } }, ["code"]),
   dangerous: true,
@@ -64,11 +85,14 @@ export class FakeBridge {
   inFlight = 0;
   maxInFlight = 0;
   objects: string[] = [];
+  autosaved: string[] | undefined;
 
   constructor(readonly options: FakeOptions = {}) {}
 
-  commands(): Record<string, { description: string; schema: Record<string, unknown>; dangerous?: boolean }> {
-    return this.options.allowPython ? { ...BASE_COMMANDS, run_python: RUN_PYTHON } : { ...BASE_COMMANDS };
+  commands(): Record<string, Spec> {
+    const commands: Record<string, Spec> = this.options.allowPython ? { ...BASE_COMMANDS, run_python: RUN_PYTHON } : { ...BASE_COMMANDS };
+    if (this.options.noRecover) delete commands["recover"];
+    return commands;
   }
 
   describe(): Record<string, unknown> {
@@ -105,7 +129,14 @@ export class FakeBridge {
     if (cmd === "add_primitive") {
       const name = `${String(args["type"])}.${this.objects.length}`;
       this.objects.push(name);
+      this.autosaved = [...this.objects];
       return { id, ok: true, result: { object: name } };
+    }
+    if (cmd === "recover") {
+      if (this.autosaved === undefined) return { id, ok: true, result: { restored: false, reason: "there was no autosave yet" } };
+      this.objects = [...this.autosaved];
+      const result = { restored: true, path: ".blendworks/autosave.blend", saved_at: "2026-10-27T12:00:00Z", reason: "after add_primitive", objects: this.objects.length };
+      return { id, ok: true, result };
     }
     if (cmd === "scene_info") return { id, ok: true, result: { objects: this.objects.map((name) => ({ name })) } };
     if (cmd === "render_preview") {

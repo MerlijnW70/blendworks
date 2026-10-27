@@ -5,8 +5,6 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { blenderPath } from "../src/blender.js";
-import { BAKE_TIMEOUT_MS, DEFAULT_TIMEOUT_MS, defaultTimeoutFor } from "../src/mcp/connection.js";
-import { buildTools } from "../src/mcp/tools.js";
 import { scratchDir, texts, unusedPort } from "./mcp-helpers.js";
 
 const TEXTURE_TOOLS = [
@@ -37,18 +35,11 @@ function glbDocument(path: string): { materials: GlbMaterial[]; images: unknown[
 const MAX_BAKE_SECONDS = Number(/MAX_BAKE_SECONDS = ([\d.]+)/.exec(readFileSync(join("bridge", "blendworks_bridge", "limits.py"), "utf8"))?.[1]);
 
 describe("texture tool limits and hints", () => {
-  it("gives bake more time than its own cap and marks image_info read-only", () => {
+  it("gives bake more time than its own cap", () => {
+    const policy = readFileSync(join("bridge", "blendworks_bridge", "policy.py"), "utf8");
+    const bakeTimeout = Number(/"bake": \{[^}]*"timeout": (\d+)/.exec(policy)?.[1]);
     expect(MAX_BAKE_SECONDS).toBe(600);
-    expect(defaultTimeoutFor("bake")).toBe(BAKE_TIMEOUT_MS);
-    expect(BAKE_TIMEOUT_MS).toBeGreaterThanOrEqual(MAX_BAKE_SECONDS * 1000 + 30_000);
-    expect(defaultTimeoutFor("image_save")).toBe(DEFAULT_TIMEOUT_MS);
-    const schema = { type: "object" as const, properties: {}, additionalProperties: false };
-    const tools = buildTools([
-      { name: "image_info", description: "List images.", inputSchema: schema, pathFields: [], dangerous: false },
-      { name: "bake", description: "Bake.", inputSchema: schema, pathFields: [], dangerous: false },
-    ]);
-    expect(tools.get("blender_image_info")?.tool.annotations).toMatchObject({ readOnlyHint: true, openWorldHint: false });
-    expect(tools.get("blender_bake")?.tool.annotations).toMatchObject({ readOnlyHint: false });
+    expect(bakeTimeout).toBeGreaterThanOrEqual(MAX_BAKE_SECONDS + 30);
   });
 });
 
@@ -87,8 +78,12 @@ describe("texture, material and bake tools through the MCP server", () => {
   }
 
   it("lists the texture tools and bakes a procedural cube into a textured .glb", async () => {
-    const names = (await client.listTools()).tools.map((entry) => entry.name);
-    expect(names).toEqual(expect.arrayContaining(TEXTURE_TOOLS));
+    const listed = (await client.listTools()).tools;
+    expect(listed.map((entry) => entry.name)).toEqual(expect.arrayContaining(TEXTURE_TOOLS));
+    const bakeTool = listed.find((entry) => entry.name === "blender_bake");
+    expect(JSON.stringify(bakeTool?.inputSchema.properties?.["timeout_seconds"])).toContain("Default 660");
+    expect(listed.find((entry) => entry.name === "blender_image_info")?.annotations).toMatchObject({ readOnlyHint: true, openWorldHint: false });
+    expect(bakeTool?.annotations).toMatchObject({ readOnlyHint: false });
 
     await tool("blender_add_primitive", { type: "cube", name: "Crate", size: 1 });
     await tool("blender_uv_smart_project", { name: "Crate", island_margin: 0.02 });

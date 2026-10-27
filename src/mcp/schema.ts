@@ -6,7 +6,16 @@ export interface BridgeCommand {
   inputSchema: JsonSchema & { type: "object" };
   pathFields: string[];
   dangerous: boolean;
+  mutates: boolean;
+  destructive: boolean;
+  writesFiles: boolean;
+  internal: boolean;
+  timeoutMs: number;
+  maxTimeoutMs: number;
 }
+
+export const FALLBACK_TIMEOUT_MS = 120_000;
+export const FALLBACK_MAX_TIMEOUT_MS = 600_000;
 
 const KEPT_KEYWORDS = new Set([
   "type",
@@ -74,19 +83,31 @@ function pathFieldsOf(schema: JsonSchema): string[] {
     .map(([name]) => name);
 }
 
+function seconds(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.round(value * 1000) : undefined;
+}
+
 export function commandsFromDescribe(describe: Record<string, unknown>): BridgeCommand[] {
   const commands = Array.isArray(describe["commands"]) ? describe["commands"] : [];
   return commands.filter(isRecord).flatMap((command) => {
     const name = text(command["name"]);
     if (name === undefined || !/^[a-z][a-z0-9_]*$/.test(name)) return [];
     const inputSchema = convertObject(isRecord(command["schema"]) ? command["schema"] : {});
+    const timeoutMs = seconds(command["timeout"]) ?? FALLBACK_TIMEOUT_MS;
+    const dangerous = command["dangerous"] === true;
     return [
       {
         name,
         description: text(command["description"]) ?? `Runs the Blender bridge command ${name}.`,
         inputSchema,
         pathFields: pathFieldsOf(inputSchema),
-        dangerous: command["dangerous"] === true,
+        dangerous,
+        mutates: command["mutates"] !== false,
+        destructive: command["destructive"] === true || dangerous,
+        writesFiles: command["writes_files"] === true,
+        internal: command["internal"] === true,
+        timeoutMs,
+        maxTimeoutMs: Math.max(seconds(command["max_timeout"]) ?? FALLBACK_MAX_TIMEOUT_MS, timeoutMs),
       },
     ];
   });

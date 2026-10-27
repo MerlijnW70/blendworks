@@ -1,5 +1,4 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { defaultTimeoutFor } from "./connection.js";
 import { desktopPort } from "./desktop.js";
 import { startHeadlessSession } from "./headless.js";
 import { parseOptions, USAGE } from "./options.js";
@@ -18,7 +17,7 @@ async function main(): Promise<void> {
     port: desktopPort(),
     allowPython: options.allowPython,
     startHeadless: (headless) => startHeadlessSession(headless, log),
-    timeoutFor: timeoutMs === undefined ? defaultTimeoutFor : () => timeoutMs,
+    ...(timeoutMs === undefined ? {} : { timeoutFor: () => timeoutMs }),
     log,
   });
   const shutdown = async () => {

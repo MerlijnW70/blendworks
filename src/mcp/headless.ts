@@ -38,12 +38,21 @@ class SessionLink implements BridgeLink {
     await this.session.close(STOP_GRACE_MS);
   }
 
+  async kill(): Promise<void> {
+    await this.session.kill();
+  }
+
   onClose(listener: (reason: string) => void): void {
     void this.session.exited.then((exit) => listener(describeExit(exit)));
   }
 }
 
 export async function startHeadlessSession(options: HeadlessOptions, log: (line: string) => void = () => undefined): Promise<BridgeLink> {
-  const session = await startSession({ workspace: options.workspace, allowPython: options.allowPython, timeoutMs: NO_SESSION_TIMEOUT_MS });
+  const session = await startSession({
+    workspace: options.workspace,
+    allowPython: options.allowPython,
+    timeoutMs: NO_SESSION_TIMEOUT_MS,
+    ...(options.autosaveSeconds === undefined ? {} : { autosaveSeconds: options.autosaveSeconds }),
+  });
   return new SessionLink(session, log);
 }

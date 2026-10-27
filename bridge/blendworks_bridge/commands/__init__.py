@@ -24,6 +24,7 @@ MODULES = (
     "render",
     "files",
     "run_python",
+    "checkpoints",
 )
 
 

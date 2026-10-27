@@ -1,5 +1,20 @@
 export type Content = { type: "text"; text: string } | { type: "image"; data: string; mimeType: string };
 
+export const MAX_TEXT_CHARS = 64_000;
+
+const PAGING_HINTS: Record<string, string> = {
+  scene_info: "Ask for a page: scene_info takes detail (summary, objects or full), names (a glob such as \"Bolt*\"), limit and offset.",
+  run_python: "Print less, or set result to a smaller value.",
+  uv_info: "Ask for fewer objects with names.",
+  image_info: "Ask for fewer images with names.",
+};
+
+export function capText(cmd: string, text: string, limit = MAX_TEXT_CHARS): string {
+  if (text.length <= limit) return text;
+  const hint = PAGING_HINTS[cmd] ?? "Ask for less, for example fewer names.";
+  return `${text.slice(0, limit)}\n[cut: this result has ${text.length} characters and results stop at ${limit}. ${hint}]`;
+}
+
 interface FoundImage {
   label: string;
   data: string;
@@ -34,14 +49,20 @@ function extractImages(value: unknown, found: FoundImage[]): unknown {
   return out;
 }
 
+const SUMMARISED = new Set(["images", "engine", "samples", "seed", "geometry_objects", "device", "device_label", "shading"]);
+
 function previewSummary(found: FoundImage[], result: Record<string, unknown>): string {
   const first = found[0];
   const size = first !== undefined && typeof first.width === "number" && typeof first.height === "number" ? ` at ${first.width}x${first.height} px` : "";
   const engine = typeof result["engine"] === "string" ? result["engine"] : undefined;
   const samples = typeof result["samples"] === "number" ? result["samples"] : undefined;
-  const how = engine !== undefined && samples !== undefined ? ` with ${engine}, ${samples} samples` : "";
+  const on = typeof result["device_label"] === "string" ? ` on ${result["device_label"]}` : "";
+  const how = engine !== undefined && samples !== undefined ? ` with ${engine}${on}, ${samples} samples` : "";
+  const shading = typeof result["shading"] === "string" && result["shading"] !== "shaded" ? `, ${result["shading"]} shading` : "";
   const plural = found.length === 1 ? "" : "s";
-  return `Rendered ${found.length} view${plural}${size}${how}: ${found.map((image) => image.label).join(", ")}.`;
+  const extra = Object.fromEntries(Object.entries(result).filter(([key]) => !SUMMARISED.has(key)));
+  const details = Object.keys(extra).length > 0 ? ` ${JSON.stringify(extra)}` : "";
+  return `Rendered ${found.length} view${plural}${size}${how}${shading}: ${found.map((image) => image.label).join(", ")}.${details}`;
 }
 
 export function toContent(cmd: string, result: Record<string, unknown>, notices: string[] = []): Content[] {
@@ -49,11 +70,11 @@ export function toContent(cmd: string, result: Record<string, unknown>, notices:
   const rest = extractImages(result, found);
   const content: Content[] = notices.map((notice) => ({ type: "text", text: notice }));
   if (found.length === 0) {
-    content.push({ type: "text", text: JSON.stringify(rest) });
+    content.push({ type: "text", text: capText(cmd, JSON.stringify(rest)) });
     return content;
   }
-  const summary = cmd === "render_preview" ? previewSummary(found, result) : `${JSON.stringify(rest)}`;
-  content.push({ type: "text", text: summary });
+  const summary = cmd === "render_preview" ? previewSummary(found, result) : JSON.stringify(rest);
+  content.push({ type: "text", text: capText(cmd, summary) });
   for (const image of found) content.push({ type: "image", data: image.data, mimeType: image.mimeType });
   return content;
 }

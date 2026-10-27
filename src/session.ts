@@ -25,6 +25,7 @@ export interface SessionOptions {
   blender?: string;
   timeoutMs?: number;
   env?: NodeJS.ProcessEnv;
+  autosaveSeconds?: number | "off";
   onStderr?: (line: string) => void;
 }
 
@@ -64,6 +65,7 @@ export interface Session {
   call(cmd: string, args?: BridgeResult, options?: RequestOptions): Promise<BridgeResult>;
   stderrTail(): string;
   close(graceMs?: number): Promise<SessionExit>;
+  kill(): Promise<SessionExit>;
 }
 
 interface Pending {
@@ -74,6 +76,14 @@ interface Pending {
 
 const DEFAULT_TIMEOUT_MS = 120_000;
 const STDERR_TAIL = 8_000;
+const FORCE_KILL_MS = 2_000;
+export const AUTOSAVE_ENV = "BLENDWORKS_AUTOSAVE_SECONDS";
+
+function sessionEnvironment(options: SessionOptions): NodeJS.ProcessEnv {
+  const env = { ...(options.env ?? process.env) };
+  if (options.autosaveSeconds !== undefined) env[AUTOSAVE_ENV] = String(options.autosaveSeconds);
+  return env;
+}
 
 export function sessionArguments(workspace: string, allowPython: boolean): string[] {
   const args = ["--background", "--factory-startup", "--python-exit-code", "1", "--python", SESSION_SCRIPT, "--", "--workspace", workspace];
@@ -83,7 +93,7 @@ export function sessionArguments(workspace: string, allowPython: boolean): strin
 export async function startSession(options: SessionOptions = {}): Promise<Session> {
   const workspace = resolve(options.workspace ?? "workspace");
   const child = spawn(options.blender ?? blenderPath(), sessionArguments(workspace, options.allowPython ?? false), {
-    env: options.env ?? process.env,
+    env: sessionEnvironment(options),
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true,
   });
@@ -155,9 +165,18 @@ class BlenderSession implements Session {
   async close(graceMs = 10_000): Promise<SessionExit> {
     if (this.exit) return this.exit;
     this.child.stdin.end(`${JSON.stringify({ id: "quit", cmd: "quit" })}\n`);
-    const timer = setTimeout(() => this.child.kill(), graceMs);
+    const timer = setTimeout(() => void this.kill(), graceMs);
     const exit = await this.exited;
     clearTimeout(timer);
+    return exit;
+  }
+
+  async kill(): Promise<SessionExit> {
+    if (this.exit) return this.exit;
+    this.child.kill();
+    const force = setTimeout(() => this.child.kill("SIGKILL"), FORCE_KILL_MS);
+    const exit = await this.exited;
+    clearTimeout(force);
     return exit;
   }
 

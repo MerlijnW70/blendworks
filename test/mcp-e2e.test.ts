@@ -71,7 +71,7 @@ describe.skipIf(bridgeMissing)(TITLE, () => {
       expect(png.readUInt32BE(16)).toBe(128);
       expect(png.readUInt32BE(20)).toBe(128);
     }
-    expect(texts(preview)).toBe("Rendered 2 views at 128x128 px with cycles, 4 samples: front, three-quarter.");
+    expect(texts(preview)).toMatch(/^Rendered 2 views at 128x128 px with cycles on (cpu|gpu [A-Z]+ \(.+\)).*, 4 samples: front, three-quarter\.$/);
 
     await tool("blender_export", { path: "crate.glb" });
     const glb = readFileSync(join(workspace, "crate.glb"));

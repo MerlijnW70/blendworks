@@ -19,8 +19,21 @@ The `BLENDER` environment variable names the binary everywhere.
 - **Messages:**
   - request: `{ "id": n, "cmd": "<name>", "args": { … } }`;
   - reply: `{ "id": n, "ok": true, "result": { … } }` or `{ "id": n, "ok": false, "error": { "code": "...", "message": "..." } }`.
-- **Errors:** every command validates its arguments and refuses unknown fields. A failing command never leaves the scene half-changed: it runs inside an undo step, or on a copy that is applied only on success.
-- **Discovery:** `"cmd": "describe"` returns every command with its argument schema and a one-line description. The MCP server builds its tool list from it.
+- **Errors:** every command validates its arguments and refuses unknown fields. A failing command never leaves the scene half-changed.
+- **Rollback:** before a mutating command the bridge pushes a step on Blender's own undo stack (memory undo, which also works in background mode). When the command fails, it pushes the failed state and undoes back to that step. This restores every data-block, including deleted ones: objects, meshes, materials and their node trees, images, worlds, lights, cameras, curves, collections, modifiers and custom properties.
+  - Unsaved image pixels are not part of undo. Images that a failing command made dirty are reloaded. `run_python` also keeps a copy of the pixels of images that are already dirty, up to 1 GiB, or it refuses to run.
+  - Read-only commands take no snapshot. A snapshot costs time in proportion to the data that changed, not to the number of meshes.
+  - The desktop add-on also pushes a named undo step after each successful command. It needs global undo with at least 2 steps, and refuses mutating commands otherwise.
+- **Discovery:** `"cmd": "describe"` returns every command with its argument schema, a one-line description and its metadata. The MCP server builds its tool list from it.
+  - `mutates`: it changes the scene. `writes_files`: it writes into the workspace.
+  - `destructive`: it can discard work that rollback cannot bring back (`delete`, `new_scene`, `load_blend`, `restore_checkpoint`, `run_python`). A command that is destructive only in some cases adds `destructive_when`: `export`, `save_blend`, `image_save` and `checkpoint` when they overwrite a file, and `boolean` when `cutter_action` is delete.
+  - `slow`, `timeout` and `max_timeout`: the default and the largest timeout in seconds. Most commands default to 120 s and allow 600 s. Slow commands default to 300 s and allow 1800 s: `run_python`, `export`, `import`, `save_blend`, `load_blend`, `checkpoint`, `restore_checkpoint`, `render_preview`, `boolean`, `decimate`, `apply_modifier`, `uv_pack`, `set_world_hdri`, `mesh_from_data`, `sweep`, `loft`, `instances`, `rivet_line`, `roller_chain` and `displace_noise`. `bake` defaults to 660 s and allows 1200 s.
+  - `internal`: not offered as an MCP tool (`describe`, `recover`).
+- **Autosave (headless session):** after a mutating command the session saves the whole scene to `<workspace>/.blendworks/autosave.blend`, at most once every `BLENDWORKS_AUTOSAVE_SECONDS` (default 30; `off` disables it). When there are unsaved changes, it always saves before a slow command.
+  - Each save is written to a temporary file and renamed into place. The previous save is kept as `autosave.prev.blend`. `autosave.json` records the time, the reason (for example `before run_python`) and the object count.
+  - `scene_info` reports the autosave state. The desktop add-on does not autosave; Blender's own autosave and undo cover it.
+- **Recovery:** the internal `recover` command opens the newest readable autosave, or else the previous one, and reports which file it loaded, with its time and reason.
+- **Files and checkpoints:** `load_blend` opens a `.blend` from the workspace in place of the scene, with auto-run off, so the file's scripts and Python drivers never run. `checkpoint` saves a named copy in `.blendworks/checkpoints/` (at most 64), and `restore_checkpoint` opens one. Both opening commands update the autosave. In the desktop add-on they refuse to drop unsaved changes unless `discard_unsaved` is true.
 - **No arbitrary code by default.** `run_python` exists only when the session or add-on is started with `--allow-python`, and the MCP server marks the tool as dangerous.
 - **Caps:** sizes and times are capped in `bridge/blendworks_bridge/limits.py`. Images are at most 8192 px per side. A bake is at most 4096 px and runs at most 600 s. It stops between channels once it passes its time limit (default 100 s), and the bake is then undone. The MCP server waits up to 660 s for a `bake` reply, so a bake at the cap still answers.
 - **Bake device:** `bake` picks its device from `BLENDWORKS_DEVICE` as defined in section 4 (Render device); its `device` field overrides the variable for one call. The result names the device, the backend, any CPU fallback and the seconds per channel.
@@ -35,7 +48,7 @@ The `BLENDER` environment variable names the binary everywhere.
 
 | Family | Commands (minimum) |
 |---|---|
-| Scene | `describe`, `scene_info` (objects, meshes with vertex, face and triangle counts, materials, cameras, lights, bounds, units), `new_scene`, `select`, `delete` |
+| Scene | `describe`, `scene_info` (totals, a page of objects with vertex, face and triangle counts and bounds, materials, cameras, lights, units, checkpoints), `new_scene`, `select`, `delete`, `checkpoint`, `restore_checkpoint` |
 | Objects | `add_primitive` (cube, cylinder, cone, sphere, ico sphere, torus, plane, with size and segments), `transform` (location, rotation, scale), `apply_transform`, `set_origin` (geometry centre, bottom centre, cursor), `duplicate`, `join`, `rename`, `parent` |
 | Mesh editing | `extrude`, `inset`, `bevel` (by angle, by selected faces or by listed edges, optionally with harden normals), `subdivide`, `decimate`, `boolean` (union, difference, intersect, with one cutter or a list of cutters, optional manifold check), `mirror`, `array`, `solidify`, `shade_smooth` / `shade_flat`, `recalc_normals`, `merge_by_distance`, `apply_modifier` |
 | Modifiers | `add_modifier` (typed fields for displace with built-in noise textures, weld, screw, curve, simple deform, wireframe, lattice, shrinkwrap, triangulate, weighted normal, bevel and solidify; unknown fields are refused), `apply_modifier` |
@@ -50,8 +63,8 @@ The `BLENDER` environment variable names the binary everywhere.
 | Baking | `bake` (base colour, roughness, metallic and emission by emission, tangent-space normal and AO; margin, UV map, selected to active with a cage extrusion; optional rewire to a `material_pbr` material) |
 | UV | `uv_smart_project` and `uv_unwrap` (island margin, texel density), `uv_pack` (margin, rotation, shared atlas across objects), `uv_info` (coverage, overlap, texel density) |
 | Lights and camera | `add_light`, `add_camera`, `look_at`, `set_world` (colour or strength) |
-| Output | `render_preview` (PNG of the current scene from the active or a named camera, or the standard turntable views, at a capped resolution, returned as base64), `export` (glTF binary `.glb`, FBX, OBJ), `save_blend` |
-| Import | `import` (`.glb`, `.gltf`, `.fbx`, `.obj` from a path inside the working folder) |
+| Output | `render_preview` (PNG or JPEG from the active or a named camera, the turntable views plus `bottom`, or a close-up `focus`, in a chosen shading, at a capped resolution, returned as base64), `export` (glTF binary `.glb`, FBX, OBJ, with the parent empties of the exported objects), `save_blend` |
+| Import | `import` (`.glb`, `.gltf`, `.fbx`, `.obj` from a path inside the working folder), `load_blend` |
 
 All lengths are in metres, and all angles in degrees.
 
@@ -84,10 +97,45 @@ All lengths are in metres, and all angles in degrees.
 - **Harden normals:** `bevel` with `harden_normals` stores custom normals: flat faces keep their own normal and the bevel faces blend into them. Blender stores custom normals with about four decimals.
 - **Wear:** `displace_noise` never moves a vertex further than `amplitude`; the same `seed` gives the same result, and vertices at one position move together so seams stay closed.
 
+### Inspecting big scenes
+
+- `scene_info` takes `detail`:
+  - `summary`: totals, bounds and name lists;
+  - `objects` (the default): plus a page of objects;
+  - `full`: plus each object's data, collections, custom properties, vertex groups and shape keys, and the settings of the materials those objects use.
+- The page is sorted by name. `names` filters it with a case-sensitive glob, `limit` sets its size (default 100, at most 1000) and `offset` skips objects. `page` gives `matched` and `next_offset`, and `notes` says when more objects exist. Totals always cover the whole scene. The name lists of materials, cameras and lights stop at 100, with a note.
+- Bounds are exact over the evaluated vertices. They are computed with `foreach_get` and numpy, once per object per call.
+
+### Previews
+
+- **Device:** `render_preview` renders with Cycles on the device chosen as in section 4, from `BLENDWORKS_DEVICE` or its own `device` field. Its `auto` takes the first GPU backend that lists a device. If the render fails there, it renders again on the CPU and says so. The result names the device (`device`, `device_label`).
+- **Close-ups:** `focus` frames an `object` (its bounds centre and size) or a `point`, with a `width` in metres visible at the focus. It looks from `focus.direction`, or from each of `views` (default three-quarter).
+- **Shading:**
+  - `shaded`: the scene's materials;
+  - `clay`: one grey material;
+  - `wireframe`: clay with every mesh edge drawn as a line about one pixel wide, at most 400 000 edges;
+  - `normals`: world-space normals as colours;
+  - `uv_checker`: a colour grid on the active UV map, and the result lists meshes without UVs;
+  - `material_id`: one flat colour per material, with the legend in `material_colors`.
+- **Output:** PNG, or JPEG with `format` jpeg and a `quality` (default 85). The scene is left exactly as it was.
+
 ## 2. The MCP server
 
 - **Tools:** each bridge command becomes an MCP tool named `blender_<command>`, with its schema and a short, accurate description. Results that include images are returned as MCP image content.
 - **Connection:** the server connects to a running desktop add-on when one is listening (`BLENDWORKS_PORT`, default 9876). Otherwise it starts and owns a headless session.
+- **Annotations:** each tool's `readOnlyHint`, `destructiveHint`, `idempotentHint` and `openWorldHint` come from the command's `describe` metadata.
+  - A command that changes nothing and writes no file is read-only and idempotent.
+  - `destructive` sets the destructive hint, and only `run_python` is open-world.
+  - Internal commands are not tools.
+- **Requests** run one at a time, in order.
+  - **Timeouts:** every tool takes an optional `timeout_seconds`, up to the command's `max_timeout`. The default is the command's `timeout`, and `--timeout` sets one default for all. A timeout stops only that request: the owned session is killed, restarted and recovered as below, and the queued requests then run on the new session. A desktop Blender is never killed; the server reconnects to it.
+  - **Progress:** when a call carries a progress token, the server sends `notifications/progress` about every 10 s while the request waits or runs. `progress` counts seconds, and the message says whether the request is queued or running and when it times out.
+  - **Cancellation:** a cancelled request that is still queued is dropped before it reaches Blender. A running one is stopped by restarting the owned session and recovering it.
+  - **Close:** `close()` drops the queue, stops the running request and stops Blender within a few seconds. It never hangs.
+- **Recovery:** when the owned session crashes, times out, is cancelled or is found stopped, the server starts a fresh session and calls `recover`.
+  - The tool result says what happened and which state was restored, for example `Reloaded .blendworks/autosave.blend saved at 2026-10-27T12:00:00Z (before run_python); the scene has 12 objects.` Without an autosave, it says that the scene is empty.
+  - If reloading fails or crashes Blender again, the server starts one empty session and says so. A session that cannot start at all is not restarted in a loop.
+- **Result size:** a text result is cut at 64 000 characters. The cut ends with a note on how to ask for less, for example with the paging fields of `scene_info`. Images do not count.
 - **Workspace:** a working folder (`--workspace`) holds every import, export and save. Paths outside it are refused.
 - **Install:** `node dist/mcp/index.js` is the server. `npm run install-claude` adds it to Claude Code (`claude mcp add`).
 

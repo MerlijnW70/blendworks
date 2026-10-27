@@ -19,11 +19,13 @@ from ..schema import string
     {"code": string("Python source to run with bpy, bmesh and mathutils in scope.", max_length=limits.MAX_PYTHON_SOURCE)},
     ["code"],
     dangerous=True,
+    slow=True,
+    destructive=True,
 )
 def run_python(ctx, args):
     namespace = {"bpy": bpy, "bmesh": bmesh, "mathutils": mathutils, "result": None, "__name__": "blendworks_run_python"}
     output = io.StringIO()
-    ctx.txn.touch_all_meshes()
+    ctx.txn.guard_image_pixels()
     try:
         compiled = compile(args["code"], "<run_python>", "exec")
         with contextlib.redirect_stdout(output):

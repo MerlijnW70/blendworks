@@ -22,6 +22,7 @@ DESIGN_COMMANDS = {
     "material_pbr", "material_procedural", "material_layer", "bake",
     "add_light", "add_camera", "look_at", "set_world",
     "render_preview", "export", "save_blend", "import",
+    "load_blend", "checkpoint", "restore_checkpoint",
 }
 ASSET_LIBRARY_COMMANDS = {"set_world_hdri"}
 SCHEMA_KEYS = {"type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",
@@ -45,6 +46,8 @@ def test_describe_matches_the_registry(bridge):
         assert entry["schema"] == command.schema, name
         assert entry["description"] == command.description, name
         assert entry.get("dangerous", False) == command.dangerous, name
+        assert entry["mutates"] == command.mutates and entry["slow"] == command.slow, name
+        assert 0 < entry["timeout"] <= entry["max_timeout"], name
     python = Bridge(bridge.workspace, allow_python=True)
     assert sorted(entry["name"] for entry in python.ok("describe")["commands"]) == sorted(COMMANDS)
 
@@ -53,7 +56,7 @@ def test_every_design_command_exists(bridge):
     names = set(bridge.handler.registry.names())
     assert DESIGN_COMMANDS <= names, sorted(DESIGN_COMMANDS - names)
     assert ASSET_LIBRARY_COMMANDS <= names, sorted(ASSET_LIBRARY_COMMANDS - names)
-    assert set(COMMANDS) - DESIGN_COMMANDS - ASSET_LIBRARY_COMMANDS == {"run_python"}
+    assert set(COMMANDS) - DESIGN_COMMANDS - ASSET_LIBRARY_COMMANDS == {"run_python", "recover"}
 
 
 def test_descriptions_are_one_line_and_schemas_are_closed(bridge):
@@ -67,6 +70,33 @@ def test_descriptions_are_one_line_and_schemas_are_closed(bridge):
             assert set(node) <= SCHEMA_KEYS, (entry["name"], set(node) - SCHEMA_KEYS)
         for field, node in schema["properties"].items():
             assert node.get("description"), (entry["name"], field)
+
+
+def test_metadata_marks_mutation_destruction_and_time(bridge):
+    described = {entry["name"]: entry for entry in bridge.ok("describe")["commands"]}
+    read_only = {name for name, entry in described.items() if not entry["mutates"] and not entry["writes_files"]}
+    assert {"describe", "scene_info", "render_preview", "image_info", "uv_info"} <= read_only
+    assert not read_only & {"add_primitive", "delete", "export", "save_blend", "checkpoint", "load_blend"}
+    destructive = {name for name, entry in described.items() if entry["destructive"]}
+    assert {"delete", "new_scene", "export", "boolean", "save_blend", "image_save", "load_blend", "restore_checkpoint", "checkpoint"} <= destructive
+    assert not destructive & {"add_primitive", "scene_info", "render_preview", "transform", "select"}
+    assert described["boolean"]["destructive_when"] == "cutter_action is delete"
+    assert described["export"]["destructive_when"] == "the file already exists"
+    slow = {name for name, entry in described.items() if entry["slow"]}
+    assert {"bake", "boolean", "export", "render_preview", "import", "save_blend", "load_blend"} <= slow
+    assert all(described[name]["timeout"] >= 300 for name in slow)
+    assert described["add_primitive"]["timeout"] == 120 and described["add_primitive"]["max_timeout"] == 600
+    assert described["bake"]["timeout"] == 660
+    assert {name for name, entry in described.items() if entry.get("internal")} == {"describe", "recover"}
+    python = Bridge(bridge.workspace, allow_python=True).ok("describe")["commands"]
+    run_python = next(entry for entry in python if entry["name"] == "run_python")
+    assert run_python["slow"] and run_python["destructive"] and run_python["mutates"] and run_python["timeout"] == 300
+
+
+def test_policy_overrides_name_real_commands(bridge):
+    from blendworks_bridge.policy import OVERRIDES
+
+    assert set(OVERRIDES) <= set(COMMANDS), sorted(set(OVERRIDES) - set(COMMANDS))
 
 
 def test_every_command_refuses_unknown_fields(bridge):

@@ -28,6 +28,7 @@ export class BridgeError extends Error {
 export interface BridgeLink {
   call(cmd: string, args: BridgeArgs): Promise<Record<string, unknown>>;
   close(): Promise<void>;
+  kill(): Promise<void>;
   onClose(listener: (reason: string) => void): void;
 }
 

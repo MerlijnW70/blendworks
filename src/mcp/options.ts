@@ -15,7 +15,8 @@ The Blendworks MCP server, over stdio. It uses a desktop Blender add-on when one
 
   --workspace <dir>      folder for every import, export and save (default ./workspace, created if missing)
   --allow-python         start the headless session with run_python, which runs arbitrary code
-  --timeout <seconds>    timeout for every request (default 120, and 300 for renders, imports and exports)`;
+  --timeout <seconds>    default timeout for every request; without it each command has its own default,
+                         listed by describe (120 s, 300 s for slow commands such as run_python and export)`;
 
 export function parseOptions(argv: string[]): ServerOptions {
   const { values } = parseArgs({
