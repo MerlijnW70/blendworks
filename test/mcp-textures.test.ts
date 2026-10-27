@@ -60,7 +60,7 @@ describe("texture, material and bake tools through the MCP server", () => {
     env["BLENDWORKS_DEVICE"] = "cpu";
     const transport = new StdioClientTransport({
       command: process.execPath,
-      args: ["--import", "tsx", join("src", "mcp", "index.ts"), "--workspace", workspace],
+      args: ["--import", "tsx", join("src", "mcp", "index.ts"), "--workspace", workspace, "--toolsets", "all"],
       env,
       stderr: "pipe",
     });

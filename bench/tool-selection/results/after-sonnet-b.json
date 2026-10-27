@@ -1,0 +1,3377 @@
+{
+ "label": "after-sonnet-b",
+ "intents": {
+  "total": 224,
+  "heldout": 69
+ },
+ "coverage": {
+  "unknown": [],
+  "uncovered": [
+   "blender_run_python"
+  ]
+ },
+ "listings": {
+  "legacy": {
+   "tools": 83,
+   "bytes": 198181,
+   "estimatedTokens": 76223,
+   "note": "every tool with the bridge descriptions only: the listing before routing"
+  },
+  "core": {
+   "tools": 11,
+   "bytes": 41694,
+   "estimatedTokens": 16036,
+   "instructionsBytes": 7278,
+   "names": [
+    "blender_find_tools",
+    "blender_call",
+    "blender_assign_material",
+    "blender_bake",
+    "blender_clean_mesh",
+    "blender_delete",
+    "blender_export",
+    "blender_instances",
+    "blender_material_procedural",
+    "blender_new_scene",
+    "blender_sweep"
+   ]
+  }
+ },
+ "routing": {
+  "baseline BM25, heldout": {
+   "top1": {
+    "hits": 41,
+    "total": 69,
+    "rate": 0.5942
+   },
+   "top5": {
+    "hits": 56,
+    "total": 69,
+    "rate": 0.8116
+   },
+   "byKind": {
+    "single": {
+     "top1": {
+      "hits": 24,
+      "total": 36,
+      "rate": 0.6667
+     },
+     "top5": {
+      "hits": 30,
+      "total": 36,
+      "rate": 0.8333
+     }
+    },
+    "near-miss": {
+     "top1": {
+      "hits": 16,
+      "total": 27,
+      "rate": 0.5926
+     },
+     "top5": {
+      "hits": 23,
+      "total": 27,
+      "rate": 0.8519
+     }
+    },
+    "multi-step": {
+     "top1": {
+      "hits": 1,
+      "total": 6,
+      "rate": 0.1667
+     },
+     "top5": {
+      "hits": 3,
+      "total": 6,
+      "rate": 0.5
+     }
+    }
+   },
+   "misses": [
+    {
+     "id": "delete-1",
+     "expected": [
+      "blender_delete"
+     ],
+     "got": [
+      "blender_select",
+      "blender_new_scene",
+      "blender_rivet_line",
+      "blender_assign_material",
+      "blender_look_at"
+     ]
+    },
+    {
+     "id": "add_primitive-2",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_uv_pack",
+      "blender_uv_smart_project",
+      "blender_collection_create",
+      "blender_uv_unwrap",
+      "blender_add_material"
+     ]
+    },
+    {
+     "id": "duplicate-1",
+     "expected": [
+      "blender_duplicate"
+     ],
+     "got": [
+      "blender_lathe",
+      "blender_instances",
+      "blender_generate_lods",
+      "blender_add_light",
+      "blender_transform_selection"
+     ]
+    },
+    {
+     "id": "parent-1",
+     "expected": [
+      "blender_parent"
+     ],
+     "got": [
+      "blender_transform_selection",
+      "blender_mesh_query",
+      "blender_recalc_normals",
+      "blender_set_origin",
+      "blender_collection_link"
+     ]
+    },
+    {
+     "id": "sweep-1",
+     "expected": [
+      "blender_sweep"
+     ],
+     "got": [
+      "blender_shade_smooth",
+      "blender_instances",
+      "blender_subdivide",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "render_preview-3",
+     "expected": [
+      "blender_render_preview"
+     ],
+     "got": [
+      "library_preview",
+      "blender_uv_pack",
+      "blender_add_primitive",
+      "blender_uv_smart_project",
+      "blender_uv_unwrap"
+     ]
+    },
+    {
+     "id": "lathe-3",
+     "expected": [
+      "blender_lathe",
+      "blender_material_procedural",
+      "blender_export"
+     ],
+     "got": [
+      "blender_export",
+      "blender_import",
+      "blender_material_procedural",
+      "blender_material_pbr",
+      "blender_recalc_normals"
+     ]
+    },
+    {
+     "id": "uv_smart_project-2",
+     "expected": [
+      "blender_uv_smart_project",
+      "blender_bake",
+      "blender_export"
+     ],
+     "got": [
+      "blender_export",
+      "blender_bake",
+      "blender_material_pbr",
+      "blender_material_nodes",
+      "library_apply"
+     ]
+    },
+    {
+     "id": "sweep-4",
+     "expected": [
+      "blender_sweep",
+      "blender_material_procedural"
+     ],
+     "got": [
+      "blender_look_at",
+      "blender_material_procedural",
+      "blender_roller_chain",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "delete-2",
+     "expected": [
+      "blender_delete"
+     ],
+     "got": [
+      "blender_boolean",
+      "blender_subdivide",
+      "blender_loft",
+      "blender_clean_mesh",
+      "blender_engrave"
+     ]
+    },
+    {
+     "id": "extrude-2",
+     "expected": [
+      "blender_extrude"
+     ],
+     "got": [
+      "blender_inset",
+      "blender_assign_material",
+      "blender_subdivide",
+      "blender_vertex_colors",
+      "blender_bevel"
+     ]
+    },
+    {
+     "id": "engrave-5",
+     "expected": [
+      "blender_engrave"
+     ],
+     "got": [
+      "blender_extrude_outline",
+      "blender_image_info",
+      "blender_image_save",
+      "blender_roller_chain"
+     ]
+    },
+    {
+     "id": "rename-2",
+     "expected": [
+      "blender_rename"
+     ],
+     "got": [
+      "blender_select",
+      "blender_delete",
+      "blender_join",
+      "blender_engrave",
+      "blender_generate_lods"
+     ]
+    }
+   ],
+   "msPerQuery": {
+    "mean": 0.172,
+    "max": 6.951
+   }
+  },
+  "baseline BM25, probe": {
+   "top1": {
+    "hits": 10,
+    "total": 15,
+    "rate": 0.6667
+   },
+   "top5": {
+    "hits": 13,
+    "total": 15,
+    "rate": 0.8667
+   },
+   "byKind": {
+    "single": {
+     "top1": {
+      "hits": 10,
+      "total": 15,
+      "rate": 0.6667
+     },
+     "top5": {
+      "hits": 13,
+      "total": 15,
+      "rate": 0.8667
+     }
+    },
+    "near-miss": {
+     "top1": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     },
+     "top5": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     }
+    },
+    "multi-step": {
+     "top1": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     },
+     "top5": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     }
+    }
+   },
+   "misses": [
+    {
+     "id": "probe-1",
+     "expected": [
+      "blender_new_scene"
+     ],
+     "got": [
+      "library_preview",
+      "blender_curve_from_points",
+      "blender_material_pbr",
+      "library_apply",
+      "blender_mesh_from_data"
+     ]
+    },
+    {
+     "id": "probe-9",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_collection_create",
+      "blender_add_material",
+      "blender_image_new",
+      "blender_material_nodes",
+      "blender_material_procedural"
+     ]
+    }
+   ],
+   "msPerQuery": {
+    "mean": 0.027,
+    "max": 0.071
+   }
+  },
+  "baseline BM25, all": {
+   "top1": {
+    "hits": 142,
+    "total": 224,
+    "rate": 0.6339
+   },
+   "top5": {
+    "hits": 190,
+    "total": 224,
+    "rate": 0.8482
+   },
+   "byKind": {
+    "single": {
+     "top1": {
+      "hits": 97,
+      "total": 143,
+      "rate": 0.6783
+     },
+     "top5": {
+      "hits": 123,
+      "total": 143,
+      "rate": 0.8601
+     }
+    },
+    "near-miss": {
+     "top1": {
+      "hits": 43,
+      "total": 65,
+      "rate": 0.6615
+     },
+     "top5": {
+      "hits": 57,
+      "total": 65,
+      "rate": 0.8769
+     }
+    },
+    "multi-step": {
+     "top1": {
+      "hits": 2,
+      "total": 16,
+      "rate": 0.125
+     },
+     "top5": {
+      "hits": 10,
+      "total": 16,
+      "rate": 0.625
+     }
+    }
+   },
+   "misses": [
+    {
+     "id": "scene_info-1",
+     "expected": [
+      "blender_scene_info"
+     ],
+     "got": [
+      "blender_material_pbr",
+      "blender_new_scene",
+      "library_download",
+      "blender_export",
+      "blender_collection_create"
+     ]
+    },
+    {
+     "id": "new_scene-2",
+     "expected": [
+      "blender_new_scene"
+     ],
+     "got": [
+      "blender_boolean",
+      "library_preview",
+      "blender_clean_mesh",
+      "blender_curve_from_points",
+      "blender_material_pbr"
+     ]
+    },
+    {
+     "id": "delete-1",
+     "expected": [
+      "blender_delete"
+     ],
+     "got": [
+      "blender_select",
+      "blender_new_scene",
+      "blender_rivet_line",
+      "blender_assign_material",
+      "blender_look_at"
+     ]
+    },
+    {
+     "id": "add_primitive-1",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_add_light",
+      "blender_text_object",
+      "blender_set_origin",
+      "blender_join",
+      "blender_engrave"
+     ]
+    },
+    {
+     "id": "add_primitive-2",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_uv_pack",
+      "blender_uv_smart_project",
+      "blender_collection_create",
+      "blender_uv_unwrap",
+      "blender_add_material"
+     ]
+    },
+    {
+     "id": "add_primitive-3",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_bevel",
+      "blender_shade_flat",
+      "blender_mirror",
+      "blender_collection_create",
+      "blender_engrave"
+     ]
+    },
+    {
+     "id": "duplicate-1",
+     "expected": [
+      "blender_duplicate"
+     ],
+     "got": [
+      "blender_lathe",
+      "blender_instances",
+      "blender_generate_lods",
+      "blender_add_light",
+      "blender_transform_selection"
+     ]
+    },
+    {
+     "id": "join-1",
+     "expected": [
+      "blender_join"
+     ],
+     "got": [
+      "blender_mirror",
+      "blender_merge_by_distance",
+      "blender_sprocket",
+      "blender_instances",
+      "blender_uv_pack"
+     ]
+    },
+    {
+     "id": "parent-1",
+     "expected": [
+      "blender_parent"
+     ],
+     "got": [
+      "blender_transform_selection",
+      "blender_mesh_query",
+      "blender_recalc_normals",
+      "blender_set_origin",
+      "blender_collection_link"
+     ]
+    },
+    {
+     "id": "extrude-1",
+     "expected": [
+      "blender_extrude"
+     ],
+     "got": [
+      "blender_add_light",
+      "blender_bevel",
+      "blender_mesh_query",
+      "blender_shade_flat",
+      "blender_decimate"
+     ]
+    },
+    {
+     "id": "boolean-1",
+     "expected": [
+      "blender_boolean"
+     ],
+     "got": [
+      "blender_extrude_outline",
+      "blender_engrave",
+      "blender_subdivide",
+      "blender_roller_chain"
+     ]
+    },
+    {
+     "id": "sweep-1",
+     "expected": [
+      "blender_sweep"
+     ],
+     "got": [
+      "blender_shade_smooth",
+      "blender_instances",
+      "blender_subdivide",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "sweep-2",
+     "expected": [
+      "blender_sweep"
+     ],
+     "got": [
+      "blender_curve_from_points",
+      "blender_collection_create",
+      "blender_look_at",
+      "blender_extrude_outline",
+      "blender_lathe"
+     ]
+    },
+    {
+     "id": "sweep-3",
+     "expected": [
+      "blender_sweep"
+     ],
+     "got": [
+      "blender_generate_lods",
+      "blender_loft",
+      "blender_uv_unwrap",
+      "blender_uv_info",
+      "blender_mirror"
+     ]
+    },
+    {
+     "id": "render_preview-1",
+     "expected": [
+      "blender_render_preview"
+     ],
+     "got": [
+      "library_preview",
+      "blender_look_at",
+      "blender_boolean",
+      "library_apply",
+      "library_search"
+     ]
+    },
+    {
+     "id": "render_preview-3",
+     "expected": [
+      "blender_render_preview"
+     ],
+     "got": [
+      "library_preview",
+      "blender_uv_pack",
+      "blender_add_primitive",
+      "blender_uv_smart_project",
+      "blender_uv_unwrap"
+     ]
+    },
+    {
+     "id": "lathe-3",
+     "expected": [
+      "blender_lathe",
+      "blender_material_procedural",
+      "blender_export"
+     ],
+     "got": [
+      "blender_export",
+      "blender_import",
+      "blender_material_procedural",
+      "blender_material_pbr",
+      "blender_recalc_normals"
+     ]
+    },
+    {
+     "id": "add_primitive-4",
+     "expected": [
+      "blender_add_primitive",
+      "blender_displace_noise",
+      "blender_material_procedural"
+     ],
+     "got": [
+      "blender_material_procedural",
+      "blender_generate_lods",
+      "blender_recalc_normals",
+      "blender_add_camera",
+      "blender_material_info"
+     ]
+    },
+    {
+     "id": "uv_smart_project-2",
+     "expected": [
+      "blender_uv_smart_project",
+      "blender_bake",
+      "blender_export"
+     ],
+     "got": [
+      "blender_export",
+      "blender_bake",
+      "blender_material_pbr",
+      "blender_material_nodes",
+      "library_apply"
+     ]
+    },
+    {
+     "id": "boolean-3",
+     "expected": [
+      "blender_boolean",
+      "blender_clean_mesh"
+     ],
+     "got": [
+      "blender_clean_mesh",
+      "blender_extrude_outline",
+      "blender_subdivide",
+      "blender_array",
+      "blender_engrave"
+     ]
+    },
+    {
+     "id": "sweep-4",
+     "expected": [
+      "blender_sweep",
+      "blender_material_procedural"
+     ],
+     "got": [
+      "blender_look_at",
+      "blender_material_procedural",
+      "blender_roller_chain",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "library_search-3",
+     "expected": [
+      "library_search",
+      "library_apply"
+     ],
+     "got": [
+      "library_download",
+      "library_search",
+      "library_preview",
+      "blender_bake",
+      "blender_collection_create"
+     ]
+    },
+    {
+     "id": "delete-2",
+     "expected": [
+      "blender_delete"
+     ],
+     "got": [
+      "blender_boolean",
+      "blender_subdivide",
+      "blender_loft",
+      "blender_clean_mesh",
+      "blender_engrave"
+     ]
+    },
+    {
+     "id": "scene_info-5",
+     "expected": [
+      "blender_scene_info"
+     ],
+     "got": [
+      "blender_select",
+      "blender_delete",
+      "blender_join",
+      "blender_rivet_line",
+      "blender_loft"
+     ]
+    },
+    {
+     "id": "add_material-3",
+     "expected": [
+      "blender_add_material"
+     ],
+     "got": [
+      "blender_shade_flat",
+      "blender_generate_lods",
+      "blender_shade_smooth",
+      "blender_recalc_normals",
+      "blender_render_preview"
+     ]
+    },
+    {
+     "id": "render_preview-4",
+     "expected": [
+      "blender_render_preview"
+     ],
+     "got": [
+      "library_download",
+      "blender_vertex_colors",
+      "blender_material_layer",
+      "blender_material_pbr",
+      "blender_material_nodes"
+     ]
+    },
+    {
+     "id": "extrude-2",
+     "expected": [
+      "blender_extrude"
+     ],
+     "got": [
+      "blender_inset",
+      "blender_assign_material",
+      "blender_subdivide",
+      "blender_vertex_colors",
+      "blender_bevel"
+     ]
+    },
+    {
+     "id": "solidify-2",
+     "expected": [
+      "blender_solidify"
+     ],
+     "got": [
+      "blender_recalc_normals",
+      "blender_add_camera",
+      "blender_gear",
+      "blender_sprocket",
+      "blender_generate_lods"
+     ]
+    },
+    {
+     "id": "loft-2",
+     "expected": [
+      "blender_loft"
+     ],
+     "got": [
+      "blender_curve_from_points",
+      "blender_uv_info",
+      "blender_uv_pack",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "engrave-5",
+     "expected": [
+      "blender_engrave"
+     ],
+     "got": [
+      "blender_extrude_outline",
+      "blender_image_info",
+      "blender_image_save",
+      "blender_roller_chain"
+     ]
+    },
+    {
+     "id": "merge_by_distance-2",
+     "expected": [
+      "blender_merge_by_distance"
+     ],
+     "got": [
+      "blender_select",
+      "blender_new_scene",
+      "library_search",
+      "blender_instances",
+      "blender_boolean"
+     ]
+    },
+    {
+     "id": "rename-2",
+     "expected": [
+      "blender_rename"
+     ],
+     "got": [
+      "blender_select",
+      "blender_delete",
+      "blender_join",
+      "blender_engrave",
+      "blender_generate_lods"
+     ]
+    },
+    {
+     "id": "probe-1",
+     "expected": [
+      "blender_new_scene"
+     ],
+     "got": [
+      "library_preview",
+      "blender_curve_from_points",
+      "blender_material_pbr",
+      "library_apply",
+      "blender_mesh_from_data"
+     ]
+    },
+    {
+     "id": "probe-9",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_collection_create",
+      "blender_add_material",
+      "blender_image_new",
+      "blender_material_nodes",
+      "blender_material_procedural"
+     ]
+    }
+   ],
+   "msPerQuery": {
+    "mean": 0.018,
+    "max": 0.063
+   }
+  },
+  "core router, heldout": {
+   "top1": {
+    "hits": 60,
+    "total": 69,
+    "rate": 0.8696
+   },
+   "top5": {
+    "hits": 68,
+    "total": 69,
+    "rate": 0.9855
+   },
+   "byKind": {
+    "single": {
+     "top1": {
+      "hits": 33,
+      "total": 36,
+      "rate": 0.9167
+     },
+     "top5": {
+      "hits": 36,
+      "total": 36,
+      "rate": 1
+     }
+    },
+    "near-miss": {
+     "top1": {
+      "hits": 24,
+      "total": 27,
+      "rate": 0.8889
+     },
+     "top5": {
+      "hits": 27,
+      "total": 27,
+      "rate": 1
+     }
+    },
+    "multi-step": {
+     "top1": {
+      "hits": 3,
+      "total": 6,
+      "rate": 0.5
+     },
+     "top5": {
+      "hits": 5,
+      "total": 6,
+      "rate": 0.8333
+     }
+    }
+   },
+   "misses": [
+    {
+     "id": "lathe-3",
+     "expected": [
+      "blender_lathe",
+      "blender_material_procedural",
+      "blender_export"
+     ],
+     "got": [
+      "blender_export",
+      "blender_import",
+      "blender_material_procedural",
+      "blender_material_pbr",
+      "blender_add_camera"
+     ]
+    }
+   ],
+   "msPerQuery": {
+    "mean": 0.049,
+    "max": 1.175
+   }
+  },
+  "core router, tune": {
+   "top1": {
+    "hits": 126,
+    "total": 140,
+    "rate": 0.9
+   },
+   "top5": {
+    "hits": 139,
+    "total": 140,
+    "rate": 0.9929
+   },
+   "byKind": {
+    "single": {
+     "top1": {
+      "hits": 85,
+      "total": 92,
+      "rate": 0.9239
+     },
+     "top5": {
+      "hits": 92,
+      "total": 92,
+      "rate": 1
+     }
+    },
+    "near-miss": {
+     "top1": {
+      "hits": 38,
+      "total": 38,
+      "rate": 1
+     },
+     "top5": {
+      "hits": 38,
+      "total": 38,
+      "rate": 1
+     }
+    },
+    "multi-step": {
+     "top1": {
+      "hits": 3,
+      "total": 10,
+      "rate": 0.3
+     },
+     "top5": {
+      "hits": 9,
+      "total": 10,
+      "rate": 0.9
+     }
+    }
+   },
+   "misses": [
+    {
+     "id": "add_primitive-4",
+     "expected": [
+      "blender_add_primitive",
+      "blender_displace_noise",
+      "blender_material_procedural"
+     ],
+     "got": [
+      "blender_material_procedural",
+      "blender_material_layer",
+      "blender_displace_noise",
+      "blender_bake",
+      "blender_inset"
+     ]
+    }
+   ],
+   "msPerQuery": {
+    "mean": 0.025,
+    "max": 0.112
+   }
+  },
+  "core router, probe": {
+   "top1": {
+    "hits": 11,
+    "total": 15,
+    "rate": 0.7333
+   },
+   "top5": {
+    "hits": 14,
+    "total": 15,
+    "rate": 0.9333
+   },
+   "byKind": {
+    "single": {
+     "top1": {
+      "hits": 11,
+      "total": 15,
+      "rate": 0.7333
+     },
+     "top5": {
+      "hits": 14,
+      "total": 15,
+      "rate": 0.9333
+     }
+    },
+    "near-miss": {
+     "top1": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     },
+     "top5": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     }
+    },
+    "multi-step": {
+     "top1": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     },
+     "top5": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     }
+    }
+   },
+   "misses": [
+    {
+     "id": "probe-1",
+     "expected": [
+      "blender_new_scene"
+     ],
+     "got": [
+      "blender_apply_transform",
+      "library_preview",
+      "library_apply",
+      "blender_checkpoint",
+      "blender_run_python"
+     ]
+    }
+   ],
+   "msPerQuery": {
+    "mean": 0.021,
+    "max": 0.034
+   }
+  },
+  "core router, all": {
+   "top1": {
+    "hits": 197,
+    "total": 224,
+    "rate": 0.8795
+   },
+   "top5": {
+    "hits": 221,
+    "total": 224,
+    "rate": 0.9866
+   },
+   "byKind": {
+    "single": {
+     "top1": {
+      "hits": 129,
+      "total": 143,
+      "rate": 0.9021
+     },
+     "top5": {
+      "hits": 142,
+      "total": 143,
+      "rate": 0.993
+     }
+    },
+    "near-miss": {
+     "top1": {
+      "hits": 62,
+      "total": 65,
+      "rate": 0.9538
+     },
+     "top5": {
+      "hits": 65,
+      "total": 65,
+      "rate": 1
+     }
+    },
+    "multi-step": {
+     "top1": {
+      "hits": 6,
+      "total": 16,
+      "rate": 0.375
+     },
+     "top5": {
+      "hits": 14,
+      "total": 16,
+      "rate": 0.875
+     }
+    }
+   },
+   "misses": [
+    {
+     "id": "lathe-3",
+     "expected": [
+      "blender_lathe",
+      "blender_material_procedural",
+      "blender_export"
+     ],
+     "got": [
+      "blender_export",
+      "blender_import",
+      "blender_material_procedural",
+      "blender_material_pbr",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "add_primitive-4",
+     "expected": [
+      "blender_add_primitive",
+      "blender_displace_noise",
+      "blender_material_procedural"
+     ],
+     "got": [
+      "blender_material_procedural",
+      "blender_material_layer",
+      "blender_displace_noise",
+      "blender_bake",
+      "blender_inset"
+     ]
+    },
+    {
+     "id": "probe-1",
+     "expected": [
+      "blender_new_scene"
+     ],
+     "got": [
+      "blender_apply_transform",
+      "library_preview",
+      "library_apply",
+      "blender_checkpoint",
+      "blender_run_python"
+     ]
+    }
+   ],
+   "msPerQuery": {
+    "mean": 0.031,
+    "max": 0.96
+   }
+  }
+ },
+ "e2e": {
+  "core": {
+   "mode": "core",
+   "model": "sonnet",
+   "effort": "low",
+   "samples": 69,
+   "failed": 0,
+   "accuracy": {
+    "hits": 66,
+    "total": 69,
+    "rate": 0.9565
+   },
+   "nearMiss": {
+    "hits": 27,
+    "total": 27,
+    "rate": 1
+   },
+   "multiStep": {
+    "hits": 5,
+    "total": 6,
+    "rate": 0.8333
+   },
+   "runPython": {
+    "hits": 0,
+    "total": 69,
+    "rate": 0
+   },
+   "validArguments": {
+    "hits": 66,
+    "total": 69,
+    "rate": 0.9565
+   },
+   "searchesPerTask": 0.74,
+   "inputTokensPerTask": 38923,
+   "costUsd": 2.947,
+   "results": [
+    {
+     "id": "delete-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_delete",
+       "arguments": {
+        "names": [
+         "Bolt.001",
+         "Bolt.002"
+        ]
+       }
+      }
+     ],
+     "final": "blender_delete",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 20330,
+      "cacheRead": 20181,
+      "output": 191
+     },
+     "promptTokens": 20183,
+     "costUsd": 0.0852561
+    },
+    {
+     "id": "scene_info-3",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "list all materials and cameras in the file"
+       }
+      },
+      {
+       "tool": "blender_scene_info",
+       "arguments": {
+        "detail": "full"
+       }
+      }
+     ],
+     "final": "blender_scene_info",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 26666,
+      "cacheRead": 110985,
+      "output": 650
+     },
+     "promptTokens": 45569,
+     "costUsd": 0.12428650000000001
+    },
+    {
+     "id": "lathe-3",
+     "kind": "multi-step",
+     "calls": [
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_lathe",
+        "arguments": "{\"name\":\"Candlestick\",\"profile\":[[0,0],[0.07,0],[0.075,0.01],[0.07,0.02],[0.04,0.04],[0.02,0.07],[0.02,0.1],[0.03,0.12],[0.018,0.14],[0.018,0.18],[0.03,0.2],[0.022,0.22],[0.022,0.25],[0.035,0.27],[0.04,0.29],[0.03,0.3],[0.025,0.3],[0.025,0.31],[0,0.31]]}"
+       }
+      }
+     ],
+     "final": "blender_lathe",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 20697,
+      "cacheRead": 40748,
+      "output": 662
+     },
+     "promptTokens": 20181,
+     "costUsd": 0.0934948
+    },
+    {
+     "id": "restore_checkpoint-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_restore_checkpoint",
+        "arguments": "{\"name\": \"before_boolean\"}"
+       }
+      }
+     ],
+     "final": "blender_restore_checkpoint",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 944,
+      "cacheRead": 60076,
+      "output": 249
+     },
+     "promptTokens": 20194,
+     "costUsd": 0.0122856
+    },
+    {
+     "id": "add_primitive-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "add a UV sphere primitive with segments",
+        "families": "[\"shapes\",\"objects\"]",
+        "limit": "3"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_add_primitive",
+        "arguments": "{\"type\":\"sphere\",\"name\":\"LampGlobe\",\"segments\":32}"
+       }
+      }
+     ],
+     "final": "blender_add_primitive",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 7758,
+      "cacheRead": 105740,
+      "output": 664
+     },
+     "promptTokens": 46248,
+     "costUsd": 0.048266
+    },
+    {
+     "id": "uv_smart_project-2",
+     "kind": "multi-step",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "smart UV project unwrap the crate",
+        "families": "[\"uv\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_uv_smart_project",
+        "arguments": "{\"name\":\"Crate\"}"
+       }
+      }
+     ],
+     "final": "blender_uv_smart_project",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 4330,
+      "cacheRead": 102301,
+      "output": 714
+     },
+     "promptTokens": 42799,
+     "costUsd": 0.0347101
+    },
+    {
+     "id": "duplicate-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "duplicate an object as an independent copy and move it"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_duplicate",
+        "arguments": "{\"name\":\"Chair\",\"offset\":[1,0,0]}"
+       }
+      }
+     ],
+     "final": "blender_duplicate",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 5702,
+      "cacheRead": 103697,
+      "output": 601
+     },
+     "promptTokens": 44224,
+     "costUsd": 0.0392077
+    },
+    {
+     "id": "transform-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "scale an object along Z axis",
+        "families": "[\"objects\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_transform",
+        "arguments": "{\"name\":\"Crate\",\"scale\":[1,1,2],\"relative\":true}"
+       }
+      }
+     ],
+     "final": "blender_transform",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 5277,
+      "cacheRead": 126652,
+      "output": 862
+     },
+     "promptTokens": 43576,
+     "costUsd": 0.0424172
+    },
+    {
+     "id": "sweep-4",
+     "kind": "multi-step",
+     "calls": [
+      {
+       "tool": "blender_sweep",
+       "arguments": {
+        "name": "CopperPipe",
+        "preset": "circle",
+        "radius": "0.02",
+        "segments": "32",
+        "waypoints": "[[0,0,0],[0,0,1],[1,0,1],[1,1,1],[1,1,2]]",
+        "fillet_radius": "0.12",
+        "fillet_segments": "12",
+        "shading": "smooth"
+       }
+      }
+     ],
+     "final": "blender_sweep",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1304,
+      "cacheRead": 60304,
+      "output": 585
+     },
+     "promptTokens": 20185,
+     "costUsd": 0.017108400000000003
+    },
+    {
+     "id": "parent-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "parent an object to another object",
+        "families": "[\"hierarchy\"]",
+        "limit": "3"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_parent",
+        "arguments": "{\"name\":\"Lid\",\"parent\":\"Box\",\"keep_transform\":true}"
+       }
+      }
+     ],
+     "final": "blender_parent",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 3716,
+      "cacheRead": 101692,
+      "output": 600
+     },
+     "promptTokens": 42203,
+     "costUsd": 0.031053200000000003
+    },
+    {
+     "id": "inset-1",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "inset faces to make a frame",
+        "families": "[\"faces\",\"mesh_edit\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_inset",
+        "arguments": "{\"name\":\"Panel\",\"thickness\":0.02,\"facing\":\"front\"}"
+       }
+      }
+     ],
+     "final": "blender_inset",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 9233,
+      "cacheRead": 134651,
+      "output": 692
+     },
+     "promptTokens": 47622,
+     "costUsd": 0.057341100000000006
+    },
+    {
+     "id": "generate_lods-2",
+     "kind": "multi-step",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "generate levels of detail by decimation for an object",
+        "families": "[\"lods\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_generate_lods",
+        "arguments": "{\"names\":[\"barrel\"],\"count\":3,\"ratios\":[0.5,0.25,0.1]}"
+       }
+      }
+     ],
+     "final": "blender_generate_lods",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 2931,
+      "cacheRead": 121666,
+      "output": 874
+     },
+     "promptTokens": 41084,
+     "costUsd": 0.032654600000000006
+    },
+    {
+     "id": "collection_link-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "move object into a collection and unlink from other collections",
+        "families": "[\"hierarchy\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_collection_link",
+        "arguments": "{\"collection\":\"Lighting\",\"names\":[\"Lamp\"],\"move\":true}"
+       }
+      }
+     ],
+     "final": "blender_collection_link",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 4901,
+      "cacheRead": 102879,
+      "output": 749
+     },
+     "promptTokens": 43383,
+     "costUsd": 0.0374019
+    },
+    {
+     "id": "subdivide-1",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "cut every edge of a mesh into four parts (subdivide edges)"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_subdivide",
+        "arguments": "{\"name\":\"Plane\",\"cuts\":3}"
+       }
+      }
+     ],
+     "final": "blender_subdivide",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 10309,
+      "cacheRead": 108279,
+      "output": 582
+     },
+     "promptTokens": 48863,
+     "costUsd": 0.0579039
+    },
+    {
+     "id": "extrude_outline-3",
+     "kind": "multi-step",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "extrude an outline into a plate with holes"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_extrude_outline",
+        "arguments": "{\"name\":\"BracketPlate\",\"outline\":[[0,0],[0.12,0],[0.12,0.04],[0.05,0.04],[0.05,0.1],[0,0.1]],\"holes\":[[[0.015,0.015],[0.025,0.015],[0.025,0.025],[0.015,0.025]],[[0.085,0.015],[0.095,0.015],[0.095,0.025],[0.085,0.025]]],\"depth\":0.004,\"chamfer\":0.001,\"bevel_segments\":3}"
+       }
+      }
+     ],
+     "final": "blender_extrude_outline",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 8001,
+      "cacheRead": 131728,
+      "output": 1291
+     },
+     "promptTokens": 46074,
+     "costUsd": 0.0581108
+    },
+    {
+     "id": "mirror-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "mirror mesh symmetric across X axis and merge seam"
+       }
+      },
+      {
+       "tool": "blender_mirror",
+       "arguments": {
+        "name": "CarBody",
+        "axes": "[\"x\"]",
+        "merge_distance": "0.001",
+        "apply": "true"
+       }
+      }
+     ],
+     "final": "blender_mirror",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 5226,
+      "cacheRead": 126443,
+      "output": 884
+     },
+     "promptTokens": 43434,
+     "costUsd": 0.0424123
+    },
+    {
+     "id": "boolean-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "boolean cut many cylinder holes through flange",
+        "families": "[\"modifiers\",\"mesh_edit\",\"shapes\"]"
+       }
+      },
+      {
+       "tool": "blender_boolean",
+       "arguments": {
+        "name": "Flange",
+        "cutters": "[\"Cutter_1\",\"Cutter_2\",\"Cutter_3\",\"Cutter_4\",\"Cutter_5\",\"Cutter_6\",\"Cutter_7\",\"Cutter_8\"]",
+        "operation": "difference",
+        "manifold": "true"
+       }
+      }
+     ],
+     "final": "blender_boolean",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 11407,
+      "cacheRead": 138611,
+      "output": 1247
+     },
+     "promptTokens": 49466,
+     "costUsd": 0.0719831
+    },
+    {
+     "id": "image_load-2",
+     "kind": "multi-step",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "load image file and build PBR material from base color and normal maps",
+        "families": "[\"textures\",\"materials\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_material_pbr",
+        "arguments": "{\"name\":\"PBR_Material\",\"base_color_path\":\"basecolor.png\",\"normal_path\":\"normal.png\"}"
+       }
+      }
+     ],
+     "final": "blender_material_pbr",
+     "correct": false,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 9240,
+      "cacheRead": 134410,
+      "output": 909
+     },
+     "promptTokens": 47403,
+     "costUsd": 0.05951500000000001
+    },
+    {
+     "id": "shade_smooth-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "shade smooth with angle threshold keeping sharp edges"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_shade_smooth",
+        "arguments": "{\"name\":\"Bottle\",\"angle\":40}"
+       }
+      }
+     ],
+     "final": "blender_shade_smooth",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 8571,
+      "cacheRead": 133131,
+      "output": 791
+     },
+     "promptTokens": 46830,
+     "costUsd": 0.0555311
+    },
+    {
+     "id": "mesh_from_data-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "load mesh vertices and faces from a JSON file",
+        "families": "[\"from_data\",\"files\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_mesh_from_data",
+        "arguments": "{\"name\":\"Terrain\",\"path\":\"terrain.json\"}"
+       }
+      }
+     ],
+     "final": "blender_mesh_from_data",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 8,
+      "cacheCreation": 6163,
+      "cacheRead": 83969,
+      "output": 470
+     },
+     "promptTokens": 44905,
+     "costUsd": 0.037764900000000004
+    },
+    {
+     "id": "add_modifier-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "add weld modifier without applying",
+        "families": "[\"modifiers\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_add_modifier",
+        "arguments": "{\"name\":\"Imported\",\"weld\":{},\"apply\":false}"
+       }
+      }
+     ],
+     "final": "blender_add_modifier",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 7610,
+      "cacheRead": 105606,
+      "output": 735
+     },
+     "promptTokens": 46175,
+     "costUsd": 0.0483706
+    },
+    {
+     "id": "render_preview-3",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_render_preview",
+        "arguments": "{\"shading\":\"uv_checker\",\"focus\":\"Crate\"}"
+       }
+      }
+     ],
+     "final": "blender_render_preview",
+     "correct": true,
+     "validArguments": false,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1139,
+      "cacheRead": 60201,
+      "output": 458
+     },
+     "promptTokens": 20182,
+     "costUsd": 0.0151681
+    },
+    {
+     "id": "apply_modifier-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "apply modifier stack into real geometry"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_apply_modifier",
+        "arguments": "{\"name\":\"Pipe\"}"
+       }
+      }
+     ],
+     "final": "blender_apply_modifier",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 8,
+      "cacheCreation": 9253,
+      "cacheRead": 87104,
+      "output": 410
+     },
+     "promptTokens": 48040,
+     "costUsd": 0.049838400000000005
+    },
+    {
+     "id": "library_search-1",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "search Poly Haven free outdoor HDRI sunset",
+        "families": "[\"library\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "library_search",
+        "arguments": "{\"type\":\"hdri\",\"category\":\"outdoor\",\"query\":\"sunset\"}"
+       }
+      }
+     ],
+     "final": "library_search",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 4072,
+      "cacheRead": 102054,
+      "output": 637
+     },
+     "promptTokens": 42546,
+     "costUsd": 0.0328834
+    },
+    {
+     "id": "sweep-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_sweep",
+       "arguments": {
+        "name": "Pipe",
+        "preset": "circle",
+        "radius": "0.03",
+        "segments": "24",
+        "waypoints": "[[0,0,0],[0,0,1],[1,0,1],[1,1,1],[1,1,2]]",
+        "fillet_radius": "0.15",
+        "fillet_segments": "12",
+        "shading": "smooth"
+       }
+      }
+     ],
+     "final": "blender_sweep",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1374,
+      "cacheRead": 60381,
+      "output": 769
+     },
+     "promptTokens": 20190,
+     "costUsd": 0.019236100000000003
+    },
+    {
+     "id": "library_download-1",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "download Poly Haven texture maps",
+        "families": "[\"library\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "library_download",
+        "arguments": "{\"id\":\"rusty_metal_02\",\"resolution\":\"2k\"}"
+       }
+      }
+     ],
+     "final": "library_download",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 3631,
+      "cacheRead": 101627,
+      "output": 598
+     },
+     "promptTokens": 42177,
+     "costUsd": 0.0306867
+    },
+    {
+     "id": "loft-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "loft skin through cross-sections of different shapes",
+        "families": "[\"shapes\"]"
+       }
+      },
+      {
+       "tool": "blender_loft",
+       "arguments": {
+        "name": "BoatHull",
+        "sections": "[{\"profile\":[[-0.05,1],[-0.05,0.4],[0,0.2],[0.05,0.4],[0.05,1]],\"position\":[0,3,0],\"rotation\":[90,0,0]},{\"profile\":[[-0.6,1],[-0.55,0.6],[-0.25,0.2],[0,0.1],[0.25,0.2],[0.55,0.6],[0.6,1]],\"position\":[0,1.5,0],\"rotation\":[90,0,0]},{\"profile\":[[-0.9,1],[-0.9,0.5],[-0.6,0.15],[0,0],[0.6,0.15],[0.9,0.5],[0.9,1]],\"position\":[0,0,0],\"rotation\":[90,0,0]},{\"profile\":[[-0.8,1],[-0.75,0.55],[-0.45,0.2],[0,0.1],[0.45,0.2],[0.75,0.55],[0.8,1]],\"position\":[0,-1.5,0],\"rotation\":[90,0,0]},{\"profile\":[[-0.6,1],[-0.6,0.4],[-0.4,0.25],[0,0.2],[0.4,0.25],[0.6,0.4],[0.6,1]],\"position\":[0,-3,0],\"rotation\":[90,0,0]}]",
+        "shading": "smooth",
+        "caps": "true"
+       }
+      }
+     ],
+     "final": "blender_loft",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 10709,
+      "cacheRead": 135621,
+      "output": 2707
+     },
+     "promptTokens": 47531,
+     "costUsd": 0.0834921
+    },
+    {
+     "id": "delete-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_delete",
+       "arguments": {
+        "names": "[\"Cutter\"]"
+       }
+      }
+     ],
+     "final": "blender_delete",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 918,
+      "cacheRead": 60013,
+      "output": 232
+     },
+     "promptTokens": 20181,
+     "costUsd": 0.0120053
+    },
+    {
+     "id": "gear-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "spur gear with teeth, module and bore",
+        "families": "[\"shapes\"]",
+        "limit": "3"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_gear",
+        "arguments": "{\"name\":\"SpurGear\",\"teeth\":24,\"module\":0.002,\"bore\":0.006,\"thickness\":0.01}"
+       }
+      }
+     ],
+     "final": "blender_gear",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 4580,
+      "cacheRead": 125083,
+      "output": 882
+     },
+     "promptTokens": 42816,
+     "costUsd": 0.0396723
+    },
+    {
+     "id": "transform_selection-3",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "rotate UV island by angle about its centre",
+        "families": "[\"uv\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_transform_selection",
+        "arguments": "{\"name\":\"Cube\",\"island\":2,\"rotate\":[0,0,20]}"
+       }
+      }
+     ],
+     "final": "blender_transform_selection",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 6275,
+      "cacheRead": 104116,
+      "output": 699
+     },
+     "promptTokens": 44664,
+     "costUsd": 0.0425216
+    },
+    {
+     "id": "engrave-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "engrave numbers 1 to 12 into a dial face like a clock",
+        "families": "[\"engraving\"]"
+       }
+      },
+      {
+       "tool": "blender_engrave",
+       "arguments": {
+        "name": "Dial",
+        "text": "12",
+        "plane": "{\"origin\":[0,0.08,0],\"normal\":[0,0,1],\"up\":[0,1,0]}",
+        "size": "0.02",
+        "depth": "0.001"
+       }
+      }
+     ],
+     "final": "blender_engrave",
+     "correct": true,
+     "validArguments": false,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 5760,
+      "cacheRead": 127215,
+      "output": 1231
+     },
+     "promptTokens": 43698,
+     "costUsd": 0.0480955
+    },
+    {
+     "id": "material_procedural-4",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_material_procedural",
+       "arguments": {
+        "name": "BarrelBandMetal",
+        "worn_metal": "{\"wear\":0.6,\"scratch_scale\":1.5,\"scratch_direction\":\"around_z\"}"
+       }
+      }
+     ],
+     "final": "blender_material_procedural",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1035,
+      "cacheRead": 60084,
+      "output": 392
+     },
+     "promptTokens": 20183,
+     "costUsd": 0.0140804
+    },
+    {
+     "id": "instances-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_instances",
+       "arguments": {
+        "source": "Bolt",
+        "name": "Bolt",
+        "circle": "{\"centre\":[0,0,0],\"radius\":0.2,\"count\":12}"
+       }
+      }
+     ],
+     "final": "blender_instances",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1035,
+      "cacheRead": 60110,
+      "output": 369
+     },
+     "promptTokens": 20196,
+     "costUsd": 0.013853
+    },
+    {
+     "id": "export-3",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_export",
+       "arguments": {
+        "path": "scene.glb",
+        "format": "glb",
+        "yup": true,
+        "draco": true
+       }
+      }
+     ],
+     "final": "blender_export",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 799,
+      "cacheRead": 39710,
+      "output": 281
+     },
+     "promptTokens": 20178,
+     "costUsd": 0.009985
+    },
+    {
+     "id": "mesh_query-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "find faces pointing up with centres and areas",
+        "families": "[\"faces\",\"mesh_edit\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_mesh_query",
+        "arguments": "{\"name\":\"Box\",\"facing\":\"up\"}"
+       }
+      }
+     ],
+     "final": "blender_mesh_query",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 7571,
+      "cacheRead": 131333,
+      "output": 715
+     },
+     "promptTokens": 45935,
+     "costUsd": 0.0505913
+    },
+    {
+     "id": "set_origin-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "set object origin to 3D cursor"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_set_origin",
+        "arguments": "{\"name\":\"Door\",\"to\":\"cursor\"}"
+       }
+      }
+     ],
+     "final": "blender_set_origin",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 8,
+      "cacheCreation": 3814,
+      "cacheRead": 81637,
+      "output": 394
+     },
+     "promptTokens": 42573,
+     "costUsd": 0.027375700000000003
+    },
+    {
+     "id": "displace_noise-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "add seeded dents noise displacement to a surface",
+        "families": "[\"wear\",\"modifiers\",\"mesh_edit\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_displace_noise",
+        "arguments": "{\"name\":\"Shield\",\"mode\":\"dents\",\"amplitude\":0.002,\"seed\":1,\"count\":60,\"radius\":0.03}"
+       }
+      }
+     ],
+     "final": "blender_displace_noise",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 18713,
+      "cacheRead": 153392,
+      "output": 917
+     },
+     "promptTokens": 56954,
+     "costUsd": 0.09938519999999998
+    },
+    {
+     "id": "extrude-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "move selected faces inward / push faces along normal",
+        "families": "[\"faces\",\"mesh_edit\"]"
+       }
+      },
+      {
+       "tool": "blender_transform_selection",
+       "arguments": {
+        "name": "Wall",
+        "with_material": "Window",
+        "push": "-0.03"
+       }
+      }
+     ],
+     "final": "blender_transform_selection",
+     "correct": false,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 7289,
+      "cacheRead": 130568,
+      "output": 924
+     },
+     "promptTokens": 45494,
+     "costUsd": 0.051476799999999996
+    },
+    {
+     "id": "add_material-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "create a plain colour material with roughness",
+        "families": "[\"materials\"]"
+       }
+      },
+      {
+       "tool": "blender_add_material",
+       "arguments": {
+        "name": "RedGlossy",
+        "base_color": [
+         0.8,
+         0.02,
+         0.02
+        ],
+        "metallic": 0,
+        "roughness": 0.1
+       }
+      }
+     ],
+     "final": "blender_add_material",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 14064,
+      "cacheRead": 112013,
+      "output": 673
+     },
+     "promptTokens": 52558,
+     "costUsd": 0.0742073
+    },
+    {
+     "id": "boolean-4",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "exact boolean union of two objects with manifold check"
+       }
+      },
+      {
+       "tool": "blender_boolean",
+       "arguments": {
+        "name": "mug",
+        "cutter": "handle",
+        "operation": "union",
+        "solver": "exact",
+        "manifold": "true"
+       }
+      }
+     ],
+     "final": "blender_boolean",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 8207,
+      "cacheRead": 112370,
+      "output": 724
+     },
+     "promptTokens": 46606,
+     "costUsd": 0.051324999999999996
+    },
+    {
+     "id": "vertex_colors-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "paint selected faces vertex color attribute"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_vertex_colors",
+        "arguments": "{\"name\":\"Cube\",\"color\":[0.1,0.1,0.1]}"
+       }
+      }
+     ],
+     "final": "blender_vertex_colors",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 12946,
+      "cacheRead": 110773,
+      "output": 666
+     },
+     "promptTokens": 51363,
+     "costUsd": 0.0695413
+    },
+    {
+     "id": "sweep-5",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_sweep",
+       "arguments": {
+        "name": "PictureFrame",
+        "profile": [
+         [
+          0,
+          0
+         ],
+         [
+          0.03,
+          0
+         ],
+         [
+          0.03,
+          0.015
+         ],
+         [
+          0.022,
+          0.02
+         ],
+         [
+          0.015,
+          0.015
+         ],
+         [
+          0.01,
+          0.018
+         ],
+         [
+          0,
+          0.012
+         ]
+        ],
+        "waypoints": [
+         [
+          -0.2,
+          0,
+          -0.15
+         ],
+         [
+          0.2,
+          0,
+          -0.15
+         ],
+         [
+          0.2,
+          0,
+          0.15
+         ],
+         [
+          -0.2,
+          0,
+          0.15
+         ]
+        ],
+        "closed": true,
+        "up": [
+         0,
+         -1,
+         0
+        ]
+       }
+      }
+     ],
+     "final": "blender_sweep",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1278,
+      "cacheRead": 60211,
+      "output": 705
+     },
+     "promptTokens": 20190,
+     "costUsd": 0.0181951
+    },
+    {
+     "id": "image_save-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "save baked image to a file",
+        "families": "[\"files\",\"baking\",\"textures\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_image_save",
+        "arguments": "{\"name\":\"BaseColor\",\"path\":\"textures/base.png\"}"
+       }
+      }
+     ],
+     "final": "blender_image_save",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 5138,
+      "cacheRead": 103124,
+      "output": 590
+     },
+     "promptTokens": 43653,
+     "costUsd": 0.0367844
+    },
+    {
+     "id": "extrude_outline-4",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_sweep",
+       "arguments": {
+        "name": "StarCookieCutter",
+        "preset": "rectangle",
+        "width": "0.002",
+        "height": "0.01",
+        "waypoints": "[[0,0.04,0],[-0.0094,0.01294,0],[-0.03804,0.01236,0],[-0.01522,-0.00494,0],[-0.02351,-0.03236,0],[0,-0.016,0],[0.02351,-0.03236,0],[0.01522,-0.00494,0],[0.03804,0.01236,0],[0.0094,0.01294,0]]",
+        "closed": "true",
+        "up": "[0,0,1]",
+        "shading": "flat"
+       }
+      }
+     ],
+     "final": "blender_sweep",
+     "correct": false,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1880,
+      "cacheRead": 60792,
+      "output": 1373
+     },
+     "promptTokens": 20187,
+     "costUsd": 0.027341200000000003
+    },
+    {
+     "id": "material_procedural-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_material_procedural",
+       "arguments": {
+        "name": "Oak",
+        "wood": "{\"light_color\":[0.34,0.2,0.095],\"dark_color\":[0.13,0.065,0.03],\"grain\":\"x\",\"roughness\":0.6}"
+       }
+      }
+     ],
+     "final": "blender_material_procedural",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1052,
+      "cacheRead": 60085,
+      "output": 419
+     },
+     "promptTokens": 20179,
+     "costUsd": 0.0144185
+    },
+    {
+     "id": "engrave-5",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "engrave text into a plane surface with depth",
+        "families": "[\"engraving\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_engrave",
+        "arguments": "{\"name\":\"SidePlate\",\"text\":\"AB-1234\",\"faces\":{\"facing\":\"right\"},\"depth\":0.0005}"
+       }
+      }
+     ],
+     "final": "blender_engrave",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 5283,
+      "cacheRead": 103123,
+      "output": 806
+     },
+     "promptTokens": 43686,
+     "costUsd": 0.0395243
+    },
+    {
+     "id": "material_layer-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "add rust layer over existing material through edge wear mask",
+        "families": "[\"materials\",\"wear\"]"
+       }
+      },
+      {
+       "tool": "blender_material_layer",
+       "arguments": {
+        "material": "iron",
+        "mask": "edges",
+        "rust": "{}"
+       }
+      }
+     ],
+     "final": "blender_material_layer",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 19525,
+      "cacheRead": 155179,
+      "output": 796
+     },
+     "promptTokens": 57863,
+     "costUsd": 0.1016019
+    },
+    {
+     "id": "vertex_colors-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "fill mesh colour attribute with a colour (vertex colors) before painting"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_vertex_colors",
+        "arguments": "{\"name\":\"Cube\",\"color\":[1,1,1]}"
+       }
+      }
+     ],
+     "final": "blender_vertex_colors",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 10509,
+      "cacheRead": 137163,
+      "output": 823
+     },
+     "promptTokens": 48847,
+     "costUsd": 0.0640063
+    },
+    {
+     "id": "material_info-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_material_info",
+        "arguments": "{\"name\": \"Glass\"}"
+       }
+      }
+     ],
+     "final": "blender_material_info",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1078,
+      "cacheRead": 60173,
+      "output": 426
+     },
+     "promptTokens": 20183,
+     "costUsd": 0.014601300000000001
+    },
+    {
+     "id": "material_nodes-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "build a custom material from a node graph with a checker texture node",
+        "families": "[\"materials\",\"textures\"]"
+       }
+      },
+      {
+       "tool": "blender_material_nodes",
+       "arguments": {
+        "name": "Checkerboard",
+        "nodes": "[{\"name\":\"TexCoord\",\"type\":\"texture_coordinate\"},{\"name\":\"Checker\",\"type\":\"checker_texture\",\"inputs\":[{\"socket\":\"Color1\",\"color\":[0.9,0.9,0.9]},{\"socket\":\"Color2\",\"color\":[0.05,0.05,0.05]},{\"socket\":\"Scale\",\"number\":8}]},{\"name\":\"BSDF\",\"type\":\"principled_bsdf\",\"inputs\":[{\"socket\":\"Roughness\",\"number\":0.5}]},{\"name\":\"Output\",\"type\":\"material_output\"}]",
+        "links": "[{\"from_node\":\"TexCoord\",\"from_socket\":\"UV\",\"to_node\":\"Checker\",\"to_socket\":\"Vector\"},{\"from_node\":\"Checker\",\"from_socket\":\"Color\",\"to_node\":\"BSDF\",\"to_socket\":\"Base Color\"},{\"from_node\":\"BSDF\",\"from_socket\":\"BSDF\",\"to_node\":\"Output\",\"to_socket\":\"Surface\"}]"
+       }
+      }
+     ],
+     "final": "blender_material_nodes",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 9096,
+      "cacheRead": 133226,
+      "output": 1719
+     },
+     "promptTokens": 46741,
+     "costUsd": 0.0669206
+    },
+    {
+     "id": "uv_smart_project-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "smart UV project unwrap",
+        "families": "[\"uv\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_uv_smart_project",
+        "arguments": "{\"name\":\"Rock\"}"
+       }
+      }
+     ],
+     "final": "blender_uv_smart_project",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 4303,
+      "cacheRead": 124936,
+      "output": 739
+     },
+     "promptTokens": 42783,
+     "costUsd": 0.0371196
+    },
+    {
+     "id": "image_save-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "save baked image as 16 bit PNG",
+        "families": "[\"files\",\"baking\",\"textures\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_image_save",
+        "arguments": "{\"name\":\"Cube_roughness\",\"path\":\"roughness.png\",\"depth\":16}"
+       }
+      }
+     ],
+     "final": "blender_image_save",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 6639,
+      "cacheRead": 129085,
+      "output": 952
+     },
+     "promptTokens": 44763,
+     "costUsd": 0.049008499999999997
+    },
+    {
+     "id": "uv_info-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "check UV coverage and overlap",
+        "families": "[\"uv\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_uv_info",
+        "arguments": "{\"name\":\"shield\"}"
+       }
+      }
+     ],
+     "final": "blender_uv_info",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 5196,
+      "cacheRead": 126626,
+      "output": 600
+     },
+     "promptTokens": 43601,
+     "costUsd": 0.0394706
+    },
+    {
+     "id": "uv_info-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "texel density of UVs in pixels per metre",
+        "families": "[\"uv\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_uv_info",
+        "arguments": "{\"name\":\"Floor\"}"
+       }
+      }
+     ],
+     "final": "blender_uv_info",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 6703,
+      "cacheRead": 104716,
+      "output": 494
+     },
+     "promptTokens": 45222,
+     "costUsd": 0.042243600000000006
+    },
+    {
+     "id": "look_at-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "aim spotlight at an object",
+        "families": "[\"lighting\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_look_at",
+        "arguments": "{\"name\":\"Spotlight\",\"target\":\"Statue\"}"
+       }
+      }
+     ],
+     "final": "blender_look_at",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 3624,
+      "cacheRead": 123470,
+      "output": 670
+     },
+     "promptTokens": 42024,
+     "costUsd": 0.033567
+    },
+    {
+     "id": "clean_mesh-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_clean_mesh",
+       "arguments": {
+        "name": "plate"
+       }
+      }
+     ],
+     "final": "blender_clean_mesh",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 926,
+      "cacheRead": 60024,
+      "output": 233
+     },
+     "promptTokens": 20185,
+     "costUsd": 0.012048399999999999
+    },
+    {
+     "id": "generate_lods-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_generate_lods",
+        "arguments": "{\"names\":[\"Barrel\"],\"ratios\":[0.5,0.25,0.1]}"
+       }
+      }
+     ],
+     "final": "blender_generate_lods",
+     "correct": true,
+     "validArguments": false,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1128,
+      "cacheRead": 60216,
+      "output": 544
+     },
+     "promptTokens": 20182,
+     "costUsd": 0.015985600000000003
+    },
+    {
+     "id": "shade_smooth-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "smooth shade an object"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_shade_smooth",
+        "arguments": "{\"name\":\"Sphere\"}"
+       }
+      }
+     ],
+     "final": "blender_shade_smooth",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 7613,
+      "cacheRead": 105609,
+      "output": 556
+     },
+     "promptTokens": 46130,
+     "costUsd": 0.04659290000000001
+    },
+    {
+     "id": "save_blend-1",
+     "kind": "near-miss",
+     "calls": [
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_save_blend",
+        "arguments": "{\"path\": \"work.blend\"}"
+       }
+      }
+     ],
+     "final": "blender_save_blend",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1063,
+      "cacheRead": 60179,
+      "output": 395
+     },
+     "promptTokens": 20181,
+     "costUsd": 0.014231900000000002
+    },
+    {
+     "id": "rename-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "rename an object"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_rename",
+        "arguments": "{\"name\":\"Sphere\",\"new_name\":\"Planet\"}"
+       }
+      }
+     ],
+     "final": "blender_rename",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 3799,
+      "cacheRead": 101789,
+      "output": 582
+     },
+     "promptTokens": 42402,
+     "costUsd": 0.0312149
+    },
+    {
+     "id": "collection_create-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "create a collection nested under a parent collection",
+        "families": "[\"hierarchy\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_collection_create",
+        "arguments": "{\"name\":\"LOD_Group\",\"parent\":\"Export\"}"
+       }
+      }
+     ],
+     "final": "blender_collection_create",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 4846,
+      "cacheRead": 102833,
+      "output": 604
+     },
+     "promptTokens": 43373,
+     "costUsd": 0.035727300000000003
+    },
+    {
+     "id": "set_world-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "set world background color black",
+        "families": "[\"lighting\",\"scene\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_set_world",
+        "arguments": "{\"color\":[0,0,0],\"strength\":0}"
+       }
+      }
+     ],
+     "final": "blender_set_world",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 8,
+      "cacheCreation": 4659,
+      "cacheRead": 82454,
+      "output": 450
+     },
+     "promptTokens": 43390,
+     "costUsd": 0.031397400000000006
+    },
+    {
+     "id": "checkpoint-3",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_checkpoint",
+        "arguments": "{\"name\": \"v2\"}"
+       }
+      }
+     ],
+     "final": "blender_checkpoint",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1034,
+      "cacheRead": 60155,
+      "output": 338
+     },
+     "promptTokens": 20186,
+     "costUsd": 0.0135435
+    },
+    {
+     "id": "load_blend-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "load open a .blend file scene",
+        "families": "[\"files\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_load_blend",
+        "arguments": "{\"path\":\"base.blend\"}"
+       }
+      }
+     ],
+     "final": "blender_load_blend",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 12,
+      "cacheCreation": 3975,
+      "cacheRead": 124262,
+      "output": 688
+     },
+     "promptTokens": 42433,
+     "costUsd": 0.0352302
+    },
+    {
+     "id": "library_preview-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "preview a Poly Haven HDRI venice_sunset",
+        "families": "[\"library\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "library_preview",
+        "arguments": "{\"id\":\"venice_sunset\"}"
+       }
+      }
+     ],
+     "final": "library_preview",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 3711,
+      "cacheRead": 101684,
+      "output": 669
+     },
+     "promptTokens": 42187,
+     "costUsd": 0.0317224
+    },
+    {
+     "id": "select-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "add object to the current selection"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_select",
+        "arguments": "{\"names\":[\"Lid\"],\"mode\":\"add\"}"
+       }
+      }
+     ],
+     "final": "blender_select",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 8,
+      "cacheCreation": 5751,
+      "cacheRead": 83577,
+      "output": 382
+     },
+     "promptTokens": 44513,
+     "costUsd": 0.0351977
+    },
+    {
+     "id": "gear-3",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "create a spur gear with teeth count and circular pitch",
+        "families": "[\"shapes\"]",
+        "limit": "3"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_gear",
+        "arguments": "{\"name\":\"Gear\",\"teeth\":40,\"pitch\":0.005,\"tooth_profile\":\"simple\",\"thickness\":0.01}"
+       }
+      }
+     ],
+     "final": "blender_gear",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 6763,
+      "cacheRead": 109421,
+      "output": 927
+     },
+     "promptTokens": 45153,
+     "costUsd": 0.0472841
+    },
+    {
+     "id": "mesh_from_data-3",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "create mesh from explicit vertices, faces and UVs",
+        "families": "[\"from_data\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_mesh_from_data",
+        "arguments": "{\"name\":\"Triangle\",\"vertices\":[[0,0,0],[1,0,0],[0,1,0]],\"faces\":[[0,1,2]],\"uvs\":[[0,0],[1,0],[0,1]]}"
+       }
+      }
+     ],
+     "final": "blender_mesh_from_data",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 6172,
+      "cacheRead": 108321,
+      "output": 687
+     },
+     "promptTokens": 44612,
+     "costUsd": 0.042410100000000006
+    },
+    {
+     "id": "add_modifier-5",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_find_tools",
+       "arguments": {
+        "query": "add triangulate modifier to mesh",
+        "families": "[\"modifiers\"]"
+       }
+      },
+      {
+       "tool": "blender_call",
+       "arguments": {
+        "tool": "blender_add_modifier",
+        "arguments": "{\"name\":\"Mesh\",\"triangulate\":{}}"
+       }
+      }
+     ],
+     "final": "blender_add_modifier",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 10,
+      "cacheCreation": 7680,
+      "cacheRead": 105573,
+      "output": 584
+     },
+     "promptTokens": 46174,
+     "costUsd": 0.04713730000000001
+    }
+   ]
+  }
+ }
+}

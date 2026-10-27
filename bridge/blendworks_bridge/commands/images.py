@@ -26,6 +26,9 @@ TEMPORARY_SCENE = "blendworks_image_save"
         ),
     },
     ["path"],
+    family="textures",
+    intents=("load an image file from the workspace", "open a texture PNG, JPEG, EXR or WebP", "load a map as non-colour data"),
+    nearest=(("image_new", "for a blank image"),),
 )
 def image_load(ctx, args):
     image = load_image(ctx.workspace, args["path"], args.get("name"), args.get("colorspace"))
@@ -45,6 +48,9 @@ def image_load(ctx, args):
         "colorspace": string("Colour space. Default: srgb for 8-bit, linear for float.", list(COLORSPACES)),
     },
     ["name"],
+    family="textures",
+    intents=("blank image as bake target", "create an empty texture"),
+    nearest=(("image_load", "to read a file"),),
 )
 def image_new(ctx, args):
     colorspace = args.get("colorspace") or ("linear" if args["float"] else "srgb")
@@ -65,6 +71,9 @@ def image_new(ctx, args):
     ["name", "path"],
     writes_files=True,
     destructive_when="the file already exists",
+    family="textures",
+    intents=("write an image to a PNG or JPEG file", "save a baked map"),
+    nearest=(("export", "to write the model"),),
 )
 def image_save(ctx, args):
     image = get_image(args["name"])
@@ -135,6 +144,9 @@ def relink(txn, image, path, data):
     "List images with their size, colour space, file or packed state and number of users.",
     {"names": names("Images to report. Default: every image.")},
     mutates=False,
+    family="textures",
+    intents=("image sizes and colour spaces", "list loaded textures"),
+    nearest=(("uv_info", "for UV coverage"),),
 )
 def image_info(ctx, args):
     if "names" in args:

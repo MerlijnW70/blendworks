@@ -55,6 +55,9 @@ def rounded_level(level):
     },
     ["count"],
     slow=True,
+    family="lods",
+    intents=("levels of detail for a game engine", "LOD copies with screen error"),
+    nearest=(("decimate", "for one reduction in place"),),
 )
 def generate_lods(ctx, args):
     if "names" in args:

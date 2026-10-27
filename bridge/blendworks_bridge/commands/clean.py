@@ -33,6 +33,9 @@ def clean_object(obj, tolerance=DEFAULT_TOLERANCE, merge_distance=DEFAULT_MERGE_
     },
     ["name"],
     slow=True,
+    family="mesh_edit",
+    intents=("fix slivers and degenerate faces after a boolean", "repair a broken mesh"),
+    nearest=(("merge_by_distance", "to only weld close vertices"),),
 )
 def clean_mesh(ctx, args):
     obj = get_mesh_object(args["name"])

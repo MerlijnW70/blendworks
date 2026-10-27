@@ -68,6 +68,9 @@ def opened(ctx, path):
     slow=True,
     writes_files=True,
     destructive_when="a checkpoint with this name already exists",
+    family="files",
+    intents=("save a named snapshot before a risky step", "restore point of the scene"),
+    nearest=(("save_blend", "for a .blend file you keep"),),
 )
 def checkpoint(ctx, args):
     path = checkpoint_path(ctx.workspace, args["name"])
@@ -92,6 +95,9 @@ def checkpoint(ctx, args):
     slow=True,
     destructive=True,
     snapshot=REPLACES_FILE,
+    family="files",
+    intents=("go back to a saved snapshot", "undo a bad step by loading a named state"),
+    nearest=(("load_blend", "to open a .blend file"),),
 )
 def restore_checkpoint(ctx, args):
     path = checkpoint_path(ctx.workspace, args["name"])
@@ -111,6 +117,9 @@ def restore_checkpoint(ctx, args):
     slow=True,
     internal=True,
     snapshot=NO_SNAPSHOT,
+    family="scene",
+    intents=("reload the autosave after Blender crashed",),
+    nearest=(("restore_checkpoint", "to go back to a state you saved by name"),),
 )
 def recover(ctx, args):
     if ctx.desktop:

@@ -59,6 +59,9 @@ FOCUS["description"] = "Close-up: frame an object or a point at a chosen width i
     },
     mutates=False,
     slow=True,
+    family="output",
+    intents=("look at the model, render preview images", "close-up of a detail", "clay, wireframe, normals, UV checker or material id view"),
+    nearest=(("bake", "to make textures"),),
 )
 def render_preview(ctx, args):
     check_arguments(args)

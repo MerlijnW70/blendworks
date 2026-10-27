@@ -94,6 +94,9 @@ def drop_unused_empty_slots(mesh):
     {"name": OBJECT, "modifier": string("Modifier name, as listed by scene_info.")},
     ["name"],
     slow=True,
+    family="modifiers",
+    intents=("apply modifiers to make them real geometry", "collapse the modifier stack", "apply one named modifier"),
+    nearest=(("apply_transform", "to freeze rotation and scale"),),
 )
 def apply_modifier(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -169,6 +172,9 @@ def dispose_cutters(ctx, cutters, action):
     ["name"],
     slow=True,
     destructive_when="cutter_action is delete",
+    family="mesh_edit",
+    intents=("cut holes with cutter objects", "subtract, union or intersect meshes", "drill many holes in one operation"),
+    nearest=(("join", "to combine objects without merging geometry"), ("engrave", "to cut text")),
 )
 def boolean_command(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -219,6 +225,9 @@ def boolean_command(ctx, args):
         "apply": APPLY,
     },
     ["name"],
+    family="mesh_edit",
+    intents=("make a mesh symmetric", "mirror half a model across an axis"),
+    nearest=(("duplicate", "for a separate mirrored copy"),),
 )
 def mirror(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -255,6 +264,9 @@ def get_object_for_modifier(name, obj):
         "apply": APPLY,
     },
     ["name", "count"],
+    family="mesh_edit",
+    intents=("repeat a mesh in a row inside one object", "stack copies with an offset"),
+    nearest=(("instances", "for linked copies on a circle, curve or points"),),
 )
 def array_command(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -279,6 +291,9 @@ def array_command(ctx, args):
         "apply": APPLY,
     },
     ["name", "thickness"],
+    family="mesh_edit",
+    intents=("give a surface thickness", "make a shell wall"),
+    nearest=(("extrude", "to move only some faces"),),
 )
 def solidify(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -298,6 +313,9 @@ def solidify(ctx, args):
     },
     ["name", "ratio"],
     slow=True,
+    family="mesh_edit",
+    intents=("reduce the polygon count", "lower triangles to a ratio"),
+    nearest=(("generate_lods", "for named LOD copies with error reports"),),
 )
 def decimate(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -317,6 +335,9 @@ KIND_PROPERTIES = kind_schemas()
         **KIND_PROPERTIES,
     },
     ["name"],
+    family="modifiers",
+    intents=("add a modifier: displace, weld, screw, curve, simple deform, wireframe, lattice, shrinkwrap, triangulate, weighted normal, bevel, solidify", "non-destructive modifier stack", "bend or twist a mesh"),
+    nearest=(("bevel", "to bevel the mesh directly"), ("displace_noise", "for seeded wear")),
 )
 def add_modifier_command(ctx, args):
     obj = get_mesh_object(args["name"])

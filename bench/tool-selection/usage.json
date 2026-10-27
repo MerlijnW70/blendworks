@@ -1,0 +1,64 @@
+{
+ "method": "Call sites in the proof-asset build scripts, counted in the source text: cmd(\"<command>\", ...) in the commands-only scripts, and in the raw bpy scripts the Blender calls that a Blendworks command covers (RAW_BLENDER_CALLS).",
+ "sources": [
+  {
+   "file": "armillary-build.py",
+   "sha256": "6b0fb9db14ca94b3adfdeda009f2ac077c67ea3a8b8da4e7cc95146be1e0f21d",
+   "calls": 45
+  },
+  {
+   "file": "armillary-v2-build.py",
+   "sha256": "d8a115f1030b30bc563a33bbfa867754281d23096ac9104d08e737d1be64c611",
+   "calls": 50
+  },
+  {
+   "file": "drill-rig-build.py",
+   "sha256": "0b434e0153867e19f6d0714aac33a878c4b80336d9dafca8a93a62ab9324ad99",
+   "calls": 9
+  },
+  {
+   "file": "pickaxe-build.py",
+   "sha256": "9b225dd3d18cc3fd00a1a3cea86ca7988052937219c195e3454a1dac1990bf96",
+   "calls": 8
+  }
+ ],
+ "counts": {
+  "assign_material": 18,
+  "sweep": 10,
+  "material_layer": 6,
+  "material_procedural": 6,
+  "add_material": 4,
+  "add_primitive": 4,
+  "bake": 4,
+  "clean_mesh": 4,
+  "delete": 4,
+  "export": 4,
+  "instances": 4,
+  "new_scene": 4,
+  "uv_pack": 4,
+  "rename": 3,
+  "add_empty": 2,
+  "add_modifier": 2,
+  "boolean": 2,
+  "join": 2,
+  "lathe": 2,
+  "load_blend": 2,
+  "mesh_from_data": 2,
+  "save_blend": 2,
+  "shade_smooth": 2,
+  "uv_smart_project": 2,
+  "apply_transform": 1,
+  "bevel": 1,
+  "checkpoint": 1,
+  "collection_create": 1,
+  "displace_noise": 1,
+  "engrave": 1,
+  "image_new": 1,
+  "merge_by_distance": 1,
+  "parent": 1,
+  "recalc_normals": 1,
+  "restore_checkpoint": 1,
+  "select": 1,
+  "transform": 1
+ }
+}

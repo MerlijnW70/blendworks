@@ -83,7 +83,7 @@ async function start(extra: Record<string, Spec> = {}): Promise<Setup> {
   const connection = new BridgeConnection({ open: async () => bridge.link(), owned: true, label: "fake Blender" });
   await connection.connect();
   const commands = commandsFromDescribe(bridge.describe());
-  const server = createServer({ connection, workspace: lib.workspace, commands, library: lib.library });
+  const server = createServer({ connection, workspace: lib.workspace, commands, library: lib.library, toolsets: { kind: "all" } });
   const client = await connectClient({ server, connection, workspace: lib.workspace, commands, mode: "headless" });
   setup = {
     client,

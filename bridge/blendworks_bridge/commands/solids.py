@@ -55,6 +55,9 @@ def rotate_points(points, degrees):
         },
     ),
     ["outline", "depth"],
+    family="shapes",
+    intents=("solid plate from a 2D outline with holes", "bracket, sign or cookie cutter shape"),
+    nearest=(("extrude", "to pull faces of an existing mesh"),),
 )
 def extrude_outline(ctx, args):
     require_free_name(args["name"])
@@ -83,6 +86,9 @@ def extrude_outline(ctx, args):
         },
     ),
     ["teeth", "thickness"],
+    family="shapes",
+    intents=("spur gear with teeth and a bore", "cog wheel from module or pitch"),
+    nearest=(("sprocket", "for a chain wheel"),),
 )
 def gear(ctx, args):
     require_free_name(args["name"])
@@ -122,6 +128,9 @@ def gear(ctx, args):
         },
     ),
     ["teeth", "chain_pitch", "thickness"],
+    family="shapes",
+    intents=("chain wheel for a roller chain", "bicycle chainring"),
+    nearest=(("gear", "for a gear that meshes with gears"),),
 )
 def sprocket(ctx, args):
     require_free_name(args["name"])

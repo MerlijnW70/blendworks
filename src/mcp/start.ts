@@ -2,6 +2,7 @@ import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { BridgeConnection } from "./connection.js";
 import { DESKTOP_ANSWER_MS, openDesktopLink, probeDesktop } from "./desktop.js";
 import type { BridgeLink } from "./protocol.js";
+import type { Toolsets } from "./routing/disclosure.js";
 import { type BridgeCommand, commandsFromDescribe } from "./schema.js";
 import { createServer } from "./server.js";
 import { Workspace } from "./workspace.js";
@@ -24,6 +25,7 @@ export interface StartOptions {
   timeoutFor?: (cmd: string) => number;
   progressIntervalMs?: number;
   autosaveSeconds?: number | "off";
+  toolsets?: Toolsets;
   log?: (line: string) => void;
 }
 
@@ -44,6 +46,10 @@ function tuning(options: StartOptions): { timeoutFor?: (cmd: string) => number; 
   };
 }
 
+function toolsetsOf(options: StartOptions): { toolsets?: Toolsets } {
+  return options.toolsets === undefined ? {} : { toolsets: options.toolsets };
+}
+
 export async function startBlendworks(options: StartOptions): Promise<Started> {
   const log = options.log ?? (() => undefined);
   const workspace = Workspace.open(options.workspace, options.cwd);
@@ -61,7 +67,7 @@ export async function startBlendworks(options: StartOptions): Promise<Started> {
     const commands = commandsFromDescribe(desktop.describe);
     connection.useCommands(commands);
     log(`blendworks: using ${connection.label} with ${commands.length} commands; workspace ${workspace.root} (set the add-on's workspace to the same folder, or it refuses these paths)`);
-    return { server: createServer({ connection, workspace, commands }), connection, workspace, commands, mode: "desktop" };
+    return { server: createServer({ connection, workspace, commands, ...toolsetsOf(options) }), connection, workspace, commands, mode: "desktop" };
   }
   const headless: HeadlessOptions = {
     workspace: workspace.root,
@@ -79,5 +85,5 @@ export async function startBlendworks(options: StartOptions): Promise<Started> {
   const commands = commandsFromDescribe(described.result);
   connection.useCommands(commands);
   log(`blendworks: no desktop Blender answered on 127.0.0.1:${options.port}; started a headless session with ${commands.length} commands; workspace ${workspace.root}`);
-  return { server: createServer({ connection, workspace, commands }), connection, workspace, commands, mode: "headless" };
+  return { server: createServer({ connection, workspace, commands, ...toolsetsOf(options) }), connection, workspace, commands, mode: "headless" };
 }

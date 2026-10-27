@@ -49,6 +49,9 @@ PRIMITIVE_NAMES = {
         "subdivisions": integer("ico_sphere: subdivisions (default 2).", 1, 7),
     },
     ["type"],
+    family="objects",
+    intents=("add a cube, cylinder, cone, sphere, torus or plane", "basic mesh shape to start from", "ground plane"),
+    nearest=(("lathe", "for turned profiles"), ("extrude_outline", "for flat plates")),
 )
 def add_primitive(ctx, args):
     kind = args["type"]
@@ -135,6 +138,9 @@ def build_torus(bm, uv, options):
         "offset": vector3("Move the copy by this many metres.", [0.0, 0.0, 0.0]),
     },
     ["name"],
+    family="objects",
+    intents=("make one copy of an object", "clone an object with an offset"),
+    nearest=(("instances", "for many copies on a pattern"), ("array", "for a row of copies inside one mesh")),
 )
 def duplicate(ctx, args):
     source = get_object(args["name"])
@@ -158,6 +164,9 @@ def duplicate(ctx, args):
         "target": string("Object that receives the others. Default: the first name."),
     },
     ["names"],
+    family="objects",
+    intents=("combine several meshes into one object", "merge separate objects into one mesh object"),
+    nearest=(("boolean", "for a watertight union that removes inner faces"),),
 )
 def join(ctx, args):
     get_objects(args["names"])
@@ -177,6 +186,9 @@ def join(ctx, args):
     "Rename an object (and its data when only it uses that data).",
     {"name": string("Current name."), "new_name": string("New name; must be unused.")},
     ["name", "new_name"],
+    family="objects",
+    intents=("change an object's name",),
+    nearest=(("collection_create", "to group objects"),),
 )
 def rename(ctx, args):
     obj = get_object(args["name"])
@@ -197,6 +209,9 @@ def rename(ctx, args):
         "keep_transform": boolean("Keep the child where it is in the world.", True),
     },
     ["name"],
+    family="hierarchy",
+    intents=("make an object the child of another", "clear an object's parent", "attach parts so they move together"),
+    nearest=(("add_empty", "for a new grouping node"),),
 )
 def parent(ctx, args):
     child = get_object(args["name"])

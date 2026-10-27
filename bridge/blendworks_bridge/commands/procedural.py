@@ -35,6 +35,9 @@ PRESET_NAMES = ", ".join(PRESETS)
     f"Create or rebuild a bakeable procedural material from one preset: {PRESET_NAMES}.",
     dict({"name": string("Material name; created, or rebuilt when it exists.")}, **preset_properties()),
     ["name"],
+    family="materials",
+    intents=("realistic wood, worn metal, brass, rust, stone, marble, concrete, fabric or dirt", "aged or scratched preset material"),
+    nearest=(("add_material", "for a plain colour"), ("material_layer", "to add wear on an existing material")),
 )
 def material_procedural(ctx, args):
     preset, params = chosen_preset(PRESETS, args)
@@ -79,6 +82,9 @@ def viewport_color(params):
         **preset_properties(),
     ),
     ["material"],
+    family="materials",
+    intents=("add rust, dirt or patina on top of a material", "wear on edges or in cavities"),
+    nearest=(("material_procedural", "for the base material"),),
 )
 def material_layer(ctx, args):
     material = bpy.data.materials.get(args["material"])

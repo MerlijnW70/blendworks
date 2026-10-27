@@ -1,0 +1,1430 @@
+{
+ "label": "before-probe-sonnet",
+ "intents": {
+  "total": 224,
+  "heldout": 69
+ },
+ "coverage": {
+  "unknown": [],
+  "uncovered": [
+   "blender_run_python"
+  ]
+ },
+ "listings": {
+  "legacy": {
+   "tools": 83,
+   "bytes": 198181,
+   "estimatedTokens": 76223,
+   "note": "every tool with the bridge descriptions only: the listing before routing"
+  },
+  "base": {
+   "tools": 83,
+   "bytes": 198181,
+   "estimatedTokens": 76223,
+   "instructionsBytes": 4914,
+   "names": [
+    "blender_add_camera",
+    "blender_add_empty",
+    "blender_add_light",
+    "blender_add_material",
+    "blender_add_modifier",
+    "blender_add_primitive",
+    "blender_apply_modifier",
+    "blender_apply_transform",
+    "blender_array",
+    "blender_assign_material",
+    "blender_bake",
+    "blender_bevel",
+    "blender_boolean",
+    "blender_checkpoint",
+    "blender_clean_mesh",
+    "blender_collection_create",
+    "blender_collection_link",
+    "blender_collection_unlink",
+    "blender_curve_from_points",
+    "blender_decimate",
+    "blender_delete",
+    "blender_displace_noise",
+    "blender_duplicate",
+    "blender_engrave",
+    "blender_export",
+    "blender_extrude",
+    "blender_extrude_outline",
+    "blender_gear",
+    "blender_generate_lods",
+    "blender_image_info",
+    "blender_image_load",
+    "blender_image_new",
+    "blender_image_save",
+    "blender_import",
+    "blender_inset",
+    "blender_instances",
+    "blender_join",
+    "blender_lathe",
+    "blender_load_blend",
+    "blender_loft",
+    "blender_look_at",
+    "blender_material_info",
+    "blender_material_layer",
+    "blender_material_nodes",
+    "blender_material_pbr",
+    "blender_material_procedural",
+    "blender_merge_by_distance",
+    "blender_mesh_from_data",
+    "blender_mesh_query",
+    "blender_mirror",
+    "blender_new_scene",
+    "blender_parent",
+    "blender_recalc_normals",
+    "blender_rename",
+    "blender_render_preview",
+    "blender_restore_checkpoint",
+    "blender_rivet_line",
+    "blender_roller_chain",
+    "blender_run_python",
+    "blender_save_blend",
+    "blender_scene_info",
+    "blender_select",
+    "blender_set_origin",
+    "blender_set_world",
+    "blender_set_world_hdri",
+    "blender_shade_flat",
+    "blender_shade_smooth",
+    "blender_solidify",
+    "blender_sprocket",
+    "blender_subdivide",
+    "blender_sweep",
+    "blender_text_object",
+    "blender_transform",
+    "blender_transform_selection",
+    "blender_uv_info",
+    "blender_uv_pack",
+    "blender_uv_smart_project",
+    "blender_uv_unwrap",
+    "blender_vertex_colors",
+    "library_search",
+    "library_preview",
+    "library_download",
+    "library_apply"
+   ]
+  }
+ },
+ "routing": {
+  "baseline BM25, heldout": {
+   "top1": {
+    "hits": 41,
+    "total": 69,
+    "rate": 0.5942
+   },
+   "top5": {
+    "hits": 56,
+    "total": 69,
+    "rate": 0.8116
+   },
+   "byKind": {
+    "single": {
+     "top1": {
+      "hits": 24,
+      "total": 36,
+      "rate": 0.6667
+     },
+     "top5": {
+      "hits": 30,
+      "total": 36,
+      "rate": 0.8333
+     }
+    },
+    "near-miss": {
+     "top1": {
+      "hits": 16,
+      "total": 27,
+      "rate": 0.5926
+     },
+     "top5": {
+      "hits": 23,
+      "total": 27,
+      "rate": 0.8519
+     }
+    },
+    "multi-step": {
+     "top1": {
+      "hits": 1,
+      "total": 6,
+      "rate": 0.1667
+     },
+     "top5": {
+      "hits": 3,
+      "total": 6,
+      "rate": 0.5
+     }
+    }
+   },
+   "misses": [
+    {
+     "id": "delete-1",
+     "expected": [
+      "blender_delete"
+     ],
+     "got": [
+      "blender_new_scene",
+      "blender_rivet_line",
+      "blender_assign_material",
+      "blender_look_at",
+      "blender_select"
+     ]
+    },
+    {
+     "id": "add_primitive-2",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_uv_pack",
+      "blender_uv_smart_project",
+      "blender_collection_create",
+      "blender_uv_unwrap",
+      "blender_add_material"
+     ]
+    },
+    {
+     "id": "duplicate-1",
+     "expected": [
+      "blender_duplicate"
+     ],
+     "got": [
+      "blender_lathe",
+      "blender_instances",
+      "blender_generate_lods",
+      "blender_add_light",
+      "blender_transform_selection"
+     ]
+    },
+    {
+     "id": "parent-1",
+     "expected": [
+      "blender_parent"
+     ],
+     "got": [
+      "blender_transform_selection",
+      "blender_mesh_query",
+      "blender_recalc_normals",
+      "blender_set_origin",
+      "blender_collection_link"
+     ]
+    },
+    {
+     "id": "sweep-1",
+     "expected": [
+      "blender_sweep"
+     ],
+     "got": [
+      "blender_shade_smooth",
+      "blender_instances",
+      "blender_subdivide",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "render_preview-3",
+     "expected": [
+      "blender_render_preview"
+     ],
+     "got": [
+      "library_preview",
+      "blender_uv_pack",
+      "blender_add_primitive",
+      "blender_uv_smart_project",
+      "blender_uv_unwrap"
+     ]
+    },
+    {
+     "id": "lathe-3",
+     "expected": [
+      "blender_lathe",
+      "blender_material_procedural",
+      "blender_export"
+     ],
+     "got": [
+      "blender_export",
+      "blender_import",
+      "blender_material_procedural",
+      "blender_material_pbr",
+      "blender_recalc_normals"
+     ]
+    },
+    {
+     "id": "uv_smart_project-2",
+     "expected": [
+      "blender_uv_smart_project",
+      "blender_bake",
+      "blender_export"
+     ],
+     "got": [
+      "blender_export",
+      "blender_bake",
+      "blender_material_pbr",
+      "blender_material_nodes",
+      "library_apply"
+     ]
+    },
+    {
+     "id": "sweep-4",
+     "expected": [
+      "blender_sweep",
+      "blender_material_procedural"
+     ],
+     "got": [
+      "blender_look_at",
+      "blender_material_procedural",
+      "blender_roller_chain",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "delete-2",
+     "expected": [
+      "blender_delete"
+     ],
+     "got": [
+      "blender_boolean",
+      "blender_subdivide",
+      "blender_loft",
+      "blender_clean_mesh",
+      "blender_engrave"
+     ]
+    },
+    {
+     "id": "extrude-2",
+     "expected": [
+      "blender_extrude"
+     ],
+     "got": [
+      "blender_inset",
+      "blender_assign_material",
+      "blender_subdivide",
+      "blender_vertex_colors",
+      "blender_bevel"
+     ]
+    },
+    {
+     "id": "engrave-5",
+     "expected": [
+      "blender_engrave"
+     ],
+     "got": [
+      "blender_extrude_outline",
+      "blender_image_info",
+      "blender_image_save",
+      "blender_roller_chain"
+     ]
+    },
+    {
+     "id": "rename-2",
+     "expected": [
+      "blender_rename"
+     ],
+     "got": [
+      "blender_select",
+      "blender_delete",
+      "blender_join",
+      "blender_engrave",
+      "blender_generate_lods"
+     ]
+    }
+   ],
+   "msPerQuery": {
+    "mean": 0.225,
+    "max": 9.527
+   }
+  },
+  "baseline BM25, probe": {
+   "top1": {
+    "hits": 10,
+    "total": 15,
+    "rate": 0.6667
+   },
+   "top5": {
+    "hits": 13,
+    "total": 15,
+    "rate": 0.8667
+   },
+   "byKind": {
+    "single": {
+     "top1": {
+      "hits": 10,
+      "total": 15,
+      "rate": 0.6667
+     },
+     "top5": {
+      "hits": 13,
+      "total": 15,
+      "rate": 0.8667
+     }
+    },
+    "near-miss": {
+     "top1": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     },
+     "top5": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     }
+    },
+    "multi-step": {
+     "top1": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     },
+     "top5": {
+      "hits": 0,
+      "total": 0,
+      "rate": 0
+     }
+    }
+   },
+   "misses": [
+    {
+     "id": "probe-1",
+     "expected": [
+      "blender_new_scene"
+     ],
+     "got": [
+      "library_preview",
+      "blender_curve_from_points",
+      "blender_material_pbr",
+      "library_apply",
+      "blender_mesh_from_data"
+     ]
+    },
+    {
+     "id": "probe-9",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_collection_create",
+      "blender_add_material",
+      "blender_image_new",
+      "blender_material_nodes",
+      "blender_material_procedural"
+     ]
+    }
+   ],
+   "msPerQuery": {
+    "mean": 0.018,
+    "max": 0.04
+   }
+  },
+  "baseline BM25, all": {
+   "top1": {
+    "hits": 140,
+    "total": 224,
+    "rate": 0.625
+   },
+   "top5": {
+    "hits": 190,
+    "total": 224,
+    "rate": 0.8482
+   },
+   "byKind": {
+    "single": {
+     "top1": {
+      "hits": 95,
+      "total": 143,
+      "rate": 0.6643
+     },
+     "top5": {
+      "hits": 123,
+      "total": 143,
+      "rate": 0.8601
+     }
+    },
+    "near-miss": {
+     "top1": {
+      "hits": 43,
+      "total": 65,
+      "rate": 0.6615
+     },
+     "top5": {
+      "hits": 57,
+      "total": 65,
+      "rate": 0.8769
+     }
+    },
+    "multi-step": {
+     "top1": {
+      "hits": 2,
+      "total": 16,
+      "rate": 0.125
+     },
+     "top5": {
+      "hits": 10,
+      "total": 16,
+      "rate": 0.625
+     }
+    }
+   },
+   "misses": [
+    {
+     "id": "scene_info-1",
+     "expected": [
+      "blender_scene_info"
+     ],
+     "got": [
+      "blender_material_pbr",
+      "blender_new_scene",
+      "library_download",
+      "blender_export",
+      "blender_collection_create"
+     ]
+    },
+    {
+     "id": "new_scene-2",
+     "expected": [
+      "blender_new_scene"
+     ],
+     "got": [
+      "blender_boolean",
+      "library_preview",
+      "blender_clean_mesh",
+      "blender_curve_from_points",
+      "blender_material_pbr"
+     ]
+    },
+    {
+     "id": "delete-1",
+     "expected": [
+      "blender_delete"
+     ],
+     "got": [
+      "blender_new_scene",
+      "blender_rivet_line",
+      "blender_assign_material",
+      "blender_look_at",
+      "blender_select"
+     ]
+    },
+    {
+     "id": "add_primitive-1",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_add_light",
+      "blender_text_object",
+      "blender_set_origin",
+      "blender_join",
+      "blender_engrave"
+     ]
+    },
+    {
+     "id": "add_primitive-2",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_uv_pack",
+      "blender_uv_smart_project",
+      "blender_collection_create",
+      "blender_uv_unwrap",
+      "blender_add_material"
+     ]
+    },
+    {
+     "id": "add_primitive-3",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_bevel",
+      "blender_shade_flat",
+      "blender_mirror",
+      "blender_collection_create",
+      "blender_engrave"
+     ]
+    },
+    {
+     "id": "duplicate-1",
+     "expected": [
+      "blender_duplicate"
+     ],
+     "got": [
+      "blender_lathe",
+      "blender_instances",
+      "blender_generate_lods",
+      "blender_add_light",
+      "blender_transform_selection"
+     ]
+    },
+    {
+     "id": "join-1",
+     "expected": [
+      "blender_join"
+     ],
+     "got": [
+      "blender_merge_by_distance",
+      "blender_instances",
+      "blender_sprocket",
+      "blender_uv_pack",
+      "blender_clean_mesh"
+     ]
+    },
+    {
+     "id": "parent-1",
+     "expected": [
+      "blender_parent"
+     ],
+     "got": [
+      "blender_transform_selection",
+      "blender_mesh_query",
+      "blender_recalc_normals",
+      "blender_set_origin",
+      "blender_collection_link"
+     ]
+    },
+    {
+     "id": "extrude-1",
+     "expected": [
+      "blender_extrude"
+     ],
+     "got": [
+      "blender_add_light",
+      "blender_bevel",
+      "blender_mesh_query",
+      "blender_shade_flat",
+      "blender_decimate"
+     ]
+    },
+    {
+     "id": "boolean-1",
+     "expected": [
+      "blender_boolean"
+     ],
+     "got": [
+      "blender_extrude_outline",
+      "blender_engrave",
+      "blender_subdivide",
+      "blender_roller_chain"
+     ]
+    },
+    {
+     "id": "lathe-2",
+     "expected": [
+      "blender_lathe"
+     ],
+     "got": [
+      "blender_gear",
+      "blender_extrude_outline",
+      "blender_transform",
+      "blender_shade_smooth",
+      "blender_add_light"
+     ]
+    },
+    {
+     "id": "sweep-1",
+     "expected": [
+      "blender_sweep"
+     ],
+     "got": [
+      "blender_shade_smooth",
+      "blender_instances",
+      "blender_subdivide",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "sweep-2",
+     "expected": [
+      "blender_sweep"
+     ],
+     "got": [
+      "blender_curve_from_points",
+      "blender_collection_create",
+      "blender_look_at",
+      "blender_extrude_outline",
+      "blender_lathe"
+     ]
+    },
+    {
+     "id": "render_preview-1",
+     "expected": [
+      "blender_render_preview"
+     ],
+     "got": [
+      "library_preview",
+      "blender_look_at",
+      "blender_boolean",
+      "library_apply",
+      "library_search"
+     ]
+    },
+    {
+     "id": "render_preview-3",
+     "expected": [
+      "blender_render_preview"
+     ],
+     "got": [
+      "library_preview",
+      "blender_uv_pack",
+      "blender_add_primitive",
+      "blender_uv_smart_project",
+      "blender_uv_unwrap"
+     ]
+    },
+    {
+     "id": "lathe-3",
+     "expected": [
+      "blender_lathe",
+      "blender_material_procedural",
+      "blender_export"
+     ],
+     "got": [
+      "blender_export",
+      "blender_import",
+      "blender_material_procedural",
+      "blender_material_pbr",
+      "blender_recalc_normals"
+     ]
+    },
+    {
+     "id": "add_primitive-4",
+     "expected": [
+      "blender_add_primitive",
+      "blender_displace_noise",
+      "blender_material_procedural"
+     ],
+     "got": [
+      "blender_material_procedural",
+      "blender_generate_lods",
+      "blender_recalc_normals",
+      "blender_add_camera",
+      "blender_material_info"
+     ]
+    },
+    {
+     "id": "uv_smart_project-2",
+     "expected": [
+      "blender_uv_smart_project",
+      "blender_bake",
+      "blender_export"
+     ],
+     "got": [
+      "blender_export",
+      "blender_bake",
+      "blender_material_pbr",
+      "blender_material_nodes",
+      "library_apply"
+     ]
+    },
+    {
+     "id": "boolean-3",
+     "expected": [
+      "blender_boolean",
+      "blender_clean_mesh"
+     ],
+     "got": [
+      "blender_clean_mesh",
+      "blender_extrude_outline",
+      "blender_subdivide",
+      "blender_array",
+      "blender_engrave"
+     ]
+    },
+    {
+     "id": "sweep-4",
+     "expected": [
+      "blender_sweep",
+      "blender_material_procedural"
+     ],
+     "got": [
+      "blender_look_at",
+      "blender_material_procedural",
+      "blender_roller_chain",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "library_search-3",
+     "expected": [
+      "library_search",
+      "library_apply"
+     ],
+     "got": [
+      "library_download",
+      "library_search",
+      "library_preview",
+      "blender_bake",
+      "blender_collection_create"
+     ]
+    },
+    {
+     "id": "delete-2",
+     "expected": [
+      "blender_delete"
+     ],
+     "got": [
+      "blender_boolean",
+      "blender_subdivide",
+      "blender_loft",
+      "blender_clean_mesh",
+      "blender_engrave"
+     ]
+    },
+    {
+     "id": "scene_info-5",
+     "expected": [
+      "blender_scene_info"
+     ],
+     "got": [
+      "blender_select",
+      "blender_delete",
+      "blender_join",
+      "blender_rivet_line",
+      "blender_loft"
+     ]
+    },
+    {
+     "id": "add_material-3",
+     "expected": [
+      "blender_add_material"
+     ],
+     "got": [
+      "blender_shade_flat",
+      "blender_shade_smooth",
+      "blender_generate_lods",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "render_preview-4",
+     "expected": [
+      "blender_render_preview"
+     ],
+     "got": [
+      "library_download",
+      "blender_vertex_colors",
+      "blender_material_layer",
+      "blender_material_pbr",
+      "blender_material_nodes"
+     ]
+    },
+    {
+     "id": "extrude-2",
+     "expected": [
+      "blender_extrude"
+     ],
+     "got": [
+      "blender_inset",
+      "blender_assign_material",
+      "blender_subdivide",
+      "blender_vertex_colors",
+      "blender_bevel"
+     ]
+    },
+    {
+     "id": "solidify-2",
+     "expected": [
+      "blender_solidify"
+     ],
+     "got": [
+      "blender_recalc_normals",
+      "blender_add_camera",
+      "blender_gear",
+      "blender_sprocket",
+      "blender_generate_lods"
+     ]
+    },
+    {
+     "id": "loft-2",
+     "expected": [
+      "blender_loft"
+     ],
+     "got": [
+      "blender_curve_from_points",
+      "blender_uv_info",
+      "blender_uv_pack",
+      "blender_recalc_normals",
+      "blender_add_camera"
+     ]
+    },
+    {
+     "id": "engrave-5",
+     "expected": [
+      "blender_engrave"
+     ],
+     "got": [
+      "blender_extrude_outline",
+      "blender_image_info",
+      "blender_image_save",
+      "blender_roller_chain"
+     ]
+    },
+    {
+     "id": "merge_by_distance-2",
+     "expected": [
+      "blender_merge_by_distance"
+     ],
+     "got": [
+      "blender_new_scene",
+      "library_search",
+      "blender_instances",
+      "blender_boolean",
+      "blender_mesh_from_data"
+     ]
+    },
+    {
+     "id": "rename-2",
+     "expected": [
+      "blender_rename"
+     ],
+     "got": [
+      "blender_select",
+      "blender_delete",
+      "blender_join",
+      "blender_engrave",
+      "blender_generate_lods"
+     ]
+    },
+    {
+     "id": "probe-1",
+     "expected": [
+      "blender_new_scene"
+     ],
+     "got": [
+      "library_preview",
+      "blender_curve_from_points",
+      "blender_material_pbr",
+      "library_apply",
+      "blender_mesh_from_data"
+     ]
+    },
+    {
+     "id": "probe-9",
+     "expected": [
+      "blender_add_primitive"
+     ],
+     "got": [
+      "blender_collection_create",
+      "blender_add_material",
+      "blender_image_new",
+      "blender_material_nodes",
+      "blender_material_procedural"
+     ]
+    }
+   ],
+   "msPerQuery": {
+    "mean": 0.018,
+    "max": 0.05
+   }
+  }
+ },
+ "e2e": {
+  "base": {
+   "mode": "base",
+   "model": "sonnet",
+   "effort": "low",
+   "samples": 15,
+   "failed": 0,
+   "accuracy": {
+    "hits": 12,
+    "total": 15,
+    "rate": 0.8
+   },
+   "nearMiss": {
+    "hits": 0,
+    "total": 0,
+    "rate": 0
+   },
+   "multiStep": {
+    "hits": 0,
+    "total": 0,
+    "rate": 0
+   },
+   "runPython": {
+    "hits": 2,
+    "total": 15,
+    "rate": 0.1333
+   },
+   "validArguments": {
+    "hits": 14,
+    "total": 15,
+    "rate": 0.9333
+   },
+   "searchesPerTask": 0,
+   "inputTokensPerTask": 80320,
+   "costUsd": 1.262,
+   "results": [
+    {
+     "id": "probe-1",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_new_scene",
+       "arguments": {}
+      }
+     ],
+     "final": "blender_new_scene",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 80444,
+      "cacheRead": 80310,
+      "output": 155
+     },
+     "promptTokens": 80312,
+     "costUsd": 0.331365
+    },
+    {
+     "id": "probe-2",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_mesh_from_data",
+       "arguments": {
+        "name": "Mesh",
+        "vertices": [
+         [
+          0,
+          0,
+          0
+         ],
+         [
+          1,
+          0,
+          0
+         ],
+         [
+          1,
+          1,
+          0
+         ],
+         [
+          0,
+          1,
+          0
+         ],
+         [
+          0.5,
+          0.5,
+          1
+         ]
+        ],
+        "faces": [
+         [
+          0,
+          3,
+          2,
+          1
+         ],
+         [
+          0,
+          1,
+          4
+         ],
+         [
+          1,
+          2,
+          4
+         ],
+         [
+          2,
+          3,
+          4
+         ],
+         [
+          3,
+          0,
+          4
+         ]
+        ]
+       }
+      }
+     ],
+     "final": "blender_mesh_from_data",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 2,
+      "cacheCreation": 80324,
+      "cacheRead": 0,
+      "output": 312
+     },
+     "promptTokens": 80326,
+     "costUsd": 0.32442000000000004
+    },
+    {
+     "id": "probe-3",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_add_material",
+       "arguments": {
+        "name": "DarkRed",
+        "base_color": [
+         0.3,
+         0,
+         0,
+         1
+        ]
+       }
+      }
+     ],
+     "final": "blender_add_material",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 80493,
+      "cacheRead": 80325,
+      "output": 219
+     },
+     "promptTokens": 80327,
+     "costUsd": 0.33220249999999996
+    },
+    {
+     "id": "probe-4",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_image_new",
+       "arguments": {
+        "name": "bake_target",
+        "width": 2048,
+        "height": 2048
+       }
+      }
+     ],
+     "final": "blender_image_new",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 795,
+      "cacheRead": 159984,
+      "output": 194
+     },
+     "promptTokens": 80316,
+     "costUsd": 0.0211264
+    },
+    {
+     "id": "probe-5",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_uv_smart_project",
+       "arguments": {
+        "name": "hull"
+       }
+      }
+     ],
+     "final": "blender_uv_smart_project",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 2,
+      "cacheCreation": 639,
+      "cacheRead": 79670,
+      "output": 92
+     },
+     "promptTokens": 80311,
+     "costUsd": 0.011446999999999999
+    },
+    {
+     "id": "probe-6",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_scene_info",
+       "arguments": {
+        "detail": "objects",
+        "names": "*rop*"
+       }
+      }
+     ],
+     "final": "blender_scene_info",
+     "correct": false,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1408,
+      "cacheRead": 240651,
+      "output": 789
+     },
+     "promptTokens": 80319,
+     "costUsd": 0.0375991
+    },
+    {
+     "id": "probe-7",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_bake",
+       "arguments": {
+        "names": [
+         "crate"
+        ],
+        "channels": [
+         "base_color"
+        ],
+        "rewire": true
+       }
+      }
+     ],
+     "final": "blender_bake",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 814,
+      "cacheRead": 159988,
+      "output": 209
+     },
+     "promptTokens": 80320,
+     "costUsd": 0.0213528
+    },
+    {
+     "id": "probe-8",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_export",
+       "arguments": {
+        "path": "ship.glb",
+        "format": "glb"
+       }
+      }
+     ],
+     "final": "blender_export",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 791,
+      "cacheRead": 159987,
+      "output": 182
+     },
+     "promptTokens": 80319,
+     "costUsd": 0.0209907
+    },
+    {
+     "id": "probe-9",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_add_primitive",
+       "arguments": {
+        "type": "cube",
+        "name": "CrateBody",
+        "size": 1,
+        "location": [
+         0,
+         0,
+         0.5
+        ]
+       }
+      }
+     ],
+     "final": "blender_add_primitive",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 2,
+      "cacheCreation": 643,
+      "cacheRead": 79670,
+      "output": 197
+     },
+     "promptTokens": 80315,
+     "costUsd": 0.012513
+    },
+    {
+     "id": "probe-10",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_bevel",
+       "arguments": {
+        "name": "crate",
+        "width": 0.004
+       }
+      }
+     ],
+     "final": "blender_bevel",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 858,
+      "cacheRead": 159990,
+      "output": 244
+     },
+     "promptTokens": 80322,
+     "costUsd": 0.021879000000000003
+    },
+    {
+     "id": "probe-11",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_run_python",
+       "arguments": {
+        "arguments": "{\"code\":\"import bmesh\\ncount = 0\\nfor obj in bpy.data.objects:\\n    if obj.type == 'MESH':\\n        bm = bmesh.new()\\n        bm.from_mesh(obj.data)\\n        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)\\n        bm.to_mesh(obj.data)\\n        bm.free()\\n        obj.data.update()\\n        count += 1\\nresult = {'meshes_recalculated': count}\"}",
+        "tool": "blender_run_python"
+       }
+      }
+     ],
+     "final": "blender_run_python",
+     "correct": false,
+     "validArguments": false,
+     "failure": null,
+     "usage": {
+      "input": 6,
+      "cacheCreation": 1430,
+      "cacheRead": 240893,
+      "output": 791
+     },
+     "promptTokens": 80318,
+     "costUsd": 0.037731299999999995
+    },
+    {
+     "id": "probe-12",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_transform",
+       "arguments": {
+        "name": "Lid",
+        "rotation": [
+         0,
+         0,
+         45
+        ]
+       }
+      }
+     ],
+     "final": "blender_transform",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 804,
+      "cacheRead": 159994,
+      "output": 192
+     },
+     "promptTokens": 80326,
+     "costUsd": 0.0211434
+    },
+    {
+     "id": "probe-13",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_instances",
+       "arguments": {
+        "source": "Bolt",
+        "name": "BoltRing",
+        "circle": {
+         "centre": [
+          0,
+          0,
+          0
+         ],
+         "radius": 0.1,
+         "count": 12
+        },
+        "align": "radial"
+       }
+      }
+     ],
+     "final": "blender_instances",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 847,
+      "cacheRead": 159999,
+      "output": 264
+     },
+     "promptTokens": 80331,
+     "costUsd": 0.0220359
+    },
+    {
+     "id": "probe-14",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_transform_selection",
+       "arguments": {
+        "name": "Tower",
+        "facing": "up",
+        "move": [
+         0,
+         0,
+         0.02
+        ]
+       }
+      }
+     ],
+     "final": "blender_transform_selection",
+     "correct": true,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 814,
+      "cacheRead": 159994,
+      "output": 211
+     },
+     "promptTokens": 80326,
+     "costUsd": 0.0213734
+    },
+    {
+     "id": "probe-15",
+     "kind": "single",
+     "calls": [
+      {
+       "tool": "blender_run_python",
+       "arguments": {
+        "code": "obj = bpy.data.objects['Pipe']\nbpy.context.view_layer.objects.active = obj\nfor o in bpy.context.view_layer.objects:\n    o.select_set(False)\nobj.select_set(True)\nfor m in list(obj.modifiers):\n    bpy.ops.object.modifier_apply(modifier=m.name)\nresult = {'remaining_modifiers': len(obj.modifiers), 'vertices': len(obj.data.vertices)}"
+       }
+      }
+     ],
+     "final": "blender_run_python",
+     "correct": false,
+     "validArguments": true,
+     "failure": null,
+     "usage": {
+      "input": 4,
+      "cacheCreation": 946,
+      "cacheRead": 159986,
+      "output": 495
+     },
+     "promptTokens": 80318,
+     "costUsd": 0.0247406
+    }
+   ]
+  }
+ },
+ "commit": "2291451"
+}

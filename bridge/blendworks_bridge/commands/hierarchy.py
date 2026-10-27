@@ -42,6 +42,9 @@ def move_to(obj, collection):
         "collection": string("Collection to put the empty in. Default: the scene collection."),
     },
     ["name"],
+    family="hierarchy",
+    intents=("empty as a group root or pivot", "null object to group parts"),
+    nearest=(("collection_create", "to group objects without a transform"),),
 )
 def add_empty(ctx, args):
     require_free_name(args["name"])
@@ -75,6 +78,9 @@ def add_empty(ctx, args):
         "objects": names("Objects to link into the new collection.", min_items=0),
     },
     ["name"],
+    family="hierarchy",
+    intents=("new collection for some objects", "group objects in a collection"),
+    nearest=(("collection_link", "to put objects in an existing collection"),),
 )
 def collection_create(ctx, args):
     if args["name"] in bpy.data.collections or args["name"] == ctx.scene.collection.name:
@@ -99,6 +105,9 @@ def collection_create(ctx, args):
         "move": boolean("Unlink the objects from all their other collections.", False),
     },
     ["collection", "names"],
+    family="hierarchy",
+    intents=("put objects into an existing collection", "move objects to a collection"),
+    nearest=(("collection_create", "when the collection does not exist yet"),),
 )
 def collection_link(ctx, args):
     collection = get_collection(ctx.scene, args["collection"])
@@ -119,6 +128,9 @@ def collection_link(ctx, args):
     "Unlink objects from a collection; an object must stay in at least one collection, so unlinking its last one is refused.",
     {"collection": string("Collection to unlink the objects from."), "names": names("Objects to unlink.")},
     ["collection", "names"],
+    family="hierarchy",
+    intents=("take objects out of a collection", "remove an object from one collection and keep it in the others",),
+    nearest=(("delete", "to remove the objects"),),
 )
 def collection_unlink(ctx, args):
     collection = get_collection(ctx.scene, args["collection"])

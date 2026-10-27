@@ -87,6 +87,9 @@ def checked(nodes, links):
         "displacement": string("How a linked Displacement input is applied.", list(DISPLACEMENT), "bump"),
     },
     ["name", "nodes"],
+    family="materials",
+    intents=("custom shader node graph", "colour ramp, noise or checker material"),
+    nearest=(("material_procedural", "for ready presets"),),
 )
 def material_nodes(ctx, args):
     links = args.get("links", [])
@@ -107,6 +110,9 @@ def material_nodes(ctx, args):
     {"name": string("Material name.")},
     ["name"],
     mutates=False,
+    family="materials",
+    intents=("read a material's nodes to edit them", "inspect a shader graph"),
+    nearest=(("material_nodes", "to change the graph"),),
 )
 def material_info(ctx, args):
     material = bpy.data.materials.get(args["name"])

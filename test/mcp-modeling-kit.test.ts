@@ -64,7 +64,7 @@ describe.skipIf(!existsSync(SESSION))("a detailed prop built with the modelling 
     env["BLENDER"] = blenderPath();
     const transport = new StdioClientTransport({
       command: process.execPath,
-      args: ["--import", "tsx", join("src", "mcp", "index.ts"), "--workspace", workspace],
+      args: ["--import", "tsx", join("src", "mcp", "index.ts"), "--workspace", workspace, "--toolsets", "all"],
       env,
       stderr: "pipe",
     });

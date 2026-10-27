@@ -35,6 +35,9 @@ EXPORTABLE_TYPES = GEOMETRY_TYPES + ("EMPTY",)
     slow=True,
     writes_files=True,
     destructive_when="the file already exists",
+    family="output",
+    intents=("export a .glb, .fbx or .obj file", "deliver the asset for a game engine"),
+    nearest=(("save_blend", "for a .blend file"),),
 )
 def export(ctx, args):
     extension = os.path.splitext(args["path"])[1].lower()
@@ -111,6 +114,9 @@ def with_ancestor_empties(objects, scene):
     slow=True,
     writes_files=True,
     destructive_when="the file already exists",
+    family="files",
+    intents=("save the scene as a .blend file",),
+    nearest=(("checkpoint", "for a quick restore point"), ("export", "for .glb, .fbx or .obj")),
 )
 def save_blend(ctx, args):
     path = ctx.workspace.output(args["path"], (".blend",))
@@ -125,6 +131,9 @@ def save_blend(ctx, args):
     slow=True,
     destructive=True,
     snapshot=REPLACES_FILE,
+    family="files",
+    intents=("open a .blend file in place of the scene",),
+    nearest=(("import", "to add a .glb, .fbx or .obj model"),),
 )
 def load_blend(ctx, args):
     path = ctx.workspace.existing(args["path"], (".blend",))
@@ -142,6 +151,9 @@ def load_blend(ctx, args):
     },
     ["path"],
     slow=True,
+    family="files",
+    intents=("import a .glb, .gltf, .fbx or .obj model into the scene",),
+    nearest=(("load_blend", "to open a .blend file"),),
 )
 def import_command(ctx, args):
     path = ctx.workspace.existing(args["path"], IMPORT_EXTENSIONS)

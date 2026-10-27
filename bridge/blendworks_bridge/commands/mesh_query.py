@@ -38,6 +38,9 @@ def material_name(obj, index):
     ),
     ["name"],
     mutates=False,
+    family="faces",
+    intents=("find faces by direction, material or island", "face centres, normals and areas"),
+    nearest=(("scene_info", "for whole objects"),),
 )
 def mesh_query(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -110,6 +113,9 @@ def selected_vertices(bm, obj, args):
         }
     ),
     ["name"],
+    family="faces",
+    intents=("move, rotate or scale faces or vertices", "taper part of a mesh"),
+    nearest=(("transform", "to move a whole object"),),
 )
 def transform_selection(ctx, args):
     obj = get_mesh_object(args["name"])

@@ -67,6 +67,9 @@ def apply_texel_density(ctx, obj, args, margin):
         **TEXEL_PROPERTIES,
     },
     ["name"],
+    family="uv",
+    intents=("automatic UV unwrap without seams", "unwrap by angle, merge small islands"),
+    nearest=(("uv_unwrap", "when seams are marked"),),
 )
 def uv_smart_project(ctx, args):
     obj = uv_mesh_object(args["name"])
@@ -106,6 +109,9 @@ def uv_smart_project(ctx, args):
         **TEXEL_PROPERTIES,
     },
     ["name"],
+    family="uv",
+    intents=("unwrap along marked seams", "mark seams by angle and unwrap"),
+    nearest=(("uv_smart_project", "for fully automatic islands"),),
 )
 def uv_unwrap(ctx, args):
     obj = uv_mesh_object(args["name"])
@@ -136,6 +142,9 @@ def uv_unwrap(ctx, args):
     },
     ["name"],
     mutates=False,
+    family="uv",
+    intents=("measure UV coverage, overlap and texel density",),
+    nearest=(("uv_pack", "to improve the layout"),),
 )
 def uv_info(ctx, args):
     obj = get_mesh_object(args["name"])

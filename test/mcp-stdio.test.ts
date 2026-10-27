@@ -32,7 +32,7 @@ describe("node src/mcp/index.ts over stdio", () => {
     const workspace = join(scratchDir(), "new-workspace");
     const transport = new StdioClientTransport({
       command: process.execPath,
-      args: ["--import", "tsx", join("src", "mcp", "index.ts"), "--workspace", workspace],
+      args: ["--import", "tsx", join("src", "mcp", "index.ts"), "--workspace", workspace, "--toolsets", "all"],
       env: env(listening.port),
       stderr: "pipe",
     });

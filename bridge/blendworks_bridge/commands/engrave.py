@@ -123,6 +123,9 @@ def check_fit(surface, shapes, shift):
     },
     ["name", "text"],
     slow=True,
+    family="engraving",
+    intents=("cut or emboss text into a surface", "numbers or scale marks on a dial or ring", "zodiac or planet symbols"),
+    nearest=(("text_object", "for free-standing 3D text"),),
 )
 def engrave(ctx, args):
     target = get_mesh_object(args["name"])

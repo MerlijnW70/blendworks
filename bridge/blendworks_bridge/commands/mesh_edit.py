@@ -57,6 +57,9 @@ def edit_result(obj, extra=None):
         }
     ),
     ["name", "distance"],
+    family="mesh_edit",
+    intents=("pull faces out along their normals", "push selected faces inward"),
+    nearest=(("extrude_outline", "to make a solid from a 2D outline"),),
 )
 def extrude(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -92,6 +95,9 @@ def extrude(ctx, args):
         }
     ),
     ["name", "thickness"],
+    family="mesh_edit",
+    intents=("inset faces to make a border or frame", "rim inside a face"),
+    nearest=(("bevel", "to round edges"),),
 )
 def inset(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -123,6 +129,9 @@ def inset(ctx, args):
         "edges": indices("Edge indices to bevel instead of choosing by angle; each must border two faces.", 1, 100_000),
     },
     ["name", "width"],
+    family="mesh_edit",
+    intents=("round or chamfer edges", "soften sharp corners", "harden normals after bevelling"),
+    nearest=(("add_modifier", "for a bevel modifier that stays editable"),),
 )
 def bevel(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -187,6 +196,9 @@ def sharp_enough(edge, threshold):
         }
     ),
     ["name"],
+    family="mesh_edit",
+    intents=("split edges into more parts", "add more faces and smooth"),
+    nearest=(("decimate", "to reduce faces"),),
 )
 def subdivide(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -205,6 +217,9 @@ def subdivide(ctx, args):
     "Shade faces smooth; with angle, edges sharper than angle degrees stay sharp.",
     with_faces({"angle": number("Keep edges sharper than this many degrees sharp.", 0.0, 180.0)}),
     ["name"],
+    family="mesh_edit",
+    intents=("smooth shading", "auto smooth by angle"),
+    nearest=(("shade_flat", "for faceted shading"),),
 )
 def shade_smooth(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -218,7 +233,15 @@ def shade_smooth(ctx, args):
     return edit_result(obj, {"smooth_faces": len(faces)})
 
 
-@command("shade_flat", "Shade faces flat.", with_faces({}), ["name"])
+@command(
+    "shade_flat",
+    "Shade faces flat.",
+    with_faces({}),
+    ["name"],
+    family="mesh_edit",
+    intents=("faceted flat shading", "hard low-poly look"),
+    nearest=(("shade_smooth", "for smooth shading"),),
+)
 def shade_flat(ctx, args):
     obj = get_mesh_object(args["name"])
     with EditMesh(obj) as bm:
@@ -233,6 +256,9 @@ def shade_flat(ctx, args):
     "Make face normals consistent, pointing outside (or inside).",
     {"name": OBJECT, "inside": boolean("Point the normals inside instead.", False)},
     ["name"],
+    family="mesh_edit",
+    intents=("fix normals pointing inward", "flip normals outside"),
+    nearest=(("clean_mesh", "for a broader repair"),),
 )
 def recalc_normals(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -248,6 +274,9 @@ def recalc_normals(ctx, args):
     "Merge vertices closer together than a distance in metres.",
     {"name": OBJECT, "distance": length("Merge distance in metres.", 0.0001, 10.0)},
     ["name"],
+    family="mesh_edit",
+    intents=("remove doubles", "weld overlapping vertices"),
+    nearest=(("clean_mesh", "for a full repair after booleans"),),
 )
 def merge_by_distance(ctx, args):
     obj = get_mesh_object(args["name"])

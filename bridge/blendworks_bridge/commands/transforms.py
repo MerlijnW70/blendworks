@@ -20,6 +20,9 @@ TRANSFORMABLE_DATA = ("MESH", "CURVE")
         "relative": boolean("Add location and rotation, and multiply scale, instead of setting them.", False),
     },
     ["name"],
+    family="objects",
+    intents=("move, rotate or scale an object", "set position, rotation or size of an object", "place an object at a location", "rotate an object by an angle about an axis"),
+    nearest=(("transform_selection", "to move faces or vertices inside a mesh"),),
 )
 def transform(ctx, args):
     obj = get_object(args["name"])
@@ -56,6 +59,9 @@ def transform(ctx, args):
         "scale": boolean("Apply the scale.", True),
     },
     ["name"],
+    family="objects",
+    intents=("freeze rotation and scale into the mesh", "reset scale to one keeping the shape"),
+    nearest=(("apply_modifier", "to make modifiers permanent"),),
 )
 def apply_transform(ctx, args):
     obj = editable_data_object(args["name"])
@@ -91,6 +97,9 @@ def apply_transform(ctx, args):
         "point": vector3("World point in metres used with to=cursor instead of the scene's 3D cursor."),
     },
     ["name", "to"],
+    family="objects",
+    intents=("move the pivot point", "origin to bottom centre, centre or cursor"),
+    nearest=(("transform", "to move the object itself"),),
 )
 def set_origin(ctx, args):
     obj = editable_data_object(args["name"], mesh_only=True)

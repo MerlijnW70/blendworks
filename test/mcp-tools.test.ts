@@ -19,11 +19,12 @@ afterEach(async () => {
 
 describe("tools built from the bridge's describe", () => {
   it("names every command blender_<command>, except describe, whose result the list itself is", async () => {
-    harness = await headlessHarness();
+    harness = await headlessHarness({}, { toolsets: { kind: "all" } });
     const { tools } = await harness.client.listTools();
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       "blender_add_primitive",
       "blender_export",
+      "blender_find_tools",
       "blender_render_preview",
       "blender_scene_info",
       "blender_slow",
@@ -83,7 +84,7 @@ describe("tools built from the bridge's describe", () => {
 
 describe("tool annotations", () => {
   it("come from the describe metadata of each command", async () => {
-    harness = await headlessHarness({ allowPython: true });
+    harness = await headlessHarness({ allowPython: true }, { toolsets: { kind: "all" } });
     const { tools } = await harness.client.listTools();
     const hints = Object.fromEntries(tools.map((tool) => [tool.name, tool.annotations]));
     expect(hints["blender_scene_info"]).toEqual({ readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false });
@@ -143,7 +144,7 @@ describe("run_python gating", () => {
   });
 
   it("is offered when the bridge has it, marked as running arbitrary code", async () => {
-    harness = await headlessHarness({ allowPython: true });
+    harness = await headlessHarness({ allowPython: true }, { toolsets: { kind: "all" } });
     const { tools } = await harness.client.listTools();
     const runPython = tools.find((tool) => tool.name === "blender_run_python");
     expect(runPython?.description?.startsWith(RUN_PYTHON_WARNING)).toBe(true);

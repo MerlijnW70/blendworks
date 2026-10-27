@@ -43,6 +43,9 @@ def allowed_vertices(bm, obj, args):
     },
     ["name", "amplitude"],
     slow=True,
+    family="wear",
+    intents=("dents, hammered facets or jitter", "roughen a surface so it looks used"),
+    nearest=(("add_modifier", "for a displace modifier with a noise texture"),),
 )
 def displace_noise(ctx, args):
     obj = get_mesh_object(args["name"])

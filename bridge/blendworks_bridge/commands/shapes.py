@@ -43,6 +43,9 @@ def with_shape_fields(properties, name):
         "Lathe",
     ),
     ["profile"],
+    family="shapes",
+    intents=("revolve a profile around an axis", "turned part such as a bottle, vase, knob or pawn", "spin an outline"),
+    nearest=(("loft", "when sections change shape"), ("sweep", "to follow a path")),
 )
 def lathe(ctx, args):
     require_free_name(args["name"])
@@ -94,6 +97,9 @@ def sweep_path(args):
         "Sweep",
     ),
     slow=True,
+    family="shapes",
+    intents=("pipe, tube, rail or cable along a path", "spring or coil along a helix", "ring, frame or moulding along a closed path"),
+    nearest=(("curve_from_points", "for a curve object instead of a mesh"), ("lathe", "for parts turned around one axis")),
 )
 def sweep(ctx, args):
     require_free_name(args["name"])
@@ -151,6 +157,9 @@ SECTION = obj(
     ),
     ["sections"],
     slow=True,
+    family="shapes",
+    intents=("skin through cross-sections", "hull or vase whose section changes shape"),
+    nearest=(("lathe", "for round sections"), ("sweep", "for one profile along a path")),
 )
 def loft(ctx, args):
     require_free_name(args["name"])

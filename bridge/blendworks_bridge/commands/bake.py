@@ -60,6 +60,9 @@ def samples_schema():
     slow=True,
     timeout=660,
     max_timeout=1200,
+    family="baking",
+    intents=("bake materials to image textures", "bake normals or ambient occlusion from high poly to low poly"),
+    nearest=(("render_preview", "to look at the model"),),
 )
 def bake(ctx, args):
     mode = device.requested_mode(args.get("device"))

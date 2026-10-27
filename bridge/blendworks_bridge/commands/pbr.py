@@ -48,6 +48,9 @@ PROPERTIES = dict(
     "Build a Principled BSDF material from PBR image maps with the right colour spaces, ready for glTF export.",
     PROPERTIES,
     ["name"],
+    family="materials",
+    intents=("PBR material from my image maps", "albedo, normal, roughness and ORM textures from files"),
+    nearest=(("library_apply", "for Poly Haven textures"),),
 )
 def material_pbr(ctx, args):
     maps = collect_maps(ctx, args)

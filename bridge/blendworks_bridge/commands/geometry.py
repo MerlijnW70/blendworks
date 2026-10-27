@@ -156,6 +156,9 @@ def mesh_data_from(data):
     ),
     [],
     slow=True,
+    family="from_data",
+    intents=("mesh from explicit vertices and faces", "load vertices and faces from JSON"),
+    nearest=(("curve_from_points", "for a curve"),),
 )
 def mesh_from_data(ctx, args):
     require_free_name(args["name"])
@@ -195,6 +198,9 @@ def mesh_from_data(ctx, args):
         }
     ),
     ["points"],
+    family="from_data",
+    intents=("curve through points", "path or cable curve with a round bevel"),
+    nearest=(("sweep", "for a mesh pipe with fillets and UVs"),),
 )
 def curve_from_points(ctx, args):
     require_free_name(args["name"])
@@ -239,6 +245,9 @@ def curve_from_points(ctx, args):
         }
     ),
     ["text"],
+    family="from_data",
+    intents=("free-standing 3D text object", "title letters"),
+    nearest=(("engrave", "to cut text into a surface"),),
 )
 def text_object(ctx, args):
     require_free_name(args["name"])

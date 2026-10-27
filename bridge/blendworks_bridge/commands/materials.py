@@ -30,6 +30,9 @@ DEFAULTS = {
         "alpha": number("Opacity, 0 to 1 (default 1).", 0.0, 1.0),
     },
     ["name"],
+    family="materials",
+    intents=("plain colour material", "emissive or transparent simple material", "set base colour, metallic, roughness"),
+    nearest=(("material_procedural", "for wood, metal, stone and other realistic looks"),),
 )
 def add_material(ctx, args):
     material = bpy.data.materials.get(args["name"])
@@ -63,6 +66,9 @@ def add_material(ctx, args):
     "Give an object a material: the whole object, or only the selected faces of a mesh.",
     dict({"name": string("Object."), "material": string("Material name.")}, **FACE_PROPERTIES),
     ["name", "material"],
+    family="materials",
+    intents=("put a material on an object", "assign a material to faces"),
+    nearest=(("add_material", "to create the material first"),),
 )
 def assign_material(ctx, args):
     obj = get_object(args["name"])
@@ -104,6 +110,9 @@ def assign_material(ctx, args):
         **FACE_PROPERTIES,
     ),
     ["name", "color"],
+    family="materials",
+    intents=("paint vertex colours", "fill a colour attribute"),
+    nearest=(("material_layer", "for a wear layer masked by vertex colour"),),
 )
 def vertex_colors(ctx, args):
     obj = get_object(args["name"])

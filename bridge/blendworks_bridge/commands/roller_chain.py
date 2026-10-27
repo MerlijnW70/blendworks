@@ -31,6 +31,9 @@ WHEEL = obj({"centre": point3("Wheel centre [x, y, z] in metres."), "radius": le
     },
     ["pitch"],
     slow=True,
+    family="shapes",
+    intents=("roller chain around sprockets", "bike or conveyor chain along a path"),
+    nearest=(("instances", "for other repeated parts"),),
 )
 def roller_chain(ctx, args):
     require_free_name(args["name"])

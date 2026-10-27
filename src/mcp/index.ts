@@ -16,6 +16,7 @@ async function main(): Promise<void> {
     workspace: options.workspace,
     port: desktopPort(),
     allowPython: options.allowPython,
+    toolsets: options.toolsets,
     startHeadless: (headless) => startHeadlessSession(headless, log),
     ...(timeoutMs === undefined ? {} : { timeoutFor: () => timeoutMs }),
     log,

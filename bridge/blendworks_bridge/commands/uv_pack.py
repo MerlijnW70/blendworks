@@ -55,6 +55,9 @@ def summary(reports):
     },
     ["names"],
     slow=True,
+    family="uv",
+    intents=("pack UV islands into one atlas", "repack islands with a margin"),
+    nearest=(("uv_info", "to measure UVs"),),
 )
 def uv_pack(ctx, args):
     objects = object_group(args)

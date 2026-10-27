@@ -1,8 +1,16 @@
 export type JsonSchema = Record<string, unknown>;
 
+export interface Nearest {
+  name: string;
+  when: string;
+}
+
 export interface BridgeCommand {
   name: string;
   description: string;
+  family: string | undefined;
+  intents: string[];
+  nearest: Nearest[];
   inputSchema: JsonSchema & { type: "object" };
   pathFields: string[];
   dangerous: boolean;
@@ -83,6 +91,19 @@ function pathFieldsOf(schema: JsonSchema): string[] {
     .map(([name]) => name);
 }
 
+function phrases(value: unknown): string[] {
+  return Array.isArray(value) ? value.flatMap((entry) => (text(entry) === undefined ? [] : [text(entry)!])) : [];
+}
+
+function nearestOf(value: unknown): Nearest[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isRecord).flatMap((entry) => {
+    const name = text(entry["name"]);
+    const when = text(entry["when"]);
+    return name === undefined || when === undefined || !/^[a-z][a-z0-9_]*$/.test(name) ? [] : [{ name, when }];
+  });
+}
+
 function seconds(value: unknown): number | undefined {
   return typeof value === "number" && Number.isFinite(value) && value > 0 ? Math.round(value * 1000) : undefined;
 }
@@ -99,6 +120,9 @@ export function commandsFromDescribe(describe: Record<string, unknown>): BridgeC
       {
         name,
         description: text(command["description"]) ?? `Runs the Blender bridge command ${name}.`,
+        family: text(command["family"]),
+        intents: phrases(command["intents"]),
+        nearest: nearestOf(command["nearest"]),
         inputSchema,
         pathFields: pathFieldsOf(inputSchema),
         dangerous,

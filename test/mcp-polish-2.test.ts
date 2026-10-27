@@ -58,7 +58,7 @@ describe("polish round 2 through MCP tools only", workBudget(1_800_000), () => {
     env["BLENDER"] = blenderPath();
     const transport = new StdioClientTransport({
       command: process.execPath,
-      args: ["--import", "tsx", join("src", "mcp", "index.ts"), "--workspace", workspace],
+      args: ["--import", "tsx", join("src", "mcp", "index.ts"), "--workspace", workspace, "--toolsets", "all"],
       env,
       stderr: "pipe",
     });

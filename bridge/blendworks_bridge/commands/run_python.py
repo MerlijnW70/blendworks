@@ -21,6 +21,9 @@ from ..schema import string
     dangerous=True,
     slow=True,
     destructive=True,
+    family="python",
+    intents=("arbitrary Python as a last resort",),
+    nearest=(("find_tools", "to find a built-in tool first"),),
 )
 def run_python(ctx, args):
     namespace = {"bpy": bpy, "bmesh": bmesh, "mathutils": mathutils, "result": None, "__name__": "blendworks_run_python"}

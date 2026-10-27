@@ -10,7 +10,15 @@ from .checkpoints import list_checkpoints
 PROTOCOL_VERSION = 2
 
 
-@command("describe", "List every command with its argument schema, metadata and a one-line description.", mutates=False, internal=True)
+@command(
+    "describe",
+    "List every command with its argument schema, metadata and a one-line description.",
+    mutates=False,
+    internal=True,
+    family="scene",
+    intents=("list every command and its arguments",),
+    nearest=(("scene_info", "to see what is in the scene"),),
+)
 def describe(ctx, args):
     return {
         "protocol": PROTOCOL_VERSION,
@@ -44,12 +52,22 @@ def describe(ctx, args):
         "offset": integer("Objects to skip, for the next page.", 0, None, 0),
     },
     mutates=False,
+    family="scene",
+    intents=("how many objects, vertices and triangles", "object sizes, bounds, parents and collections", "list materials, cameras, lights and checkpoints", "find objects by name pattern"),
+    nearest=(("mesh_query", "for single faces of one mesh"),),
 )
 def scene_info(ctx, args):
     return scene_report(ctx, args["detail"], args.get("names"), args["limit"], args["offset"], list_checkpoints(ctx.workspace))
 
 
-@command("new_scene", "Clear the scene: remove every object, collection and unused data, metric units in metres.", destructive=True)
+@command(
+    "new_scene",
+    "Clear the scene: remove every object, collection and unused data, metric units in metres.",
+    destructive=True,
+    family="scene",
+    intents=("clear the whole scene and start fresh", "empty scene in metres"),
+    nearest=(("delete", "to remove only some objects"),),
+)
 def new_scene(ctx, args):
     removed = reset_scene(ctx.scene)
     return {"removed_objects": removed}
@@ -87,6 +105,9 @@ def purge_unused():
         "active": string("Object to make active."),
     },
     ["names"],
+    family="scene",
+    intents=("select objects by name", "set the active object", "add to or remove from the selection"),
+    nearest=(("mesh_query", "to pick faces inside a mesh; face tools take selectors"),),
 )
 def select(ctx, args):
     objects = get_objects(args["names"])
@@ -111,6 +132,9 @@ def select(ctx, args):
     {"names": names("Objects to delete.")},
     ["names"],
     destructive=True,
+    family="scene",
+    intents=("remove objects by name", "delete a helper or cutter object", "delete cameras, lights or meshes"),
+    nearest=(("new_scene", "to clear everything"),),
 )
 def delete(ctx, args):
     objects = get_objects(args["names"])

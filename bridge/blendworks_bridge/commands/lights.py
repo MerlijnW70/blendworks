@@ -26,6 +26,9 @@ LIGHT_NAMES = {"point": "Point", "sun": "Sun", "spot": "Spot", "area": "Area"}
         "spot_angle": number("Spot cone angle in degrees (default 45).", 1.0, 180.0),
     },
     ["type"],
+    family="lighting",
+    intents=("add a sun, point, spot or area light", "lamp with power in watts"),
+    nearest=(("set_world", "for background light"),),
 )
 def add_light(ctx, args):
     kind = args["type"]
@@ -61,6 +64,9 @@ def add_light(ctx, args):
         "orthographic_scale": length("Use an orthographic camera this many metres wide."),
         "active": boolean("Make it the scene's active camera.", True),
     },
+    family="lighting",
+    intents=("add a camera and make it active", "orthographic or perspective camera"),
+    nearest=(("render_preview", "for preview views without a camera"),),
 )
 def add_camera(ctx, args):
     if "rotation" in args and "target" in args:
@@ -105,6 +111,9 @@ def aim(ctx, obj, target, up_axis="Y"):
         "point": vector3("Point in metres to look at."),
     },
     ["name"],
+    family="lighting",
+    intents=("aim a camera or light at an object or point", "point something at a target"),
+    nearest=(("transform", "for any other rotation"),),
 )
 def look_at(ctx, args):
     obj = get_object(args["name"])
@@ -128,6 +137,9 @@ def look_at(ctx, args):
         "color": color("Background colour, linear RGB from 0 to 1.", allow_alpha=False),
         "strength": number("Background strength.", 0.0, 100.0),
     },
+    family="lighting",
+    intents=("uniform background colour that lights the scene", "black or grey world"),
+    nearest=(("set_world_hdri", "for an HDRI image"),),
 )
 def set_world(ctx, args):
     if "color" not in args and "strength" not in args:
@@ -184,6 +196,9 @@ HDRI_EXTENSIONS = (".hdr", ".exr")
     },
     ["path"],
     slow=True,
+    family="lighting",
+    intents=("environment light from an .hdr or .exr file in the workspace",),
+    nearest=(("library_apply", "for a Poly Haven HDRI"), ("set_world", "for a plain colour")),
 )
 def set_world_hdri(ctx, args):
     path = ctx.workspace.existing(args["path"], HDRI_EXTENSIONS)

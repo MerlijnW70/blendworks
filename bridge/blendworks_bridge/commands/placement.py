@@ -124,6 +124,9 @@ def place_copies(ctx, args, mesh, matrices):
     },
     ["source"],
     slow=True,
+    family="placement",
+    intents=("linked copies along a curve, edge loop or waypoints", "copies on a circle or at points", "scatter copies"),
+    nearest=(("duplicate", "for one copy"), ("rivet_line", "for rivets between two points")),
 )
 def instances(ctx, args):
     source = get_mesh_object(args["source"])
@@ -156,6 +159,9 @@ def rivet_mesh(name, radius, height):
     },
     ["start", "end"],
     slow=True,
+    family="placement",
+    intents=("row of rivets or bolts between two points", "rivets along a seam"),
+    nearest=(("instances", "for other patterns"),),
 )
 def rivet_line(ctx, args):
     start, end = Vector(args["start"]), Vector(args["end"])

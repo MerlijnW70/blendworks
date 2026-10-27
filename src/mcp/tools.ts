@@ -1,5 +1,6 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { type BridgeArgs, BridgeError } from "./protocol.js";
+import { withNearest } from "./routing/catalog.js";
 import type { BridgeCommand } from "./schema.js";
 import type { Workspace } from "./workspace.js";
 
@@ -25,9 +26,9 @@ export function toolName(command: string): string {
 }
 
 function describeTool(command: BridgeCommand): string {
-  if (command.name === RUN_PYTHON) return `${RUN_PYTHON_WARNING} ${command.description}`;
-  if (command.dangerous) return `DANGEROUS: ${command.description}`;
-  return command.description;
+  const described = withNearest(command.description, command.nearest);
+  if (command.name === RUN_PYTHON) return `${RUN_PYTHON_WARNING} ${described}`;
+  return command.dangerous ? `DANGEROUS: ${described}` : described;
 }
 
 export function annotations(command: BridgeCommand): NonNullable<Tool["annotations"]> {
