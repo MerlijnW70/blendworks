@@ -9,6 +9,9 @@ import { CLOSEUP_NAMES, closeups } from "../src/judge/closeups.js";
 import { judge } from "../src/judge/run.js";
 import { freshDir } from "./judge/helpers.js";
 import { scratchDir, texts, unusedPort } from "./mcp-helpers.js";
+import { useBlenderSlot } from "./setup/slot.js";
+
+useBlenderSlot();
 
 const SESSION = join("bridge", "session.py");
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);

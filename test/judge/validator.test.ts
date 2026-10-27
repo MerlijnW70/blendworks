@@ -5,6 +5,9 @@ import type { Report } from "../../src/judge/report.js";
 import { judge, type JudgeOptions } from "../../src/judge/run.js";
 import { resolveResource, validateGltf, ValidationError, VALIDATOR_DEFAULTS } from "../../src/judge/validator.js";
 import { freshDir, makeTextureFixtures } from "./helpers.js";
+import { useBlenderSlot } from "../setup/slot.js";
+
+useBlenderSlot();
 
 let assets = "";
 let work = "";

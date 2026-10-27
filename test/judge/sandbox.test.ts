@@ -5,6 +5,9 @@ import { blenderPath } from "../../src/blender.js";
 import { SCRIPTS_DIR } from "../../src/judge/run.js";
 import { BLENDER_FLAGS, detectTools, planSandbox, runSandboxed, sandboxEnvironment, type SandboxDevice, type Tools } from "../../src/judge/sandbox.js";
 import { freshDir } from "./helpers.js";
+import { useBlenderSlot } from "../setup/slot.js";
+
+useBlenderSlot();
 
 const LIMITS = { timeoutMs: 60_000, memoryBytes: 2048 * 1024 * 1024 };
 const WINDOWS: Tools = { platform: "win32", unshare: false, prlimit: false };

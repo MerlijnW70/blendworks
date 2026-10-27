@@ -5,6 +5,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import { spawn } from "node:child_process";
 import { blenderPath } from "../src/blender.js";
 import { BridgeCommandError, sessionArguments, startSession, type Session } from "../src/session.js";
+import { useBlenderSlot } from "./setup/slot.js";
+
+useBlenderSlot();
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 

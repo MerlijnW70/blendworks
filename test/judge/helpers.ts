@@ -1,9 +1,10 @@
-import { execFileSync } from "node:child_process";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
-import { blenderPath } from "../../src/blender.js";
+import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { inject } from "vitest";
+import { cacheRoot } from "../../scripts/lib/paths.js";
+import { blenderSlotHeld } from "../setup/slot.js";
 
-export const ARTIFACTS = resolve("artifacts", "test-judge");
+export const ARTIFACTS = join(cacheRoot(), "test-judge");
 
 export const CRATE_SPEC = {
   name: "wooden crate",
@@ -27,29 +28,32 @@ export function freshDir(...parts: string[]): string {
   return dir;
 }
 
+export function emptyDirectory(dir: string): void {
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+}
+
 export function writeSpec(dir: string, name: string, overrides: Record<string, unknown> = {}): string {
   const path = join(dir, `${name}.spec.json`);
   writeFileSync(path, JSON.stringify({ ...CRATE_SPEC, ...overrides }, null, 2));
   return path;
 }
 
-export function makeFixtures(name: string): { assets: string; markers: string } {
+export function makeFixtureSet(set: string, name: string): { assets: string; markers: string } {
+  const sets = inject("fixtureSets");
+  if (sets === null) throw new Error("the judge fixtures are not available: set BLENDER (see README) and run the tests without BLENDWORKS_FIXTURES=skip");
+  const cached = sets[set];
+  if (cached === undefined) throw new Error(`no fixture set named ${set}; the sets are ${Object.keys(sets).join(", ")}`);
+  if (!blenderSlotHeld()) throw new Error("call useBlenderSlot() at the top of this test file, before anything that starts Blender");
   const assets = freshDir(name, "assets");
-  const markers = freshDir(name, "markers");
-  execFileSync(
-    blenderPath(),
-    ["--background", "--factory-startup", "--python-exit-code", "1", "--python", resolve("test", "judge", "fixtures.py"), "--", assets, markers],
-    { stdio: "pipe", timeout: 120_000 },
-  );
-  return { assets, markers };
+  cpSync(cached.assets, assets, { recursive: true });
+  return { assets, markers: cached.markers };
+}
+
+export function makeFixtures(name: string): { assets: string; markers: string } {
+  return makeFixtureSet("fixtures", name);
 }
 
 export function makeTextureFixtures(name: string): string {
-  const assets = freshDir(name, "assets");
-  execFileSync(
-    blenderPath(),
-    ["--background", "--factory-startup", "--python-exit-code", "1", "--python", resolve("test", "judge", "texture_fixtures.py"), "--", assets],
-    { stdio: "pipe", timeout: 120_000 },
-  );
-  return assets;
+  return makeFixtureSet("texture_fixtures", name).assets;
 }

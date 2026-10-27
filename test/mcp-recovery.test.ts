@@ -6,6 +6,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import { startHeadlessSession } from "../src/mcp/headless.js";
 import { type Started, startBlendworks } from "../src/mcp/start.js";
 import { connectClient, scratchDir, texts, unusedPort } from "./mcp-helpers.js";
+import { useBlenderSlot } from "./setup/slot.js";
+
+useBlenderSlot();
 
 const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const SLEEP = "import time\ntime.sleep(120)";

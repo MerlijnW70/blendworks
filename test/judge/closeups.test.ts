@@ -4,6 +4,9 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { main } from "../../src/judge/cli.js";
 import { CLOSEUP_NAMES, CLOSEUP_SHEET, closeups } from "../../src/judge/closeups.js";
 import { freshDir, makeFixtures } from "./helpers.js";
+import { useBlenderSlot } from "../setup/slot.js";
+
+useBlenderSlot();
 
 let assets = "";
 

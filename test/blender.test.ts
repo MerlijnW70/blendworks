@@ -1,6 +1,9 @@
 import { execFileSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { BLENDER_VERSION, blenderPath } from "../src/blender.js";
+import { useBlenderSlot } from "./setup/slot.js";
+
+useBlenderSlot();
 
 describe("the pinned Blender", () => {
   it("runs headless at the pinned version", () => {

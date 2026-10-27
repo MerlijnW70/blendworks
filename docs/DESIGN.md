@@ -8,10 +8,12 @@ Three parts:
 2. **The MCP server.** A Node/TypeScript stdio MCP server that exposes those commands as tools to Claude and other MCP hosts, including a render preview so the agent sees what it builds.
 3. **The judge.** A command-line checker that opens a delivered asset in a sandboxed headless Blender with its own script, measures it against an asset spec, renders fixed views, and reports pass or fail.
 
-Blender is 5.2 LTS:
-- **On Windows:** `F:\tools\blender-5.2.3-windows-x64\blender.exe`.
-- **In WSL:** `~/tools/blender/blender`.
-The `BLENDER` environment variable names the binary everywhere.
+Blender is 5.2 LTS ([download](https://www.blender.org/download/lts/)). `src/blender.ts` is the one place that finds it, for the server, the judge, the scripts and the tests:
+- **`BLENDER`:** the environment variable names the binary. When it is set it is used, and an error says so if the file is missing.
+- **Standard locations:** otherwise the first that exists. On Windows, `Program Files\Blender Foundation\Blender 5.2\blender.exe`, the same under `%LOCALAPPDATA%\Programs`, and `~\tools\blender\blender.exe`. On Linux and WSL, `~/tools/blender/blender`, `~/blender/blender`, `/opt/blender/blender` and the system folders. On macOS, `/Applications/Blender.app`.
+- **`PATH`:** last, a `blender` on the path.
+
+The error for a missing Blender lists the places it looked and the download link. `npm run doctor` reports what it finds and checks that the version is 5.2. `BLENDWORKS_JOBS` (default 2) caps how many Blender processes run at once in tests and scripts.
 
 ## 1. The bridge protocol
 

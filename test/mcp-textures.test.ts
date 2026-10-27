@@ -6,6 +6,9 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { blenderPath } from "../src/blender.js";
 import { scratchDir, texts, unusedPort } from "./mcp-helpers.js";
+import { useBlenderSlot } from "./setup/slot.js";
+
+useBlenderSlot();
 
 const TEXTURE_TOOLS = [
   "blender_image_load",

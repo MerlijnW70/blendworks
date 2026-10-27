@@ -3,3 +3,10 @@ dist/
 artifacts/
 workspace/
 __pycache__/
+.cache/
+logs/
+*.log
+*.blend1
+coverage/
+.sota/
+.nyc_output/

@@ -9,6 +9,9 @@ import { commandsFromDescribe } from "../src/mcp/schema.js";
 import { createServer } from "../src/mcp/server.js";
 import { libraryHarness, type LibraryHarness, serveBodies, textureUrl } from "./library-helpers.js";
 import { call, connectClient, texts } from "./mcp-helpers.js";
+import { useBlenderSlot } from "./setup/slot.js";
+
+useBlenderSlot();
 
 const CRC_TABLE = Array.from({ length: 256 }, (_, index) => {
   let value = index;

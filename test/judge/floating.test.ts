@@ -4,6 +4,9 @@ import { beforeAll, describe, expect, it } from "vitest";
 import type { Report } from "../../src/judge/report.js";
 import { judge } from "../../src/judge/run.js";
 import { freshDir, makeTextureFixtures } from "./helpers.js";
+import { useBlenderSlot } from "../setup/slot.js";
+
+useBlenderSlot();
 
 let assets = "";
 let specs = "";

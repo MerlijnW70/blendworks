@@ -1,11 +1,15 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
-import { join } from "node:path";
-import { beforeAll, describe, expect, it } from "vitest";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { blenderPath } from "../../src/blender.js";
 import type { Report } from "../../src/judge/report.js";
 import { judge } from "../../src/judge/run.js";
-import { freshDir, makeFixtures, writeSpec } from "./helpers.js";
+import { lockFile, type FileLock } from "../../scripts/lib/locks.js";
+import { useBlenderSlot } from "../setup/slot.js";
+import { emptyDirectory, freshDir, makeFixtures, writeSpec } from "./helpers.js";
+
+useBlenderSlot();
 
 let assets = "";
 let markers = "";
@@ -125,10 +129,18 @@ describe("judging the fixture assets", { timeout: 120_000 }, () => {
 
 describe("a .blend with auto-run code", { timeout: 120_000 }, () => {
   const markerNames = () => readdirSync(markers).filter((name) => name.endsWith(".marker")).sort();
+  let lock: FileLock | undefined;
+
+  beforeAll(async () => {
+    lock = await lockFile(join(dirname(markers), "markers.lock"));
+  }, 600_000);
+
+  afterAll(() => {
+    lock?.release();
+  });
 
   it("runs its code when Blender opens it with auto-run on, so the fixture is armed", () => {
-    rmSync(markers, { recursive: true, force: true });
-    freshDir("fixtures", "markers");
+    emptyDirectory(markers);
     execFileSync(
       blenderPath(),
       ["--background", "--enable-autoexec", join(assets, "autorun.blend"), "--python-expr", "import bpy; bpy.context.view_layer.update()"],
@@ -138,8 +150,7 @@ describe("a .blend with auto-run code", { timeout: 120_000 }, () => {
   });
 
   it("never runs it in the judge, which still measures the crate", async () => {
-    rmSync(markers, { recursive: true, force: true });
-    freshDir("fixtures", "markers");
+    emptyDirectory(markers);
     const report = await judged("autorun.blend", { format: "blend" });
     expect(markerNames()).toEqual([]);
     expect(existsSync(join(markers, "autorun-text.marker"))).toBe(false);

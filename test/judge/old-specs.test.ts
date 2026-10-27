@@ -3,6 +3,9 @@ import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { judge } from "../../src/judge/run.js";
 import { freshDir, makeFixtures, writeSpec } from "./helpers.js";
+import { useBlenderSlot } from "../setup/slot.js";
+
+useBlenderSlot();
 
 let assets = "";
 let specs = "";
