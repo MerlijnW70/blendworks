@@ -22,6 +22,14 @@ The `BLENDER` environment variable names the binary everywhere.
 - **Errors:** every command validates its arguments and refuses unknown fields. A failing command never leaves the scene half-changed: it runs inside an undo step, or on a copy that is applied only on success.
 - **Discovery:** `"cmd": "describe"` returns every command with its argument schema and a one-line description. The MCP server builds its tool list from it.
 - **No arbitrary code by default.** `run_python` exists only when the session or add-on is started with `--allow-python`, and the MCP server marks the tool as dangerous.
+- **Caps:** sizes and times are capped in `bridge/blendworks_bridge/limits.py`. Images are at most 8192 px per side. A bake is at most 4096 px and runs at most 600 s. It stops between channels once it passes its time limit (default 100 s), and the bake is then undone. The MCP server waits up to 660 s for a `bake` reply, so a bake at the cap still answers.
+- **Bake device:** `bake` picks its device from `BLENDWORKS_DEVICE` as defined in section 4 (Render device); its `device` field overrides the variable for one call. The result names the device, the backend, any CPU fallback and the seconds per channel.
+- **Texturing workflow:** model, then UV, then procedural or image materials, then bake, then export.
+  - **UV:** `uv_smart_project` or `uv_unwrap`, with `uv_pack` for an atlas shared by several objects.
+  - **Materials:** `material_procedural` and `material_layer`, or `material_pbr` from image maps.
+  - **Bake:** `bake` with `rewire`, which gives the objects one `material_pbr` material made from the baked images.
+  - **Export:** a `.glb` written by `export` carries every map: base colour, metallic-roughness, normal, emission and occlusion.
+- **Colour spaces:** colour maps (base colour, emission) are sRGB, and data maps (metallic, roughness, ORM, normal, height, alpha, AO) are non-colour. Height is a bump in Blender only, because glTF has no height map. A bake folds it into the normal map.
 
 ### Command families
 
@@ -32,7 +40,10 @@ The `BLENDER` environment variable names the binary everywhere.
 | Mesh editing | `extrude`, `inset`, `bevel`, `subdivide`, `decimate`, `boolean` (union, difference, intersect), `mirror`, `array`, `solidify`, `shade_smooth` / `shade_flat`, `recalc_normals`, `merge_by_distance`, `apply_modifier` |
 | Geometry from data | `mesh_from_data` (vertices and faces, with a size cap), `curve_from_points`, `text_object` |
 | Materials | `add_material` (Principled BSDF: base colour, metallic, roughness, emission, alpha), `assign_material` (whole object or face set), `vertex_colors` |
-| UV | `uv_smart_project`, `uv_unwrap`, `uv_info` (coverage, overlap) |
+| Textures | `image_load` (PNG, JPEG, OpenEXR or WebP from the workspace, with a colour space), `image_new` (blank 8-bit or float image, a bake target), `image_save` (PNG or JPEG into the workspace, 8 or 16 bit, quality), `image_info` (size, colour space, file or packed, users) |
+| PBR and procedural materials | `material_pbr` (Principled BSDF from image maps: base colour, metallic, roughness, ORM, normal in the OpenGL or DirectX convention, height as a bump, emission, alpha and AO; UV map and mapping), `material_procedural` (presets built in code: wood, worn metal, rust, stone, concrete, fabric, dirt; typed parameters), `material_layer` (an overlay preset over a material through a noise, edge, cavity or vertex colour mask) |
+| Baking | `bake` (base colour, roughness, metallic and emission by emission, tangent-space normal and AO; margin, UV map, selected to active with a cage extrusion; optional rewire to a `material_pbr` material) |
+| UV | `uv_smart_project` and `uv_unwrap` (island margin, texel density), `uv_pack` (margin, rotation, shared atlas across objects), `uv_info` (coverage, overlap, texel density) |
 | Lights and camera | `add_light`, `add_camera`, `look_at`, `set_world` (colour or strength) |
 | Output | `render_preview` (PNG of the current scene from the active or a named camera, or the standard turntable views, at a capped resolution, returned as base64), `export` (glTF binary `.glb`, FBX, OBJ), `save_blend` |
 | Import | `import` (`.glb`, `.gltf`, `.fbx`, `.obj` from a path inside the working folder) |
@@ -82,6 +93,8 @@ Every render picks its device from `BLENDWORKS_DEVICE`:
 - **`auto`** (the default) tries OptiX, then CUDA, HIP, Metal and oneAPI inside the sandbox, and uses the first backend whose device lists and passes a small test render. Otherwise it renders on the CPU.
 - **`gpu`** fails with a reason when no GPU backend works.
 - **`cpu`** never starts a GPU.
+
+The bridge's `bake` follows the same order and meaning, outside any sandbox. Its `auto` takes the first backend that lists a device. When a bake on it fails, `auto` bakes that channel again on the CPU and says so.
 
 The denoiser is the OptiX denoiser on OptiX and OpenImageDenoise elsewhere. A re-run on the CPU gives byte-identical images. On a GPU, a small share of pixels may differ by one level out of 255.
 

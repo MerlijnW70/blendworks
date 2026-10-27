@@ -2,10 +2,12 @@ import math
 
 import bpy
 
+from .. import limits
 from ..errors import bad_args, not_found
 from ..operators import edit_mode
 from ..registry import command
-from ..schema import boolean, number, string
+from ..schema import boolean, integer, number, string
+from ..texel import density, pack, scale_to_density
 from ..util import EditMesh, get_mesh_object, rounded
 
 GRID = 256
@@ -32,6 +34,23 @@ def run_in_edit_mode(ctx, obj, operator):
     obj.data.update()
 
 
+TEXEL_PROPERTIES = {
+    "texel_density": number(
+        "Scale the islands to this many texture pixels per metre, then pack them without rescaling; they may spill out of the UV square.",
+        maximum=limits.MAX_TEXEL_DENSITY,
+        exclusive_minimum=0.0,
+    ),
+    "texture_size": integer("Texture size in pixels that texel densities refer to.", 1, limits.MAX_TEXTURE_SIZE, 1024),
+}
+
+
+def apply_texel_density(ctx, obj, args, margin):
+    if "texel_density" not in args:
+        return
+    scale_to_density(obj, obj.data.uv_layers.active, args["texel_density"], args["texture_size"])
+    pack(ctx.view_layer, [obj], margin, False, False)
+
+
 @command(
     "uv_smart_project",
     "UV-unwrap a mesh automatically by splitting it into islands at sharp angles.",
@@ -39,6 +58,7 @@ def run_in_edit_mode(ctx, obj, operator):
         "name": string("Mesh object."),
         "angle_limit": number("Split islands where faces meet at more than this many degrees.", 1.0, 89.0, 66.0),
         "island_margin": number("Space between islands, as a share of the UV square.", 0.0, 1.0, 0.02),
+        **TEXEL_PROPERTIES,
     },
     ["name"],
 )
@@ -49,13 +69,15 @@ def uv_smart_project(ctx, args):
         obj,
         lambda: bpy.ops.uv.smart_project(
             angle_limit=math.radians(args["angle_limit"]),
+            margin_method="FRACTION",
             island_margin=args["island_margin"],
             area_weight=0.0,
             correct_aspect=True,
             scale_to_bounds=False,
         ),
     )
-    return uv_report(obj)
+    apply_texel_density(ctx, obj, args, args["island_margin"])
+    return uv_report(obj, texture_size=args["texture_size"])
 
 
 @command(
@@ -67,6 +89,7 @@ def uv_smart_project(ctx, args):
         "margin": number("Space between islands, as a share of the UV square.", 0.0, 1.0, 0.02),
         "seam_angle": number("Mark edges whose faces meet at more than this many degrees as seams first.", 0.0, 180.0),
         "clear_seams": boolean("Clear existing seams before marking new ones.", False),
+        **TEXEL_PROPERTIES,
     },
     ["name"],
 )
@@ -81,26 +104,31 @@ def uv_unwrap(ctx, args):
     run_in_edit_mode(
         ctx,
         obj,
-        lambda: bpy.ops.uv.unwrap(method=args["method"].upper(), margin=args["margin"], correct_aspect=True),
+        lambda: bpy.ops.uv.unwrap(method=args["method"].upper(), margin_method="FRACTION", margin=args["margin"], correct_aspect=True),
     )
-    report = uv_report(obj)
+    apply_texel_density(ctx, obj, args, args["margin"])
+    report = uv_report(obj, texture_size=args["texture_size"])
     report["seams"] = sum(1 for edge in obj.data.edges if edge.use_seam)
     return report
 
 
 @command(
     "uv_info",
-    "Measure a mesh's UVs: coverage of the 0-1 square and the share of that area covered more than once.",
-    {"name": string("Mesh object."), "layer": string("UV layer. Default: the active one.")},
+    "Measure a mesh's UVs: coverage of the 0-1 square, overlap, and texel density in pixels per metre.",
+    {
+        "name": string("Mesh object."),
+        "layer": string("UV layer. Default: the active one."),
+        "texture_size": TEXEL_PROPERTIES["texture_size"],
+    },
     ["name"],
     mutates=False,
 )
 def uv_info(ctx, args):
     obj = get_mesh_object(args["name"])
-    return uv_report(obj, args.get("layer"))
+    return uv_report(obj, args.get("layer"), args["texture_size"])
 
 
-def uv_report(obj, layer_name=None):
+def uv_report(obj, layer_name=None, texture_size=1024):
     mesh = obj.data
     layers = [layer.name for layer in mesh.uv_layers]
     if layer_name is not None and layer_name not in layers:
@@ -119,6 +147,7 @@ def uv_report(obj, layer_name=None):
         "overlap": rounded(overlapped / covered, 4) if covered else 0.0,
         "outside": outside,
         "uv_area": rounded(area, 4),
+        "texel_density": density(obj, layer, texture_size),
     }
 
 

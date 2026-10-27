@@ -63,6 +63,8 @@ class Transaction:
         self.active = view_layer.objects.active
         self.mesh_copies = []
         self.material_values = []
+        self.material_copies = []
+        self.restores = []
         self.keep = set()
 
     def touch_mesh(self, mesh):
@@ -81,11 +83,29 @@ class Transaction:
     def touch_material(self, material, restore):
         self.material_values.append((material, restore))
 
+    def touch_material_tree(self, material):
+        if material.as_pointer() not in self.before["materials"]:
+            return
+        for original, _ in self.material_copies:
+            if original == material:
+                return
+        saved = material.copy()
+        saved.use_fake_user = material.use_fake_user
+        self.keep.add(saved.as_pointer())
+        self.material_copies.append((material, saved))
+
+    def on_rollback(self, restore):
+        self.restores.append(restore)
+
     def commit(self):
         for _, saved in self.mesh_copies:
             bpy.data.meshes.remove(saved)
+        for _, saved in self.material_copies:
+            bpy.data.materials.remove(saved)
         self.mesh_copies = []
         self.material_values = []
+        self.material_copies = []
+        self.restores = []
 
     def rollback(self):
         for state in self.objects:
@@ -102,6 +122,15 @@ class Transaction:
         for material, restore in reversed(self.material_values):
             restore(material)
         self.material_values = []
+        for original, saved in self.material_copies:
+            name = original.name
+            original.user_remap(saved)
+            bpy.data.materials.remove(original)
+            saved.name = name
+        self.material_copies = []
+        for restore in reversed(self.restores):
+            restore()
+        self.restores = []
         self.remove_new_blocks()
         self.scene.camera = alive(self.camera)
         self.scene.world = alive(self.world)

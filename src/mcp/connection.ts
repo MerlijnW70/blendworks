@@ -2,9 +2,11 @@ import { type BridgeArgs, BridgeError, type BridgeLink } from "./protocol.js";
 
 export const DEFAULT_TIMEOUT_MS = 120_000;
 export const SLOW_TIMEOUT_MS = 300_000;
+export const BAKE_TIMEOUT_MS = 660_000;
 const SLOW_COMMANDS = new Set(["render_preview", "export", "import", "save_blend", "boolean", "decimate"]);
 
 export function defaultTimeoutFor(cmd: string): number {
+  if (cmd === "bake") return BAKE_TIMEOUT_MS;
   return SLOW_COMMANDS.has(cmd) ? SLOW_TIMEOUT_MS : DEFAULT_TIMEOUT_MS;
 }
 

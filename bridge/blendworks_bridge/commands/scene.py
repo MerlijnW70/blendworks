@@ -22,6 +22,9 @@ def describe(ctx, args):
             "mesh_vertices": limits.MAX_MESH_VERTICES,
             "render_resolution": limits.MAX_RENDER_RESOLUTION,
             "preview_samples": limits.MAX_PREVIEW_SAMPLES,
+            "image_size": limits.MAX_IMAGE_SIZE,
+            "bake_size": limits.MAX_BAKE_SIZE,
+            "bake_seconds": limits.MAX_BAKE_SECONDS,
         },
         "commands": ctx.registry.describe(),
     }

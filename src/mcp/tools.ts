@@ -6,7 +6,7 @@ import type { Workspace } from "./workspace.js";
 export const TOOL_PREFIX = "blender_";
 export const RUN_PYTHON = "run_python";
 const NOT_TOOLS = new Set(["describe"]);
-const READ_ONLY = new Set(["scene_info", "uv_info", "render_preview"]);
+const READ_ONLY = new Set(["scene_info", "uv_info", "render_preview", "image_info"]);
 
 export const RUN_PYTHON_WARNING =
   "DANGEROUS: runs arbitrary Python code inside Blender, with the same access to files, network and programs as the user running it. Use it only when no other blender_ tool can do the step.";

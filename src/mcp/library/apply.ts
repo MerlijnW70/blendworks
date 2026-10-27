@@ -146,8 +146,9 @@ export function materialPbrArgs(command: BridgeCommand, record: LicenseRecord, w
   const maps: BridgeArgs = {};
   const notWired: string[] = [];
   const folder = assetFolderPath(record.type, record.asset);
+  const separateData = Object.keys(record.maps ?? {}).some((map) => ROLE_OF_MAP[map] === "roughness" || ROLE_OF_MAP[map] === "metallic");
   for (const [map, file] of Object.entries(record.maps ?? {})) {
-    const role = ROLE_OF_MAP[map];
+    const role = ROLE_OF_MAP[map] === "orm" && separateData ? undefined : ROLE_OF_MAP[map];
     const name = role === undefined ? undefined : slot(container, role);
     const schema = name === undefined ? undefined : container[name];
     const value = role === undefined || schema === undefined ? undefined : pathValue(schema, workspace.resolve(`${folder}/${file}`), map);
