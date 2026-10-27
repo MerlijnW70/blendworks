@@ -121,9 +121,10 @@ def autorun(folder, marker_folder):
     text.write(f"import pathlib\npathlib.Path({text_marker!r}).write_text('ran')\n")
     text.use_module = True
     driver_marker = os.path.join(marker_folder, "autorun-driver.marker")
+    bpy.data.texts.new("driver_marker").write(driver_marker)
     curve = obj.driver_add("location", 0)
     curve.driver.type = "SCRIPTED"
-    curve.driver.expression = f"__import__('pathlib').Path({driver_marker!r}).write_text('ran') and 0"
+    curve.driver.expression = "__import__('pathlib').Path(bpy.data.texts['driver_marker'].as_string()).write_text('ran') and 0"
     save_blend(os.path.join(folder, "autorun.blend"))
     for marker in (text_marker, driver_marker):
         if os.path.exists(marker):
