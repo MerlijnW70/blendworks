@@ -1,4 +1,7 @@
+import math
+
 from ..cleaning import clean_bmesh
+from ..slivers import SLIVER_AREA
 from ..errors import failed
 from ..registry import command
 from ..schema import length, number, string
@@ -10,11 +13,12 @@ DEFAULT_TOLERANCE = 0.000001
 DEFAULT_MERGE_DISTANCE = 0.00001
 
 
-def clean_object(obj, tolerance=DEFAULT_TOLERANCE, merge_distance=DEFAULT_MERGE_DISTANCE):
+def clean_object(obj, tolerance=DEFAULT_TOLERANCE, merge_distance=DEFAULT_MERGE_DISTANCE, max_aspect=None):
     local_tolerance = local_length(obj, tolerance)
     local_merge = local_length(obj, merge_distance) if merge_distance > 0 else 0.0
+    local_area = local_length(obj, math.sqrt(SLIVER_AREA)) ** 2
     with EditMesh(obj) as bm:
-        report, was_closed, is_closed = clean_bmesh(bm, local_tolerance, local_merge)
+        report, was_closed, is_closed = clean_bmesh(bm, local_tolerance, local_merge, local_area, max_aspect)
         if was_closed and not is_closed:
             raise failed(f"cleaning {obj.name} would leave a closed mesh open: {manifold_report(bm)}")
         report["manifold"] = is_closed

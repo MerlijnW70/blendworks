@@ -23,7 +23,7 @@ DESIGN_COMMANDS = {
     "add_light", "add_camera", "look_at", "set_world",
     "render_preview", "export", "save_blend", "import",
     "load_blend", "checkpoint", "restore_checkpoint",
-    "clean_mesh", "engrave",
+    "clean_mesh", "engrave", "engrave_scale",
     "material_nodes", "material_info", "add_empty", "collection_create", "collection_link", "collection_unlink",
 }
 ASSET_LIBRARY_COMMANDS = {"set_world_hdri"}

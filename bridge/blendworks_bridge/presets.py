@@ -1,5 +1,5 @@
 from .brass import brass, brass_schema
-from .marble import DEFAULT_VEIN_COLOR, marble, vein_mask, veins_schema
+from .marble import MARBLE_VEIN_COLOR, marble, vein_mask, veins_schema
 from .procedural import AXES, Preset, preset_vector, stretched
 from .scratches import DIRECTIONS, SCRATCH_DIRECTION_HELP, scratch_lines
 from .schema import boolean, color, number, string
@@ -182,12 +182,14 @@ PRESETS = {
             "veins": veins_schema(),
             "roughness": amount("Average roughness.", 0.8),
         }, stone),
-        Preset("marble", "Polished marble with warped, ridged veins and soft clouds.", 0.3, {
+        Preset("marble", "Polished white marble: layered soft-edged veins that branch, faint drifts and clouds, sized in metres like Carrara slabs.", 0.3, {
             "color": color("Base stone colour, linear RGB.", [0.8, 0.78, 0.73], False),
             "secondary_color": color("Cloud tint in the base, linear RGB.", [0.62, 0.6, 0.57], False),
-            "vein_color": color("Vein colour, linear RGB.", DEFAULT_VEIN_COLOR, False),
+            "vein_color": color("Colour at the core of the darkest veins, linear RGB.", MARBLE_VEIN_COLOR, False),
             "vein_width": amount("Vein width: 0 is hair-thin, 1 is broad bands.", 0.14),
-            "turbulence": amount("How far the veins wander: 0 gives straight parallel bands.", 0.5),
+            "turbulence": amount("How far the veins wander: 0 gives gently curving veins.", 0.5),
+            "vein_softness": amount("How hazy the veins are: 0 gives crisp veins on clean stone, 1 wide soft halos and grey drifts.", 0.5),
+            "branching": amount("How many fine veinlets branch off the main veins.", 0.6),
             "roughness": amount("Average roughness; marble is polished.", 0.18),
         }, marble),
         Preset("concrete", "Concrete with stains and small pores.", 0.5, {

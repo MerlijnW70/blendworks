@@ -2,12 +2,16 @@ import math
 import re
 
 from .errors import bad_args
-from .glyphs import CAP_HEIGHT, CHARACTERS, bounds_of, nest, symbol_loops, symbol_names, text_loops
+from .outlines import drop_close, simplify_loop
+from .glyphs import CAP_HEIGHT, CHARACTERS, FLATNESS, bounds_of, nest, symbol_loops, symbol_names, text_loops
 
 TOKEN = re.compile(r"\{([a-z_]+)\}")
 RUN_GAP = 0.12
 ALIGNS = ("left", "centre", "right")
 VALIGNS = ("middle", "baseline")
+SIMPLIFY = FLATNESS / 4.0
+EAR_SLOPE = 1.0 / 400.0
+MIN_EDGE = 2.0 * FLATNESS
 
 
 def split_runs(text):
@@ -73,8 +77,12 @@ def place(shapes, align, valign, size, rotation):
     return [([move(point) for point in outline], [[move(point) for point in hole] for hole in holes]) for outline, holes in shapes], high_x - low_x
 
 
+def min_edge(size):
+    return MIN_EDGE * size
+
+
 def text_shapes(ctx, text, size, spacing, font, align, valign, rotation):
     loops = run_loops(ctx, split_runs(text), size, spacing, font)
     if not loops:
         raise bad_args("the text has nothing to engrave; it holds only spaces")
-    return place(nest(loops), align, valign, size, rotation)
+    return place(nest([simplify_loop(drop_close(loop, min_edge(size)), SIMPLIFY * size, EAR_SLOPE) for loop in loops]), align, valign, size, rotation)

@@ -280,7 +280,7 @@ def test_engrave_refuses_what_does_not_fit(bridge):
 
 
 def test_an_engraving_that_fails_after_the_cut_is_rolled_back(bridge):
-    from blendworks_bridge.commands import engrave as engrave_command
+    from blendworks_bridge import engraving as engrave_command
     from blendworks_bridge.errors import failed
 
     plate(bridge)

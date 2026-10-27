@@ -4,13 +4,15 @@ import math
 import bmesh
 from mathutils import Vector
 
-from .analytic_paths import plane_basis
+from .analytic_paths import angle_step, plane_basis
 from .errors import bad_args
 from .paths import clean_path, object_curve, segment_lengths
 from .selection import select_faces
 
 PLANAR_DEGREES = 2.0
 MIN_EDGE = 1e-5
+SURFACES = ("plane", "faces", "cylinder", "ring", "curve")
+MIN_MITRE = 0.25
 
 
 def default_up(normal):
@@ -37,14 +39,11 @@ class PlaneSurface:
         self.origin = Vector(origin)
         self.normal, self.across, self.up = plane_frame(normal, up)
 
-    def limit(self, tolerance):
-        return math.inf
-
     def point(self, x, y):
         return self.origin + self.across * x + self.up * y, self.normal
 
-    def distance(self, first, second):
-        return math.inf
+    def folds(self, low, high, tolerance, reach):
+        return []
 
 
 class FaceRegion(PlaneSurface):
@@ -95,16 +94,46 @@ class CylinderSurface:
         self.sign = 1.0 if spec["side"] == "outer" else -1.0
         self.start = math.radians(spec["angle"])
 
-    def limit(self, tolerance):
-        return math.sqrt(8.0 * self.radius * tolerance)
+    def folds(self, low, high, tolerance, reach):
+        return even_folds(low, high, self.radius * angle_step(self.radius, min(tolerance, self.radius)))
 
-    def distance(self, first, second):
-        return abs(second[0] - first[0])
+    def x_of_angle(self, degrees):
+        return self.sign * (math.radians(degrees) - self.start) * self.radius
 
     def point(self, x, y):
         angle = self.start + self.sign * x / self.radius
         radial = self.first * math.cos(angle) + self.second * math.sin(angle)
         return self.centre + self.axis * y + radial * self.radius, radial * self.sign
+
+
+class RingSurface:
+    kind = "ring"
+
+    def __init__(self, spec):
+        self.axis = Vector(spec["axis"])
+        if self.axis.length == 0:
+            raise bad_args("axis must not be zero")
+        self.axis.normalize()
+        self.first, self.second = plane_basis(self.axis, spec.get("reference"))
+        self.centre = Vector(spec["centre"])
+        self.radius = spec["radius"]
+        self.sign = 1.0 if spec["up"] == "outward" else -1.0
+        self.start = math.radians(spec["angle"])
+
+    def folds(self, low, high, tolerance, reach):
+        outer = self.radius + reach
+        return even_folds(low, high, self.radius * angle_step(outer, min(tolerance, outer)))
+
+    def x_of_angle(self, degrees):
+        return self.sign * (self.start - math.radians(degrees)) * self.radius
+
+    def point(self, x, y):
+        angle = self.start - self.sign * x / self.radius
+        distance = self.radius + self.sign * y
+        if distance <= 0:
+            raise bad_args("the text reaches the centre of the ring; make it smaller or use a larger radius")
+        radial = self.first * math.cos(angle) + self.second * math.sin(angle)
+        return self.centre + radial * distance, self.axis.copy()
 
 
 class PathSurface:
@@ -126,14 +155,27 @@ class PathSurface:
         for direction in self.directions:
             if abs(direction.dot(self.hint)) > 0.999:
                 raise bad_args("normal must not run along the path")
-        turns = [math.acos(max(-1.0, min(1.0, a.dot(b)))) for a, b in zip(self.directions, self.directions[1:] + ([self.directions[0]] if closed else []))]
-        self.curvature = max((turn / max(lengths[index], MIN_EDGE) for index, turn in enumerate(turns)), default=0.0)
+        normals = [(self.hint - direction * self.hint.dot(direction)).normalized() for direction in self.directions]
+        acrosses = [normal.cross(direction) for normal, direction in zip(normals, self.directions)]
+        self.mitres, self.normals = [], []
+        for index in range(len(points)):
+            before, after = self.joining(index, len(self.directions))
+            mitre = acrosses[before] + acrosses[after]
+            self.mitres.append(mitre / max(1.0 + acrosses[before].dot(acrosses[after]), MIN_MITRE))
+            self.normals.append((normals[before] + normals[after]).normalized())
 
-    def limit(self, tolerance):
-        return math.inf if self.curvature < 1e-9 else math.sqrt(8.0 * tolerance / self.curvature)
+    def joining(self, index, count):
+        if self.closed:
+            return (index - 1) % count, index % count
+        return max(index - 1, 0), min(index, count - 1)
 
-    def distance(self, first, second):
-        return math.hypot(second[0] - first[0], second[1] - first[1])
+    def folds(self, low, high, tolerance, reach):
+        if self.closed:
+            laps = range(math.floor(low / self.total), math.floor(high / self.total) + 1)
+            starts = [start + self.total * lap for lap in laps for start in self.starts[:-1]]
+        else:
+            starts = self.starts[1:-1]
+        return sorted(start for start in starts if low < start < high)
 
     def point(self, x, y):
         if self.closed:
@@ -141,10 +183,16 @@ class PathSurface:
         elif x < -1e-9 or x > self.total + 1e-9:
             raise bad_args(f"the text runs {abs(x if x < 0 else x - self.total):.4f} m past the end of the path; shorten it, make it smaller or move the offset")
         index = min(max(bisect.bisect_right(self.starts, x) - 1, 0), len(self.directions) - 1)
-        direction = self.directions[index]
-        position = self.points[index] + direction * (x - self.starts[index])
-        normal = (self.hint - direction * self.hint.dot(direction)).normalized()
-        return position + normal.cross(direction) * y, normal
+        following = (index + 1) % len(self.points)
+        share = (x - self.starts[index]) / (self.starts[index + 1] - self.starts[index])
+        start = self.points[index] + self.mitres[index] * y
+        end = self.points[following] + self.mitres[following] * y
+        normal = self.normals[index].lerp(self.normals[following], share).normalized()
+        return start.lerp(end, share), normal
+
+
+def even_folds(low, high, step):
+    return [index * step for index in range(math.floor(low / step) + 1, math.ceil(high / step))]
 
 
 def curve_surface(spec):
@@ -161,9 +209,9 @@ def curve_surface(spec):
 
 
 def build_surface(obj, args):
-    given = [kind for kind in ("plane", "faces", "cylinder", "curve") if kind in args]
+    given = [kind for kind in SURFACES if kind in args]
     if len(given) != 1:
-        raise bad_args("give the surface as exactly one of plane, faces, cylinder or curve")
+        raise bad_args("give the surface as exactly one of plane, faces, cylinder, ring or curve")
     kind = given[0]
     spec = args[kind]
     if kind == "plane":
@@ -173,5 +221,7 @@ def build_surface(obj, args):
         return FaceRegion(obj, selection, spec.get("up"))
     if kind == "cylinder":
         return CylinderSurface(spec)
+    if kind == "ring":
+        return RingSurface(spec)
     return curve_surface(spec)
 

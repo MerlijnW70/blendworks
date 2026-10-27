@@ -163,3 +163,48 @@ def triangulate(outline, holes):
     if abs(area - expected) > 1e-6 * max(expected, 1e-12):
         raise failed("the outline could not be triangulated cleanly")
     return flat, triangles
+
+
+
+def chord_offset(start, end, point):
+    span = math.dist(start, end)
+    if span <= EPSILON:
+        return math.dist(start, point)
+    return abs(orientation(start, end, point)) / span
+
+
+def removable(loop, covered, index, tolerance, slope):
+    count = len(loop)
+    start, end = loop[index - 1], loop[(index + 1) % count]
+    if math.dist(start, end) <= tolerance:
+        return False
+    tolerance = max(tolerance, slope * math.dist(start, end))
+    between = covered[index - 1] + [loop[index]] + covered[index]
+    return all(chord_offset(start, end, point) <= tolerance for point in between)
+
+
+def simplify_loop(points, tolerance, slope=0.0):
+    loop = list(points)
+    covered = [[] for _ in loop]
+    changed = True
+    while changed and len(loop) > 3:
+        changed = False
+        index = 0
+        while index < len(loop) and len(loop) > 3:
+            if removable(loop, covered, index, tolerance, slope):
+                covered[index - 1] = covered[index - 1] + [loop[index]] + covered[index]
+                del loop[index]
+                del covered[index]
+                changed = True
+            index += 1
+    return loop
+
+
+def drop_close(points, distance):
+    loop = []
+    for point in points:
+        if not loop or math.dist(loop[-1], point) > distance:
+            loop.append(point)
+    while len(loop) > 3 and math.dist(loop[0], loop[-1]) <= distance:
+        loop.pop()
+    return loop

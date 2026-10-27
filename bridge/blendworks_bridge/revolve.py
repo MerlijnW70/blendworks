@@ -4,6 +4,7 @@ from mathutils import Vector
 
 from .errors import bad_args
 from .meshdata import MeshData
+from .shading import hard_corners
 from .skin import cap, newell_normal
 
 ON_AXIS = 1e-9
@@ -99,6 +100,14 @@ def lathe_data(points, axis, segments, angle_degrees, caps, seam_merge, closed):
                 quad = (column(rings[a], j), column(rings[a], j + 1), column(rings[b], j + 1), column(rings[b], j))
                 uvs = [(u_of(ra, j), va), (u_of(ra, j + 1), va), (u_of(rb, j + 1), vb), (u_of(rb, j), vb)]
                 data.face(quad, uvs, island, 0, True)
+    corners = hard_corners(split, closed)
+    if caps and full and not closed:
+        corners |= {0, count - 1}
+    for index in corners:
+        ring = rings[index]
+        if len(ring) > 1:
+            for j in range(len(ring) if wraps else len(ring) - 1):
+                data.harden(ring[j], ring[(j + 1) % len(ring)])
     if caps:
         add_caps(data, rings, split, axis, full, segments, total_angle, closed)
     return data

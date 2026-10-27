@@ -58,6 +58,7 @@
   {"id":"engrave-1","text":"Cut the numbers 1 to 12 into the dial face like a clock","kind":"near-miss","split":"heldout","expect":["blender_engrave"],"confusable":"blender_text_object"},
   {"id":"engrave-2","text":"Emboss the zodiac signs around the brass ring band, one every 30 degrees","kind":"single","split":"tune","expect":["blender_engrave"]},
   {"id":"engrave-3","text":"Engrave a scale with a number every 10 degrees around the cylinder","kind":"single","split":"tune","expect":["blender_engrave"]},
+  {"id":"engrave_scale-1","text":"Cut 360 graduation lines around the dial rim, a longer one every 10 degrees","kind":"near-miss","split":"tune","expect":["blender_engrave_scale"],"confusable":"blender_engrave"},
   {"id":"instances-1","text":"Place linked copies of the Bolt on a circle of radius 0.2 m, 12 of them","kind":"near-miss","split":"heldout","expect":["blender_instances"],"confusable":"blender_duplicate"},
   {"id":"instances-2","text":"Scatter the rock at these 20 points, then merge them into one mesh","kind":"single","split":"tune","expect":["blender_instances"]},
   {"id":"rivet_line-1","text":"Add a row of rivets between these two points every 3 cm along the seam","kind":"near-miss","split":"tune","expect":["blender_rivet_line"],"confusable":"blender_instances"},

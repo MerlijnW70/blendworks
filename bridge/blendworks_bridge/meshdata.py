@@ -28,6 +28,9 @@ class MeshData:
         self.smooth.append(smooth)
         return len(self.faces) - 1
 
+    def harden(self, a, b):
+        self.sharp.add((min(a, b), max(a, b)))
+
     def island_count(self):
         return max(self.islands) + 1 if self.islands else 0
 

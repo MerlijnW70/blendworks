@@ -8,8 +8,25 @@ VEIN_WIDTH_SHARES = (1.0, 0.6, 0.35)
 WARP_SCALE = 0.55
 FADE_SCALE = 0.7
 DEFAULT_VEIN_COLOR = [0.07, 0.068, 0.065]
+MARBLE_VEIN_COLOR = [0.16, 0.165, 0.175]
 HALO_REACH = 5.0
 HALO_STRENGTH = 0.2
+FLOW_DIRECTION = (0.6, 0.48, 0.64)
+FLOW_WARP_SCALE = 1.2
+FLOW_WARP_REACH = 0.9
+MAIN_SCALE = 6.0
+MAIN_WIDTH = 0.008
+MAIN_WIDTH_RANGE = 0.04
+STRAND_SCALE = 9.0
+SMOKE_WIDTH = 0.07
+SMOKE_STRENGTH = 0.3
+BRANCH_RATIO = 2.2
+BRANCH_REACH = 0.16
+DRIFT_RATIO = 0.55
+SECOND_RATIO = 1.45
+SECOND_STRENGTH = 0.6
+DRIFT_WIDTH = 0.16
+DRIFT_STRENGTH = 0.42
 
 
 def veins_schema():
@@ -66,11 +83,54 @@ def clouds(graph, vector, base, tint):
     return graph.mix(mottled, base, tint), grain
 
 
+def flowing(graph, vector, turbulence):
+    field = graph.noise(vector, FLOW_WARP_SCALE, detail=4.0, roughness=0.55).outputs["Color"]
+    warped_vector = graph.vector_math("ADD", vector, graph.vector_math("SCALE", graph.vector_math("SUBTRACT", field, 0.5), scale=FLOW_WARP_REACH * (0.15 + turbulence)))
+    along = graph.vector_math("DOT_PRODUCT", warped_vector, FLOW_DIRECTION)
+    return graph.vector_math("SUBTRACT", warped_vector, graph.vector_math("SCALE", FLOW_DIRECTION, along))
+
+
+def distance_to_isoline(graph, vector, scale, detail):
+    field = graph.noise(vector, scale, detail=detail, roughness=0.5).outputs["Factor"]
+    return graph.math("ABSOLUTE", graph.math("SUBTRACT", field, 0.5))
+
+
+def soft_line(graph, distance, width, reach, peak, halo):
+    core = graph.map_range(distance, 0.0, width, peak, 0.0, "SMOOTHSTEP")
+    glow = graph.map_range(distance, 0.0, graph.math("MULTIPLY", width, reach), halo, 0.0, "SMOOTHSTEP")
+    return graph.math("ADD", core, glow, clamp=True)
+
+
+def varying(graph, vector, scale, low, high, salt):
+    field = graph.noise(graph.vector_math("ADD", vector, (salt, salt * 0.37, salt * 0.71)), scale, detail=3.0, roughness=0.6).outputs["Factor"]
+    return graph.map_range(field, 0.3, 0.7, low, high)
+
+
+def layered_veins(graph, vector, p):
+    flow = flowing(graph, vector, p["turbulence"])
+    width = MAIN_WIDTH + MAIN_WIDTH_RANGE * p["vein_width"]
+    reach = 2.0 + 6.0 * p["vein_softness"]
+    main_distance = distance_to_isoline(graph, flow, MAIN_SCALE, 4.0)
+    main_width = graph.math("MULTIPLY", varying(graph, vector, STRAND_SCALE, 0.35, 1.3, 13.0), width)
+    strength = varying(graph, vector, STRAND_SCALE * 2.0, 0.25, 0.95, 29.0)
+    main = graph.math("MULTIPLY", soft_line(graph, main_distance, main_width, reach, 1.0, 0.45), strength)
+    smoke = graph.map_range(main_distance, 0.0, SMOKE_WIDTH * (0.2 + 1.6 * p["vein_softness"]), SMOKE_STRENGTH * (0.3 + 1.4 * p["vein_softness"]), 0.0, "SMOOTHSTEP")
+    branch_distance = distance_to_isoline(graph, graph.vector_math("ADD", graph.vector_math("SCALE", flow, scale=BRANCH_RATIO), (3.1, 7.7, 1.9)), MAIN_SCALE, 5.0)
+    nearby = graph.map_range(main_distance, 0.0, BRANCH_REACH, 1.0, 0.0, "SMOOTHSTEP")
+    branch_width = graph.math("MULTIPLY", varying(graph, vector, STRAND_SCALE * 3.0, 0.3, 1.0, 47.0), width * 0.5)
+    branches = graph.math("MULTIPLY", soft_line(graph, branch_distance, branch_width, reach, 0.55, 0.2), graph.math("MULTIPLY_ADD", nearby, p["branching"], 0.1))
+    drift_distance = distance_to_isoline(graph, graph.vector_math("SCALE", flow, scale=DRIFT_RATIO), MAIN_SCALE, 3.0)
+    drift = graph.map_range(drift_distance, 0.0, DRIFT_WIDTH, DRIFT_STRENGTH * min(1.2, 0.2 + 1.6 * p["vein_softness"]), 0.0, "SMOOTHSTEP")
+    second_distance = distance_to_isoline(graph, graph.vector_math("ADD", graph.vector_math("SCALE", flow, scale=SECOND_RATIO), (11.3, 2.9, 5.3)), MAIN_SCALE, 4.0)
+    second = graph.math("MULTIPLY", soft_line(graph, second_distance, graph.math("MULTIPLY", main_width, 0.7), reach, SECOND_STRENGTH, 0.3), strength)
+    veins = graph.math("MAXIMUM", graph.math("MAXIMUM", main, second), branches)
+    return graph.math("MAXIMUM", veins, graph.math("MAXIMUM", drift, smoke))
+
+
 def marble(graph, p):
     vector = preset_vector(graph, p)
     surface, grain = clouds(graph, vector, p["color"], p["secondary_color"])
-    params = {"width": p["vein_width"], "turbulence": p["turbulence"], "strength": 1.0}
-    mask = vein_mask(graph, vector, params)
+    mask = layered_veins(graph, vector, p)
     low = max(0.0, p["roughness"] - 0.07)
     return {
         "base_color": graph.mix(mask, surface, p["vein_color"]),

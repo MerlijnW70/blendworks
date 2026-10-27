@@ -128,7 +128,8 @@ def test_helix_handedness_decides_the_turning_direction(bridge):
 def test_analytic_sweeps_refuse_what_does_not_fit(bridge):
     bridge.refuse("sweep", "bad_args", name="A", **RING, circle={"radius": 0.1}, arc={"radius": 0.1, "end_angle": 90.0})
     bridge.refuse("sweep", "bad_args", name="A", **RING, circle={"radius": 0.1}, waypoints=[[0, 0, 0], [1, 0, 0]])
-    bridge.refuse("sweep", "bad_args", name="A", **RING, circle={"radius": 0.1}, closed=True)
+    bridge.refuse("sweep", "bad_args", name="A", **RING, circle={"radius": 0.1}, closed=False)
+    bridge.refuse("sweep", "bad_args", name="A", **RING, helix={"radius": 0.1, "pitch": 0.02, "turns": 1.0}, closed=True)
     bridge.refuse("sweep", "bad_args", name="A", **RING, circle={"radius": 0.1}, fillet_radius=0.01)
     bridge.refuse("sweep", "bad_args", name="A", **RING, arc={"radius": 0.1, "end_angle": 360.0})
     bridge.refuse("sweep", "bad_args", name="A", **RING, arc={"radius": 0.1, "start_angle": 20.0, "end_angle": 20.0})

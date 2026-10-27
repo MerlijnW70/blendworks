@@ -1,12 +1,14 @@
 import bmesh
 import bpy
 
+from ..cutmarks import mark_cut_edges, mark_cutter, unmark
 from ..errors import bad_args, failed, not_found
 from ..limits import MAX_MESH_VERTICES
 from ..meshdata import MeshData
 from ..modifier_specs import SPECS, configure, kind_schemas
 from ..registry import command
 from ..schema import array, boolean, integer, length, names, number, string, vector3
+from ..slivers import SLIVER_ASPECT
 from ..topology import describe_problems, mesh_report
 from ..util import check_vertex_cap, get_mesh_object, get_object, mesh_counts
 from .clean import clean_object
@@ -162,7 +164,7 @@ def dispose_cutters(ctx, cutters, action):
         "cutter": string("The other mesh object."),
         "cutters": names("Several other mesh objects, joined by union first and applied in one operation with the exact solver.", 1, 1000),
         "operation": string("Boolean operation.", ["union", "difference", "intersect"], "difference"),
-        "solver": string("exact is robust, float is fast, manifold needs closed meshes; cutters always use exact.", ["exact", "float", "manifold"], "exact"),
+        "solver": string("exact is robust, float is fast, manifold needs closed meshes; auto measures the meshes and picks manifold when all are closed, else exact. The result says which and why.", ["exact", "float", "manifold", "auto"], "exact"),
         "cutter_action": string("What to do with the cutters: hide them, keep them shown, or delete them (needs apply).", ["hide", "keep", "delete"], "hide"),
         "apply": boolean("Apply the boolean to the mesh now instead of keeping it live.", True),
         "manifold": boolean("Refuse and roll back when the result is not a closed manifold.", False),
@@ -188,29 +190,50 @@ def boolean_command(ctx, args):
     if args["cutter_action"] == "delete" and not args["apply"]:
         raise bad_args("cutter_action delete needs apply=true; a live boolean needs its cutter")
     multiple = "cutters" in args
-    if multiple and (args["solver"] != "exact" or not args["apply"]):
+    if multiple and (args["solver"] not in ("exact", "auto") or not args["apply"]):
         raise bad_args("cutters use the exact solver and need apply=true")
-    settings = {"operation": args["operation"].upper(), "solver": args["solver"].upper()}
+    solver, reason = pick_solver(args["solver"], obj, cutters, multiple)
+    settings = {"operation": args["operation"].upper(), "solver": solver.upper()}
     stand_in = union_of_cutters(ctx, cutters) if multiple else None
+    operand = stand_in if multiple else cutters[0]
+    if args["apply"] and operand.data.users == 1:
+        mark_cutter(operand.data)
     try:
-        settings["object"] = stand_in if multiple else cutters[0]
+        settings["object"] = operand
         if multiple:
             settings["use_self"] = True
         result = add_modifier(ctx, obj, "BOOLEAN", settings, args["apply"])
     finally:
         if stand_in is not None:
             remove_stand_in(stand_in)
-    cleaned = clean_object(obj, merge_distance=args["merge_distance"]) if args["apply"] and args["clean"] else None
+        else:
+            unmark(operand.data)
+    if args["apply"]:
+        mark_cut_edges(obj, engraved=False)
+    cleaned = clean_object(obj, merge_distance=args["merge_distance"], max_aspect=SLIVER_ASPECT) if args["apply"] and args["clean"] else None
     report = mesh_report(obj.data) if args["apply"] else evaluated_report(ctx, obj)
     if args["manifold"] and not report["manifold"]:
         raise failed(f"the boolean result is not manifold: {describe_problems(report)}")
     dispose_cutters(ctx, cutters, args["cutter_action"])
-    result.update({"cutter": args["cutter_action"], "cutters": len(cutters), "manifold": report["manifold"], "volume": round(report["volume"], 9) if report["volume"] is not None else None})
+    result.update({"cutter": args["cutter_action"], "cutters": len(cutters), "manifold": report["manifold"], "volume": round(report["volume"], 9) if report["volume"] is not None else None, "solver": {"used": solver, "reason": reason}})
     if args["apply"]:
         result["mesh"] = mesh_counts(obj.data)
     if cleaned is not None:
-        result["cleaned"] = {key: value for key, value in cleaned.items() if key not in ("mesh", "manifold", "volume")}
+        result["cleaned"] = {key: value for key, value in cleaned.items() if key not in ("mesh", "manifold", "volume", "quality")}
+        result["quality"] = cleaned["quality"]
     return result
+
+
+def pick_solver(asked, obj, cutters, multiple):
+    if asked != "auto":
+        return asked, "asked for"
+    if multiple:
+        return "exact", "several cutters are joined into one mesh by the exact solver"
+    for item in [obj] + cutters:
+        report = mesh_report(item.data)
+        if not report["manifold"]:
+            return "exact", f"{item.name} is not a closed manifold ({describe_problems(report)}), which the manifold solver cannot take"
+    return "manifold", "every mesh is a closed manifold, so the manifold solver gives a closed result"
 
 
 @command(

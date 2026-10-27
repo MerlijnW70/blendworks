@@ -21,7 +21,7 @@ TRANSFORMABLE_DATA = ("MESH", "CURVE")
     },
     ["name"],
     family="objects",
-    intents=("move, rotate or scale an object", "set position, rotation or size of an object", "place an object at a location", "rotate an object by an angle about an axis"),
+    intents=("move, rotate or scale an object", "scale an object by a factor along an axis", "set position, rotation or size of an object", "place an object at a location", "rotate an object by an angle about an axis"),
     nearest=(("transform_selection", "to move faces or vertices inside a mesh"),),
 )
 def transform(ctx, args):

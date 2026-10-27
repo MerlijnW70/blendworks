@@ -1,6 +1,10 @@
+import math
+
 import bmesh
 import numpy
 
+from .flatfill import guarded
+from .slivers import SLIVER_AREA, Limits, merge_close, quality, repair
 from .topology import manifold_report
 
 MAX_REPAIR_PASSES = 12
@@ -193,24 +197,30 @@ def recalc_normals(bm):
     return sum(1 for old, face in zip(before, bm.faces) if old.dot(face.normal) < 0)
 
 
-def clean_bmesh(bm, tolerance, merge_distance):
+def clean_bmesh(bm, tolerance, merge_distance, area_floor=SLIVER_AREA, aspect_ceiling=None):
     start = manifold_report(bm)
     _, degenerate_before = sliver_faces(bm, tolerance)
     report = {"degenerate_triangles_before": degenerate_before}
+    limits = Limits(max(merge_distance, tolerance), area_floor, aspect_ceiling or math.inf, tolerance)
     loose_edges, loose_vertices = remove_loose(bm)
     vertices = len(bm.verts)
-    if merge_distance > 0:
-        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=merge_distance)
+    bm.normal_update()
+    merge_close(bm, merge_distance, limits)
     report["merged_vertices"] = vertices - len(bm.verts)
     faces = len(bm.faces)
-    bmesh.ops.dissolve_degenerate(bm, dist=tolerance, edges=bm.edges)
+    guarded(bm, lambda target: bmesh.ops.dissolve_degenerate(target, dist=tolerance, edges=target.edges))
     report["dissolved_faces"] = faces - len(bm.faces)
     report["collinear_vertices_removed"] = dissolve_collinear(bm, tolerance)
     report["faces_retriangulated"], report["edges_flipped"] = repair_slivers(bm, tolerance)
+    if aspect_ceiling is not None:
+        for key, value in repair(bm, limits).items():
+            report[key] = report.get(key, 0) + value
     extra_edges, extra_vertices = remove_loose(bm)
     report["loose_edges_removed"] = loose_edges + extra_edges
     report["loose_vertices_removed"] = loose_vertices + extra_vertices
     closed = manifold_report(bm)["manifold"]
     report["normals_flipped"] = recalc_normals(bm) if closed else 0
     _, report["degenerate_triangles_after"] = sliver_faces(bm, tolerance)
+    if aspect_ceiling is not None:
+        report["quality"] = quality(bm, area_floor, aspect_ceiling, tolerance)[1]
     return report, start["manifold"], closed

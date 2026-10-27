@@ -4,7 +4,8 @@ import bpy
 
 from .. import limits
 from ..analytic_paths import DEFAULT_TOLERANCE
-from ..cutters import add_solid, limiter
+from ..cutters import add_solid
+from ..engraving import cut, sampler_for
 from ..errors import bad_args, failed
 from ..glyphs import bounds_of, load_font
 from ..kit_limits import MAX_PATH_POINTS
@@ -13,11 +14,8 @@ from ..registry import command
 from ..schema import boolean, integer, length, number, obj as object_schema, point3, points3, string, vector3
 from ..selection import EXTENDED_FACE_PROPERTIES
 from ..surfaces import FaceRegion, build_surface
-from ..textlayout import ALIGNS, VALIGNS, text_shapes
-from ..topology import mesh_report
-from ..util import check_vertex_cap, get_mesh_object, mesh_counts
-from .clean import clean_object
-from .modifiers import add_modifier, remove_stand_in
+from ..textlayout import ALIGNS, VALIGNS, min_edge, text_shapes
+from ..util import check_vertex_cap, get_mesh_object
 
 MAX_REPEATS = 720
 DEFAULT_SIZE = 0.01
@@ -49,14 +47,30 @@ def surface_properties():
         }
     )
     curve["description"] = "A path on the surface: the text follows it."
-    return {"plane": plane, "faces": faces, "cylinder": cylinder, "curve": curve}
+    return {"plane": plane, "faces": faces, "cylinder": cylinder, "ring": ring_schema(), "curve": curve}
+
+
+def ring_schema():
+    ring = object_schema(
+        {
+            "centre": vector3("Centre of the ring face in metres; the face lies in the plane through it, square to the axis.", [0.0, 0.0, 0.0]),
+            "axis": vector3("Direction the flat ring face looks at.", [0.0, 0.0, 1.0]),
+            "radius": length("Radius in metres of the circle the text or marks follow.", maximum=1000.0),
+            "up": string("outward: the top of the text points away from the centre and the text reads clockwise seen along -axis; inward: towards the centre, reading anticlockwise.", ["outward", "inward"], "outward"),
+            "angle": number("Angle in degrees around the axis where the text is anchored, anticlockwise from reference.", -36000.0, 36000.0, 0.0),
+            "reference": vector3("Direction of angle 0, made perpendicular to the axis. Default +X, or +Y when the axis runs along X."),
+        },
+        ["radius"],
+    )
+    ring["description"] = "A flat ring face, such as the top of a dial, a horizon ring or a bezel: the text follows a circle on it."
+    return ring
 
 
 def repeat_schema():
     schema = object_schema(
         {
             "count": integer("How many copies.", 2, MAX_REPEATS),
-            "step": number("Distance between copies: degrees around a cylinder, metres on other surfaces.", -100000.0, 100000.0),
+            "step": number("Distance between copies: degrees around a cylinder, degrees anticlockwise around a ring, metres on other surfaces.", -100000.0, 100000.0),
             "number_start": number("Value of {n} in the first copy.", -1e9, 1e9, 0.0),
             "number_step": number("Add this to {n} for each copy; the text must contain {n}.", -1e9, 1e9),
         },
@@ -89,6 +103,8 @@ def instance_texts(args):
 def along(surface, args, step):
     if surface.kind == "cylinder":
         return args["offset"] + math.radians(step) * surface.radius
+    if surface.kind == "ring":
+        return args["offset"] + surface.x_of_angle(math.degrees(surface.start) + step)
     return args["offset"] + step
 
 
@@ -102,7 +118,7 @@ def check_fit(surface, shapes, shift):
 
 @command(
     "engrave",
-    "Cut or emboss text and symbols (a built-in set: zodiac signs and planets) into a mesh along a plane, face region, cylinder band or curve, with optional repeats for scales.",
+    "Cut or emboss text and symbols (zodiac, planets) along a plane, face region, cylinder band, flat ring face or curve; repeats number a scale. For tick marks use engrave_scale.",
     {
         "name": string("Mesh object to engrave."),
         "text": string("The text. {aries}, {sun} and the like, or the Unicode signs, give built-in symbols; {n} is the repeat number.", max_length=limits.MAX_TEXT_LENGTH),
@@ -141,37 +157,9 @@ def engrave(ctx, args):
         if font is not None:
             bpy.data.fonts.remove(font)
     check_vertex_cap(len(data.verts))
-    before = mesh_report(target.data)
-    apply_cutters(ctx, target, data, cutting)
-    cleaned = clean_object(target) if args["clean"] else None
-    after = mesh_report(target.data)
-    if before["volume"] is not None and after["volume"] is not None and abs(after["volume"] - before["volume"]) <= 1e-12 * abs(before["volume"]):
-        raise failed(f"the engraving did not change {target.name}: the {surface.kind} surface does not meet the mesh, so check its position")
-    if before["manifold"] and not after["manifold"]:
-        raise failed("the engraving left the mesh open; try a smaller depth, a larger tolerance or a surface that matches the mesh")
-    result = {
-        "name": target.name,
-        "mode": "cut" if cutting else "emboss",
-        "instances": len(texts),
-        "mesh": mesh_counts(target.data),
-        "manifold": after["manifold"],
-        "volume_before": rounded_volume(before),
-        "volume_after": rounded_volume(after),
-        "volume_change": rounded_volume(after, before),
-        "fits": summary["fits"],
-        "surface": surface.kind,
-    }
-    if cleaned is not None:
-        result["cleaned"] = {key: value for key, value in cleaned.items() if key not in ("mesh", "manifold", "volume")}
-    if target.data.uv_layers:
-        result["note"] = "the new faces have no UVs; unwrap the object again"
+    result = cut(ctx, target, data, cutting, args["clean"], "the engraving")
+    result.update({"instances": len(texts), "fits": summary["fits"], "surface": surface.kind})
     return result
-
-
-def rounded_volume(report, other=None):
-    if report["volume"] is None or (other is not None and other["volume"] is None):
-        return None
-    return round(report["volume"] - (other["volume"] if other is not None else 0.0), 12)
 
 
 def build_cutters(ctx, target, surface, args, texts, steps, font, cutting):
@@ -179,11 +167,11 @@ def build_cutters(ctx, target, surface, args, texts, steps, font, cutting):
     size = args["size"]
     depth = args["depth"] if cutting else max(0.5 * args["height"], 4.0 * tolerance)
     rise = max(0.3 * args["depth"], 4.0 * tolerance) if cutting else args["height"]
-    too_long = limiter(surface, tolerance)
     cache = {}
     data = MeshData()
     fits = True
     inverse = target.matrix_world.inverted()
+    sampler = sampler_for(target)
     for text, step in zip(texts, steps):
         if text not in cache:
             cache[text] = text_shapes(ctx, text, size, args["spacing"], font, args["align"], args["valign"], args["rotation"])[0]
@@ -193,19 +181,7 @@ def build_cutters(ctx, target, surface, args, texts, steps, font, cutting):
         material = target.data.polygons[target.closest_point_on_mesh(inverse @ anchor)[3]].material_index if target.data.polygons else 0
         fit = check_fit(surface, shapes, shift)
         fits = fits and fit is not False
-        add_solid(data, shapes, surface, shift, depth, rise, material, too_long)
+        add_solid(data, shapes, surface, shift, depth, rise, material, min_edge(size), tolerance, sampler)
         if len(data.verts) > limits.MAX_MESH_VERTICES:
             raise failed(f"the engraving needs more than {limits.MAX_MESH_VERTICES} vertices; use less text or a larger tolerance")
     return data, {"fits": fits if isinstance(surface, FaceRegion) else None}
-
-
-def apply_cutters(ctx, target, data, cutting):
-    mesh = bpy.data.meshes.new("blendworks_engrave_cutter")
-    data.to_mesh(mesh)
-    cutter = bpy.data.objects.new("blendworks_engrave_cutter", mesh)
-    ctx.scene.collection.objects.link(cutter)
-    try:
-        settings = {"operation": "DIFFERENCE" if cutting else "UNION", "solver": "EXACT", "object": cutter, "use_self": True}
-        add_modifier(ctx, target, "BOOLEAN", settings, True)
-    finally:
-        remove_stand_in(cutter)

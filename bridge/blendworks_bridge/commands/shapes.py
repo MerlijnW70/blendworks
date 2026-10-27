@@ -11,6 +11,7 @@ from ..profiles import profile_fields, resolve_profile
 from ..registry import command
 from ..revolve import lathe_data
 from ..schema import array, boolean, integer, length, number, obj, point3, points2, points3, string, vector3
+from ..shading import hard_corners
 from ..skin import cap, skin
 from ..sweeping import check_closed_arguments, sweep_rings
 from ..util import require_free_name
@@ -64,9 +65,10 @@ def sweep_path(args):
         raise bad_args(f"give the route as exactly one of {', '.join(ROUTES)}")
     route = given[0]
     if route in ANALYTIC_PATHS:
-        if "closed" in args or args["fillet_radius"] > 0:
-            raise bad_args(f"the {route} path has no corners and decides itself whether it closes; closed and fillet_radius belong to waypoints and curve")
+        if args["fillet_radius"] > 0:
+            raise bad_args(f"the {route} path has no corners to round; fillet_radius belongs to waypoints and curve")
         points, closed, info = ANALYTIC_PATHS[route](args[route])
+        closed = analytic_closed(route, closed, args.get("closed"))
         return clean_path(points, closed, f"the {route} path"), closed, info
     if route == "waypoints":
         closed = args.get("closed", False)
@@ -74,6 +76,16 @@ def sweep_path(args):
     points, cyclic = object_curve(args["curve"])
     closed = args.get("closed", cyclic)
     return clean_path(points, closed, f"curve {args['curve']}"), closed, None
+
+
+def analytic_closed(route, natural, asked):
+    if asked is None or asked == natural:
+        return natural
+    if route == "circle":
+        raise bad_args("a circle path is always closed; use an arc for an open ring")
+    if route == "helix":
+        raise bad_args("a helix path cannot be closed; its ends lie on different turns")
+    return True
 
 
 @command(
@@ -85,7 +97,7 @@ def sweep_path(args):
             "waypoints": points3("Path points [x, y, z] in metres; the profile origin follows them.", 2, MAX_PATH_POINTS),
             "curve": string("Name of an existing curve object (one spline) to follow instead of waypoints, in world space."),
             **path_fields(),
-            "closed": boolean("Join the end of the path to its start (default: the curve's own setting, else false)."),
+            "closed": boolean("Join the end of the path to its start into a ring without a seam gap. Default: the curve's own setting; a circle is closed, and an arc closes with a straight chord."),
             "up": vector3("Direction the profile's v axis points at the start of the path. Default +Z, or the axis of a circle, arc or helix."),
             "scale_start": length("Profile scale at the start of the path.", 1.0, 1000.0),
             "scale_end": length("Profile scale at the end of the path; the scale changes linearly with distance.", 1.0, 1000.0),
@@ -117,6 +129,9 @@ def sweep(ctx, args):
     rings, total = sweep_rings(points, closed, profile, up, args["twist"], args["scale_start"], args["scale_end"])
     data = MeshData()
     indices = skin(data, rings, closed_v=closed)
+    for corner in hard_corners(profile, True):
+        for k in range(len(rings) if closed else len(rings) - 1):
+            data.harden(indices[k][corner], indices[(k + 1) % len(rings)][corner])
     if args["caps"] and not closed:
         cap(data, indices[0], rings[0], points[0] - points[1])
         cap(data, indices[-1], rings[-1], points[-1] - points[-2])

@@ -16,6 +16,7 @@ MODULES = (
     "wear",
     "clean",
     "engrave",
+    "scales",
     "materials",
     "images",
     "pbr",
