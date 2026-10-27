@@ -32,6 +32,18 @@ for (const file of [...walk(join(root, "src")), ...walk(join(root, "bridge")), .
   if (python && /\b(exec|eval)\s*\(/.test(code) && !rel.includes("run_python")) problems.push(`${rel}: exec or eval outside the gated run_python command`);
 }
 
+const strictUtf8 = new TextDecoder("utf-8", { fatal: true });
+const textFiles = [...readdirSync(root).map((name) => join(root, name)).filter((path) => statSync(path).isFile()), ...["src", "bridge", "test", "docs", "jobs", "schemas", "scripts"].flatMap((dir) => walk(join(root, dir)))];
+for (const file of textFiles) {
+  const rel = relative(root, file).split(sep).join("/");
+  if (!/\.(ts|py|mjs|js|json|md|toml)$/.test(rel)) continue;
+  try {
+    strictUtf8.decode(readFileSync(file));
+  } catch {
+    problems.push(`${rel}: not valid UTF-8`);
+  }
+}
+
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 const allowedRuntime = ["@modelcontextprotocol/sdk", "zod"];
 const allowedDev = ["@types/node", "tsx", "typescript", "vitest"];

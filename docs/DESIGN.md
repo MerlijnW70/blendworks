@@ -115,8 +115,8 @@ With `--preview`, the judge measures and checks every rule and draws the UV layo
 
 `blendworks closeups <asset> --out <dir> [--res <px>] [--samples <n>]` renders 9 close-ups:
 - a hero three-quarter view;
-- a 2 × 2 grid of zoomed tiles from the front-right;
-- a 2 × 2 grid of zoomed tiles from the back-left.
+- a 2 Ã— 2 grid of zoomed tiles from the front-right;
+- a 2 Ã— 2 grid of zoomed tiles from the back-left.
 
 Each framing is fitted to the asset's vertices, and the four tiles of a grid together make up the whole view. The command also writes a labelled `closeup-sheet.png`. It uses the judge's light rig, device choice and sandbox, without outlines. The defaults are 1200 px and 16 samples with denoising, and the command prints its total time.
 
