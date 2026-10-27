@@ -1,0 +1,36 @@
+{
+  "$schema": "../../../../schemas/asset-spec.schema.json",
+  "name": "wooden crate",
+  "format": "glb",
+  "views": [
+    "front",
+    "back",
+    "left",
+    "right",
+    "top",
+    "three-quarter"
+  ],
+  "brief": "A sturdy wooden crate with planks, a thicker frame and dark metal corner brackets, for a top-down game.",
+  "visual": {
+    "rubric": [
+      {
+        "id": "matches-brief",
+        "question": "Does the asset match the brief: the object it names, its parts and its materials?",
+        "weight": 2
+      },
+      {
+        "id": "detail",
+        "question": "Is the detail the brief states present and legible in the close-ups?",
+        "weight": 1
+      },
+      {
+        "id": "finish",
+        "question": "Is the surface free of visible defects such as holes, stretched or missing textures, and floating or broken parts?",
+        "weight": 1
+      }
+    ],
+    "minScore": 0.7,
+    "samples": 3,
+    "required": true
+  }
+}

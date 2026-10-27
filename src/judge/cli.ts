@@ -6,6 +6,7 @@ import { DeviceError, deviceModeFromEnvironment, type DeviceMode } from "./devic
 import { diffReports, diffText, readReport, ReportError } from "./diff.js";
 import { DEFAULTS, judge } from "./run.js";
 import { StageFailure } from "./stages.js";
+import { EvalError, evalText, visualEval } from "./visual/eval.js";
 
 const DEVICE_HELP = `Rendering uses BLENDWORKS_DEVICE: auto (default) tries OptiX, CUDA, HIP, Metal and oneAPI
 inside the sandbox and falls back to the CPU; gpu fails with a reason when no GPU works; cpu never uses one.`;
@@ -35,7 +36,17 @@ to the asset's bounds, and writes them with a labelled closeup-sheet.png to the 
 Defaults: --res ${CLOSEUP_DEFAULTS.resolution} px, --samples ${CLOSEUP_DEFAULTS.samples} with denoising, --timeout ${CLOSEUP_DEFAULTS.timeoutMs / 1000} s.
 ${DEVICE_HELP}`;
 
-export const USAGE = `${JUDGE_USAGE}\n\n${CLOSEUPS_USAGE}\n\n${DIFF_USAGE}`;
+export const VISUAL_EVAL_USAGE = `usage: blendworks visual-eval <labelled.json> [--out dir] [--dir name=folder]...
+
+Judges every entry of a labelled set (asset, spec with a visual rule, expected pass or fail) and
+reports how often the visual judge agrees, its false passes and false fails, tokens and cost.
+A path that starts with $name/ is read from the folder given by --dir name=folder; other paths
+are relative to the labelled file. Writes visual-eval.json and one judge folder per entry to the
+out dir (default artifacts/visual-eval). Every entry calls the model, which costs money on the
+anthropic-api provider and subscription usage on the claude-code provider.
+${DEVICE_HELP}`;
+
+export const USAGE = `${JUDGE_USAGE}\n\n${CLOSEUPS_USAGE}\n\n${DIFF_USAGE}\n\n${VISUAL_EVAL_USAGE}`;
 
 export class UsageError extends Error {}
 
@@ -121,11 +132,31 @@ function parseCloseups(argv: string[]) {
   };
 }
 
+function parseVisualEval(argv: string[]) {
+  const { values, positionals } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    strict: true,
+    options: { out: { type: "string" }, dir: { type: "string", multiple: true }, help: { type: "boolean", short: "h" } },
+  });
+  if (values.help) return { help: VISUAL_EVAL_USAGE };
+  const [labelledPath, ...extra] = positionals;
+  if (labelledPath === undefined || extra.length > 0) throw new UsageError(VISUAL_EVAL_USAGE);
+  const dirs: Record<string, string> = {};
+  for (const entry of values.dir ?? []) {
+    const match = /^([a-z][a-z0-9_-]*)=(.+)$/i.exec(entry);
+    if (match === null) throw new UsageError(`--dir takes name=folder, not ${entry}`);
+    dirs[match[1]!] = match[2]!;
+  }
+  return { command: "visual-eval" as const, labelledPath, outDir: values.out ?? "artifacts/visual-eval", dirs, device: deviceFromEnvironment() };
+}
+
 export function parseCommand(argv: string[]) {
   const [command, ...rest] = argv;
   if (command === "judge") return parseJudge(rest);
   if (command === "closeups") return parseCloseups(rest);
   if (command === "diff") return parseDiff(rest);
+  if (command === "visual-eval") return parseVisualEval(rest);
   if (command === "--help" || command === "-h") return { help: USAGE };
   throw new UsageError(USAGE);
 }
@@ -146,6 +177,18 @@ function runDiff(beforePath: string, afterPath: string, json: boolean): number {
   return changes.length === 0 ? 0 : 1;
 }
 
+async function runVisualEval(command: { labelledPath: string; outDir: string; dirs: Record<string, string>; device: DeviceMode }): Promise<number> {
+  try {
+    const report = await visualEval({ ...command, judge, judgeOptions: { device: command.device }, progress: (line) => console.log(line) });
+    console.log(evalText(report));
+    return 0;
+  } catch (error) {
+    if (!(error instanceof EvalError)) throw error;
+    console.error(error.message);
+    return 2;
+  }
+}
+
 export async function main(argv: string[]): Promise<number> {
   let command: ReturnType<typeof parseCommand>;
   try {
@@ -159,6 +202,7 @@ export async function main(argv: string[]): Promise<number> {
     return 0;
   }
   if (command.command === "diff") return runDiff(command.before, command.after, command.json);
+  if (command.command === "visual-eval") return runVisualEval(command);
   if (command.command === "judge") {
     const { command: _, ...options } = command;
     const report = await judge(options);

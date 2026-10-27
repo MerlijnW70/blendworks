@@ -45,8 +45,8 @@ for (const file of textFiles) {
 }
 
 const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
-const allowedRuntime = ["@modelcontextprotocol/sdk", "zod", "gltf-validator"];
-const pinnedRuntime = { "gltf-validator": "2.0.0-dev.3.10" };
+const allowedRuntime = ["@modelcontextprotocol/sdk", "zod", "gltf-validator", "@anthropic-ai/sdk"];
+const pinnedRuntime = { "gltf-validator": "2.0.0-dev.3.10", "@anthropic-ai/sdk": "1.3.0" };
 const allowedDev = ["@types/node", "tsx", "typescript", "vitest"];
 for (const name of Object.keys(pkg.dependencies ?? {})) if (!allowedRuntime.includes(name)) problems.push(`package.json: ${name} is not an allowed runtime dependency`);
 for (const [name, version] of Object.entries(pinnedRuntime)) if (pkg.dependencies?.[name] !== undefined && pkg.dependencies[name] !== version) problems.push(`package.json: ${name} must be pinned to ${version}`);

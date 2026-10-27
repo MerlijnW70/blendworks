@@ -52,6 +52,12 @@ node src/judge/bin.js judge crate.spec.json <folder>/crate.glb
 | `BLENDWORKS_LIVE` | `1` runs the Poly Haven tests against the real API | off |
 | `BLENDWORKS_LIBRARY_MAX_MB` | Largest library download, in MB | `300` |
 | `BLENDWORKS_CACHE` | Folder for generated fixtures and locks; `npm run clean` empties it | `.cache` |
+| `BLENDWORKS_VLM_PROVIDER` | Visual judge provider: `anthropic-api`, or `claude-code` (the Claude Code CLI on your own subscription, only for your own machine) | `anthropic-api` when API credentials resolve, else `claude-code` |
+| `BLENDWORKS_VISUAL_MODEL` | Visual judge model when the spec names none | `claude-opus-5-5` |
+| `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN` | Credentials for `anthropic-api`; an `ant auth login` profile works too | none |
+| `BLENDWORKS_CLAUDE` | The `claude` CLI for `claude-code` | `claude` on `PATH` |
+| `BLENDWORKS_LIVE_VLM` | `1` runs the visual judge tests against the real model, through the provider above | off |
+| `BLENDWORKS_PROOF_DIR` | The proof assets for those tests | `artifacts/proof` |
 
 ## Platforms
 

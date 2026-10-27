@@ -556,6 +556,96 @@
         "maxFloating"
       ],
       "additionalProperties": false
+    },
+    "visual": {
+      "type": "object",
+      "properties": {
+        "rubric": {
+          "minItems": 1,
+          "maxItems": 12,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]{0,39}$"
+              },
+              "question": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 300,
+                "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+              },
+              "weight": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "id",
+              "question",
+              "weight"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "minScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "samples": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "model": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.\\-]{1,63}$"
+        },
+        "models": {
+          "minItems": 2,
+          "maxItems": 5,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9.\\-]{1,63}$"
+          }
+        },
+        "committee": {
+          "type": "string",
+          "enum": [
+            "min",
+            "majority"
+          ]
+        },
+        "effort": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "xhigh",
+            "max"
+          ]
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "anthropic-api",
+            "claude-code"
+          ]
+        }
+      },
+      "required": [
+        "rubric"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [

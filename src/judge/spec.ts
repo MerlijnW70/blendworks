@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { z } from "zod";
+import { visualRule } from "./visual/spec.js";
 
 export const FORMATS = ["glb", "gltf", "fbx", "obj", "blend"] as const;
 export const VIEWS = ["front", "back", "left", "right", "top", "bottom", "three-quarter"] as const;
@@ -113,12 +114,15 @@ const baseSchema = z.strictObject({
   textures: textures.optional(),
   gltf: gltf.optional(),
   parts: parts.optional(),
+  visual: visualRule.optional(),
 });
 
-export const assetSpecSchema = baseSchema.refine((spec) => spec.gltf === undefined || GLTF_FORMATS.includes(spec.format), {
-  message: "the gltf rules need format glb or gltf",
-  path: ["gltf"],
-});
+export const assetSpecSchema = baseSchema
+  .refine((spec) => spec.gltf === undefined || GLTF_FORMATS.includes(spec.format), {
+    message: "the gltf rules need format glb or gltf",
+    path: ["gltf"],
+  })
+  .refine((spec) => spec.visual === undefined || spec.brief !== undefined, { message: "the visual rule needs a brief", path: ["visual"] });
 
 export type AssetSpec = z.infer<typeof assetSpecSchema>;
 export type NamedObject = z.infer<typeof namedObject>;

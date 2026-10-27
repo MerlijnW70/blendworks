@@ -1,0 +1,34 @@
+{
+  "$schema": "../../../../schemas/asset-spec.schema.json",
+  "name": "realistic pickaxe",
+  "format": "glb",
+  "views": [
+    "front",
+    "left",
+    "top",
+    "three-quarter"
+  ],
+  "brief": "A photorealistic miner's pickaxe standing on its handle end: forged steel head with pick and chisel ends, rust and forge scale, ground bright edges; hickory handle with real grain, wedged eye, grip wear; baked PBR textures.",
+  "visual": {
+    "rubric": [
+      {
+        "id": "matches-brief",
+        "question": "Does the asset match the brief: the object it names, its parts and its materials?",
+        "weight": 2
+      },
+      {
+        "id": "detail",
+        "question": "Is the detail the brief states present and legible in the close-ups?",
+        "weight": 1
+      },
+      {
+        "id": "finish",
+        "question": "Is the surface free of visible defects such as holes, stretched or missing textures, and floating or broken parts?",
+        "weight": 1
+      }
+    ],
+    "minScore": 0.7,
+    "samples": 3,
+    "required": true
+  }
+}

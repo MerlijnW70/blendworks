@@ -15,6 +15,9 @@ import { readSpec, SpecError, type AssetSpec } from "./spec.js";
 import { checkAsset, checkBlender, DEFAULTS, deviceMode, runScript, seconds, sha256, StageFailure, workOut, type Sandbox } from "./stages.js";
 import { floatingTolerance, validatorRules } from "./texture-rules.js";
 import { validateGltf, ValidationError, VALIDATOR_DEFAULTS, type Validation } from "./validator.js";
+import { visualStage } from "./visual/judge-stage.js";
+import { visualRules } from "./visual/record.js";
+import type { VisualOptions } from "./visual/stage.js";
 
 export { DEFAULTS, SCRIPTS_DIR } from "./stages.js";
 
@@ -35,9 +38,10 @@ export type JudgeOptions = {
   backends?: readonly string[];
   maxValidatorBytes?: number;
   afterCopy?: (delivery: Delivery) => void;
+  visual?: VisualOptions;
 };
 
-const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "contact-sheet.png", "views"];
+const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "contact-sheet.png", "views", "visual.json", "visual", "closeups"];
 const STAGE_OUTPUTS = ["measurements.json", "render.json", "contact-sheet.png"];
 
 function prepareOutDir(outDir: string): void {
@@ -175,6 +179,12 @@ export async function judge(options: JudgeOptions): Promise<Report> {
       collectOutputs(workDir, outDir, draft);
     }
     draft.rules.push(...renderRules(spec, draft.renders));
+    if (spec.visual !== undefined) {
+      const maxFileBytes = options.maxFileBytes ?? DEFAULTS.maxFileBytes;
+      const extra = { ...(options.device ? { device: options.device } : {}), ...(options.backends ? { backends: options.backends } : {}) };
+      draft.visual = await visualStage({ spec, renders: draft.renders, assetPath: delivery.main, outDir, sandbox, maxTriangles, maxFileBytes, ...extra, options: options.visual ?? {} });
+      draft.rules.push(...visualRules(draft.visual));
+    }
   } catch (error) {
     if (!(error instanceof StageFailure)) throw error;
     draft.failure = error.failure;

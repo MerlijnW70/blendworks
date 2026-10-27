@@ -3,6 +3,7 @@ import type { Measurements } from "./measurements.js";
 import type { RuleResult } from "./rules.js";
 import type { Isolation } from "./sandbox.js";
 import type { Validation } from "./validator.js";
+import { visualLines, type VisualRecord } from "./visual/record.js";
 
 export type Failure = { stage: "spec" | "asset" | "validate" | "blender" | "measure" | "device" | "render" | "closeups"; code: string; message: string };
 
@@ -49,6 +50,7 @@ export type Report = {
   renders: Renders | null;
   timings: Timings;
   validation?: Validation | null;
+  visual?: VisualRecord | null;
   summary: string;
 };
 
@@ -140,6 +142,7 @@ export function summarize(report: Omit<Report, "summary">): string {
   if (report.measurements?.textures) lines.push(...textureLines(report.measurements.textures));
   if (report.validation !== undefined) lines.push(...validationLines(report.validation));
   if (report.measurements) lines.push(...integrityLines(report.measurements));
+  if (report.visual) lines.push(...visualLines(report.visual));
   if (report.device) lines.push(`  render: ${describeDevice(report.device)}`);
   if (report.renders) lines.push(...renderLines(report.renders));
   if (report.asset.setSha256 !== null) lines.push(`  delivery: ${report.asset.files.length} files, ${report.asset.setBytes} bytes, set sha256 ${report.asset.setSha256}`);
