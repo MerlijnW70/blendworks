@@ -16,6 +16,11 @@ def smoothed(values):
     return numpy.apply_along_axis(lambda column: numpy.convolve(column, kernel, "same"), 0, rows)
 
 
+def gradient_share(values, floor=GRADIENT_FLOOR):
+    gradient_y, gradient_x = numpy.gradient(smoothed(values))
+    return float((numpy.hypot(gradient_x, gradient_y) > floor).mean())
+
+
 def vein_statistics(values):
     gradient_y, gradient_x = numpy.gradient(smoothed(values))
     energy = gradient_x ** 2 + gradient_y ** 2

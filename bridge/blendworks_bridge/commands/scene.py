@@ -49,7 +49,7 @@ def scene_info(ctx, args):
     return scene_report(ctx, args["detail"], args.get("names"), args["limit"], args["offset"], list_checkpoints(ctx.workspace))
 
 
-@command("new_scene", "Clear the scene: remove every object and unused data, metric units in metres.", destructive=True)
+@command("new_scene", "Clear the scene: remove every object, collection and unused data, metric units in metres.", destructive=True)
 def new_scene(ctx, args):
     removed = reset_scene(ctx.scene)
     return {"removed_objects": removed}
@@ -59,6 +59,8 @@ def reset_scene(scene):
     objects = list(scene.objects)
     count = len(objects)
     bpy.data.batch_remove(objects)
+    for collection in list(scene.collection.children_recursive):
+        bpy.data.collections.remove(collection)
     purge_unused()
     scene.camera = None
     scene.cursor.location = (0.0, 0.0, 0.0)
@@ -69,7 +71,7 @@ def reset_scene(scene):
 
 
 def purge_unused():
-    for name in ("meshes", "curves", "materials", "lights", "cameras", "images", "textures", "node_groups"):
+    for name in ("meshes", "curves", "materials", "lights", "cameras", "images", "textures", "node_groups", "collections"):
         collection = getattr(bpy.data, name)
         unused = [block for block in collection if block.users - int(block.use_fake_user) == 0]
         if unused:

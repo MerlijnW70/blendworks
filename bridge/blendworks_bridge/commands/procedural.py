@@ -2,6 +2,7 @@ import bpy
 
 from ..errors import bad_args, not_found
 from ..nodes import Graph
+from ..occlusion import occlusion_mask
 from ..pbr import users_of
 from ..presets import PRESETS
 from ..procedural import chosen_preset, displacement_of, preset_vector, surface_principled, wire_channels
@@ -10,6 +11,16 @@ from ..schema import boolean, integer, number, string
 
 BLENDED_INPUTS = (("Base Color", "base_color", "RGBA"), ("Roughness", "roughness", "FLOAT"), ("Metallic", "metallic", "FLOAT"))
 MASKS = ("noise", "edges", "cavity", "vertex_color")
+
+
+def ensure_material(name):
+    material = bpy.data.materials.get(name)
+    created = material is None
+    if created:
+        material = bpy.data.materials.new(name)
+        material.use_fake_user = True
+    material.use_nodes = True
+    return material, created
 
 
 def preset_properties():
@@ -27,12 +38,7 @@ PRESET_NAMES = ", ".join(PRESETS)
 )
 def material_procedural(ctx, args):
     preset, params = chosen_preset(PRESETS, args)
-    material = bpy.data.materials.get(args["name"])
-    created = material is None
-    if created:
-        material = bpy.data.materials.new(args["name"])
-        material.use_fake_user = True
-    material.use_nodes = True
+    material, created = ensure_material(args["name"])
     tree = material.node_tree
     tree.nodes.clear()
     graph = Graph(tree)
@@ -119,8 +125,7 @@ def mask_value(graph, args):
     elif kind == "edges" and args["edge_source"] == "pointiness":
         raw = graph.map_range(graph.node("ShaderNodeNewGeometry").outputs["Pointiness"], 0.5, 0.56)
     elif kind in ("edges", "cavity"):
-        occlusion = graph.node("ShaderNodeAmbientOcclusion", {"Distance": args["distance"]}, inside=kind == "edges", samples=16)
-        raw = graph.math("SUBTRACT", 1.0, occlusion.outputs["AO"])
+        raw = occlusion_mask(graph, args["distance"], kind == "edges")
     else:
         raw = graph.node("ShaderNodeAttribute", attribute_type="GEOMETRY", attribute_name=args["layer"]).outputs["Fac"]
     if args["invert"]:

@@ -13,6 +13,7 @@ from ..schema import boolean, names, string
 from ..util import GEOMETRY_TYPES, get_objects
 from ..workspace import IMPORT_EXTENSIONS
 from .checkpoints import DISCARD, ensure_may_replace, opened
+from .hierarchy import get_collection
 
 EXPORT_FORMATS = {"glb": ".glb", "fbx": ".fbx", "obj": ".obj"}
 EXPORTABLE_TYPES = GEOMETRY_TYPES + ("EMPTY",)
@@ -20,11 +21,12 @@ EXPORTABLE_TYPES = GEOMETRY_TYPES + ("EMPTY",)
 
 @command(
     "export",
-    "Export the scene (or named objects) to a .glb, .fbx or .obj file in the workspace; options for modifiers, hidden objects, up axis, tangents, texture format and Draco.",
+    "Export the scene, a collection or named objects to a .glb, .fbx or .obj file in the workspace; options for modifiers, hidden objects, up axis, tangents, texture format and Draco.",
     {
         "path": string("File path inside the workspace, relative to it.", max_length=1024),
         "format": string("File format. Default: from the path's extension.", list(EXPORT_FORMATS)),
         "names": names("Objects to export. Default: every visible mesh, curve and text object."),
+        "collection": string("Export the objects of this collection and its nested collections instead of the whole scene."),
         "ancestors": boolean("Also export the empties these objects are parented under, so the hierarchy survives.", True),
         **option_fields(),
     },
@@ -67,16 +69,19 @@ def export(ctx, args):
 
 
 def chosen_objects(ctx, args):
+    if "names" in args and "collection" in args:
+        raise bad_args("give names or collection, not both")
     if "names" in args:
         objects = get_objects(args["names"])
         hidden = [obj.name for obj in objects if obj.type in EXPORTABLE_TYPES and not obj.visible_get(view_layer=ctx.view_layer)]
         if hidden and not args["include_hidden"]:
             raise bad_args(f"{', '.join(hidden)} is hidden; set include_hidden to export hidden objects")
     else:
+        pool = get_collection(ctx.scene, args["collection"]).all_objects if "collection" in args else ctx.scene.objects
         objects = [
             obj
-            for obj in ctx.scene.objects
-            if obj.type in GEOMETRY_TYPES and (args["include_hidden"] or obj.visible_get(view_layer=ctx.view_layer))
+            for obj in pool
+            if obj.name in ctx.scene.objects and obj.type in GEOMETRY_TYPES and (args["include_hidden"] or obj.visible_get(view_layer=ctx.view_layer))
         ]
     objects = [obj for obj in objects if obj.type in EXPORTABLE_TYPES]
     if not objects:

@@ -1,5 +1,7 @@
+from .brass import brass, brass_schema
 from .marble import DEFAULT_VEIN_COLOR, marble, vein_mask, veins_schema
 from .procedural import AXES, Preset, preset_vector, stretched
+from .scratches import DIRECTIONS, SCRATCH_DIRECTION_HELP, scratch_lines
 from .schema import boolean, color, number, string
 
 WAVE_FREQUENCY = 3.1831
@@ -40,9 +42,7 @@ def wood(graph, p):
 def worn_metal(graph, p):
     vector = preset_vector(graph, p)
     wear = p["wear"]
-    lines = graph.noise(stretched(graph, vector, p["scratch_direction"], 1.0, 25.0), 4.0 * p["scratch_scale"], detail=1.0)
-    centred = graph.math("ABSOLUTE", graph.math("SUBTRACT", lines.outputs["Factor"], 0.5))
-    scratch = graph.map_range(centred, 0.0, 0.01 + 0.03 * wear, 1.0, 0.0)
+    scratch = scratch_lines(graph, vector, p, 0.01 + 0.03 * wear)
     density = threshold(graph, graph.noise(vector, 3.0, detail=4.0, roughness=0.6).outputs["Factor"], wear, 0.1)
     scratches = graph.math("MULTIPLY", scratch, density)
     smudge = graph.noise(vector, 2.5, detail=8.0, roughness=0.6).outputs["Factor"]
@@ -163,8 +163,9 @@ PRESETS = {
             "roughness": amount("Average roughness.", 0.35),
             "wear": amount("How worn: scratch density and tarnish.", 0.4),
             "scratch_scale": number("Scratch density multiplier.", 0.1, 20.0, 1.0),
-            "scratch_direction": string("Axis the scratches run along.", AXIS_CHOICE, "x"),
+            "scratch_direction": string(SCRATCH_DIRECTION_HELP, DIRECTIONS, "x"),
         }, worn_metal),
+        Preset("brass", "Aged brass: smooth polished metal with fine scratches, bright worn edges and dark patina in the recesses.", 0.05, brass_schema(), brass),
         Preset("rust", "Metal with patches of flaking rust.", 1.0, {
             "metal_color": color("Bare metal colour, linear RGB.", [0.45, 0.45, 0.47], False),
             "rust_color": color("Light rust colour, linear RGB.", [0.33, 0.11, 0.035], False),

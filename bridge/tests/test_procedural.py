@@ -35,7 +35,7 @@ def output_of(material):
 
 
 def test_every_preset_builds_a_bakeable_material(bridge):
-    assert sorted(PRESETS) == ["concrete", "dirt", "fabric", "marble", "rust", "stone", "wood", "worn_metal"]
+    assert sorted(PRESETS) == ["brass", "concrete", "dirt", "fabric", "marble", "rust", "stone", "wood", "worn_metal"]
     for name in PRESETS:
         result = bridge.ok("material_procedural", name=f"M_{name}", **{name: {"seed": 7, "scale": 2.0}})
         assert result["created"] is True and result["preset"] == name and result["nodes"] > 8, result

@@ -229,9 +229,13 @@ def object_summary(obj, view_layer, depsgraph, cache=None):
         "scale": vec(obj.scale),
         "dimensions": vec(obj.dimensions),
         "parent": obj.parent.name if obj.parent else None,
+        "collections": sorted(collection.name for collection in obj.users_collection),
         "visible": obj.visible_get(view_layer=view_layer),
         "selected": obj.select_get(view_layer=view_layer),
     }
+    if obj.type == "EMPTY":
+        entry["display"] = obj.empty_display_type.lower()
+        entry["display_size"] = rounded(obj.empty_display_size)
     if obj.type in GEOMETRY_TYPES:
         if cache is not None and obj.name in cache:
             bounds = cache[obj.name]

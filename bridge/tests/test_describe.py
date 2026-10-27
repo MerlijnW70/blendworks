@@ -24,6 +24,7 @@ DESIGN_COMMANDS = {
     "render_preview", "export", "save_blend", "import",
     "load_blend", "checkpoint", "restore_checkpoint",
     "clean_mesh", "engrave",
+    "material_nodes", "material_info", "add_empty", "collection_create", "collection_link", "collection_unlink",
 }
 ASSET_LIBRARY_COMMANDS = {"set_world_hdri"}
 SLOW = {"slow": True, "timeout": 300, "max_timeout": 1800}

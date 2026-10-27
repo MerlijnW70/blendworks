@@ -40,6 +40,18 @@ def totals(scene):
     }
 
 
+def collection_entries(scene, listing):
+    holders = [scene.collection, *scene.collection.children_recursive]
+    parents = {child.name: holder.name for holder in holders for child in holder.children}
+    entries = [
+        {"name": collection.name, "parent": parents[collection.name], "objects": len(collection.objects)}
+        for collection in sorted(scene.collection.children_recursive, key=lambda item: item.name)
+    ]
+    if len(entries) > MAX_LISTED_NAMES:
+        listing.notes.append(f"collections lists {MAX_LISTED_NAMES} of {len(entries)}; use the collections of each object for the rest")
+    return entries[:MAX_LISTED_NAMES]
+
+
 def matching(scene, pattern):
     ordered = sorted(scene.objects, key=lambda obj: obj.name)
     if pattern is None:
@@ -83,7 +95,6 @@ def json_property(value):
 
 def full_entry(entry, obj):
     entry["data"] = obj.data.name if obj.data is not None else None
-    entry["collections"] = sorted(collection.name for collection in obj.users_collection)
     entry["hide_render"] = obj.hide_render
     entry["custom_properties"] = {key: json_property(obj[key]) for key in sorted(obj.keys()) if not key.startswith("_")}
     if obj.type == "MESH":
@@ -114,6 +125,7 @@ def scene_report(ctx, detail, pattern, limit, offset, checkpoints):
         {
             "materials": listing.names("materials", (material.name for material in bpy.data.materials), hint),
             "used_materials": listing.names("used_materials", used_names, hint),
+            "collections": collection_entries(scene, listing),
             "cameras": listing.names("cameras", (obj.name for obj in scene.objects if obj.type == "CAMERA"), hint),
             "active_camera": scene.camera.name if scene.camera else None,
             "lights": listing.names("lights", (obj.name for obj in scene.objects if obj.type == "LIGHT"), hint),

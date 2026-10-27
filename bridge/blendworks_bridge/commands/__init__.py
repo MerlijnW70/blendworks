@@ -3,6 +3,7 @@ import importlib
 MODULES = (
     "scene",
     "objects",
+    "hierarchy",
     "transforms",
     "mesh_edit",
     "modifiers",
@@ -19,6 +20,7 @@ MODULES = (
     "images",
     "pbr",
     "procedural",
+    "material_nodes",
     "bake",
     "uv",
     "uv_pack",
