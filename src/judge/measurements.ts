@@ -1,9 +1,52 @@
 import { z } from "zod";
-import { FORMATS } from "./spec.js";
+import { FORMATS, TEXTURE_KINDS } from "./spec.js";
 
 const finite = z.number().finite();
 const count = z.number().int().nonnegative();
 const vector = z.tuple([finite, finite, finite]);
+const name = z.string().max(200);
+const names = z.object({ count, names: z.array(name).max(64) });
+const kinds = z.array(z.enum(TEXTURE_KINDS)).max(TEXTURE_KINDS.length);
+
+export const texturesSchema = z.object({
+  count,
+  gpuBytes: count,
+  smallestSide: count.nullable(),
+  largestSide: count.nullable(),
+  images: z
+    .array(
+      z.object({
+        name,
+        kinds,
+        materials: z.array(name).max(64),
+        width: count,
+        height: count,
+        colourSpace: z.string().max(64),
+        embedded: z.boolean(),
+        source: z.enum(["packed", "generated", "file"]),
+        file: name.nullable(),
+        gpuBytes: count,
+        powerOfTwo: z.boolean(),
+      }),
+    )
+    .max(256),
+  materials: z.array(z.object({ name, maps: kinds })).max(256),
+  facesWithoutMaterial: z.boolean(),
+  missing: z.object(Object.fromEntries(TEXTURE_KINDS.map((kind) => [kind, names])) as Record<(typeof TEXTURE_KINDS)[number], typeof names>),
+  external: names,
+  nonPowerOfTwo: names,
+  colourSpaceMismatches: z.object({
+    count,
+    items: z.array(z.object({ image: name, kind: z.enum(TEXTURE_KINDS), colourSpace: z.string().max(64), expected: z.string().max(64) })).max(64),
+  }),
+});
+
+export const floatingSchema = z.object({
+  tolerance: finite,
+  parts: count,
+  count,
+  items: z.array(z.object({ object: name, index: count, bounds: z.object({ min: vector, max: vector }) })).max(64),
+});
 
 export const measurementsSchema = z.object({
   format: z.enum(FORMATS),
@@ -30,6 +73,8 @@ export const measurementsSchema = z.object({
   materials: z.object({ count, names: z.array(z.string().max(200)).max(64) }),
   uv: z.object({ present: z.boolean(), meshesWithoutUv: count, coverage: finite, overlap: finite }),
   externalFilesRefused: z.array(z.string().max(200)).max(1000),
+  textures: texturesSchema.optional(),
+  floating: floatingSchema.optional(),
 });
 
 export type Measurements = z.infer<typeof measurementsSchema>;

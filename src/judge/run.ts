@@ -1,12 +1,14 @@
 import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { basename, extname, join, resolve } from "node:path";
 import { blenderPath } from "../blender.js";
 import type { z } from "zod";
 import type { DeviceMode } from "./device.js";
 import { measureOutputSchema, renderOutputSchema, type Measurements } from "./measurements.js";
 import { summarize, type Report, type Timings } from "./report.js";
 import { evaluateRules } from "./rules.js";
+import { floatingTolerance, validatorRules } from "./texture-rules.js";
+import { validateGltf, ValidationError, VALIDATOR_DEFAULTS, type Validation } from "./validator.js";
 import { detectTools, type Limits, type SandboxDevice, type Tools } from "./sandbox.js";
 import { DEFAULT_VIEWS, readSpec, SpecError, type AssetSpec } from "./spec.js";
 import { checkAsset, checkBlender, DEFAULT_BACKENDS, DEFAULTS, deviceMode, onDevice, runScript, seconds, sha256, StageFailure, type Attempt, type Sandbox } from "./stages.js";
@@ -26,9 +28,10 @@ export type JudgeOptions = {
   preview?: boolean;
   device?: DeviceMode;
   backends?: readonly string[];
+  maxValidatorBytes?: number;
 };
 
-const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "render.json", "contact-sheet.png", "views"];
+const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "contact-sheet.png", "views"];
 
 function prepareOutDir(outDir: string): void {
   mkdirSync(outDir, { recursive: true });
@@ -88,6 +91,39 @@ async function renderStage(draft: Draft, spec: AssetSpec, assetPath: string, out
   };
 }
 
+function writeJson(path: string, value: unknown): void {
+  writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+async function validationStage(draft: Draft, spec: AssetSpec, assetPath: string, outDir: string, options: JudgeOptions, timeoutMs: number): Promise<Validation | null> {
+  const format = extname(assetPath).slice(1).toLowerCase();
+  const wanted = spec.gltf !== undefined;
+  if (wanted) draft.validation = null;
+  if (format !== "glb" && format !== "gltf") return null;
+  const limits = { maxBytes: options.maxValidatorBytes ?? VALIDATOR_DEFAULTS.maxBytes, heapMb: VALIDATOR_DEFAULTS.heapMb, timeoutMs };
+  let validation: Validation;
+  try {
+    validation = await validateGltf(assetPath, format, limits);
+  } catch (error) {
+    if (!(error instanceof ValidationError)) throw error;
+    writeJson(join(outDir, "validation.json"), { ok: false, error: { code: error.code, message: error.message } });
+    if (wanted) throw new StageFailure({ stage: "validate", code: error.code, message: error.message });
+    return null;
+  }
+  writeJson(join(outDir, "validation.json"), { ok: true, ...validation });
+  if (wanted) {
+    draft.validation = validation;
+    draft.rules = validatorRules(spec, validation);
+  }
+  return validation;
+}
+
+function reported(spec: AssetSpec, measurements: Measurements): Measurements {
+  if (spec.textures !== undefined) return measurements;
+  const { textures: _, ...rest } = measurements;
+  return rest;
+}
+
 function emptyTimings(): Timings {
   return { measure: null, device: null, render: null, sheet: null, total: 0 };
 }
@@ -127,21 +163,24 @@ export async function judge(options: JudgeOptions): Promise<Report> {
     draft.spec.name = spec.name ?? null;
     draft.asset.bytes = checkAsset(assetPath, options.maxFileBytes ?? DEFAULTS.maxFileBytes);
     draft.asset.sha256 = sha256(assetPath);
+    const validation = await validationStage(draft, spec, assetPath, outDir, options, limits.timeoutMs);
     const blender = options.blender ?? blenderPath();
     draft.blender = await checkBlender(blender);
     if (options.preview !== true) deviceMode(options.device);
     const sandbox: Sandbox = { blender, limits, tools: options.tools ?? detectTools(), workDir };
     const measurementsPath = join(outDir, "measurements.json");
     const measureArgs = [assetPath, measurementsPath, "--max-triangles", String(maxTriangles), "--uv-grid", uvGridPath(sandbox)];
+    const tolerance = floatingTolerance(spec);
+    if (tolerance !== undefined) measureArgs.push("--floating-tolerance", String(tolerance));
     const measured = await runScript("measure", "measure.py", measureArgs, measurementsPath, sandbox);
     draft.sandbox = measured.isolation;
     draft.timings.measure = measured.seconds;
     const parsed = measureOutputSchema.safeParse(measured.output);
     if (!parsed.success) throw new StageFailure({ stage: "measure", code: "malformed", message: "the measuring script wrote malformed output" });
     if (!parsed.data.ok) throw new StageFailure({ stage: "measure", ...parsed.data.error });
-    const measurements: Measurements = parsed.data.measurements;
+    const measurements = reported(spec, parsed.data.measurements);
     draft.measurements = measurements;
-    draft.rules = evaluateRules(spec, measurements);
+    draft.rules = evaluateRules(spec, measurements, validation);
     await renderStage(draft, spec, assetPath, outDir, sandbox, maxTriangles, options);
   } catch (error) {
     if (!(error instanceof StageFailure)) throw error;
@@ -153,7 +192,7 @@ export async function judge(options: JudgeOptions): Promise<Report> {
   draft.passed = draft.failure === null && draft.rules.length > 0 && draft.rules.every((rule) => rule.pass);
   draft.timings.total = seconds(performance.now() - started);
   const report: Report = { ...draft, summary: summarize(draft) };
-  writeFileSync(join(outDir, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
+  writeJson(join(outDir, "report.json"), report);
   writeFileSync(join(outDir, "summary.txt"), `${report.summary}\n`);
   return report;
 }

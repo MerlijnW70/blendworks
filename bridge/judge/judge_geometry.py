@@ -4,6 +4,7 @@ from math import inf, sqrt
 import bmesh
 
 from judge_common import JudgeError
+from judge_parts import PartCollector
 from judge_uv import UvGrid
 
 GEOMETRY_TYPES = {"MESH", "CURVE", "SURFACE", "FONT", "META"}
@@ -37,8 +38,9 @@ def top_ancestor(obj):
 
 
 class Measurer:
-    def __init__(self, triangle_cap):
+    def __init__(self, triangle_cap, floating_tolerance=None):
         self.triangle_cap = triangle_cap
+        self.parts = None if floating_tolerance is None else PartCollector(floating_tolerance, WELD_DISTANCE)
         self.triangles = 0
         self.objects = 0
         self.low = [inf, inf, inf]
@@ -46,6 +48,8 @@ class Measurer:
         self.roots = {}
         self.seen = set()
         self.materials = set()
+        self.material_blocks = {}
+        self.faces_without_material = False
         self.topology = {"nonManifoldEdges": 0, "boundaryEdges": 0, "wireEdges": 0, "nonManifoldVertices": 0, "looseVertices": 0, "looseParts": 0}
         self.uv_grid = UvGrid()
         self.meshes_without_uv = 0
@@ -76,6 +80,8 @@ class Measurer:
         self.objects += 1
         self.roots[root.name] = root
         self.extend_bounds(mesh, matrix)
+        if self.parts is not None:
+            self.parts.add(key, mesh, matrix)
         if key in self.seen:
             return
         self.seen.add(key)
@@ -112,9 +118,14 @@ class Measurer:
         slots = obj.material_slots
         for index in set(indices):
             if 0 <= index < len(slots) and slots[index].material is not None:
-                self.materials.add(slots[index].material.name[:120])
+                material = slots[index].material
             elif 0 <= index < len(mesh.materials) and mesh.materials[index] is not None:
-                self.materials.add(mesh.materials[index].name[:120])
+                material = mesh.materials[index]
+            else:
+                self.faces_without_material = True
+                continue
+            self.materials.add(material.name[:120])
+            self.material_blocks[material.name] = material
 
     def collect_topology(self, mesh):
         topology = self.topology
@@ -155,7 +166,7 @@ class Measurer:
             source = "scene origin"
         names = sorted(self.materials)
         uv_present = self.meshes_with_faces > 0 and self.meshes_without_uv == 0
-        return {
+        measured = {
             "triangles": self.triangles,
             "objects": self.objects,
             "bounds": {"min": rounded(self.low), "max": rounded(self.high)},
@@ -175,6 +186,9 @@ class Measurer:
                 "overlap": round(self.uv_grid.overlap(), 6),
             },
         }
+        if self.parts is not None:
+            measured["floating"] = self.parts.result()
+        return measured
 
 
 def count_parts(graph):

@@ -43,3 +43,13 @@ export function makeFixtures(name: string): { assets: string; markers: string } 
   );
   return { assets, markers };
 }
+
+export function makeTextureFixtures(name: string): string {
+  const assets = freshDir(name, "assets");
+  execFileSync(
+    blenderPath(),
+    ["--background", "--factory-startup", "--python-exit-code", "1", "--python", resolve("test", "judge", "texture_fixtures.py"), "--", assets],
+    { stdio: "pipe", timeout: 120_000 },
+  );
+  return assets;
+}

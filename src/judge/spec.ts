@@ -5,6 +5,10 @@ export const FORMATS = ["glb", "gltf", "fbx", "obj", "blend"] as const;
 export const VIEWS = ["front", "back", "left", "right", "top", "bottom", "three-quarter"] as const;
 export const ORIGINS = ["bottom-centre", "centre"] as const;
 export const DEFAULT_VIEWS = ["front", "back", "left", "right", "top", "three-quarter"] as const;
+export const TEXTURE_KINDS = ["baseColor", "metallicRoughness", "normal", "emissive", "occlusion"] as const;
+export const GLTF_FORMATS: readonly string[] = ["glb", "gltf"];
+export const DEFAULT_FLOATING_TOLERANCE = 0.001;
+export const MAX_FLOATING_TOLERANCE = 1;
 
 const count = z.number().int().nonnegative();
 const ratio = z.number().min(0).max(1);
@@ -20,7 +24,31 @@ const lengthRange = z
   .tuple([length, length])
   .refine(([low, high]) => low <= high, { message: "the first number (minimum) must not exceed the second (maximum)" });
 
-export const assetSpecSchema = z.strictObject({
+const pixels = z.number().int().positive();
+
+const textures = z
+  .strictObject({
+    required: z
+      .array(z.enum(TEXTURE_KINDS))
+      .min(1)
+      .refine((kinds) => new Set(kinds).size === kinds.length, { message: "map kinds must not repeat" })
+      .optional(),
+    minSize: pixels.optional(),
+    maxSize: pixels.optional(),
+    embedded: z.boolean().optional(),
+    maxCount: count.optional(),
+    maxGpuBytes: count.optional(),
+    powerOfTwo: z.boolean().optional(),
+  })
+  .refine((value) => value.minSize === undefined || value.maxSize === undefined || value.minSize <= value.maxSize, {
+    message: "minSize must not exceed maxSize",
+  });
+
+const gltf = z.strictObject({ validator: z.strictObject({ maxErrors: count.optional(), maxWarnings: count.optional() }) });
+
+const parts = z.strictObject({ maxFloating: count, tolerance: length.max(MAX_FLOATING_TOLERANCE).optional() });
+
+const baseSchema = z.strictObject({
   $schema: z.string().optional(),
   name: z.string().min(1).max(200).optional(),
   format: z.enum(FORMATS),
@@ -38,6 +66,14 @@ export const assetSpecSchema = z.strictObject({
     .refine((views) => new Set(views).size === views.length, { message: "views must not repeat" })
     .optional(),
   brief: z.string().max(4000).optional(),
+  textures: textures.optional(),
+  gltf: gltf.optional(),
+  parts: parts.optional(),
+});
+
+export const assetSpecSchema = baseSchema.refine((spec) => spec.gltf === undefined || GLTF_FORMATS.includes(spec.format), {
+  message: "the gltf rules need format glb or gltf",
+  path: ["gltf"],
 });
 
 export type AssetSpec = z.infer<typeof assetSpecSchema>;

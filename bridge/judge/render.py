@@ -21,7 +21,7 @@ from judge_device import CPU, GPU_BACKENDS, device_backend, resolve_backend, use
 from judge_geometry import Measurer
 from judge_load import load_asset
 from judge_rig import VIEWS, Rig, configure_scene, remove_foreign_rig
-from judge_sheet import MARKER, MUTED, TEXT, compose, load_png, uv_tile
+from judge_sheet import MARKER, MUTED, TEXT, compose, load_png, texture_line, uv_tile
 from judge_uv import UvGrid
 
 USAGE = (
@@ -68,7 +68,7 @@ def header_lines(title, measurements, preview):
         f"{measurements['materials']['count']} MATERIALS   {measurements['objects']} OBJECTS"
     )
     legend = "PREVIEW: VIEWS SKIPPED   UV LAYOUT: GREY USED, RED OVERLAP" if preview else "+ ORIGIN   UV LAYOUT: GREY USED, RED OVERLAP"
-    return [(title, TEXT), (summary, MUTED), (legend, MARKER)]
+    return [(title, TEXT), (summary, MUTED), (texture_line(measurements.get("textures")), MUTED), (legend, MARKER)]
 
 
 def render_views(scene, views, low, high, origin, out_dir, backend, found):

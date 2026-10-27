@@ -2,8 +2,9 @@ import { describeDevice, type RenderDevice } from "./device.js";
 import type { Measurements } from "./measurements.js";
 import type { RuleResult } from "./rules.js";
 import type { Isolation } from "./sandbox.js";
+import type { Validation } from "./validator.js";
 
-export type Failure = { stage: "spec" | "asset" | "blender" | "measure" | "device" | "render" | "closeups"; code: string; message: string };
+export type Failure = { stage: "spec" | "asset" | "validate" | "blender" | "measure" | "device" | "render" | "closeups"; code: string; message: string };
 
 export const STAGES = ["measure", "device", "render", "sheet"] as const;
 
@@ -23,8 +24,12 @@ export type Report = {
   measurements: Measurements | null;
   renders: { viewsSkipped: boolean; views: { view: string; path: string }[]; contactSheet: string } | null;
   timings: Timings;
+  validation?: Validation | null;
   summary: string;
 };
+
+const LISTED_ISSUES = 10;
+const MEBIBYTE = 1024 * 1024;
 
 function show(value: unknown): string {
   if (typeof value === "string") return value;
@@ -43,8 +48,8 @@ function show(value: unknown): string {
 }
 
 function comparison(rule: string): string {
-  if (/\.(min|minCoverage)$/.test(rule)) return "at least ";
-  if (/\.(max|maxBytes|maxOverlap)$/.test(rule)) return "at most ";
+  if (/\.min([A-Z]\w*)?$/.test(rule)) return "at least ";
+  if (/\.max([A-Z]\w*)?$/.test(rule)) return "at most ";
   if (rule.startsWith("size.")) return "between ";
   return "";
 }
@@ -58,6 +63,26 @@ export function timingText(timings: Timings): string {
   return [...stages, `total ${timings.total.toFixed(2)} s`].join(", ");
 }
 
+function textureLines(textures: NonNullable<Measurements["textures"]>): string[] {
+  const lines = [`  textures: ${textures.count} images, GPU estimate ${textures.gpuBytes} bytes (${(textures.gpuBytes / MEBIBYTE).toFixed(1)} MiB, RGBA8 with mips)`];
+  const { count, items } = textures.colourSpaceMismatches;
+  if (count === 0) return [...lines, "  colour spaces: right for every map"];
+  lines.push(`  colour spaces: ${count} wrong`);
+  for (const item of items) lines.push(`    ${item.image} as ${item.kind} is ${item.colourSpace}, expected ${item.expected}`);
+  if (count > items.length) lines.push(`    and ${count - items.length} more`);
+  return lines;
+}
+
+function validationLines(validation: Validation | null): string[] {
+  if (validation === null) return ["  glTF validator: no result"];
+  const { errors, warnings, infos, hints, issues, refused } = validation;
+  const lines = [`  glTF validator ${validation.validator}: ${errors} errors, ${warnings} warnings, ${infos} infos, ${hints} hints`];
+  for (const issue of issues.slice(0, LISTED_ISSUES)) lines.push(`    ${issue.severity} ${issue.code} at ${issue.pointer ?? "the file"}: ${issue.message}`);
+  if (issues.length > LISTED_ISSUES) lines.push(`    and ${issues.length - LISTED_ISSUES} more in report.json`);
+  for (const entry of refused) lines.push(`    not opened: ${entry}`);
+  return lines;
+}
+
 export function summarize(report: Omit<Report, "summary">): string {
   const title = report.spec.name ?? "asset";
   const lines = [`${report.passed ? "PASS" : "FAIL"}  ${title}  (${report.asset.path})`];
@@ -68,6 +93,8 @@ export function summarize(report: Omit<Report, "summary">): string {
   }
   const passed = report.rules.filter((rule) => rule.pass).length;
   lines.push(`  ${passed} of ${report.rules.length} rules pass`);
+  if (report.measurements?.textures) lines.push(...textureLines(report.measurements.textures));
+  if (report.validation !== undefined) lines.push(...validationLines(report.validation));
   if (report.preview) lines.push("  views: skipped (preview); the rules alone decide pass or fail");
   if (report.device) lines.push(`  render: ${describeDevice(report.device)}`);
   if (report.renders) lines.push(`  contact sheet: ${report.renders.contactSheet}`);

@@ -78,14 +78,83 @@ An asset spec is JSON (`schemas/asset-spec.schema.json`), so it can be pinned by
 }
 ```
 
+Three optional groups check textures, the glTF file itself and loose parts. For a textured asset:
+
+```json
+{
+  "format": "glb",
+  "textures": {
+    "required": ["baseColor", "metallicRoughness", "normal"],
+    "minSize": 512,
+    "maxSize": 4096,
+    "embedded": true,
+    "maxCount": 3,
+    "maxGpuBytes": 268435456,
+    "powerOfTwo": true
+  },
+  "gltf": { "validator": { "maxErrors": 0, "maxWarnings": 10 } },
+  "parts": { "maxFloating": 0, "tolerance": 0.001 }
+}
+```
+
+- **`textures.required`:** the map kinds every material must have, from `baseColor`, `metallicRoughness`, `normal`, `emissive` and `occlusion`. Faces without a material count as a material, `(no material)`, that has none.
+- **`textures.minSize` / `textures.maxSize`:** limits in pixels on the shorter and the longer side of every image. With no images, nothing breaks them.
+- **`textures.embedded`:** when `true`, every image is inside the delivered file. An image read from a file beside it, or refused because it lies outside the asset folder, fails the rule.
+- **`textures.maxCount`:** the most distinct images the materials may use.
+- **`textures.maxGpuBytes`:** a budget for the estimated GPU memory of those images.
+- **`textures.powerOfTwo`:** when `true`, both sides of every image are powers of two.
+- **`gltf.validator`:** the most errors (`maxErrors`, 0 when left out) and warnings (`maxWarnings`, not checked when left out) the Khronos glTF-Validator may report. Only for `glb` and `gltf` specs.
+- **`parts.maxFloating`:** the most loose parts that touch nothing, with `tolerance` in metres (0.001 when left out, at most 1).
+
+The GPU estimate treats every image as uncompressed RGBA8 with a full mip chain, whatever its file format, so a compressed image counts by its decoded size. For an image of `w` × `h` pixels it is 4 bytes times the sum of `w_i × h_i` over the levels, where `w_0 = w`, `w_(i+1) = max(1, floor(w_i / 2))` (the same for `h`), and the chain ends at the first 1 × 1 level. A 4096 × 4096 image takes 4 × (4096² + 2048² + … + 1²) = 89,478,484 bytes. A 48 × 20 image takes 4 × (960 + 240 + 60 + 12 + 3 + 1) = 5,104 bytes.
+
 ## 4. The judge
 
 `blendworks judge <spec.json> <asset> [--out <dir>] [--preview]` does the following:
 1. Starts headless Blender in a sandbox with a fresh factory scene (`--factory-startup --disable-autoexec`). In WSL it also has no network.
 2. Imports the asset with the judge's own script. The worker's file never runs code: a `.blend` delivery is opened with auto-run disabled, and only its data is read.
-3. Measures every rule of the spec: triangles, bounds, origin, manifoldness, materials, UV coverage and overlap, object count, file size.
+3. Measures every rule of the spec: triangles, bounds, origin, manifoldness, materials, UV coverage and overlap, object count, file size, textures and, when the spec asks, floating parts.
 4. Renders the spec's views with a fixed camera rig fitted to the asset's bounds, a neutral three-point light, Cycles with a fixed seed, 24 samples and denoising, at 512 px. Outlines come from the compositor (edges in the normal and depth passes), so they cost almost nothing on any device. The result is a contact sheet.
 5. Writes `report.json`, with every rule, its measured value and pass or fail, plus the PNGs. It exits 0 when every rule passes and 1 otherwise.
+
+Before Blender starts, the judge runs the Khronos glTF-Validator on every `.glb` and `.gltf` delivery (see below).
+
+### Textures
+
+The judge reads every material's texture slots from the imported scene. It follows the links into the Principled BSDF's inputs, through any nodes, node groups and reroutes, and skips muted links and nodes:
+- Base Color gives `baseColor`;
+- Metallic and Roughness give `metallicRoughness`;
+- Normal gives `normal`;
+- Emission Color gives `emissive`;
+- the Occlusion input of the glTF importer's `glTF Material Output` group gives `occlusion`.
+
+Only materials on faces of the measured geometry count. For each distinct image, `measurements.textures.images` lists:
+- its map kinds and the materials that use it;
+- its size in pixels and its colour space;
+- whether it is embedded, as its source: `packed` or `generated` are embedded, `file` is not, and then the file name is given too;
+- its GPU estimate, and whether both sides are powers of two.
+
+glTF files are imported without packing, so an image that is a file beside a `.gltf` stays external.
+
+Base colour and emission must be in `sRGB`, and data maps in `Non-Color`. Each wrong pair is listed in `colourSpaceMismatches` and in the summary. It is a measurement, not a rule, so it does not decide pass or fail.
+
+The contact sheet header always shows the texture count and the GPU estimate. `report.json` carries `measurements.textures` only when the spec has texture rules, and `measurements.floating` only when it has `parts`. A spec without the new rules gets exactly the report it got before.
+
+### glTF validation
+
+The validator is the official `gltf-validator` npm package. It runs in a worker thread of the judge's Node process, with a 2048 MB heap, the judge's timeout and a size cap of 128 MiB for the file and its resources together. The cap is `maxValidatorBytes` in the judge's options.
+
+It may read only files in the asset's own folder: the resources of a `.gltf` beside it. It never opens a URI with a scheme (`http:`, `file:`, `data:` aside, which the validator decodes itself), an absolute path, or a path that leaves the folder. Each refused URI is listed and shows up as an `IO_ERROR` issue.
+
+The full result goes to `validation.json` for every glTF delivery. With a `gltf.validator` rule, `report.json` also carries it as `validation`, listing every issue with its code, severity, JSON pointer and message, and the summary shows the counts and the first 10 issues. The rule compares the error and warning counts; infos and hints never count.
+
+If the validator cannot finish (over the cap, a timeout, a crash), a spec with the rule fails at the `validate` stage. Without the rule the failure goes only to `validation.json`.
+
+### Floating parts
+
+A loose part is a connected piece of a mesh, after merging vertices closer than 1 µm, as for manifoldness. Each placed instance of a mesh counts on its own. A part is floating when its world-space bounds, grown by the tolerance on every side, overlap neither another part of its own object nor the bounds of another object. An asset of one part has nothing to touch, so it never floats.
+
+`measurements.floating` lists each floating part by object and index, with its bounds. The parts of an object are numbered in order of their lowest corner (x, then y, then z).
 
 ### Render device
 

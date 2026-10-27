@@ -1,5 +1,7 @@
 import type { Measurements } from "./measurements.js";
 import type { AssetSpec } from "./spec.js";
+import { partsRules, textureRules, validatorRules } from "./texture-rules.js";
+import type { Validation } from "./validator.js";
 
 export type RuleResult = { rule: string; measured: unknown; limit: unknown; pass: boolean };
 
@@ -60,7 +62,7 @@ function uvRules(spec: AssetSpec, measurements: Measurements): RuleResult[] {
   return results;
 }
 
-export function evaluateRules(spec: AssetSpec, measurements: Measurements): RuleResult[] {
+export function evaluateRules(spec: AssetSpec, measurements: Measurements, validation: Validation | null = null): RuleResult[] {
   const results: RuleResult[] = [
     { rule: "format", measured: measurements.format, limit: spec.format, pass: measurements.format === spec.format },
   ];
@@ -81,5 +83,6 @@ export function evaluateRules(spec: AssetSpec, measurements: Measurements): Rule
   if (spec.fileSize !== undefined) {
     results.push({ rule: "fileSize.maxBytes", measured: measurements.fileBytes, limit: spec.fileSize.maxBytes, pass: measurements.fileBytes <= spec.fileSize.maxBytes });
   }
+  results.push(...textureRules(spec, measurements), ...partsRules(spec, measurements), ...validatorRules(spec, validation));
   return results;
 }

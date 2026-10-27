@@ -158,7 +158,7 @@ def load_asset(path):
     files = [os.path.realpath(path)]
     if file_format in {"glb", "gltf"}:
         files += gltf_referenced_files(path, gltf_document(path, file_format))
-        run_importer(bpy.ops.import_scene.gltf, filepath=path, merge_vertices=True)
+        run_importer(bpy.ops.import_scene.gltf, filepath=path, merge_vertices=True, import_pack_images=False)
     elif file_format == "fbx":
         run_importer(bpy.ops.import_scene.fbx, filepath=path, use_image_search=False, use_anim=False)
     elif file_format == "obj":

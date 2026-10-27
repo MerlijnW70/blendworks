@@ -18,6 +18,7 @@ LABEL_HEIGHT = 36
 LABEL_SCALE = 3
 HEADER_SCALE = 2
 HEADER_LINE = 22
+MEBIBYTE = 1024 * 1024
 
 
 class Canvas:
@@ -67,6 +68,15 @@ def load_png(path):
     image.pixels.foreach_get(pixels)
     bpy.data.images.remove(image)
     return pixels, width, height
+
+
+def texture_line(textures):
+    if not isinstance(textures, dict):
+        return "TEXTURES NOT MEASURED"
+    count = int(textures.get("count", 0))
+    mebibytes = int(textures.get("gpuBytes", 0)) / MEBIBYTE
+    noun = "TEXTURE" if count == 1 else "TEXTURES"
+    return f"{count} {noun}   GPU ESTIMATE {mebibytes:.1f} MIB (RGBA8 WITH MIPS)"
 
 
 def uv_tile(grid):

@@ -186,6 +186,96 @@
     "brief": {
       "type": "string",
       "maxLength": 4000
+    },
+    "textures": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "baseColor",
+              "metallicRoughness",
+              "normal",
+              "emissive",
+              "occlusion"
+            ]
+          }
+        },
+        "minSize": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxSize": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "embedded": {
+          "type": "boolean"
+        },
+        "maxCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxGpuBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "powerOfTwo": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "gltf": {
+      "type": "object",
+      "properties": {
+        "validator": {
+          "type": "object",
+          "properties": {
+            "maxErrors": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "maxWarnings": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "validator"
+      ],
+      "additionalProperties": false
+    },
+    "parts": {
+      "type": "object",
+      "properties": {
+        "maxFloating": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "tolerance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "maxFloating"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
