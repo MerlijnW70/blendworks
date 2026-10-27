@@ -19,7 +19,7 @@ export const WORKFLOWS: Workflow[] = [
     goal: "Realistic materials",
     examples: ["wood, brass, worn metal, stone or marble look", "aged metal with patina", "rust and dirt"],
     steps: ["blender_material_procedural", "blender_material_layer", "blender_assign_material"],
-    note: "blender_material_procedural has wood, brass, worn metal, stone, marble and more; blender_material_layer adds wear and dirt through a mask. Scratches run along an axis or around it (around_z) and stay smooth on faces that look along that axis. Edge and cavity masks follow bevels and creases.",
+    note: "blender_material_procedural has wood, brass, worn metal, stone, marble and more; blender_material_layer adds wear and dirt through a mask. Scratches run around an axis (around_z, or around with scratch_axis) as on turned parts, along UV u or v (v follows sweep rings, u follows lathes), or along an axis for flat stock. Marble finish polished stays optically flat; honed and rough add relief. Edge and cavity masks follow bevels and creases.",
   },
   {
     id: "node-material",
