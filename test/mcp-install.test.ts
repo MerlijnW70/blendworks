@@ -1,7 +1,10 @@
-import { writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { findClaude, type InstallDeps, install, type InstallPlan } from "../src/mcp/install.js";
+import { findClaude, type InstallDeps, install, type InstallPlan, planInstall, runClaude } from "../src/mcp/install.js";
 import { scratchDir } from "./mcp-helpers.js";
 
 function deps(overrides: Partial<InstallDeps>): { deps: InstallDeps; lines: string[]; runs: InstallPlan[] } {
@@ -40,27 +43,22 @@ describe("npm run install-claude", () => {
     const setup = deps({ blender: "/opt/blender/blender" });
     expect(install(["--workspace", "assets", "--allow-python"], setup.deps)).toBe(0);
     expect(setup.runs[0]?.args).toEqual([
-      "mcp", "add", "blendworks", "--scope", "user", "-e", "BLENDER=/opt/blender/blender", "--",
+      "mcp", "add", "blendworks", "--scope", "user", "--env=BLENDER=/opt/blender/blender", "--",
       "node", setup.deps.serverPath, "--workspace", resolve(setup.deps.cwd, "assets"), "--allow-python",
     ]);
   });
 
-  it("puts the server name before every variadic option so -e cannot consume it", () => {
-    for (const blender of [undefined, "/opt/blender/blender"]) {
+  it("attaches BLENDER to a single --env= argument so the variadic option cannot consume the server command", () => {
+    for (const blender of [undefined, "/opt/blender/blender", "C:\Program Files\Blender 5\blender.exe"]) {
       const setup = deps({ blender });
       install([], setup.deps);
       const args = setup.runs[0]?.args ?? [];
-      const name = args.indexOf("blendworks");
-      expect(name).toBe(2);
-      expect(args.slice(0, 2)).toEqual(["mcp", "add"]);
+      expect(args.slice(0, 3)).toEqual(["mcp", "add", "blendworks"]);
       const separator = args.indexOf("--");
-      expect(separator).toBeGreaterThan(name);
-      const envFlags = args.flatMap((arg, index) => (arg === "-e" || arg === "--env" ? [index] : []));
-      expect(envFlags.length).toBe(blender === undefined ? 0 : 1);
-      for (const flag of envFlags) {
-        expect(flag).toBeGreaterThan(name);
-        expect(args.slice(flag + 1, separator)).toEqual([`BLENDER=${blender}`]);
-      }
+      expect(separator).toBeGreaterThan(2);
+      expect(args.filter((arg) => arg === "-e" || arg === "--env")).toEqual([]);
+      expect(args.slice(3, separator).filter((arg) => arg.startsWith("--env="))).toEqual(blender === undefined ? [] : [`--env=BLENDER=${blender}`]);
+      expect(args.slice(separator + 1, separator + 3)).toEqual(["node", setup.deps.serverPath]);
     }
   });
 
@@ -103,4 +101,43 @@ describe("finding claude", () => {
     expect(findClaude({ PATH: scratchDir() })).toBeUndefined();
     expect(findClaude({})).toBeUndefined();
   });
+});
+
+function fingerprint(path: string): string {
+  return existsSync(path) ? createHash("sha256").update(readFileSync(path)).digest("hex") : "absent";
+}
+
+const realClaude = findClaude();
+
+describe("registering with the real claude binary", () => {
+  it.skipIf(realClaude === undefined)("registers name, command, arguments and BLENDER into a temporary configuration", () => {
+    const home = scratchDir();
+    const config = join(home, "config");
+    mkdirSync(config, { recursive: true });
+    const isolated: NodeJS.ProcessEnv = {
+      ...process.env,
+      HOME: home,
+      USERPROFILE: home,
+      APPDATA: join(home, "appdata"),
+      LOCALAPPDATA: join(home, "localappdata"),
+      XDG_CONFIG_HOME: join(home, "xdg"),
+      CLAUDE_CONFIG_DIR: config,
+    };
+    const realConfig = join(homedir(), ".claude.json");
+    const before = fingerprint(realConfig);
+    const server = join(home, "mcp server", "index.js");
+    mkdirSync(join(home, "mcp server"));
+    writeFileSync(server, "");
+    const blender = join(home, "Blender 5", "blender.exe");
+    const plan = planInstall({ claude: realClaude ?? "", serverPath: server, workspace: join(home, "work space"), allowPython: true, blender });
+    expect(runClaude(plan, isolated)).toBe(0);
+    const entry = JSON.parse(readFileSync(join(config, ".claude.json"), "utf8")).mcpServers.blendworks;
+    expect(entry.command).toBe("node");
+    expect(entry.args).toEqual([server, "--workspace", join(home, "work space"), "--allow-python"]);
+    expect(entry.env).toEqual({ BLENDER: blender });
+    const shown = spawnSync(realClaude ?? "", ["mcp", "get", "blendworks"], { env: isolated, encoding: "utf8", shell: /\.(cmd|bat)$/i.test(realClaude ?? "") });
+    expect(shown.stdout).toContain("blendworks:");
+    expect(shown.stdout).toContain(`BLENDER=${blender}`);
+    expect(fingerprint(realConfig)).toBe(before);
+  }, 60_000);
 });

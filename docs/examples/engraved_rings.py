@@ -57,7 +57,7 @@ def plinth():
 
 
 def materials():
-    cmd("material_procedural", name="aged_brass", brass={"age": "aged", "color": [0.5, 0.36, 0.13], "scratch_direction": "around_z", "seed": 4})
+    cmd("material_procedural", name="aged_brass", brass={"age": "aged", "color": [0.5, 0.36, 0.13], "scratch_direction": "v", "seed": 4})
     cmd("material_procedural", name="marble", marble={"seed": 3})
     cmd("assign_material", name="rings", material="aged_brass")
     cmd("assign_material", name="plinth", material="marble")

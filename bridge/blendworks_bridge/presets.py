@@ -1,7 +1,7 @@
 from .brass import brass, brass_schema
-from .marble import MARBLE_VEIN_COLOR, marble, vein_mask, veins_schema
+from .marble import MARBLE_VEIN_COLOR, finish_schema, marble, vein_mask, veins_schema
 from .procedural import AXES, Preset, preset_vector, stretched
-from .scratches import DIRECTIONS, SCRATCH_DIRECTION_HELP, scratch_lines
+from .scratches import DIRECTIONS, SCRATCH_DIRECTION_HELP, scratch_axis_schema, scratch_lines
 from .schema import boolean, color, number, string
 
 WAVE_FREQUENCY = 3.1831
@@ -164,6 +164,7 @@ PRESETS = {
             "wear": amount("How worn: scratch density and tarnish.", 0.4),
             "scratch_scale": number("Scratch density multiplier.", 0.1, 20.0, 1.0),
             "scratch_direction": string(SCRATCH_DIRECTION_HELP, DIRECTIONS, "x"),
+            "scratch_axis": scratch_axis_schema(),
         }, worn_metal),
         Preset("brass", "Aged brass: smooth polished metal with fine scratches, bright worn edges and dark patina in the recesses.", 0.05, brass_schema(), brass),
         Preset("rust", "Metal with patches of flaking rust.", 1.0, {
@@ -190,6 +191,7 @@ PRESETS = {
             "turbulence": amount("How far the veins wander: 0 gives gently curving veins.", 0.5),
             "vein_softness": amount("How hazy the veins are: 0 gives crisp veins on clean stone, 1 wide soft halos and grey drifts.", 0.5),
             "branching": amount("How many fine veinlets branch off the main veins.", 0.6),
+            "finish": finish_schema(),
             "roughness": amount("Average roughness; marble is polished.", 0.18),
         }, marble),
         Preset("concrete", "Concrete with stains and small pores.", 0.5, {

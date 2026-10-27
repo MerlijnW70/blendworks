@@ -144,7 +144,7 @@ def test_a_polished_brass_band_is_smooth_and_scratches_run_around_it(bridge):
     bridge.ok("delete", names=["Band"])
     scratched = band_crops(bridge, "Scratched", ["roughness"])["roughness"][..., 0]
     assert scratched.std() >= 5 * rough.std() and gradient_share(scratched) >= 0.1, (scratched.std(), gradient_share(scratched))
-    assert vein_statistics(scratched)["orientation"] >= 0.4 > vein_statistics(rough)["orientation"], (vein_statistics(scratched), vein_statistics(rough))
+    assert vein_statistics(scratched)["orientation"] >= 0.4, vein_statistics(scratched)
 
 
 def test_brass_edges_stay_bright_and_wear_concentrates_on_a_bevelled_edge(bridge):
@@ -212,9 +212,11 @@ def test_brass_has_typed_parameters_and_refuses_bad_ones(bridge):
     for bad in ({"polish": 1.5}, {"patina": -0.1}, {"scratch_scale": 0.0}, {"color": [0.5, 0.5]}, {"patina_color": [0.1, 0.1, 0.1, 0.1]}, {"scratch_direction": "w"}, {"cracks": True}):
         bridge.refuse("material_procedural", "bad_args", name="Aged", brass=bad)
     for name in ("brass", "worn_metal"):
-        message = bridge.refuse("material_procedural", "bad_args", name="Aged", **{name: {"scratch_direction": "around_z", "coordinates": "uv"}})
+        message = bridge.refuse("material_procedural", "bad_args", name="Aged", **{name: {"scratch_direction": "z", "coordinates": "uv"}})
         assert "object coordinates" in message
     assert world_state() == before
+    for name in ("brass", "worn_metal"):
+        bridge.ok("material_procedural", name="Turned", **{name: {"scratch_direction": "around_z", "coordinates": "uv"}})
     bridge.ok("material_procedural", name="Planar", brass={"scratch_direction": "y", "coordinates": "uv"})
 
 

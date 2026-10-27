@@ -1,5 +1,5 @@
 from .procedural import preset_vector
-from .schema import color, number, obj
+from .schema import color, number, obj, string
 
 VEIN_DIRECTIONS = ((0.82, 0.46, 0.34), (-0.35, 0.9, 0.27), (0.12, -0.5, 0.86))
 VEIN_FREQUENCIES = (0.9, 1.9, 3.7)
@@ -27,6 +27,12 @@ SECOND_RATIO = 1.45
 SECOND_STRENGTH = 0.6
 DRIFT_WIDTH = 0.16
 DRIFT_STRENGTH = 0.42
+FINISHES = {"polished": 0.0, "honed": 0.2, "rough": 1.0}
+FINISH_HELP = "Surface finish: polished is optically flat, so the veins and grain give no relief at all; honed keeps 20% of the bump depth and rough all of it (bump millimetres at rough, 0.3 by default), so a honed or rough slab breaks up the highlights a little or a lot."
+
+
+def finish_schema():
+    return string(FINISH_HELP, list(FINISHES), "polished")
 
 
 def veins_schema():
@@ -127,6 +133,14 @@ def layered_veins(graph, vector, p):
     return graph.math("MAXIMUM", veins, graph.math("MAXIMUM", drift, smoke))
 
 
+def relief(graph, p, grain, mask):
+    share = FINISHES[p["finish"]]
+    if share == 0.0:
+        return 0.0
+    height = graph.math("MULTIPLY_ADD", grain, 0.35, graph.math("SUBTRACT", 1.0, graph.math("MULTIPLY", mask, 0.4)))
+    return graph.math("MULTIPLY", height, share)
+
+
 def marble(graph, p):
     vector = preset_vector(graph, p)
     surface, grain = clouds(graph, vector, p["color"], p["secondary_color"])
@@ -136,5 +150,5 @@ def marble(graph, p):
         "base_color": graph.mix(mask, surface, p["vein_color"]),
         "roughness": graph.map_range(graph.math("ADD", graph.math("MULTIPLY", grain, 0.5), graph.math("MULTIPLY", mask, 0.5)), 0.0, 1.0, low, min(1.0, p["roughness"] + 0.18)),
         "metallic": 0.0,
-        "height": graph.math("MULTIPLY_ADD", grain, 0.35, graph.math("SUBTRACT", 1.0, graph.math("MULTIPLY", mask, 0.4))),
+        "height": relief(graph, p, grain, mask),
     }

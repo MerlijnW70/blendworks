@@ -34,7 +34,7 @@ export function findClaude(env: NodeJS.ProcessEnv = process.env, platform: NodeJ
 }
 
 export function planInstall(input: InstallInput): InstallPlan {
-  const env = input.blender === undefined ? [] : ["-e", `BLENDER=${input.blender}`];
+  const env = input.blender === undefined ? [] : [`--env=BLENDER=${input.blender}`];
   const serverArgs = ["--workspace", input.workspace, ...(input.allowPython ? ["--allow-python"] : [])];
   return { claude: input.claude, args: ["mcp", "add", MCP_NAME, "--scope", "user", ...env, "--", "node", input.serverPath, ...serverArgs] };
 }
@@ -57,11 +57,11 @@ function quoteForCmd(arg: string): string {
   return `"${arg}"`;
 }
 
-export function runClaude(plan: InstallPlan): number {
+export function runClaude(plan: InstallPlan, env: NodeJS.ProcessEnv = process.env): number {
   const isScript = /\.(cmd|bat)$/i.test(plan.claude);
   const outcome = isScript
-    ? spawnSync([plan.claude, ...plan.args].map(quoteForCmd).join(" "), { stdio: "inherit", shell: true })
-    : spawnSync(plan.claude, plan.args, { stdio: "inherit" });
+    ? spawnSync([plan.claude, ...plan.args].map(quoteForCmd).join(" "), { stdio: "inherit", shell: true, env })
+    : spawnSync(plan.claude, plan.args, { stdio: "inherit", env });
   if (outcome.error !== undefined) throw outcome.error;
   return outcome.status ?? 1;
 }
