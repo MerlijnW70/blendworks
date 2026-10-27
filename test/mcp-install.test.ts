@@ -103,8 +103,7 @@ describe("finding claude", () => {
   });
 });
 
-// Running Claude Code sessions rewrite the whole file at any time, so only its MCP server entries are compared.
-function fingerprint(path: string): string {
+function mcpEntriesFingerprint(path: string): string {
   if (!existsSync(path)) return "absent";
   const config = JSON.parse(readFileSync(path, "utf8")) as { mcpServers?: unknown; projects?: Record<string, { mcpServers?: unknown }> };
   const projects = Object.entries(config.projects ?? {}).map(([project, entry]) => [project, entry.mcpServers ?? null]);
@@ -128,7 +127,7 @@ describe("registering with the real claude binary", () => {
       CLAUDE_CONFIG_DIR: config,
     };
     const realConfig = join(homedir(), ".claude.json");
-    const before = fingerprint(realConfig);
+    const before = mcpEntriesFingerprint(realConfig);
     const server = join(home, "mcp server", "index.js");
     mkdirSync(join(home, "mcp server"));
     writeFileSync(server, "");
@@ -142,6 +141,6 @@ describe("registering with the real claude binary", () => {
     const shown = spawnSync(realClaude ?? "", ["mcp", "get", "blendworks"], { env: isolated, encoding: "utf8", shell: /\.(cmd|bat)$/i.test(realClaude ?? "") });
     expect(shown.stdout).toContain("blendworks:");
     expect(shown.stdout).toContain(`BLENDER=${blender}`);
-    expect(fingerprint(realConfig)).toBe(before);
+    expect(mcpEntriesFingerprint(realConfig)).toBe(before);
   }, 60_000);
 });
