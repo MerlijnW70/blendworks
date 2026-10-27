@@ -4,11 +4,12 @@ import type { DeviceMode } from "./device.js";
 import { renderOutputSchema, type Measurements } from "./measurements.js";
 import type { Report, RenderBudget, Renders } from "./report.js";
 import type { SandboxDevice } from "./sandbox.js";
+import { JUDGE_RENDER, renderProfile } from "./render-profile.js";
 import { DEFAULT_VIEWS, type AssetSpec } from "./spec.js";
 import { DEFAULT_BACKENDS, deviceMode, onDevice, runScript, seconds, sha256, StageFailure, workOut, type Attempt, type Sandbox } from "./stages.js";
 
-export const RENDER_RESOLUTION = 512;
-export const RENDER_SAMPLES = 24;
+export const RENDER_RESOLUTION = JUDGE_RENDER.resolution;
+export const RENDER_SAMPLES = JUDGE_RENDER.samples;
 export const RENDER_BUDGET = { maxTriangles: 2_000_000, maxSamplePixels: 64 * 1024 * 1024 };
 
 export type RenderOptions = {
@@ -53,6 +54,8 @@ export async function renderStage(draft: Draft, spec: AssetSpec, assetPath: stri
   draft.renders = renders;
   const baseArgs = [assetPath, join(out, "measurements.json"), out, "--views", views.join(","), "--title", spec.name ?? basename(assetPath), "--max-triangles", String(maxTriangles)];
   baseArgs.push("--uv-grid", uvGridPath(sandbox));
+  const profile = renderProfile();
+  baseArgs.push("--res", String(profile.resolution), "--samples", String(profile.samples));
   const outputPath = join(out, "render.json");
   let failedGpuSeconds: number | null = null;
   const run = async (args: string[], device: SandboxDevice, target: Sandbox): Promise<Attempt<{ output: RenderOutput; seconds: number }>> => {

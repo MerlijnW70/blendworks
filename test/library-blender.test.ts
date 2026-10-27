@@ -9,6 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { blenderPath } from "../src/blender.js";
 import { scratchDir, texts, unusedPort } from "./mcp-helpers.js";
 import { useBlenderSlot } from "./setup/slot.js";
+import { withWorkBudget, workBudget } from "./setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -88,7 +89,7 @@ describe.skipIf(bridgeMissing)("library_apply with a real headless Blender", () 
   const workspace = join(scratchDir(), "workspace");
   let client: Client;
 
-  beforeAll(async () => {
+  beforeAll(withWorkBudget(120_000, async () => {
     mkdirSync(workspace, { recursive: true });
     placeHdri(workspace, "dark_sky", grey(0.02));
     placeHdri(workspace, "bright_sky", grey(0.8));
@@ -99,7 +100,7 @@ describe.skipIf(bridgeMissing)("library_apply with a real headless Blender", () 
     const transport = new StdioClientTransport({ command: process.execPath, args: ["--import", "tsx", join("src", "mcp", "index.ts"), "--workspace", workspace], env, stderr: "pipe" });
     client = new Client({ name: "library-e2e", version: "0.0.0" });
     await client.connect(transport);
-  }, 120_000);
+  }));
 
   afterAll(async () => {
     await client?.close();
@@ -121,7 +122,7 @@ describe.skipIf(bridgeMissing)("library_apply with a real headless Blender", () 
     return meanBrightness(Buffer.from(image.data, "base64"));
   }
 
-  it("lights a render with a downloaded HDRI, without the network", async () => {
+  it("lights a render with a downloaded HDRI, without the network", workBudget(300_000), async () => {
     await tool("blender_add_primitive", { type: "sphere" });
     await tool("blender_add_light", { type: "point", name: "Off", energy: 0 });
     await tool("blender_add_camera", { name: "Cam", location: [0, -4, 0], target: [0, 0, 0] });
@@ -129,5 +130,5 @@ describe.skipIf(bridgeMissing)("library_apply with a real headless Blender", () 
     const bright = await renderLitBy("bright_sky");
     expect(bright).toBeGreaterThan(dark * 5);
     expect(bright).toBeGreaterThan(0.3);
-  }, 300_000);
+  });
 });

@@ -1,13 +1,38 @@
-import { mkdirSync, readdirSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { mkdirSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { blenderJobs } from "../../src/blender.js";
-import { type FileLock, readOwner, processAlive, tryLock } from "./locks.js";
+import { type FileLock, readOwner, processAlive, tryLock, waitStarted } from "./locks.js";
 import { cacheRoot, ensureCacheRoot } from "./paths.js";
+import { currentStage, recordTiming } from "./timings.js";
 
-export type SlotOptions = { root?: string; jobs?: number; timeoutMs?: number; pollMs?: number };
+export type SlotOptions = { root?: string; jobs?: number; timeoutMs?: number; pollMs?: number; label?: string };
 
-export type Slot = { index: number; release(): void };
+export type Slot = { index: number; waitedMs: number; release(): void };
+
+const acquisitionObservers = new Set<() => void>();
+let labeler: () => string | undefined = () => undefined;
+
+export function observeAcquisitions(observer: () => void): () => void {
+  acquisitionObservers.add(observer);
+  return () => acquisitionObservers.delete(observer);
+}
+
+export function labelSlotsWith(next: () => string | undefined): void {
+  labeler = next;
+}
+
+export class SlotWaitTimeout extends Error {
+  constructor(
+    readonly jobs: number,
+    readonly directory: string,
+    readonly waitedMs: number,
+    readonly label: string,
+  ) {
+    super(`timed out waiting, not working: ${label} waited ${(waitedMs / 1000).toFixed(1)} s for one of ${jobs} Blender slots in ${directory} (stage ${currentStage()})`);
+  }
+}
 
 export function slotsDirectory(root: string): string {
   return join(root, "slots");
@@ -15,42 +40,148 @@ export function slotsDirectory(root: string): string {
 
 const SLEEP_CELL = new Int32Array(new SharedArrayBuffer(4));
 
-function prepare(options: SlotOptions): { directory: string; jobs: number; deadline: number; pollMs: number } {
+type Request = { directory: string; jobs: number; started: number; deadline: number; pollMs: number; label: string; ticket: string };
+
+const TICKET = /^(\d{15})-(\d{6})-(\d+)-[0-9a-f]{8}\.ticket$/;
+let ticketSequence = 0;
+
+export function queueDirectory(directory: string): string {
+  return join(directory, "queue");
+}
+
+function joinQueue(directory: string): string {
+  const queue = queueDirectory(directory);
+  mkdirSync(queue, { recursive: true });
+  ticketSequence = (ticketSequence + 1) % 1_000_000;
+  const ticket = `${String(Date.now()).padStart(15, "0")}-${String(ticketSequence).padStart(6, "0")}-${process.pid}-${randomUUID().slice(0, 8)}.ticket`;
+  writeFileSync(join(queue, ticket), "", { flag: "wx" });
+  return ticket;
+}
+
+function removeQuietly(path: string): void {
+  try {
+    unlinkSync(path);
+  } catch {
+    return;
+  }
+}
+
+function leaveQueue(request: Request): void {
+  removeQuietly(join(queueDirectory(request.directory), request.ticket));
+}
+
+function placeInQueue(request: Request, blocking: boolean): number {
+  const queue = queueDirectory(request.directory);
+  let names: string[];
+  try {
+    names = readdirSync(queue);
+  } catch {
+    return 0;
+  }
+  let ahead = 0;
+  for (const name of names) {
+    const match = TICKET.exec(name);
+    if (match === null || name >= request.ticket) continue;
+    const pid = Number(match[3]);
+    if (blocking && pid === process.pid) continue;
+    if (processAlive(pid)) ahead += 1;
+    else removeQuietly(join(queue, name));
+  }
+  return ahead;
+}
+
+function busySlots(request: Request): number {
+  let busy = 0;
+  for (let index = 0; index < request.jobs; index += 1) {
+    const owner = readOwner(join(request.directory, `slot-${index}.lock`));
+    if (owner !== undefined && (owner === "unreadable" || processAlive(owner.pid))) busy += 1;
+  }
+  return busy;
+}
+
+function myTurn(request: Request, blocking: boolean): boolean {
+  return placeInQueue(request, blocking) < Math.max(1, request.jobs - busySlots(request));
+}
+
+function prepare(options: SlotOptions): Request {
   const root = ensureCacheRoot(options.root ?? cacheRoot());
   const directory = slotsDirectory(root);
   mkdirSync(directory, { recursive: true });
-  return { directory, jobs: options.jobs ?? blenderJobs(), deadline: Date.now() + (options.timeoutMs ?? 30 * 60_000), pollMs: options.pollMs ?? 40 };
+  const started = performance.now();
+  const label = options.label ?? labeler() ?? `process ${process.pid}`;
+  return { directory, jobs: options.jobs ?? blenderJobs(), started, deadline: started + (options.timeoutMs ?? 30 * 60_000), pollMs: options.pollMs ?? 40, label, ticket: joinQueue(directory) };
 }
 
-function takeFree(directory: string, jobs: number): Slot | undefined {
-  for (let index = 0; index < jobs; index += 1) {
-    const lock: FileLock | undefined = tryLock(join(directory, `slot-${index}.lock`));
-    if (lock !== undefined) return { index, release: () => lock.release() };
+function attempt(request: Request, blocking = false): Slot | undefined {
+  return myTurn(request, blocking) ? takeFree(request) : undefined;
+}
+
+function takeFree(request: Request): Slot | undefined {
+  for (let index = 0; index < request.jobs; index += 1) {
+    const lock: FileLock | undefined = tryLock(join(request.directory, `slot-${index}.lock`));
+    if (lock === undefined) continue;
+    const acquired = performance.now();
+    const waitedMs = acquired - request.started;
+    const stage = currentStage();
+    for (const observer of acquisitionObservers) observer();
+    return {
+      index,
+      waitedMs,
+      release: () => {
+        if (!lock.release()) return;
+        recordTiming({ kind: "process", stage, label: request.label, waitMs: Math.round(waitedMs), workMs: Math.round(performance.now() - acquired), endedAt: Date.now() });
+      },
+    };
   }
   return undefined;
 }
 
-function timeout(jobs: number, directory: string): Error {
-  return new Error(`timed out waiting for one of ${jobs} Blender slots in ${directory}`);
+function expired(request: Request): SlotWaitTimeout | undefined {
+  const now = performance.now();
+  return now > request.deadline ? new SlotWaitTimeout(request.jobs, request.directory, now - request.started, request.label) : undefined;
 }
 
 export async function acquireSlot(options: SlotOptions = {}): Promise<Slot> {
-  const { directory, jobs, deadline, pollMs } = prepare(options);
-  for (;;) {
-    const slot = takeFree(directory, jobs);
-    if (slot !== undefined) return slot;
-    if (Date.now() > deadline) throw timeout(jobs, directory);
-    await sleep(pollMs);
+  const request = prepare(options);
+  try {
+    const immediate = attempt(request);
+    if (immediate !== undefined) return immediate;
+    const done = waitStarted();
+    try {
+      for (;;) {
+        await sleep(request.pollMs);
+        const slot = attempt(request);
+        if (slot !== undefined) return slot;
+        const failure = expired(request);
+        if (failure !== undefined) throw failure;
+      }
+    } finally {
+      done();
+    }
+  } finally {
+    leaveQueue(request);
   }
 }
 
 export function acquireSlotSync(options: SlotOptions = {}): Slot {
-  const { directory, jobs, deadline, pollMs } = prepare(options);
-  for (;;) {
-    const slot = takeFree(directory, jobs);
-    if (slot !== undefined) return slot;
-    if (Date.now() > deadline) throw timeout(jobs, directory);
-    Atomics.wait(SLEEP_CELL, 0, 0, pollMs);
+  const request = prepare(options);
+  try {
+    const immediate = attempt(request, true);
+    if (immediate !== undefined) return immediate;
+    const done = waitStarted();
+    try {
+      for (;;) {
+        Atomics.wait(SLEEP_CELL, 0, 0, request.pollMs);
+        const slot = attempt(request, true);
+        if (slot !== undefined) return slot;
+        const failure = expired(request);
+        if (failure !== undefined) throw failure;
+      }
+    } finally {
+      done();
+    }
+  } finally {
+    leaveQueue(request);
   }
 }
 

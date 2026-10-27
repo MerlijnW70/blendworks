@@ -7,6 +7,7 @@ import { childEnvironment, claudeArgs } from "../../src/judge/visual/claude-code
 import { findClaude, runProcess } from "../../src/judge/visual/process.js";
 import { freshDir, makeFixtureSet } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 import { RUBRIC } from "./visual-helpers.js";
 
 useBlenderSlot();
@@ -16,9 +17,9 @@ const SPECS = resolve("test/fixtures/visual/specs");
 const PROOF = resolve(process.env.BLENDWORKS_PROOF_DIR ?? "artifacts/proof");
 let visualAssets = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   if (LIVE) visualAssets = makeFixtureSet("visual_fixtures", "visual-live").assets;
-}, 180_000);
+}));
 
 async function visualOf(name: string, asset: string, spec: string) {
   if (!existsSync(asset)) throw new Error(`${asset} is missing; set BLENDWORKS_PROOF_DIR to the folder of the proof assets`);
@@ -26,7 +27,7 @@ async function visualOf(name: string, asset: string, spec: string) {
   return report.visual!;
 }
 
-describe.skipIf(!LIVE)("the visual judge against the real model", { timeout: 1_800_000 }, () => {
+describe.skipIf(!LIVE)("the visual judge against the real model", workBudget(1_800_000), () => {
   it("passes a proof asset against its own brief", async () => {
     const visual = await visualOf("crate-proof", join(PROOF, "crate.glb"), "crate.json");
     expect(visual.reason).toBeNull();

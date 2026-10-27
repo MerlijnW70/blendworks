@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { blenderPath } from "../src/blender.js";
 import { scratchDir, texts, unusedPort } from "./mcp-helpers.js";
 import { useBlenderSlot } from "./setup/slot.js";
+import { withWorkBudget, workBudget } from "./setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -23,7 +24,7 @@ describe.skipIf(bridgeMissing)(TITLE, () => {
   let client: Client;
   let stderr = "";
 
-  beforeAll(async () => {
+  beforeAll(withWorkBudget(120_000, async () => {
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(process.env)) if (value !== undefined) env[key] = value;
     env["BLENDWORKS_PORT"] = String(await unusedPort());
@@ -39,7 +40,7 @@ describe.skipIf(bridgeMissing)(TITLE, () => {
     });
     client = new Client({ name: "e2e", version: "0.0.0" });
     await client.connect(transport);
-  }, 120_000);
+  }));
 
   afterAll(async () => {
     await client?.close();
@@ -51,7 +52,7 @@ describe.skipIf(bridgeMissing)(TITLE, () => {
     return result;
   }
 
-  it("lists the tools, builds a cube, renders a preview and exports a .glb into the workspace", async () => {
+  it("lists the tools, builds a cube, renders a preview and exports a .glb into the workspace", workBudget(300_000), async () => {
     const { tools } = await client.listTools();
     const names = tools.map((entry) => entry.name);
     expect(names).toEqual(expect.arrayContaining(["blender_add_primitive", "blender_scene_info", "blender_render_preview", "blender_export"]));
@@ -84,5 +85,5 @@ describe.skipIf(bridgeMissing)(TITLE, () => {
     const escaped = (await client.callTool({ name: "blender_export", arguments: { path: "../escape.glb" } })) as CallToolResult;
     expect(escaped.isError).toBe(true);
     expect(existsSync(join(workspace, "..", "escape.glb"))).toBe(false);
-  }, 300_000);
+  });
 });

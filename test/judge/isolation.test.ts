@@ -7,6 +7,7 @@ import { SCRIPTS_DIR } from "../../src/judge/run.js";
 import { detectTools, LOW_INTEGRITY_SCRIPT, MOUNT_SCRIPT, NAMESPACE_FLAGS, planSandbox, runSandboxed, type Tools } from "../../src/judge/sandbox.js";
 import { freshDir } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -54,7 +55,7 @@ describe("the isolation plan", () => {
   });
 });
 
-describe("the isolation on this machine", { timeout: 180_000 }, () => {
+describe("the isolation on this machine", workBudget(180_000), () => {
   const tools = detectTools(blenderPath());
   const root = freshDir("isolation");
   const work = join(root, "work");

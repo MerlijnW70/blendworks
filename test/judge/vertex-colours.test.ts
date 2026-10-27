@@ -5,16 +5,17 @@ import type { Report } from "../../src/judge/report.js";
 import { judge } from "../../src/judge/run.js";
 import { freshDir, makeFixtureSet } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let specs = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets } = makeFixtureSet("colour_fixtures", "vertex-colours"));
   specs = freshDir("vertex-colours", "specs");
-}, 180_000);
+}));
 
 async function judged(asset: string, vertexColors: Record<string, unknown>, label: string): Promise<Report> {
   const spec = join(specs, `${asset}-${label}.spec.json`);
@@ -26,7 +27,7 @@ function verdicts(report: Report): [string, boolean][] {
   return report.rules.map((rule) => [rule.rule, rule.pass]);
 }
 
-describe("vertex colours", { timeout: 180_000 }, () => {
+describe("vertex colours", workBudget(180_000), () => {
   it("two painted cubes: a corner colour on both meshes, in bytes as glTF carries it", async () => {
     const report = await judged("painted.glb", { required: true, domain: "corner" }, "corner");
     expect(verdicts(report)).toEqual([

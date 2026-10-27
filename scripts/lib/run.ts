@@ -2,11 +2,11 @@ import { spawn } from "node:child_process";
 import { blenderJobs, blenderThreadArguments } from "../../src/blender.js";
 import { type SlotOptions, withSlot } from "./slots.js";
 
-export type RunOptions = SlotOptions & { cwd?: string; env?: NodeJS.ProcessEnv; timeoutMs?: number };
+export type RunOptions = Omit<SlotOptions, "timeoutMs"> & { cwd?: string; env?: NodeJS.ProcessEnv; timeoutMs?: number; waitTimeoutMs?: number };
 
-export type RunResult = { code: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string; seconds: number; timedOut: boolean };
+export type RunResult = { code: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string; seconds: number; waitedSeconds: number; timedOut: boolean };
 
-function run(command: string, args: string[], options: RunOptions): Promise<RunResult> {
+function run(command: string, args: string[], options: RunOptions): Promise<Omit<RunResult, "waitedSeconds">> {
   return new Promise((resolve, reject) => {
     const started = performance.now();
     const child = spawn(command, args, { cwd: options.cwd, env: options.env, stdio: ["ignore", "pipe", "pipe"], windowsHide: true });
@@ -34,7 +34,9 @@ function run(command: string, args: string[], options: RunOptions): Promise<RunR
 }
 
 export function runUnderSlot(command: string, args: string[], options: RunOptions = {}): Promise<RunResult> {
-  return withSlot(() => run(command, args, options), options);
+  const { root, jobs, pollMs, label, waitTimeoutMs } = options;
+  const slotOptions = { ...(root === undefined ? {} : { root }), ...(jobs === undefined ? {} : { jobs }), ...(pollMs === undefined ? {} : { pollMs }), ...(label === undefined ? {} : { label }), ...(waitTimeoutMs === undefined ? {} : { timeoutMs: waitTimeoutMs }) };
+  return withSlot(async (slot) => ({ ...(await run(command, args, options)), waitedSeconds: slot.waitedMs / 1000 }), slotOptions);
 }
 
 export function runBlender(blender: string, args: string[], options: RunOptions = {}): Promise<RunResult> {

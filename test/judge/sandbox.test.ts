@@ -6,6 +6,7 @@ import { SCRIPTS_DIR } from "../../src/judge/run.js";
 import { BLENDER_FLAGS, detectTools, planSandbox, runSandboxed, sandboxEnvironment, type SandboxDevice, type Tools } from "../../src/judge/sandbox.js";
 import { freshDir } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -75,7 +76,7 @@ describe("the sandbox plan", () => {
   });
 });
 
-describe("the sandbox on this machine", { timeout: 120_000 }, () => {
+describe("the sandbox on this machine", workBudget(120_000), () => {
   const tools = detectTools();
 
   async function probe(mode: string, timeoutMs: number, device: SandboxDevice = "cpu") {

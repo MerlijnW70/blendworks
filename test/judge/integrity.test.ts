@@ -5,16 +5,17 @@ import type { Report } from "../../src/judge/report.js";
 import { judge } from "../../src/judge/run.js";
 import { freshDir, makeFixtureSet } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let specs = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets } = makeFixtureSet("integrity_fixtures", "integrity"));
   specs = freshDir("integrity", "specs");
-}, 180_000);
+}));
 
 async function judged(asset: string, rules: Record<string, unknown>, label: string): Promise<Report> {
   const name = `${asset.replace(/\W+/g, "-")}-${label}`;
@@ -37,7 +38,7 @@ async function caughtOnlyBy(asset: string, rules: Record<string, unknown>, guard
   return guarded;
 }
 
-describe("gaming fixtures fail their rule, and pass once the rule is removed", { timeout: 180_000 }, () => {
+describe("gaming fixtures fail their rule, and pass once the rule is removed", workBudget(180_000), () => {
   it("a crate padded with 20 hidden 0.1 m cubes: 252 triangles, only the 12 of the crate visible, 1.2 of 6.4 m2 hidden", async () => {
     const report = await caughtOnlyBy("padded.glb", { triangles: { min: 100 } }, { triangles: { min: 100, minVisible: 100 }, faces: { maxHiddenRatio: 0.1 } }, [
       "triangles.minVisible",
@@ -81,7 +82,7 @@ describe("gaming fixtures fail their rule, and pass once the rule is removed", {
   });
 });
 
-describe("measurement fixes", { timeout: 180_000 }, () => {
+describe("measurement fixes", workBudget(180_000), () => {
   it("measures four wheels sharing one mesh once for UV and topology, and every one for triangles", async () => {
     const report = await judged("instanced.glb", { uv: { required: true, maxOverlap: 0 }, triangles: { min: 252, max: 252 } }, "wheels");
     expect(failing(report)).toEqual([]);
@@ -115,7 +116,7 @@ describe("measurement fixes", { timeout: 180_000 }, () => {
   });
 });
 
-describe("per-object rules", { timeout: 180_000 }, () => {
+describe("per-object rules", workBudget(180_000), () => {
   it("checks objects matched by a name pattern: the four 0.3 m wheels, the body pivot, and a missing spoiler", async () => {
     const named = [
       { name: "Wheel.*", required: true, triangles: { max: 60 }, size: { x: [0.29, 0.31], z: [0.29, 0.31], maxExtent: 0.31 }, origin: "centre", materials: { max: 1 } },

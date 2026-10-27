@@ -5,16 +5,17 @@ import { judge } from "../../src/judge/run.js";
 import { freshDir, makeFixtures, writeSpec } from "./helpers.js";
 import { CRATE_MEASUREMENTS } from "./measured.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let specs = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets } = makeFixtures("old-specs"));
   specs = freshDir("old-specs", "specs");
-}, 180_000);
+}));
 
 const REPORT_KEYS = ["passed", "preview", "spec", "asset", "blender", "sandbox", "renderSandbox", "device", "failure", "rules", "measurements", "renders", "timings", "summary"];
 
@@ -44,7 +45,7 @@ const SUMMARY = [
   "  time: TIME",
 ];
 
-describe("a spec without the new rules", { timeout: 120_000 }, () => {
+describe("a spec without the new rules", workBudget(120_000), () => {
   it("gives the rules, verdict and summary it gave before, with the new measurements beside them", async () => {
     const outDir = freshDir("old-specs", "report");
     const report = await judge({ specPath: writeSpec(specs, "crate"), assetPath: join(assets, "crate.glb"), outDir, preview: true });

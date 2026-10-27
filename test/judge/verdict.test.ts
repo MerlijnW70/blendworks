@@ -5,16 +5,17 @@ import type { Report } from "../../src/judge/report.js";
 import { judge, type JudgeOptions } from "../../src/judge/run.js";
 import { freshDir, makeFixtures, writeSpec } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let specs = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets } = makeFixtures("verdict"));
   specs = freshDir("verdict", "specs");
-}, 180_000);
+}));
 
 function judged(name: string, asset: string, options: Partial<JudgeOptions> = {}, overrides: Record<string, unknown> = {}): Promise<Report> {
   const spec = writeSpec(specs, name, { views: ["front", "three-quarter"], ...overrides });
@@ -25,7 +26,7 @@ function verdict(report: Report) {
   return { passed: report.passed, failure: report.failure, rules: report.rules.map((rule) => [rule.rule, rule.pass, rule.measured]) };
 }
 
-describe("the verdict depends on the measurements only", { timeout: 180_000 }, () => {
+describe("the verdict depends on the measurements only", workBudget(180_000), () => {
   it("gives the same verdict on a machine too slow to render: a 1 ms render timeout is reported, and the rules stand", async () => {
     for (const asset of ["crate.glb", "wrong-size.glb"]) {
       const fast = await judged(`fast-${asset}`, asset);

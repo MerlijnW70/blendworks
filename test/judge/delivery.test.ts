@@ -7,6 +7,7 @@ import type { Report } from "../../src/judge/report.js";
 import { judge, type JudgeOptions } from "../../src/judge/run.js";
 import { freshDir, makeFixtures, makeFixtureSet, writeSpec } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -14,11 +15,11 @@ let crates = "";
 let integrity = "";
 let work = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets: crates } = makeFixtures("delivery"));
   ({ assets: integrity } = makeFixtureSet("integrity_fixtures", "delivery-integrity"));
   work = freshDir("delivery", "work");
-}, 180_000);
+}));
 
 function sha256(data: Buffer | string): string {
   return createHash("sha256").update(data).digest("hex");
@@ -29,7 +30,7 @@ function judged(name: string, assetPath: string, overrides: Record<string, unkno
   return judge({ specPath: spec, assetPath, outDir: freshDir("delivery", "reports", name), preview: true, ...options });
 }
 
-describe("the judge judges a private copy", { timeout: 180_000 }, () => {
+describe("the judge judges a private copy", workBudget(180_000), () => {
   it("is not affected when the original changes after the copy, and records the hash of what it judged", async () => {
     const original = join(work, "crate.glb");
     copyFileSync(join(crates, "crate.glb"), original);
@@ -79,7 +80,7 @@ describe("the judge judges a private copy", { timeout: 180_000 }, () => {
   });
 });
 
-describe("importer limits before Blender evaluates anything", { timeout: 180_000 }, () => {
+describe("importer limits before Blender evaluates anything", workBudget(180_000), () => {
   function gltfVariant(name: string, change: (document: Record<string, any>) => void): string {
     const document = JSON.parse(readFileSync(join(crates, "crate.gltf"), "utf8"));
     change(document);

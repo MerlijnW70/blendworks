@@ -36,7 +36,7 @@ export async function ensureFixtureSet(root: string, blender: CheckedBlender, se
       mkdirSync(assets, { recursive: true });
       mkdirSync(join(workDir, "markers"), { recursive: true });
       const args = ["--background", "--factory-startup", "--python-exit-code", "1", "--python", set.script, "--", assets, join(finalDir, "markers")];
-      const result = await runBlender(blender.path, args, { root, timeoutMs: 180_000 });
+      const result = await runBlender(blender.path, args, { root, timeoutMs: 180_000, label: `fixtures/${set.name}` });
       if (result.code !== 0) throw new Error(`generating the ${set.name} fixtures failed (exit ${result.code})\n${result.stdout.slice(-2000)}\n${result.stderr.slice(-2000)}`);
     },
   });
@@ -46,7 +46,7 @@ export async function ensureFixtureSet(root: string, blender: CheckedBlender, se
 export async function ensureFixtures(root: string = cacheRoot()): Promise<Record<string, Fixtures>> {
   ensureCacheRoot(root);
   const blender = checkedBlender(root);
-  const out: Record<string, Fixtures> = {};
-  for (const set of fixtureSets()) out[set.name] = await ensureFixtureSet(root, blender, set);
-  return out;
+  const sets = fixtureSets();
+  const made = await Promise.all(sets.map((set) => ensureFixtureSet(root, blender, set)));
+  return Object.fromEntries(sets.map((set, index) => [set.name, made[index] as Fixtures]));
 }

@@ -5,6 +5,6 @@ export default defineConfig({
     include: ["test/tooling/slot-files/*.spec.ts"],
     environment: "node",
     maxWorkers: 2,
-    setupFiles: ["test/setup/version-once.ts"],
+    setupFiles: ["test/setup/version-once.ts", "test/setup/work.ts"],
   },
 });

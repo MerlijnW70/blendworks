@@ -7,6 +7,7 @@ import { sha256Of } from "../../src/judge/visual/images.js";
 import type { VisualRule } from "../../src/judge/visual/spec.js";
 import { freshDir, makeFixtureSet } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget } from "../setup/work-clock.js";
 import { answer, answering, BRIEF, RULE, type FakeClient } from "./visual-helpers.js";
 
 useBlenderSlot();
@@ -14,10 +15,10 @@ useBlenderSlot();
 const WORKER_NAME = "worker-canary-file-Q7.glb";
 let assets = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   assets = makeFixtureSet("visual_fixtures", "visual-judge").assets;
   copyFileSync(join(assets, "crate-clean.glb"), join(assets, WORKER_NAME));
-}, 180_000);
+}));
 
 function writeVisualSpec(dir: string, visual: VisualRule | null): string {
   const path = join(dir, "spec.json");

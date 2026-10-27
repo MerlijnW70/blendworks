@@ -7,6 +7,7 @@ import { startHeadlessSession } from "../src/mcp/headless.js";
 import { type Started, startBlendworks } from "../src/mcp/start.js";
 import { connectClient, scratchDir, texts, unusedPort } from "./mcp-helpers.js";
 import { useBlenderSlot } from "./setup/slot.js";
+import { workBudget } from "./setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -66,7 +67,7 @@ async function killDuringRunPython(session: Live, pid: number, beforeKill: () =>
 }
 
 describe("a real headless session through the MCP server", () => {
-  it("reloads the autosave when Blender is killed in the middle of run_python, and says so", async () => {
+  it("reloads the autosave when Blender is killed in the middle of run_python, and says so", workBudget(300_000), async () => {
     live = await open();
     const pid = await buildPart(live.client);
     const crashed = await killDuringRunPython(live, pid);
@@ -84,18 +85,18 @@ describe("a real headless session through the MCP server", () => {
       expect(texts(preview)).toContain(`${shading} shading`);
       expect(texts(preview)).toContain('"focus":{"centre":[0,-0.6,0.2],"width":0.5');
     }
-  }, 300_000);
+  });
 
-  it("comes back empty, and says so, when the autosave is gone", async () => {
+  it("comes back empty, and says so, when the autosave is gone", workBudget(300_000), async () => {
     live = await open();
     const pid = await buildPart(live.client);
     const workspace = live.workspace;
     const crashed = await killDuringRunPython(live, pid, () => rmSync(join(workspace, ".blendworks"), { recursive: true, force: true }));
     expect(texts(crashed)).toMatch(/Restarted it\. The scene is empty \(there was no autosave yet\), so rebuild it before continuing\.$/);
     expect(await objectNames(live.client)).toEqual([]);
-  }, 300_000);
+  });
 
-  it("recovers the same way after a timeout and after a cancellation", async () => {
+  it("recovers the same way after a timeout and after a cancellation", workBudget(300_000), async () => {
     live = await open();
     await buildPart(live.client);
     const late = await call(live.client, "blender_run_python", { code: SLEEP, timeout_seconds: 3 });
@@ -108,5 +109,5 @@ describe("a real headless session through the MCP server", () => {
     await expect(cancelled).rejects.toThrow(/abort/i);
     expect(await objectNames(live.client)).toEqual(["Body", "Knob"]);
     expect(live.started.connection.restarts).toBe(2);
-  }, 300_000);
+  });
 });

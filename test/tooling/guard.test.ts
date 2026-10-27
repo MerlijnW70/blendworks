@@ -4,6 +4,11 @@ import { describe, expect, it } from "vitest";
 
 const BLENDER_TOKENS = [/blenderPath\(/, /makeFixtures\(/, /startHeadlessSession\(/, /startSession\(/, /[^.\w]judge\(/, /[^.\w]closeups\(/, /session\.py/];
 const SLOT_CALL = "useBlenderSlot(";
+const WALL_CLOCK_TIMEOUTS = [
+  /\b(?:describe|it|test)(?:\.\w+(?:\([^)]*\))?)*\(\s*(?:"[^"]*"|'[^']*'|`[^`]*`)\s*,\s*\{[^{}]*\btimeout\s*:/,
+  /^\s*\}\s*,\s*[\d_]+\s*\)\s*;?\s*$/m,
+  /\b(?:beforeAll|afterAll|beforeEach|afterEach)\([^;\n]*,\s*[\d_]+\s*\)\s*;/,
+];
 
 function testFiles(directory: string): string[] {
   const out: string[] = [];
@@ -24,6 +29,14 @@ describe("test files that start Blender", () => {
       .filter((file) => !readFileSync(file, "utf8").includes(SLOT_CALL))
       .map((file) => relative(".", file).split(sep).join("/"));
     expect(missing).toEqual([]);
+  });
+
+  it("give their tests and hooks work budgets, never wall-clock timeouts that would count the wait for a slot", () => {
+    const wallClock = files
+      .filter((file) => readFileSync(file, "utf8").includes(SLOT_CALL))
+      .filter((file) => WALL_CLOCK_TIMEOUTS.some((pattern) => pattern.test(readFileSync(file, "utf8"))))
+      .map((file) => relative(".", file).split(sep).join("/"));
+    expect(wallClock).toEqual([]);
   });
 
   it("never take a slot without starting Blender", () => {

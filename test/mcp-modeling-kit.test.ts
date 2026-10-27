@@ -10,6 +10,7 @@ import { judge } from "../src/judge/run.js";
 import { freshDir } from "./judge/helpers.js";
 import { scratchDir, texts, unusedPort } from "./mcp-helpers.js";
 import { useBlenderSlot } from "./setup/slot.js";
+import { withWorkBudget, workBudget } from "./setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -51,12 +52,12 @@ function rimProfile(): number[][] {
   });
 }
 
-describe.skipIf(!existsSync(SESSION))("a detailed prop built with the modelling tools only", { timeout: 900_000 }, () => {
+describe.skipIf(!existsSync(SESSION))("a detailed prop built with the modelling tools only", workBudget(900_000), () => {
   const workspace = join(scratchDir(), "workspace");
   let client: Client;
   let stderr = "";
 
-  beforeAll(async () => {
+  beforeAll(withWorkBudget(120_000, async () => {
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(process.env)) if (value !== undefined) env[key] = value;
     env["BLENDWORKS_PORT"] = String(await unusedPort());
@@ -72,7 +73,7 @@ describe.skipIf(!existsSync(SESSION))("a detailed prop built with the modelling 
     });
     client = new Client({ name: "modeling-kit", version: "0.0.0" });
     await client.connect(transport);
-  }, 120_000);
+  }));
 
   afterAll(async () => {
     await client?.close();

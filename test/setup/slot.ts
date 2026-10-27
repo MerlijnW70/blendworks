@@ -1,27 +1,36 @@
 import { basename } from "node:path";
 import { vi } from "vitest";
 import { acquireSlot, acquireSlotSync, type Slot } from "../../scripts/lib/slots.js";
+import { currentWorkClock, envelopeMs, WAIT_FOR_SLOT_MS } from "./work-clock.js";
 
-export const WAIT_FOR_SLOT_MS = 45 * 60_000;
+export { WAIT_FOR_SLOT_MS };
 export const BLENDER_TEST_TIMEOUT_MS = 10 * 60_000;
 
 let declared = false;
 
 export function useBlenderSlot(): void {
   declared = true;
-  vi.setConfig({ testTimeout: BLENDER_TEST_TIMEOUT_MS, hookTimeout: BLENDER_TEST_TIMEOUT_MS });
+  vi.setConfig({ testTimeout: envelopeMs(BLENDER_TEST_TIMEOUT_MS), hookTimeout: envelopeMs(BLENDER_TEST_TIMEOUT_MS) });
 }
 
 export function blenderSlotHeld(): boolean {
   return declared;
 }
 
+export function defaultWorkBudgetMs(): number | undefined {
+  return declared ? BLENDER_TEST_TIMEOUT_MS : undefined;
+}
+
 export function isBlenderCommand(command: string): boolean {
   return /^blender(\.exe)?$/i.test(basename(command));
 }
 
+function waitAllowanceMs(): number {
+  return currentWorkClock()?.waitAllowanceMs() ?? WAIT_FOR_SLOT_MS;
+}
+
 export function takeSlot(): Promise<Slot> {
-  return acquireSlot({ timeoutMs: WAIT_FOR_SLOT_MS });
+  return acquireSlot({ timeoutMs: waitAllowanceMs() });
 }
 
 export async function whileProcessRuns<T>(task: () => Promise<T>): Promise<T> {
@@ -46,7 +55,7 @@ export async function untilProcessExits<T>(start: () => Promise<T>, exited: (sta
 }
 
 export function whileProcessRunsSync<T>(task: () => T): T {
-  const slot = acquireSlotSync({ timeoutMs: WAIT_FOR_SLOT_MS });
+  const slot = acquireSlotSync({ timeoutMs: waitAllowanceMs() });
   try {
     return task();
   } finally {

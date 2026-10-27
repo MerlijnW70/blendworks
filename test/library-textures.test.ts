@@ -10,6 +10,7 @@ import { createServer } from "../src/mcp/server.js";
 import { libraryHarness, type LibraryHarness, serveBodies, textureUrl } from "./library-helpers.js";
 import { call, connectClient, texts } from "./mcp-helpers.js";
 import { useBlenderSlot } from "./setup/slot.js";
+import { withWorkBudget, workBudget } from "./setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -69,7 +70,7 @@ describe("library_apply builds a real material_pbr material from a downloaded te
   let client: Client;
   let connection: BridgeConnection;
 
-  beforeAll(async () => {
+  beforeAll(withWorkBudget(120_000, async () => {
     lib = libraryHarness();
     connection = new BridgeConnection({ open: () => startHeadlessSession({ workspace: lib.workspace.root, allowPython: false }), owned: true, label: "headless Blender session" });
     await connection.connect();
@@ -77,7 +78,7 @@ describe("library_apply builds a real material_pbr material from a downloaded te
     const server = createServer({ connection, workspace: lib.workspace, commands, library: lib.library });
     client = await connectClient({ server, connection, workspace: lib.workspace, commands, mode: "headless" });
     serveBodies(lib.polyHaven, "aerial_asphalt_01", new Map(Object.entries(MAP_FILES).map(([map, body]) => [textureUrl(map, "1k", "png"), body])));
-  }, 120_000);
+  }));
 
   afterAll(async () => {
     await client?.close();
@@ -94,7 +95,7 @@ describe("library_apply builds a real material_pbr material from a downloaded te
     await ok("library_download", { id: "aerial_asphalt_01", resolution: "1k", format: "png", ...(maps === undefined ? {} : { maps }) });
   }
 
-  it("wires the default maps with the right colour spaces and exports them", async () => {
+  it("wires the default maps with the right colour spaces and exports them", workBudget(300_000), async () => {
     await download();
     await ok("blender_add_primitive", { type: "plane", name: "Floor", size: 2 });
     const applied = (await ok("library_apply", { id: "aerial_asphalt_01", object: "Floor", material: "Asphalt" })) as unknown as ApplyResult;
@@ -120,9 +121,9 @@ describe("library_apply builds a real material_pbr material from a downloaded te
     expect(material["pbrMetallicRoughness"]).toHaveProperty("metallicRoughnessTexture");
     expect(material).toHaveProperty("normalTexture");
     expect(material).toHaveProperty("occlusionTexture");
-  }, 300_000);
+  });
 
-  it("flips a DirectX normal map and prefers separate roughness over the ARM map", async () => {
+  it("flips a DirectX normal map and prefers separate roughness over the ARM map", workBudget(300_000), async () => {
     await download(["Diffuse", "nor_dx", "Rough", "arm"]);
     const applied = (await ok("library_apply", { id: "aerial_asphalt_01", material: "DirectX" })) as unknown as ApplyResult;
     const built = applied.steps[0]?.result as { maps: Record<string, string> };
@@ -130,13 +131,13 @@ describe("library_apply builds a real material_pbr material from a downloaded te
     expect(built.maps["roughness"]).toBe("aerial_asphalt_01_rough_1k.png");
     expect(built.maps).not.toHaveProperty("orm");
     expect(applied.maps_not_wired).toEqual(["arm"]);
-  }, 300_000);
+  });
 
-  it("wires an ARM map as orm when it is the only data map", async () => {
+  it("wires an ARM map as orm when it is the only data map", workBudget(300_000), async () => {
     await download(["Diffuse", "arm"]);
     const applied = (await ok("library_apply", { id: "aerial_asphalt_01", material: "Packed" })) as unknown as ApplyResult;
     const built = applied.steps[0]?.result as { maps: Record<string, string>; colorspaces: Record<string, string> };
     expect(built.maps).toEqual({ base_color: "aerial_asphalt_01_diff_1k.png", orm: "aerial_asphalt_01_arm_1k.png" });
     expect(built.colorspaces["aerial_asphalt_01_arm_1k.png"]).toBe("Non-Color");
-  }, 300_000);
+  });
 });

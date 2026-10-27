@@ -6,16 +6,17 @@ import type { Report } from "../../src/judge/report.js";
 import { judge } from "../../src/judge/run.js";
 import { freshDir, makeFixtures, writeSpec } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let work = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets } = makeFixtures("broken"));
   work = freshDir("broken", "work");
-}, 180_000);
+}));
 
 async function judged(asset: string, overrides: Record<string, unknown> = {}, limits: Record<string, number> = {}): Promise<Report> {
   const name = asset.replace(/\W+/g, "-");
@@ -33,7 +34,7 @@ function failure(report: Report) {
   return report.failure;
 }
 
-describe("broken deliveries fail cleanly with a reason", { timeout: 120_000 }, () => {
+describe("broken deliveries fail cleanly with a reason", workBudget(120_000), () => {
   it("a missing file", async () => {
     expect(failure(await judged("nothing-here.glb"))).toMatchObject({ stage: "asset", code: "missing" });
   });
@@ -116,7 +117,7 @@ describe("broken deliveries fail cleanly with a reason", { timeout: 120_000 }, (
   });
 });
 
-describe("the blendworks judge command", { timeout: 120_000 }, () => {
+describe("the blendworks judge command", workBudget(120_000), () => {
   it("exits 0 when every rule passes and 1 when one fails", async () => {
     copyFileSync(join(assets, "crate.glb"), join(work, "crate.glb"));
     copyFileSync(join(assets, "wrong-size.glb"), join(work, "wrong-size.glb"));

@@ -5,16 +5,17 @@ import { main } from "../../src/judge/cli.js";
 import { judge, type JudgeOptions } from "../../src/judge/run.js";
 import { freshDir, makeFixtures, writeSpec } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let specs = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets } = makeFixtures("preview"));
   specs = freshDir("preview", "specs");
-}, 180_000);
+}));
 
 function judged(name: string, asset: string, options: Partial<JudgeOptions> = {}, overrides: Record<string, unknown> = {}) {
   const spec = writeSpec(specs, name, { views: ["front", "three-quarter"], ...overrides });
@@ -25,7 +26,7 @@ function isPng(path: string): boolean {
   return statSync(path).size > 1000 && readFileSync(path).subarray(1, 4).toString("latin1") === "PNG";
 }
 
-describe("preview mode", { timeout: 120_000 }, () => {
+describe("preview mode", workBudget(120_000), () => {
   it("checks every rule and draws the UV layout, but renders no views", async () => {
     const report = await judged("crate", "crate.glb", { preview: true, device: "gpu", backends: [] });
     expect(report.passed).toBe(true);
@@ -61,7 +62,7 @@ describe("preview mode", { timeout: 120_000 }, () => {
   });
 });
 
-describe("the render device on this machine", { timeout: 120_000 }, () => {
+describe("the render device on this machine", workBudget(120_000), () => {
   it("falls back to the CPU with the original limits when no GPU backend works", async () => {
     const report = await judged("no-gpu", "crate.glb", { device: "auto", backends: [] }, { views: ["front"] });
     expect(report.passed).toBe(true);

@@ -10,6 +10,7 @@ import { judge } from "../src/judge/run.js";
 import { freshDir } from "./judge/helpers.js";
 import { scratchDir, texts, unusedPort } from "./mcp-helpers.js";
 import { useBlenderSlot } from "./setup/slot.js";
+import { withWorkBudget, workBudget } from "./setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -45,12 +46,12 @@ const STRICT_SPEC = {
 
 type Json = Record<string, unknown>;
 
-describe("polish round 2 through MCP tools only", { timeout: 1_800_000 }, () => {
+describe("polish round 2 through MCP tools only", workBudget(1_800_000), () => {
   const workspace = join(scratchDir(), "workspace");
   let client: Client;
   let stderr = "";
 
-  beforeAll(async () => {
+  beforeAll(withWorkBudget(120_000, async () => {
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(process.env)) if (value !== undefined) env[key] = value;
     env["BLENDWORKS_PORT"] = String(await unusedPort());
@@ -66,7 +67,7 @@ describe("polish round 2 through MCP tools only", { timeout: 1_800_000 }, () => 
     });
     client = new Client({ name: "polish-2", version: "0.0.0" });
     await client.connect(transport);
-  }, 120_000);
+  }));
 
   afterAll(async () => {
     await client?.close();
@@ -143,12 +144,12 @@ describe("polish round 2 through MCP tools only", { timeout: 1_800_000 }, () => 
     const smart = await tool("uv_smart_project", { name: "Ring", island_margin: 0.002, min_island_area: 0.002 });
     expect((smart["islands"] as Json)["merged"] as number).toBeGreaterThan(0);
     await tool("uv_smart_project", { name: "Plinth", island_margin: 0.01 });
-    const packed = await tool("uv_pack", { names: ["Ring", "Plinth"], target: "coverage", shared: false, margin: 0.004, texture_size: 1024, time_limit: 120 });
+    const packed = await tool("uv_pack", { names: ["Ring", "Plinth"], target: "coverage", shared: false, margin: 0.004, texture_size: 1024, time_limit: 15 });
     expect(packed["target"]).toBe("coverage");
     expect(packed["coverage"] as number).toBeGreaterThan(0.2);
     expect((packed["texel_density"] as Json)["min"] as number).toBeGreaterThan(0);
 
-    const marble = await call("render_preview", { focus: { object: "Plinth", width: 0.3, direction: [0.5, -0.8, 1.2] }, resolution: 1000, samples: 32 });
+    const marble = await call("render_preview", { focus: { object: "Plinth", width: 0.3, direction: [0.5, -0.8, 1.2] }, resolution: 320, samples: 8 });
     savePicture(marble, join(out, "marble-before-bake.png"));
 
     const baked = await tool("bake", {
@@ -176,13 +177,13 @@ describe("polish round 2 through MCP tools only", { timeout: 1_800_000 }, () => 
       const angle = (degrees * Math.PI) / 180;
       return { point: [BAND_RADIUS * Math.cos(angle), BAND_RADIUS * Math.sin(angle), RING_CENTRE_Z], direction: [Math.cos(angle), Math.sin(angle), 0.08] };
     };
-    const numbers = await call("render_preview", { focus: { ...onBand(15), width: 0.075 }, resolution: 1000, samples: 48 });
+    const numbers = await call("render_preview", { focus: { ...onBand(15), width: 0.075 }, resolution: 320, samples: 8 });
     savePicture(numbers, join(out, "ring-numbers-and-aries.png"));
-    const leo = await call("render_preview", { focus: { ...onBand(195), width: 0.045 }, resolution: 1000, samples: 48 });
+    const leo = await call("render_preview", { focus: { ...onBand(195), width: 0.045 }, resolution: 320, samples: 8 });
     savePicture(leo, join(out, "ring-leo.png"));
-    const veins = await call("render_preview", { focus: { point: [0.0, 0.065, 0.03], direction: [0.0, -0.15, 1.0], width: 0.12 }, resolution: 1000, samples: 48 });
+    const veins = await call("render_preview", { focus: { point: [0.0, 0.065, 0.03], direction: [0.0, -0.15, 1.0], width: 0.12 }, resolution: 320, samples: 8 });
     savePicture(veins, join(out, "marble-veins-baked.png"));
-    const plinth = await call("render_preview", { focus: { object: "Plinth", width: 0.34, direction: [0.5, -0.8, 1.2] }, resolution: 1000, samples: 32 });
+    const plinth = await call("render_preview", { focus: { object: "Plinth", width: 0.34, direction: [0.5, -0.8, 1.2] }, resolution: 320, samples: 8 });
     savePicture(plinth, join(out, "marble-baked.png"));
 
     await client.close();
@@ -195,7 +196,7 @@ describe("polish round 2 through MCP tools only", { timeout: 1_800_000 }, () => 
     const names = report.rules.map((rule) => rule.rule);
     expect(names).toEqual(expect.arrayContaining(["faces.maxDegenerate", "gltf.validator.maxErrors", "gltf.validator.maxWarnings", "textures.maxGpuBytes", "parts.maxFloating"]));
 
-    const result = await closeups({ assetPath: asset, outDir: join(out, "closeups"), resolution: 1200, samples: 16, device: "auto" });
+    const result = await closeups({ assetPath: asset, outDir: join(out, "closeups"), resolution: 300, samples: 4, device: "auto" });
     for (const entry of result.images) expect(statSync(entry.path).size, entry.name).toBeGreaterThan(2000);
     expect(readFileSync(result.sheet).subarray(0, 8)).toEqual(PNG_SIGNATURE);
   });

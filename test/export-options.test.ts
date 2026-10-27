@@ -5,6 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { startSession, type Session } from "../src/session.js";
 import { validateGltf, VALIDATOR_DEFAULTS } from "../src/judge/validator.js";
 import { useBlenderSlot } from "./setup/slot.js";
+import { withWorkBudget, workBudget } from "./setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -31,7 +32,7 @@ function attributes(document: Glb): string[] {
   return Object.keys(document.meshes[0]?.primitives[0]?.attributes ?? {}).sort();
 }
 
-describe("export options", { timeout: 600_000 }, () => {
+describe("export options", workBudget(600_000), () => {
   const workspace = mkdtempSync(join(tmpdir(), "blendworks-export-"));
   let session: Session;
   const path = (name: string) => join(workspace, name);
@@ -42,7 +43,7 @@ describe("export options", { timeout: 600_000 }, () => {
     return glb(path(name));
   }
 
-  beforeAll(async () => {
+  beforeAll(withWorkBudget(300_000, async () => {
     session = await startSession({ workspace });
     await session.call("add_primitive", { type: "cube", name: "Crate", size: 1 });
     await session.call("transform", { name: "Crate", scale: [1, 1, 2] });
@@ -51,7 +52,7 @@ describe("export options", { timeout: 600_000 }, () => {
     await session.call("material_procedural", { name: "Planks", wood: { seed: 3, bump: 1.0 } });
     await session.call("assign_material", { name: "Crate", material: "Planks" });
     await session.call("bake", { names: ["Crate"], channels: ["base_color", "roughness", "metallic", "normal"], size: 64, rewire: true, device: "auto" });
-  }, 300_000);
+  }));
 
   afterAll(async () => {
     await session?.close();

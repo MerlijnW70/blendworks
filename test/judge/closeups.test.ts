@@ -5,14 +5,15 @@ import { main } from "../../src/judge/cli.js";
 import { CLOSEUP_NAMES, CLOSEUP_SHEET, closeups } from "../../src/judge/closeups.js";
 import { freshDir, makeFixtures } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets } = makeFixtures("closeups"));
-}, 180_000);
+}));
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -24,7 +25,7 @@ function pngSize(path: string): [number, number] {
   return [data.readUInt32BE(16), data.readUInt32BE(20)];
 }
 
-describe("close-ups", { timeout: 180_000 }, () => {
+describe("close-ups", workBudget(180_000), () => {
   it("renders the hero view and two 2 x 2 grids, 9 non-empty PNGs, plus a labelled sheet", async () => {
     const outDir = freshDir("closeups", "crate");
     const result = await closeups({ assetPath: join(assets, "crate.glb"), outDir, resolution: 160, samples: 4 });

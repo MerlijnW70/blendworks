@@ -5,16 +5,17 @@ import type { Report } from "../../src/judge/report.js";
 import { judge } from "../../src/judge/run.js";
 import { freshDir, makeFixtureSet } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let specs = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets } = makeFixtureSet("rig_fixtures", "motion"));
   specs = freshDir("motion", "specs");
-}, 180_000);
+}));
 
 const SIZE = { x: [0.4, 0.5], y: [0.1, 0.9], z: [1.6, 1.75] };
 
@@ -57,7 +58,7 @@ function measured(report: Report, rule: string): unknown {
   return report.rules.find((entry) => entry.rule === rule)?.measured;
 }
 
-describe("the rigged figure", { timeout: 180_000 }, () => {
+describe("the rigged figure", workBudget(180_000), () => {
   it("passes every rig, skin and animation rule, with the values worked out by hand", async () => {
     const report = await judged("figure.glb", EVERY_RULE, "every-rule");
     expect(report.failure).toBeNull();
@@ -112,7 +113,7 @@ describe("the rigged figure", { timeout: 180_000 }, () => {
   });
 });
 
-describe("broken figures fail their rule, and pass once the rule is removed", { timeout: 180_000 }, () => {
+describe("broken figures fail their rule, and pass once the rule is removed", workBudget(180_000), () => {
   it("five bones on the left knee: 5 influences, over the 4 game engines take", async () => {
     const report = await caughtOnlyBy("figure-five.glb", { skin: { maxInfluences: 4 } }, ["skin.maxInfluences"]);
     expect(measured(report, "skin.maxInfluences")).toBe(5);

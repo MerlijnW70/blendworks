@@ -8,6 +8,7 @@ import { blenderPath } from "../src/blender.js";
 import { freshDir } from "./judge/helpers.js";
 import { scratchDir, texts, unusedPort } from "./mcp-helpers.js";
 import { useBlenderSlot } from "./setup/slot.js";
+import { withWorkBudget, workBudget } from "./setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -65,13 +66,13 @@ function glbNodes(path: string): Map<string, { children: string[]; translation: 
   return new Map(nodes.map((node) => [node.name, { children: (node.children ?? []).map((index) => nodes[index]?.name ?? "").sort(), translation: node.translation ?? [0, 0, 0] }]));
 }
 
-describe("custom node graphs, hierarchy and brass through MCP tools only", { timeout: 900_000 }, () => {
+describe("custom node graphs, hierarchy and brass through MCP tools only", workBudget(900_000), () => {
   const workspace = join(scratchDir(), "workspace");
   const out = freshDir("bridge-extras");
   let client: Client;
   let stderr = "";
 
-  beforeAll(async () => {
+  beforeAll(withWorkBudget(120_000, async () => {
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(process.env)) if (value !== undefined) env[key] = value;
     env["BLENDWORKS_PORT"] = String(await unusedPort());
@@ -87,7 +88,7 @@ describe("custom node graphs, hierarchy and brass through MCP tools only", { tim
     });
     client = new Client({ name: "bridge-extras", version: "0.0.0" });
     await client.connect(transport);
-  }, 120_000);
+  }));
 
   afterAll(async () => {
     await client?.close();
@@ -157,8 +158,8 @@ describe("custom node graphs, hierarchy and brass through MCP tools only", { tim
     const angle = (15 * Math.PI) / 180;
     const band = await call("render_preview", {
       focus: { point: [BAND_RADIUS * Math.cos(angle), BAND_RADIUS * Math.sin(angle), RING_CENTRE_Z], direction: [Math.cos(angle), Math.sin(angle), 0.08], width: 0.045 },
-      resolution: 1000,
-      samples: 48,
+      resolution: 320,
+      samples: 8,
     });
     savePicture(band, join(out, "brass-band.png"));
 
@@ -168,7 +169,7 @@ describe("custom node graphs, hierarchy and brass through MCP tools only", { tim
     await tool("bevel", { name: "Tile", width: 0.01, segments: 2 });
     await tool("assign_material", { name: "Tile", material: "Slate" });
     await tool("material_layer", { material: "Slate", brass: { polish: 0.2 }, mask: "edges", amount: 0.6, distance: 0.02 });
-    const slate = await call("render_preview", { focus: { object: "Tile", width: 0.4, direction: [0.6, -0.8, 0.7] }, resolution: 1000, samples: 48 });
+    const slate = await call("render_preview", { focus: { object: "Tile", width: 0.4, direction: [0.6, -0.8, 0.7] }, resolution: 320, samples: 8 });
     savePicture(slate, join(out, "custom-graph.png"));
     const info = await tool("material_info", { name: "Slate" });
     expect(info["editable"]).toBe(true);

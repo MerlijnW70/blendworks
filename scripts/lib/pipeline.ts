@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { repoRoot } from "./paths.js";
+import { STAGE_VARIABLE } from "./timings.js";
 
 export type Step = { name: string; command: string; args: string[]; env?: NodeJS.ProcessEnv };
 
@@ -8,11 +9,13 @@ export type StepResult = { name: string; passed: boolean; seconds: number; outpu
 const TAIL_LINES = 4;
 const FAILURE_LINES = 200;
 
-export function npmStep(script: string, args: string[] = [], env?: NodeJS.ProcessEnv): Step {
+export function npmStep(script: string, args: string[] = [], extra: NodeJS.ProcessEnv = {}): Step {
   const cli = process.env["npm_execpath"];
   const label = args.length > 2 ? `${script} (${args.length} files)` : [script, ...args].join(" ");
-  if (cli !== undefined && cli !== "") return { name: label, command: process.execPath, args: [cli, "run", "--silent", script, ...(args.length > 0 ? ["--", ...args] : [])], ...(env ? { env } : {}) };
-  return { name: label, command: "npm", args: ["run", "--silent", script, ...(args.length > 0 ? ["--", ...args] : [])], ...(env ? { env } : {}) };
+  const env = { [STAGE_VARIABLE]: script, ...extra };
+  const scriptArgs = ["run", "--silent", script, ...(args.length > 0 ? ["--", ...args] : [])];
+  if (cli !== undefined && cli !== "") return { name: label, command: process.execPath, args: [cli, ...scriptArgs], env };
+  return { name: label, command: "npm", args: scriptArgs, env };
 }
 
 export function runStep(step: Step): Promise<StepResult> {

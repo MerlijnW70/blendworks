@@ -14,6 +14,8 @@
     "rules": "node scripts/rules.mjs",
     "check": "tsx scripts/check.mjs",
     "check:fast": "tsx scripts/check-fast.mjs",
+    "check:stress": "tsx scripts/check-stress.mjs",
+    "durations": "tsx scripts/durations.mjs",
     "build:addon": "tsx bridge/build-addon.mjs",
     "doctor": "tsx scripts/doctor.mjs",
     "tools:gltfpack": "tsx scripts/tools.mjs",

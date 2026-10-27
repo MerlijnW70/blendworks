@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { blenderPath } from "../src/blender.js";
 import { scratchDir, texts, unusedPort } from "./mcp-helpers.js";
 import { useBlenderSlot } from "./setup/slot.js";
+import { withWorkBudget, workBudget } from "./setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -51,7 +52,7 @@ describe("texture, material and bake tools through the MCP server", () => {
   let client: Client;
   let stderr = "";
 
-  beforeAll(async () => {
+  beforeAll(withWorkBudget(120_000, async () => {
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(process.env)) if (value !== undefined) env[key] = value;
     env["BLENDWORKS_PORT"] = String(await unusedPort());
@@ -68,7 +69,7 @@ describe("texture, material and bake tools through the MCP server", () => {
     });
     client = new Client({ name: "textures", version: "0.0.0" });
     await client.connect(transport);
-  }, 120_000);
+  }));
 
   afterAll(async () => {
     await client?.close();
@@ -80,7 +81,7 @@ describe("texture, material and bake tools through the MCP server", () => {
     return JSON.parse(texts(result)) as Record<string, unknown>;
   }
 
-  it("lists the texture tools and bakes a procedural cube into a textured .glb", async () => {
+  it("lists the texture tools and bakes a procedural cube into a textured .glb", workBudget(300_000), async () => {
     const listed = (await client.listTools()).tools;
     expect(listed.map((entry) => entry.name)).toEqual(expect.arrayContaining(TEXTURE_TOOLS));
     const bakeTool = listed.find((entry) => entry.name === "blender_bake");
@@ -116,5 +117,5 @@ describe("texture, material and bake tools through the MCP server", () => {
     const unknown = (await client.callTool({ name: "blender_material_procedural", arguments: { name: "Bad", wood: { knots: 2 } } })) as CallToolResult;
     expect(unknown.isError).toBe(true);
     expect(texts(unknown)).toContain("knots");
-  }, 300_000);
+  });
 });

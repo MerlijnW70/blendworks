@@ -7,6 +7,7 @@ import type { Report } from "../../src/judge/report.js";
 import { judge } from "../../src/judge/run.js";
 import { lockFile, type FileLock } from "../../scripts/lib/locks.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 import { emptyDirectory, freshDir, makeFixtures, writeSpec } from "./helpers.js";
 
 useBlenderSlot();
@@ -15,10 +16,10 @@ let assets = "";
 let markers = "";
 let specs = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets, markers } = makeFixtures("fixtures"));
   specs = freshDir("fixtures", "specs");
-}, 180_000);
+}));
 
 async function judged(asset: string, specOverrides: Record<string, unknown> = {}): Promise<Report> {
   const name = asset.replace(/\W+/g, "-");
@@ -42,7 +43,7 @@ function expectRendered(report: Report, views: number): void {
 const CRATE_SIZE = [1, 1, 0.8];
 const SOUND = { nonManifoldEdges: 0, boundaryEdges: 0, wireEdges: 0, nonManifoldVertices: 0, looseVertices: 0, looseParts: 1 };
 
-describe("judging the fixture assets", { timeout: 120_000 }, () => {
+describe("judging the fixture assets", workBudget(120_000), () => {
   it("passes the 1 x 1 x 0.8 crate: 6 quads make 12 triangles, the cross UV layout covers 6 x 0.25 x 0.25 = 0.375", async () => {
     const report = await judged("crate.glb");
     expect(failing(report)).toEqual([]);
@@ -127,13 +128,13 @@ describe("judging the fixture assets", { timeout: 120_000 }, () => {
   });
 });
 
-describe("a .blend with auto-run code", { timeout: 120_000 }, () => {
+describe("a .blend with auto-run code", workBudget(120_000), () => {
   const markerNames = () => readdirSync(markers).filter((name) => name.endsWith(".marker")).sort();
   let lock: FileLock | undefined;
 
-  beforeAll(async () => {
+  beforeAll(withWorkBudget(600_000, async () => {
     lock = await lockFile(join(dirname(markers), "markers.lock"));
-  }, 600_000);
+  }));
 
   afterAll(() => {
     lock?.release();

@@ -20,13 +20,13 @@ from judge_common import (
 from judge_device import CPU, GPU_BACKENDS, device_backend, resolve_backend, use_device
 from judge_geometry import Measurer
 from judge_load import load_asset
-from judge_rig import VIEWS, Rig, configure_scene, remove_foreign_rig
+from judge_rig import RESOLUTION, SAMPLES, VIEWS, Rig, configure_scene, remove_foreign_rig
 from judge_sheet import MARKER, MUTED, TEXT, compose, load_png, texture_line, uv_tile
 from judge_uv import UvGrid
 
 USAGE = (
     "render.py -- <asset> <measurements.json> <out dir> [--views front,top] [--title text] [--mode full|preview]"
-    " [--device CPU|AUTO|OPTIX|CUDA|HIP|METAL|ONEAPI] [--backends OPTIX,CUDA] [--max-triangles n] [--memory-mb n] [--memory-kind address-space|data] [--uv-grid path]"
+    " [--device CPU|AUTO|OPTIX|CUDA|HIP|METAL|ONEAPI] [--backends OPTIX,CUDA] [--max-triangles n] [--memory-mb n] [--memory-kind address-space|data] [--uv-grid path] [--res px] [--samples n]"
 )
 MODES = ("full", "preview")
 DEFAULT_VIEWS = "front,back,left,right,top,three-quarter"
@@ -71,8 +71,8 @@ def header_lines(title, measurements, preview):
     return [(title, TEXT), (summary, MUTED), (texture_line(measurements.get("textures")), MUTED), (legend, MARKER)]
 
 
-def render_views(scene, views, low, high, origin, out_dir, backend, found):
-    configure_scene(scene)
+def render_views(scene, views, low, high, origin, out_dir, backend, found, resolution, samples):
+    configure_scene(scene, resolution, samples)
     device = use_device(scene, backend, found)
     rig = Rig(scene, low, high, origin)
     view_dir = os.path.join(out_dir, "views")
@@ -105,6 +105,8 @@ def render(asset, measurements_path, out_dir, options):
     mode = chosen_mode(options["mode"])
     backend = device_backend(options["device"])
     triangle_cap = positive_int(options["max-triangles"], "max-triangles")
+    resolution = min(positive_int(options["res"], "res"), RESOLUTION)
+    samples = min(positive_int(options["samples"], "samples"), SAMPLES)
     memory_cap_from(options)
     measurements, low, high, origin = read_measurements(measurements_path)
     found = {"probes": [], "probeSeconds": None}
@@ -120,7 +122,7 @@ def render(asset, measurements_path, out_dir, options):
     rendered = []
     views_time = stopwatch()
     if mode == "full":
-        device, tiles, rendered = render_views(scene, views, low, high, origin, out_dir, backend, found)
+        device, tiles, rendered = render_views(scene, views, low, high, origin, out_dir, backend, found, resolution, samples)
     views_seconds = views_time()
     sheet_time = stopwatch()
     pixels, size, _ = uv_tile(uv_grid)
@@ -153,6 +155,8 @@ def main():
             "memory-mb": str(DEFAULT_MEMORY_MB),
             "memory-kind": "address-space",
             "uv-grid": "",
+            "res": str(RESOLUTION),
+            "samples": str(SAMPLES),
         },
     )
     if len(positional) != 3:

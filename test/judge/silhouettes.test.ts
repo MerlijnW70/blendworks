@@ -9,16 +9,17 @@ import { silhouettes } from "../../src/judge/silhouettes.js";
 import { encodePng } from "../../src/judge/visual/png.js";
 import { freshDir, makeFixtures } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let folder = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets } = makeFixtures("silhouettes"));
   folder = freshDir("silhouettes", "specs");
-}, 180_000);
+}));
 
 const SIZE = 512;
 const ACROSS = 1.18;
@@ -51,7 +52,7 @@ function front(data: Buffer, name: string, limits: Record<string, unknown> = {})
   return { views: { front: { sha256: sha256(data), mask: name } }, ...limits };
 }
 
-describe("the reference comparison", { timeout: 180_000 }, () => {
+describe("the reference comparison", workBudget(180_000), () => {
   it("frames the crate as the judge's front view does: 434 x 348 pixels, IoU 1 against that rectangle", async () => {
     expect([LEFT, RIGHT, TOP, BOTTOM]).toEqual([39, 472, 82, 429]);
     const report = await compared("crate.glb", "exact", front(rectangle(), "exact.png", { minIoU: 1, maxBoundaryDistance: 0 }));

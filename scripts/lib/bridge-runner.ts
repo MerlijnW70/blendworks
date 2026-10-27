@@ -2,8 +2,10 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join } from "node:path";
 import { blenderJobs } from "../../src/blender.js";
 import { checkedBlender } from "./blender-check.js";
+import { knownDurations } from "./durations.js";
 import { cacheRoot, ensureCacheRoot, repoRoot } from "./paths.js";
-import { runBlender } from "./run.js";
+import { runBlender, type RunResult } from "./run.js";
+import { currentStage, recordTiming } from "./timings.js";
 
 export const BRIDGE_TESTS = join(repoRoot, "bridge", "tests");
 const TIMINGS_FILE = "bridge-timings.json";
@@ -62,8 +64,17 @@ function writeTimings(root: string, results: FileResult[], previous: Record<stri
   writeFileSync(join(root, TIMINGS_FILE), JSON.stringify(merged));
 }
 
+export function bridgeDurations(durations: Record<string, number>): Record<string, number> {
+  const prefix = "bridge/tests/";
+  return Object.fromEntries(Object.entries(durations).filter(([key]) => key.startsWith(prefix)).map(([key, seconds]) => [key.slice(prefix.length), seconds]));
+}
+
 export function formatSeconds(seconds: number): string {
   return `${seconds.toFixed(1)} s`;
+}
+
+export function timeoutLine(file: string, result: Pick<RunResult, "seconds" | "waitedSeconds">, stage: string = currentStage()): string {
+  return `timed out working, not waiting: ${file} in stage ${stage} worked ${formatSeconds(result.seconds)}, over its limit of ${TEST_TIMEOUT_MS / 1000} s; it waited ${formatSeconds(result.waitedSeconds)} for a Blender slot before it started, which does not count`;
 }
 
 export function summarize(results: FileResult[], wallSeconds: number): string[] {
@@ -91,13 +102,15 @@ export async function bridgeMain(argv: string[], env: NodeJS.ProcessEnv = proces
   const blender = checkedBlender(root);
   const jobs = blenderJobs(env);
   const timings = readTimings(root);
+  const expected = { ...bridgeDurations(knownDurations(root)), ...timings };
   const started = performance.now();
-  const results = await runPool(slowestFirst(selected, timings), jobs, async (file): Promise<FileResult> => {
-    const result = await runBlender(blender.path, ["--background", "--factory-startup", "--python-exit-code", "1", "--python", join(BRIDGE_TESTS, file)], { root, jobs, timeoutMs: TEST_TIMEOUT_MS });
+  const results = await runPool(slowestFirst(selected, expected), jobs, async (file): Promise<FileResult> => {
+    const result = await runBlender(blender.path, ["--background", "--factory-startup", "--python-exit-code", "1", "--python", join(BRIDGE_TESTS, file)], { root, jobs, timeoutMs: TEST_TIMEOUT_MS, label: file });
     const passed = result.code === 0 && !result.timedOut;
-    const output = passed ? "" : `${result.stdout.slice(-4000)}\n${result.stderr.slice(-2000)}${result.timedOut ? "\ntimed out" : ""}`;
+    const output = passed ? "" : `${result.stdout.slice(-4000)}\n${result.stderr.slice(-2000)}${result.timedOut ? `\n${timeoutLine(file, result)}` : ""}`;
     console.log(`${passed ? "ok  " : "FAIL"} ${file.padEnd(28)} ${formatSeconds(result.seconds)}`);
     if (!passed) console.log(output);
+    recordTiming({ kind: "file", stage: currentStage(env), file: `bridge/tests/${file}`, wallMs: Math.round((result.seconds + result.waitedSeconds) * 1000), waitMs: Math.round(result.waitedSeconds * 1000), processes: 1, endedAt: Date.now() }, env);
     return { file, passed, seconds: result.seconds, output };
   });
   writeTimings(root, results, timings);

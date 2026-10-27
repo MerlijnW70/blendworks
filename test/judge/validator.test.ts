@@ -6,16 +6,17 @@ import { judge, type JudgeOptions } from "../../src/judge/run.js";
 import { resolveResource, validateGltf, ValidationError, VALIDATOR_DEFAULTS } from "../../src/judge/validator.js";
 import { freshDir, makeTextureFixtures } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let work = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   assets = makeTextureFixtures("validator");
   work = freshDir("validator", "work");
-}, 180_000);
+}));
 
 const LIMITS = { maxBytes: VALIDATOR_DEFAULTS.maxBytes, heapMb: VALIDATOR_DEFAULTS.heapMb, timeoutMs: 60_000 };
 const PLAIN_SPEC = { name: "plain cube", format: "glb", gltf: { validator: {} }, views: ["front"] };
@@ -41,7 +42,7 @@ function gltfWithImage(name: string, uri: string): string {
   return path;
 }
 
-describe("the Khronos glTF validator", { timeout: 120_000 }, () => {
+describe("the Khronos glTF validator", workBudget(120_000), () => {
   it("reports 0 errors and 0 warnings for clean exports", async () => {
     for (const [asset, format] of [["plain.glb", "glb"], ["textured.glb", "glb"], ["external/external.gltf", "gltf"]] as const) {
       const validation = await validateGltf(join(assets, asset), format, LIMITS);
@@ -103,7 +104,7 @@ describe("the Khronos glTF validator", { timeout: 120_000 }, () => {
   });
 });
 
-describe("what the validator may open", { timeout: 120_000 }, () => {
+describe("what the validator may open", workBudget(120_000), () => {
   it("serves only files inside the asset folder", () => {
     const asset = join(assets, "external", "external.gltf");
     expect(resolveResource(asset, "base.png")).toEqual({ path: expect.stringMatching(/base\.png$/) });

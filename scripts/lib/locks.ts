@@ -8,7 +8,26 @@ const BUSY_CODES = new Set(["EEXIST", "EPERM", "EACCES", "EBUSY"]);
 
 export type Owner = { pid: number; token: string; since: number };
 
-export type FileLock = { path: string; token: string; release(): void };
+export type FileLock = { path: string; token: string; release(): boolean };
+
+export type WaitObserver = { waiting(): void; waited(waitedMs: number): void };
+
+const waitObservers = new Set<WaitObserver>();
+
+export function observeWaits(observer: WaitObserver): () => void {
+  waitObservers.add(observer);
+  return () => waitObservers.delete(observer);
+}
+
+export function waitStarted(): () => number {
+  const started = performance.now();
+  for (const observer of waitObservers) observer.waiting();
+  return () => {
+    const waitedMs = performance.now() - started;
+    for (const observer of waitObservers) observer.waited(waitedMs);
+    return waitedMs;
+  };
+}
 
 export function processAlive(pid: number): boolean {
   try {
@@ -120,8 +139,9 @@ export function tryLock(path: string): FileLock | undefined {
     path,
     token: owner.token,
     release() {
-      if (!held.delete(lock)) return;
+      if (!held.delete(lock)) return false;
       removeIfOwned(path, owner.token);
+      return true;
     },
   };
   held.add(lock);
@@ -129,11 +149,18 @@ export function tryLock(path: string): FileLock | undefined {
 }
 
 export async function lockFile(path: string, options: { timeoutMs?: number; pollMs?: number } = {}): Promise<FileLock> {
+  const immediate = tryLock(path);
+  if (immediate !== undefined) return immediate;
   const deadline = Date.now() + (options.timeoutMs ?? 30 * 60_000);
-  for (;;) {
-    const lock = tryLock(path);
-    if (lock !== undefined) return lock;
-    if (Date.now() > deadline) throw new Error(`timed out waiting for the lock ${path}`);
-    await sleep(options.pollMs ?? 40);
+  const done = waitStarted();
+  try {
+    for (;;) {
+      await sleep(options.pollMs ?? 40);
+      const lock = tryLock(path);
+      if (lock !== undefined) return lock;
+      if (Date.now() > deadline) throw new Error(`timed out waiting, not working: waited for the lock ${path}`);
+    }
+  } finally {
+    done();
   }
 }

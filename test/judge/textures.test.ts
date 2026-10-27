@@ -7,16 +7,17 @@ import type { Report } from "../../src/judge/report.js";
 import { judge, type JudgeOptions } from "../../src/judge/run.js";
 import { freshDir, makeTextureFixtures } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let specs = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   assets = makeTextureFixtures("textures");
   specs = freshDir("textures", "specs");
-}, 180_000);
+}));
 
 const BASE = 4 * (64 * 64 + 32 * 32 + 16 * 16 + 8 * 8 + 4 * 4 + 2 * 2 + 1 * 1);
 const BASE_TRIM = 4 * (32 * 32 + 16 * 16 + 8 * 8 + 4 * 4 + 2 * 2 + 1 * 1);
@@ -72,7 +73,7 @@ const TEXTURED_IMAGES = [
   image("orm", ["metallicRoughness", "occlusion"], ["painted", "trim"], 32, 32, ORM, "Non-Color"),
 ];
 
-describe("texture rules on generated PBR assets", { timeout: 120_000 }, () => {
+describe("texture rules on generated PBR assets", workBudget(120_000), () => {
   it("passes every texture rule for the box with five embedded maps, in preview mode", async () => {
     const report = await judged("textured.glb");
     expect(report.rules.map((entry) => entry.rule)).toEqual(TEXTURE_RULES);

@@ -10,6 +10,7 @@ import { imageBytes } from "../../src/package/memory.js";
 import { selectNative } from "../../src/package/native.js";
 import { freshDir, makeFixtureSet } from "../judge/helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -17,9 +18,9 @@ const NATIVE_KTX2 = (await selectNative()).tool?.ktx2.ktx2 === true;
 
 let assets = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   ({ assets } = makeFixtureSet("package_fixtures", "package"));
-}, 180_000);
+}));
 
 function command(argv: string[]): Omit<PackageCommand, "command"> {
   const parsed = parsePackage(argv);
@@ -32,7 +33,7 @@ function glbOf(path: string) {
   return parseGlb(new Uint8Array(readFileSync(path)));
 }
 
-describe("packaging a textured asset through the judge", { timeout: 300_000 }, () => {
+describe("packaging a textured asset through the judge", workBudget(300_000), () => {
   it("builds LODs, renders them against LOD0 and compresses with gltfpack, writing KTX2 with the native build and saying plainly that it cannot without", async () => {
     const dir = freshDir("package", "judge-ball");
     const specPath = join(dir, "ball.spec.json");
@@ -151,7 +152,7 @@ describe("packaging a textured asset through the judge", { timeout: 300_000 }, (
   });
 });
 
-describe("the package command", { timeout: 300_000 }, () => {
+describe("the package command", workBudget(300_000), () => {
   it("writes one file per LOD when asked and keeps the parent empties and names in both packages", async () => {
     const outDir = freshDir("package", "cli-rig");
     const run = await packageAsset(command([join(assets, "rig.glb"), "--out", outDir, "--lods", "1", "--ratios", "0.5", "--files", "separate", "--views", "front"]));

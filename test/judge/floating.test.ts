@@ -5,16 +5,17 @@ import type { Report } from "../../src/judge/report.js";
 import { judge } from "../../src/judge/run.js";
 import { freshDir, makeTextureFixtures } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
+import { withWorkBudget, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
 let assets = "";
 let specs = "";
 
-beforeAll(() => {
+beforeAll(withWorkBudget(180_000, () => {
   assets = makeTextureFixtures("floating");
   specs = freshDir("floating", "specs");
-}, 180_000);
+}));
 
 async function judged(asset: string, parts: Record<string, unknown>, label: string): Promise<Report> {
   const name = `${asset.replace(/\W+/g, "-")}-${label}`;
@@ -23,7 +24,7 @@ async function judged(asset: string, parts: Record<string, unknown>, label: stri
   return judge({ specPath: spec, assetPath: join(assets, asset), outDir: freshDir("floating", "reports", name), preview: true });
 }
 
-describe("floating parts", { timeout: 120_000 }, () => {
+describe("floating parts", workBudget(120_000), () => {
   it("fails maxFloating 0 for the stray block and the lamp hanging 0.5 m above the body", async () => {
     const report = await judged("floating.glb", { maxFloating: 0 }, "zero");
     expect(report.measurements?.floating).toEqual({
