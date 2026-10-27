@@ -13,6 +13,8 @@ MODULES = (
     "roller_chain",
     "mesh_query",
     "wear",
+    "clean",
+    "engrave",
     "materials",
     "images",
     "pbr",

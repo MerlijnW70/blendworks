@@ -154,12 +154,12 @@ class TargetNodes:
         self.found = found
         return found
 
-    def point_at(self, image):
+    def point_at(self, images):
         self.clear()
         for material in self.found:
             tree = material.node_tree
             node = tree.nodes.new("ShaderNodeTexImage")
-            node.image = image
+            node.image = images[material.name]
             self.nodes.append((tree, node, tree.nodes.active))
             tree.nodes.active = node
 

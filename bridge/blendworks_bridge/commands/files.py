@@ -5,6 +5,7 @@ import bpy
 
 from ..blendfile import open_blend, save_atomically
 from ..errors import bad_args, failed, forbidden
+from ..exporting import check_options, forced_png, option_fields, resolved_tangents, run_exporter, shown, triangulated
 from ..operators import only_selected, operator_context
 from ..policy import REPLACES_FILE
 from ..registry import command
@@ -19,12 +20,13 @@ EXPORTABLE_TYPES = GEOMETRY_TYPES + ("EMPTY",)
 
 @command(
     "export",
-    "Export the scene (or named objects) to a .glb, .fbx or .obj file in the workspace, modifiers applied.",
+    "Export the scene (or named objects) to a .glb, .fbx or .obj file in the workspace; options for modifiers, hidden objects, up axis, tangents, texture format and Draco.",
     {
         "path": string("File path inside the workspace, relative to it.", max_length=1024),
         "format": string("File format. Default: from the path's extension.", list(EXPORT_FORMATS)),
         "names": names("Objects to export. Default: every visible mesh, curve and text object."),
         "ancestors": boolean("Also export the empties these objects are parented under, so the hierarchy survives.", True),
+        **option_fields(),
     },
     ["path"],
     mutates=False,
@@ -39,28 +41,47 @@ def export(ctx, args):
         raise forbidden(f"export writes only {', '.join(EXPORT_FORMATS.values())} files")
     if extension != EXPORT_FORMATS[file_format]:
         raise bad_args(f"a {file_format} export needs a {EXPORT_FORMATS[file_format]} path")
+    check_options(file_format, args)
     path = ctx.workspace.output(args["path"], tuple(EXPORT_FORMATS.values()))
-    if "names" in args:
-        objects = get_objects(args["names"])
-    else:
-        objects = [obj for obj in ctx.scene.objects if obj.type in GEOMETRY_TYPES and obj.visible_get(view_layer=ctx.view_layer)]
-    objects = [obj for obj in objects if obj.type in EXPORTABLE_TYPES]
-    if not objects:
-        raise bad_args("there is nothing to export")
+    objects = chosen_objects(ctx, args)
     if args["ancestors"]:
         objects = with_ancestor_empties(objects, ctx.scene)
+    tangents = resolved_tangents(args, objects) if file_format == "glb" else None
     active = objects[0]
-    with only_selected(ctx.view_layer, active, objects):
-        with bpy.context.temp_override(**operator_context(active, objects)):
-            run_exporter(file_format, path)
+    with shown(objects, ctx.view_layer, args["include_hidden"]), forced_png(objects, args.get("image_format") == "png"), triangulated(objects, bool(tangents)):
+        with only_selected(ctx.view_layer, active, objects):
+            with bpy.context.temp_override(**operator_context(active, objects)):
+                run_exporter(file_format, path, args, tangents)
     if not os.path.isfile(path):
         raise failed(f"the {file_format} exporter wrote no file")
-    return {
+    result = {
         "path": ctx.workspace.relative(path),
         "format": file_format,
         "bytes": os.path.getsize(path),
         "objects": sorted(obj.name for obj in objects),
+        "options": {name: args[name] for name in ("apply_modifiers", "include_hidden", "yup")},
     }
+    if file_format == "glb":
+        result["options"].update({"tangents": tangents, "image_format": args.get("image_format", "auto"), "draco": args.get("draco", False)})
+    return result
+
+
+def chosen_objects(ctx, args):
+    if "names" in args:
+        objects = get_objects(args["names"])
+        hidden = [obj.name for obj in objects if obj.type in EXPORTABLE_TYPES and not obj.visible_get(view_layer=ctx.view_layer)]
+        if hidden and not args["include_hidden"]:
+            raise bad_args(f"{', '.join(hidden)} is hidden; set include_hidden to export hidden objects")
+    else:
+        objects = [
+            obj
+            for obj in ctx.scene.objects
+            if obj.type in GEOMETRY_TYPES and (args["include_hidden"] or obj.visible_get(view_layer=ctx.view_layer))
+        ]
+    objects = [obj for obj in objects if obj.type in EXPORTABLE_TYPES]
+    if not objects:
+        raise bad_args("there is nothing to export")
+    return objects
 
 
 def with_ancestor_empties(objects, scene):
@@ -74,35 +95,6 @@ def with_ancestor_empties(objects, scene):
                 chosen.append(parent)
             parent = parent.parent
     return chosen
-
-
-def run_exporter(file_format, path):
-    if file_format == "glb":
-        bpy.ops.export_scene.gltf(
-            filepath=path,
-            export_format="GLB",
-            use_selection=True,
-            export_apply=True,
-            export_cameras=False,
-            export_lights=False,
-            export_yup=True,
-        )
-    elif file_format == "fbx":
-        bpy.ops.export_scene.fbx(
-            filepath=path,
-            use_selection=True,
-            use_mesh_modifiers=True,
-            object_types={"MESH", "EMPTY", "OTHER"},
-            path_mode="STRIP",
-        )
-    else:
-        bpy.ops.wm.obj_export(
-            filepath=path,
-            export_selected_objects=True,
-            apply_modifiers=True,
-            export_materials=True,
-            path_mode="STRIP",
-        )
 
 
 @command(

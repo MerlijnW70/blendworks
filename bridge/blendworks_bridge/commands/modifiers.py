@@ -7,9 +7,9 @@ from ..meshdata import MeshData
 from ..modifier_specs import SPECS, configure, kind_schemas
 from ..registry import command
 from ..schema import array, boolean, integer, length, names, number, string, vector3
-from ..topology import describe_problems, manifold_report, mesh_report
-from ..util import EditMesh, check_vertex_cap, get_mesh_object, get_object, mesh_counts
-from .mesh_edit import local_length
+from ..topology import describe_problems, mesh_report
+from ..util import check_vertex_cap, get_mesh_object, get_object, mesh_counts
+from .clean import clean_object
 
 OBJECT = string("Mesh object.")
 APPLY = boolean("Apply the modifier to the mesh now instead of keeping it live.", False)
@@ -78,7 +78,14 @@ def replace_geometry(obj, source):
     obj.data.materials.clear()
     for material in source.materials:
         obj.data.materials.append(material)
+    drop_unused_empty_slots(obj.data)
     obj.data.update()
+
+
+def drop_unused_empty_slots(mesh):
+    used = {polygon.material_index for polygon in mesh.polygons}
+    while len(mesh.materials) > 0 and mesh.materials[len(mesh.materials) - 1] is None and len(mesh.materials) - 1 not in used:
+        mesh.materials.pop(index=len(mesh.materials) - 1)
 
 
 @command(
@@ -132,13 +139,6 @@ def remove_stand_in(stand_in):
     bpy.data.meshes.remove(mesh)
 
 
-def clean_boolean_result(obj, distance):
-    with EditMesh(obj) as bm:
-        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=local_length(obj, distance))
-        if manifold_report(bm)["manifold"]:
-            bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-
-
 def dispose_cutters(ctx, cutters, action):
     for cutter in cutters:
         if action == "hide":
@@ -153,7 +153,7 @@ def dispose_cutters(ctx, cutters, action):
 
 @command(
     "boolean",
-    "Combine a mesh with one cutter or a list of cutters (unioned first, one exact operation): union, difference or intersect; merges close vertices, and can refuse a non-manifold result.",
+    "Combine a mesh with one cutter or a list of cutters (unioned first, one exact operation): union, difference or intersect; cleans the result like clean_mesh, and can refuse a non-manifold result.",
     {
         "name": OBJECT,
         "cutter": string("The other mesh object."),
@@ -163,8 +163,8 @@ def dispose_cutters(ctx, cutters, action):
         "cutter_action": string("What to do with the cutters: hide them, keep them shown, or delete them (needs apply).", ["hide", "keep", "delete"], "hide"),
         "apply": boolean("Apply the boolean to the mesh now instead of keeping it live.", True),
         "manifold": boolean("Refuse and roll back when the result is not a closed manifold.", False),
-        "cleanup": boolean("After applying, merge vertices closer than merge_distance and recalculate the normals of a closed result.", True),
-        "merge_distance": length("Cleanup merge distance in metres.", 0.00001, 1.0),
+        "clean": boolean("After applying, run clean_mesh: merge close vertices, dissolve degenerate faces, retriangulate slivers, drop collinear vertices, fix normals.", True),
+        "merge_distance": length("Clean merge distance in metres.", 0.00001, 1.0),
     },
     ["name"],
     slow=True,
@@ -194,8 +194,7 @@ def boolean_command(ctx, args):
     finally:
         if stand_in is not None:
             remove_stand_in(stand_in)
-    if args["apply"] and args["cleanup"]:
-        clean_boolean_result(obj, args["merge_distance"])
+    cleaned = clean_object(obj, merge_distance=args["merge_distance"]) if args["apply"] and args["clean"] else None
     report = mesh_report(obj.data) if args["apply"] else evaluated_report(ctx, obj)
     if args["manifold"] and not report["manifold"]:
         raise failed(f"the boolean result is not manifold: {describe_problems(report)}")
@@ -203,6 +202,8 @@ def boolean_command(ctx, args):
     result.update({"cutter": args["cutter_action"], "cutters": len(cutters), "manifold": report["manifold"], "volume": round(report["volume"], 9) if report["volume"] is not None else None})
     if args["apply"]:
         result["mesh"] = mesh_counts(obj.data)
+    if cleaned is not None:
+        result["cleaned"] = {key: value for key, value in cleaned.items() if key not in ("mesh", "manifold", "volume")}
     return result
 
 

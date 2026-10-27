@@ -3,6 +3,7 @@ import time
 import bpy
 
 from .. import baking, device, limits
+from ..bake_sizes import check_rules, gpu_bytes, per_material, size_for, size_rules_schema
 from ..errors import bad_args, failed
 from ..images import require_free_image_name
 from ..pbr import DEFAULT_OPTIONS, build_pbr
@@ -37,7 +38,8 @@ def samples_schema():
             len(baking.CHANNELS),
             ["base_color", "roughness", "metallic", "normal"],
         ),
-        "size": integer("Image width and height in pixels.", 16, limits.MAX_BAKE_SIZE, limits.DEFAULT_BAKE_SIZE),
+        "size": integer("Image width and height in pixels; the default for every image that atlas_sizes does not cover.", 16, limits.MAX_BAKE_SIZE, limits.DEFAULT_BAKE_SIZE),
+        "atlas_sizes": size_rules_schema(),
         "prefix": string("Image name prefix; images are named prefix_channel. Default: the first object's name."),
         "overwrite": boolean("Replace existing images of the same names after a successful bake.", False),
         "samples": samples_schema(),
@@ -49,7 +51,7 @@ def samples_schema():
         "ao_distance": number("Reach in metres of the ao rays.", 0.001, 100.0, 1.0),
         "float_buffer": boolean("Bake data channels (roughness, metallic, normal, ao) into 32-bit float images.", False),
         "rewire": boolean("Give the objects one new material built from the baked images with material_pbr.", False),
-        "material": string("Name of the rewired material. Default: prefix_baked."),
+        "material": string("Name of the rewired material. Default: prefix_baked. Not with atlas_sizes that name materials: each gets material_baked."),
         "pack": boolean("Pack the baked images into the scene so .blend files keep them.", True),
         "device": string("auto: GPU when usable, else CPU; gpu: fail without a GPU; cpu. Default: BLENDWORKS_DEVICE or auto.", list(device.MODES)),
         "time_limit": number("Seconds; the bake fails and is undone once it runs longer.", 1.0, limits.MAX_BAKE_SECONDS, limits.DEFAULT_BAKE_SECONDS),
@@ -78,7 +80,7 @@ def bake(ctx, args):
         for channel in args["channels"]:
             check_time(started, args["time_limit"], channel)
             try:
-                entry = bake_channel(ctx, channel, images[channel], plan, args, swap, targets)
+                entry = bake_channel(ctx, channel, images, plan, args, swap, targets)
             except RuntimeError as error:
                 if choice.device != "gpu" or mode != "auto":
                     raise failed(f"baking {channel} failed: {error}") from error
@@ -86,7 +88,7 @@ def bake(ctx, args):
                 choice = device.Choice("cpu", fallback=f"{choice.backend} did not bake: {error}")
                 scope = device.DeviceScope(ctx.scene, choice)
                 scope.__enter__()
-                entry = bake_channel(ctx, channel, images[channel], plan, args, swap, targets)
+                entry = bake_channel(ctx, channel, images, plan, args, swap, targets)
             report.append(entry)
             check_time(started, args["time_limit"], None)
     finally:
@@ -96,8 +98,10 @@ def bake(ctx, args):
         settings.restore()
     final = finish_images(images, args)
     for entry in report:
-        entry["image"] = final[entry["channel"]].name
-    material = rewire(plan, final, args, swap.strength) if args["rewire"] else None
+        entry["images"] = [image.name for key, image in final.items() if key[1] == entry["channel"]]
+        entry["image"] = entry["images"][0]
+    materials = rewire(plan, final, args, swap.strength) if args["rewire"] else None
+    textures = [texture_entry(key, image) for key, image in final.items()]
     return {
         "names": [obj.name for obj in plan["targets"]],
         "source": [obj.name for obj in plan["sources"]],
@@ -105,10 +109,18 @@ def bake(ctx, args):
         "device_label": choice.label(),
         "size": [args["size"], args["size"]],
         "channels": report,
-        "images": [final[channel].name for channel in args["channels"]],
-        "material": material,
+        "images": [image.name for image in final.values()],
+        "textures": textures,
+        "gpu_bytes": sum(item["gpu_bytes"] for item in textures),
+        "material": materials[0] if materials and len(materials) == 1 else None,
+        "materials": materials,
         "seconds": rounded(time.monotonic() - started, 3),
     }
+
+
+def texture_entry(key, image):
+    width, height = image.size
+    return {"image": image.name, "material": key[0], "channel": key[1], "size": [width, height], "gpu_bytes": gpu_bytes(width, height)}
 
 
 def make_plan(ctx, args):
@@ -146,21 +158,45 @@ def make_plan(ctx, args):
         if channel not in args["channels"]:
             raise bad_args(f"samples names {channel}, which is not baked")
     prefix = args.get("prefix", targets[0].name)
-    return {"targets": targets, "sources": sources, "shading": materials, "prefix": prefix}
+    used = baked_materials(targets)
+    rules = args.get("atlas_sizes", [])
+    check_rules(rules, used, args["channels"])
+    if per_material(rules) and any(not [slot for slot in obj.material_slots if slot.material is not None] for obj in targets):
+        raise bad_args("atlas_sizes that name materials need every baked object to have a material")
+    if per_material(rules) and "material" in args:
+        raise bad_args("material names one rewired material; with atlas_sizes that name materials each baked material is called material_baked")
+    return {"targets": targets, "sources": sources, "shading": materials, "prefix": prefix, "rules": rules, "per_material": per_material(rules), "materials": used}
+
+
+def baked_materials(targets):
+    found = []
+    for obj in targets:
+        for slot in obj.material_slots:
+            if slot.material is not None and slot.material not in found:
+                found.append(slot.material)
+    return found
+
+
+def image_name(plan, material, channel):
+    middle = f"_{material}" if material is not None else ""
+    return f"{plan['prefix']}{middle}_{channel}"
 
 
 def create_images(plan, args):
     images = {}
+    owners = [material.name for material in plan["materials"]]
     for channel in args["channels"]:
-        name = f"{plan['prefix']}_{channel}"
-        if len(name) + len(BAKING_SUFFIX) > MAX_NAME_LENGTH:
-            raise bad_args(f"the image name {name} is too long; give a shorter prefix")
-        if not args["overwrite"]:
-            require_free_image_name(name)
-        image = baking.bake_image(name + BAKING_SUFFIX, args["size"], args["size"], channel, args["float_buffer"])
-        if image.name != name + BAKING_SUFFIX:
-            raise bad_args(f"an image named {name + BAKING_SUFFIX} is in the way")
-        images[channel] = image
+        for owner in owners if plan["per_material"] else [None]:
+            name = image_name(plan, owner, channel)
+            if len(name) + len(BAKING_SUFFIX) > MAX_NAME_LENGTH:
+                raise bad_args(f"the image name {name} is too long; give a shorter prefix")
+            if not args["overwrite"]:
+                require_free_image_name(name)
+            size = size_for(plan["rules"], args["size"], owner, channel)
+            image = baking.bake_image(name + BAKING_SUFFIX, size, size, channel, args["float_buffer"])
+            if image.name != name + BAKING_SUFFIX:
+                raise bad_args(f"an image named {name + BAKING_SUFFIX} is in the way")
+            images[(owner, channel)] = image
     return images
 
 
@@ -171,7 +207,14 @@ def check_time(started, limit, channel):
         raise failed(f"the bake ran {elapsed:.1f} s, over its time limit of {limit:.1f} s ({where}); nothing was kept")
 
 
-def bake_channel(ctx, channel, image, plan, args, swap, targets):
+def images_by_material(images, plan, channel, targets):
+    if not plan["per_material"]:
+        shared = images[(None, channel)]
+        return {material.name: shared for material in targets.found}
+    return {material.name: images[(material.name, channel)] for material in targets.found}
+
+
+def bake_channel(ctx, channel, images, plan, args, swap, targets):
     samples = args.get("samples", {}).get(channel, baking.DEFAULT_SAMPLES[channel])
     ctx.scene.cycles.samples = samples
     options = {
@@ -183,7 +226,7 @@ def bake_channel(ctx, channel, image, plan, args, swap, targets):
     }
     active = plan["targets"][0]
     objects = plan["sources"] + plan["targets"]
-    targets.point_at(image)
+    targets.point_at(images_by_material(images, plan, channel, targets))
     if channel in baking.EMISSION_SOURCES:
         swap.apply(channel)
     started = time.monotonic()
@@ -192,12 +235,12 @@ def bake_channel(ctx, channel, image, plan, args, swap, targets):
     finally:
         swap.restore()
         targets.clear()
-    return {"channel": channel, "image": image.name, "samples": samples, "seconds": rounded(time.monotonic() - started, 3)}
+    return {"channel": channel, "samples": samples, "seconds": rounded(time.monotonic() - started, 3)}
 
 
 def finish_images(images, args):
     final = {}
-    for channel, image in images.items():
+    for key, image in images.items():
         name = image.name[: -len(BAKING_SUFFIX)]
         existing = bpy.data.images.get(name)
         if existing is not None:
@@ -206,25 +249,43 @@ def finish_images(images, args):
         image.name = name
         if args["pack"]:
             image.pack()
-        final[channel] = image
+        final[key] = image
     return final
 
 
+def maps_of(images, owner):
+    return {PBR_KEYS[key[1]]: image for key, image in images.items() if key[0] == owner}
+
+
 def rewire(plan, images, args, strength):
-    name = args.get("material", f"{plan['prefix']}_baked")
+    options = dict(DEFAULT_OPTIONS)
+    options["uv_map"] = args.get("uv_map")
+    if "emission" in args["channels"] and strength is not None:
+        options["emission_strength"] = strength
+    if not plan["per_material"]:
+        material = fresh_material(args.get("material", f"{plan['prefix']}_baked"))
+        build_pbr(material, maps_of(images, None), options)
+        for obj in plan["targets"]:
+            obj.data.materials.clear()
+            obj.data.materials.append(material)
+            for polygon in obj.data.polygons:
+                polygon.material_index = 0
+        return [material.name]
+    replaced = {}
+    for original in plan["materials"]:
+        material = fresh_material(f"{original.name}_baked")
+        build_pbr(material, maps_of(images, original.name), options)
+        replaced[original.name] = material
+    for obj in plan["targets"]:
+        for slot in obj.material_slots:
+            if slot.material is not None and slot.material.name in replaced:
+                slot.material = replaced[slot.material.name]
+    return [material.name for material in replaced.values()]
+
+
+def fresh_material(name):
     material = bpy.data.materials.get(name)
     if material is None:
         material = bpy.data.materials.new(name)
         material.use_fake_user = True
-    maps = {PBR_KEYS[channel]: image for channel, image in images.items()}
-    options = dict(DEFAULT_OPTIONS)
-    options["uv_map"] = args.get("uv_map")
-    if "emission" in maps and strength is not None:
-        options["emission_strength"] = strength
-    build_pbr(material, maps, options)
-    for obj in plan["targets"]:
-        obj.data.materials.clear()
-        obj.data.materials.append(material)
-        for polygon in obj.data.polygons:
-            polygon.material_index = 0
-    return material.name
+    return material

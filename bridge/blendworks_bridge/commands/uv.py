@@ -8,6 +8,7 @@ from ..operators import edit_mode
 from ..registry import command
 from ..schema import boolean, integer, number, string
 from ..texel import density, pack, scale_to_density
+from ..uv_coverage import merge_islands
 from ..util import EditMesh, get_mesh_object, rounded
 
 GRID = 256
@@ -57,26 +58,40 @@ def apply_texel_density(ctx, obj, args, margin):
         "name": string("Mesh object."),
         "angle_limit": number("Split islands where faces meet at more than this many degrees.", 1.0, 89.0, 66.0),
         "island_margin": number("Space between islands, as a share of the UV square.", 0.0, 1.0, 0.02),
+        "min_island_area": number(
+            "Merge islands smaller than this share of the surface area into a neighbour where the seams allow, then pack; stops slivers on notched parts. 0 keeps every island.",
+            0.0,
+            1.0,
+            0.0,
+        ),
         **TEXEL_PROPERTIES,
     },
     ["name"],
 )
 def uv_smart_project(ctx, args):
     obj = uv_mesh_object(args["name"])
+    merging = args["min_island_area"] > 0
     run_in_edit_mode(
         ctx,
         obj,
         lambda: bpy.ops.uv.smart_project(
             angle_limit=math.radians(args["angle_limit"]),
             margin_method="FRACTION",
-            island_margin=args["island_margin"],
+            island_margin=0.0 if merging else args["island_margin"],
             area_weight=0.0,
             correct_aspect=True,
             scale_to_bounds=False,
         ),
     )
+    islands = None
+    if merging:
+        islands = merge_islands(obj, args["min_island_area"])
+        pack(ctx.view_layer, [obj], args["island_margin"], False, True, "ANY", "CONVEX")
     apply_texel_density(ctx, obj, args, args["island_margin"])
-    return uv_report(obj, texture_size=args["texture_size"])
+    report = uv_report(obj, texture_size=args["texture_size"])
+    if islands is not None:
+        report["islands"] = islands
+    return report
 
 
 @command(

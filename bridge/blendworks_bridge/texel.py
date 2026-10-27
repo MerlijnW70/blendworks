@@ -92,16 +92,16 @@ def average_island_scale(view_layer, objects):
         bpy.ops.uv.average_islands_scale(scale_uv=False, shear=False)
 
 
-def pack(view_layer, objects, margin, rotate, scale):
+def pack(view_layer, objects, margin, rotate, scale, rotate_method="ANY", shape_method="CONCAVE"):
     with multi_edit_mode(view_layer, objects):
         bpy.ops.uv.pack_islands(
             udim_source="CLOSEST_UDIM",
             rotate=rotate,
-            rotate_method="ANY",
+            rotate_method=rotate_method,
             scale=scale,
             margin_method="FRACTION",
             margin=margin,
-            shape_method="CONCAVE",
+            shape_method=shape_method,
         )
     for obj in objects:
         obj.data.update()

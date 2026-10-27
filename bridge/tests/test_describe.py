@@ -23,6 +23,7 @@ DESIGN_COMMANDS = {
     "add_light", "add_camera", "look_at", "set_world",
     "render_preview", "export", "save_blend", "import",
     "load_blend", "checkpoint", "restore_checkpoint",
+    "clean_mesh", "engrave",
 }
 ASSET_LIBRARY_COMMANDS = {"set_world_hdri"}
 SLOW = {"slow": True, "timeout": 300, "max_timeout": 1800}
@@ -31,7 +32,7 @@ DECLARED_METADATA = {
     "boolean": dict(SLOW, destructive=True, destructive_when="cutter_action is delete"),
     "image_save": {"writes_files": True, "destructive": True, "destructive_when": "the file already exists", "slow": False},
     **{name: SLOW for name in ("decimate", "import", "uv_pack", "set_world_hdri", "apply_modifier", "sweep", "loft", "instances",
-                               "rivet_line", "roller_chain", "displace_noise", "mesh_from_data", "generate_lods")},
+                               "rivet_line", "roller_chain", "displace_noise", "mesh_from_data", "generate_lods", "clean_mesh", "engrave")},
 }
 SCHEMA_KEYS = {"type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",
                "maximum", "exclusiveMinimum", "minItems", "maxItems", "minLength", "maxLength", "default"}

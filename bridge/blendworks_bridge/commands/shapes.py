@@ -1,5 +1,6 @@
 from mathutils import Vector
 
+from ..analytic_paths import ANALYTIC_PATHS, path_fields
 from ..builder import SHAPE_FIELDS, finish_shape
 from ..errors import bad_args
 from ..kit_limits import MAX_PATH_POINTS, MAX_PROFILE_POINTS, MAX_SECTIONS, MAX_SEGMENTS
@@ -51,28 +52,38 @@ def lathe(ctx, args):
     return result
 
 
+ROUTES = ("waypoints", "curve", *ANALYTIC_PATHS)
+
+
 def sweep_path(args):
-    given = [key for key in ("waypoints", "curve") if key in args]
+    given = [key for key in ROUTES if key in args]
     if len(given) != 1:
-        raise bad_args("give the route as exactly one of waypoints or curve")
-    if "waypoints" in args:
+        raise bad_args(f"give the route as exactly one of {', '.join(ROUTES)}")
+    route = given[0]
+    if route in ANALYTIC_PATHS:
+        if "closed" in args or args["fillet_radius"] > 0:
+            raise bad_args(f"the {route} path has no corners and decides itself whether it closes; closed and fillet_radius belong to waypoints and curve")
+        points, closed, info = ANALYTIC_PATHS[route](args[route])
+        return clean_path(points, closed, f"the {route} path"), closed, info
+    if route == "waypoints":
         closed = args.get("closed", False)
-        return clean_path(args["waypoints"], closed), closed
+        return clean_path(args["waypoints"], closed), closed, None
     points, cyclic = object_curve(args["curve"])
     closed = args.get("closed", cyclic)
-    return clean_path(points, closed, f"curve {args['curve']}"), closed
+    return clean_path(points, closed, f"curve {args['curve']}"), closed, None
 
 
 @command(
     "sweep",
-    "Sweep a closed profile along points or a curve with rotation-minimising frames (no flips); taper, twist, corner fillets, caps, closed loops; UVs unwrapped along the length.",
+    "Sweep a closed profile along points, a curve, or an exact circle, arc or helix with rotation-minimising frames; taper, twist, corner fillets, caps, closed loops; UVs unwrapped along the length.",
     with_shape_fields(
         {
             **profile_fields(),
             "waypoints": points3("Path points [x, y, z] in metres; the profile origin follows them.", 2, MAX_PATH_POINTS),
             "curve": string("Name of an existing curve object (one spline) to follow instead of waypoints, in world space."),
+            **path_fields(),
             "closed": boolean("Join the end of the path to its start (default: the curve's own setting, else false)."),
-            "up": vector3("Direction the profile's v axis points at the start of the path.", [0.0, 0.0, 1.0]),
+            "up": vector3("Direction the profile's v axis points at the start of the path. Default +Z, or the axis of a circle, arc or helix."),
             "scale_start": length("Profile scale at the start of the path.", 1.0, 1000.0),
             "scale_end": length("Profile scale at the end of the path; the scale changes linearly with distance.", 1.0, 1000.0),
             "twist": number("Total twist in degrees along the path; on a closed path a multiple of 360.", -36000.0, 36000.0, 0.0),
@@ -87,14 +98,14 @@ def sweep_path(args):
 def sweep(ctx, args):
     require_free_name(args["name"])
     profile = resolve_profile(args)
-    points, closed = sweep_path(args)
+    points, closed, analytic = sweep_path(args)
     if closed:
         check_closed_arguments(args["twist"], args["scale_start"], args["scale_end"])
     if args["fillet_radius"] > 0:
         points = drop_coinciding(fillet_path(points, args["fillet_radius"], args["fillet_segments"], closed), closed)
     if len(points) > MAX_PATH_POINTS:
         raise bad_args(f"the path has {len(points)} points; the cap is {MAX_PATH_POINTS}")
-    up = Vector(args["up"])
+    up = Vector(args["up"]) if "up" in args else analytic["axis"] if analytic is not None else Vector((0.0, 0.0, 1.0))
     if up.length == 0:
         raise bad_args("up must not be zero")
     rings, total = sweep_rings(points, closed, profile, up, args["twist"], args["scale_start"], args["scale_end"])
@@ -105,6 +116,12 @@ def sweep(ctx, args):
         cap(data, indices[-1], rings[-1], points[-1] - points[-2])
     result = finish_shape(ctx, data, args)
     result.update({"length": round(total, 6), "rings": len(rings), "closed": closed})
+    if analytic is not None:
+        result["path"] = {
+            "segments": analytic["segments"],
+            "chord_error": round(analytic["chord_error"], 9),
+            "analytic_length": round(analytic["analytic_length"], 6),
+        }
     return result
 
 

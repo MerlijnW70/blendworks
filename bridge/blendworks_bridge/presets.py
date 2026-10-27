@@ -1,5 +1,6 @@
+from .marble import DEFAULT_VEIN_COLOR, marble, vein_mask, veins_schema
 from .procedural import AXES, Preset, preset_vector, stretched
-from .schema import color, number, string
+from .schema import boolean, color, number, string
 
 WAVE_FREQUENCY = 3.1831
 AXIS_CHOICE = list(AXES)
@@ -72,19 +73,24 @@ def rust(graph, p):
 
 def stone(graph, p):
     vector = preset_vector(graph, p)
-    edges = graph.voronoi(vector, p["cell_scale"], feature="DISTANCE_TO_EDGE")
-    cracks = graph.map_range(edges.outputs["Distance"], 0.0, max(p["crack_width"], 0.001))
+    cracks = 1.0
+    if p["cracks"]:
+        edges = graph.voronoi(vector, p["cell_scale"], feature="DISTANCE_TO_EDGE")
+        cracks = graph.map_range(edges.outputs["Distance"], 0.0, max(p["crack_width"], 0.001))
     cells = graph.voronoi(vector, p["cell_scale"])
     detail = graph.noise(vector, 14.0, detail=8.0, roughness=0.65).outputs["Factor"]
     tone = graph.mix(0.45, cells.outputs["Color"], graph.map_range(detail, 0.25, 0.75), "FLOAT")
     surface = graph.mix(graph.map_range(tone, 0.15, 0.85), p["secondary_color"], p["color"])
     low, high = spread(p["roughness"], 0.08, 0.08)
-    return {
-        "base_color": graph.mix(graph.math("SUBTRACT", 1.0, graph.math("MULTIPLY", graph.math("SUBTRACT", 1.0, cracks), 0.75)), scaled(p["secondary_color"], 0.3), surface),
-        "roughness": graph.map_range(detail, 0.3, 0.7, low, high),
-        "metallic": 0.0,
-        "height": graph.math("MULTIPLY_ADD", cracks, 0.7, graph.math("MULTIPLY", detail, 0.3)),
-    }
+    base_color = graph.mix(graph.math("SUBTRACT", 1.0, graph.math("MULTIPLY", graph.math("SUBTRACT", 1.0, cracks), 0.75)), scaled(p["secondary_color"], 0.3), surface)
+    roughness = graph.map_range(detail, 0.3, 0.7, low, high)
+    height = graph.math("MULTIPLY_ADD", cracks, 0.7, graph.math("MULTIPLY", detail, 0.3))
+    veins = p.get("veins")
+    if veins is not None:
+        mask = vein_mask(graph, vector, veins)
+        base_color = graph.mix(mask, base_color, veins["color"])
+        height = graph.math("MULTIPLY", height, graph.math("SUBTRACT", 1.0, graph.math("MULTIPLY", mask, 0.3)))
+    return {"base_color": base_color, "roughness": roughness, "metallic": 0.0, "height": height}
 
 
 def concrete(graph, p):
@@ -166,13 +172,23 @@ PRESETS = {
             "coverage": amount("Share of the surface covered by rust.", 0.5),
             "metal_roughness": amount("Roughness of the bare metal.", 0.4),
         }, rust),
-        Preset("stone", "Stone with cells, cracks and fine grain.", 2.0, {
+        Preset("stone", "Stone with cells, cracks, fine grain and optional veins.", 2.0, {
             "color": color("Main stone colour, linear RGB.", [0.33, 0.31, 0.28], False),
             "secondary_color": color("Second stone colour, linear RGB.", [0.2, 0.19, 0.18], False),
             "cell_scale": number("Stone cells per metre.", 0.1, 200.0, 4.0),
+            "cracks": boolean("Draw the dark cracks between the cells; false leaves a seamless stone.", True),
             "crack_width": amount("Width of the cracks between cells.", 0.05),
+            "veins": veins_schema(),
             "roughness": amount("Average roughness.", 0.8),
         }, stone),
+        Preset("marble", "Polished marble with warped, ridged veins and soft clouds.", 0.3, {
+            "color": color("Base stone colour, linear RGB.", [0.8, 0.78, 0.73], False),
+            "secondary_color": color("Cloud tint in the base, linear RGB.", [0.62, 0.6, 0.57], False),
+            "vein_color": color("Vein colour, linear RGB.", DEFAULT_VEIN_COLOR, False),
+            "vein_width": amount("Vein width: 0 is hair-thin, 1 is broad bands.", 0.14),
+            "turbulence": amount("How far the veins wander: 0 gives straight parallel bands.", 0.5),
+            "roughness": amount("Average roughness; marble is polished.", 0.18),
+        }, marble),
         Preset("concrete", "Concrete with stains and small pores.", 0.5, {
             "color": color("Concrete colour, linear RGB.", [0.4, 0.39, 0.37], False),
             "variation": amount("Strength of the stains.", 0.4),

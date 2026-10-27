@@ -35,7 +35,7 @@ def output_of(material):
 
 
 def test_every_preset_builds_a_bakeable_material(bridge):
-    assert sorted(PRESETS) == ["concrete", "dirt", "fabric", "rust", "stone", "wood", "worn_metal"]
+    assert sorted(PRESETS) == ["concrete", "dirt", "fabric", "marble", "rust", "stone", "wood", "worn_metal"]
     for name in PRESETS:
         result = bridge.ok("material_procedural", name=f"M_{name}", **{name: {"seed": 7, "scale": 2.0}})
         assert result["created"] is True and result["preset"] == name and result["nodes"] > 8, result
@@ -69,7 +69,7 @@ def test_material_procedural_refuses_bad_presets(bridge):
     assert "knots" in bridge.refuse("material_procedural", "bad_args", name="Kept", wood={"knots": 3})
     assert "exactly one" in bridge.refuse("material_procedural", "bad_args", name="Kept", wood={}, rust={})
     bridge.refuse("material_procedural", "bad_args", name="Kept")
-    bridge.refuse("material_procedural", "bad_args", name="Kept", marble={})
+    bridge.refuse("material_procedural", "bad_args", name="Kept", granite={})
     bridge.refuse("material_procedural", "bad_args", name="Kept", wood={"scale": -1.0})
     bridge.refuse("material_procedural", "bad_args", name="Kept", wood={"grain": "w"})
     bridge.refuse("material_procedural", "bad_args", name="Kept", wood={"light_color": [2.0, 0.0, 0.0]})
