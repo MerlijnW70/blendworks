@@ -46,8 +46,8 @@ export const WORKFLOWS: Workflow[] = [
     id: "terrain-tiles",
     goal: "Terrain tiles",
     examples: ["landscape", "mountains", "heightmap ground", "terrain with ridges", "tiles that join"],
-    steps: ["blender_heightfield", "blender_material_procedural"],
-    note: "blender_heightfield samples one noise field at world metres, so tile [1, 0] continues tile [0, 0] with no seam: give every tile the same seed and noise settings and a different tile. Keep the finest octave at least two vertex spacings long. skirt true closes a tile into a solid; attributes slope, height and curvature are kept for masks. Roughen a rock or a cliff with blender_noise_displace.",
+    steps: ["blender_heightfield", "blender_erode", "blender_material_nodes", "blender_material_procedural"],
+    note: "blender_heightfield samples one noise field at world metres, so tile [1, 0] continues tile [0, 0] with no seam: give every tile the same seed and noise settings and a different tile. Keep the finest octave at least two vertex spacings long. skirt true closes a tile into a solid; attributes slope, height and curvature are kept for masks. Roughen a rock or a cliff with blender_noise_displace. Erode after building the tiles: pass the neighbouring tiles as names so they are eroded as one grid and still share their edge heights (one tile alone keeps its edges fixed). mode both alternates droplets and thermal talus sweeps; blender_erode writes erosion and deposition (metres) beside slope, and a blender_material_nodes attribute node reads them as masks. Lague's defaults are strong on metre terrain: lower capacity and erode_rate and use many droplets.",
   },
   {
     id: "scatter-terrain",

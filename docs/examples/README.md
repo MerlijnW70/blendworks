@@ -76,3 +76,24 @@ It adds to the terrain and rock:
 - **A bark log** (`bark`, grain along the cylinder axis) and **a leaf card** (`leaf` with `cutout`, from its UV square). They stand at y -30, beside the terrain tiles and not in front of them: the 110 m tall terrain shades anything close behind it in the preview light, which made the log close-up almost black.
 
 The close-ups are `rock`, `rock-top`, `log`, `leaf`, `ground-close` and the overview views of `noise_terrain.py`.
+
+## Eroded terrain
+
+`eroded_terrain.py` builds a 2 x 2 set of 100 m tiles from `heightfield`, erodes them as one grid with `erode` (hydraulic droplets, then thermal talus slides), dresses them with one `material_nodes` graph masked by the `slope`, `erosion` and `deposition` attributes, and renders them in low sun, with commands only. It is the acceptance build of the `erode` job.
+
+```
+blender --background --factory-startup --python docs/examples/eroded_terrain.py -- out
+```
+
+The script writes into `out`:
+- `eroded-terrain.blend`;
+- five PNGs: `overview` and `channels` (shaded and clay, from a camera and a low sun) and `tile-joint-clay` (the corner where the four tiles meet);
+- `summary.json`: the `erode` reply (volumes eroded, deposited and carried off the edge, thermal sweeps, time) and every command with its time.
+
+It runs these steps in order, and stops at the first failing command:
+1. **Tiles.** Four `heightfield` calls with the same seed and gentle fBm (`scale` 140 m, five octaves, `hurst` 0.9, 35 m of height), tiles `[0, 0]` to `[1, 1]`, with `slope` and `height` attributes. The relief is gentle on purpose: slopes well below the talus angle leave the droplets room to cut gullies, and the thermal sweeps then only trim their walls.
+2. **Erosion.** One `erode` call with `name` and the other three tiles in `names`: 300,000 droplets (capacity 3, `erode_rate` 0.02, `deposit_rate` 0.1, `inertia` 0.1, 200 steps of 1 m, the smallest brush) in 20 rounds, each followed by thermal sweeps at a 40 degree talus angle. The outer edge of the 200 m grid stays as built; the three inner edges are eroded as part of the grid and the tiles still share them exactly (`edge_change` 0).
+3. **Materials.** The tiles are joined and welded along their shared edges (so shading has no seam), then one `material_nodes` graph mixes soil towards rock where `slope` is steep, towards pale scoured rock where `erosion` is deep and towards silt where `deposition` is thick.
+4. **Renders.** A sun at 25 degrees, a world colour and three cameras, then the five renders.
+
+`BLENDWORKS_TERRAIN_RESOLUTION`, `BLENDWORKS_DROPLETS`, `BLENDWORKS_SWEEPS`, `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.

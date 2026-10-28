@@ -17,6 +17,7 @@ MODULES = (
     "wear",
     "noise_displace",
     "heightfield",
+    "erode",
     "clean",
     "engrave",
     "scales",

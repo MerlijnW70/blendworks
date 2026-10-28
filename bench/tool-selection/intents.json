@@ -169,6 +169,8 @@
   {"id":"scatter-2","text":"Sprinkle rock rubble across the terrain tile with many small pieces and a few big ones, sunk a little into the slope","kind":"single","split":"tune","expect":["blender_scatter"],"alternatives":["blender_instances"]},
   {"id":"scatter-3","text":"Plant fifty trees over the ground mesh with random size and rotation so it does not look like a grid","kind":"near-miss","split":"heldout","expect":["blender_scatter"],"confusable":"blender_instances"},
   {"id":"scatter-4","text":"Spread three kinds of bushes over the meadow with blue noise spacing, more of the first kind than the others","kind":"single","split":"tune","expect":["blender_scatter"]},
+  {"id":"erode-1","text":"Let water carve drainage valleys into the terrain tiles and drop the sediment where the slopes flatten","kind":"near-miss","split":"heldout","expect":["blender_erode"],"confusable":"blender_heightfield"},
+  {"id":"erode-2","text":"Make loose scree slide down the steep mountain flanks until they rest at a 35 degree talus angle","kind":"single","split":"tune","expect":["blender_erode"]},
   {"id":"vertex_colors-2","text":"Fill the whole mesh colour attribute with white before painting","kind":"single","split":"heldout","expect":["blender_vertex_colors"]},
   {"id":"material_layer-3","text":"Put a patina layer on the brass where cavities are","kind":"single","split":"tune","expect":["blender_material_layer"]},
   {"id":"material_pbr-2","text":"Build a PBR material with a DirectX normal map and an ORM texture","kind":"single","split":"tune","expect":["blender_material_pbr"]},

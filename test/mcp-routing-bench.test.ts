@@ -82,7 +82,7 @@ describe("tool routing on the real bridge", workBudget(240_000), () => {
     const first = scoreRouting(intents, rank, "heldout");
     const again = scoreRouting(intents, rank, "heldout");
     expect(again.misses).toEqual(first.misses);
-    expect(first.top5.total).toBe(73);
+    expect(first.top5.total).toBe(74);
     expect(first.top5.hits).toBeGreaterThanOrEqual(HELDOUT_TOP5_HITS);
     expect(first.top1.hits).toBeGreaterThanOrEqual(HELDOUT_TOP1_HITS);
     expect(first.top5.rate).toBeGreaterThanOrEqual(0.95);
