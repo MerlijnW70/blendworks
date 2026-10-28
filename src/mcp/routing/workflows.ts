@@ -57,6 +57,13 @@ export const WORKFLOWS: Workflow[] = [
     note: "Model each piece with its base at the origin (blender_set_origin to bottom_centre), then blender_scatter over the terrain: min_distance is the spacing of the smallest pieces in metres, measured in 3D so it holds on slopes; density_mask slope with slope_range keeps pieces off steep faces, or attribute with the slope or height that blender_heightfield writes. scale_distribution power with the default exponent -2 gives many small stones and a few large ones, and larger pieces keep proportionally more room. embed 0.2 sinks each piece so it does not float on a slope; align blend leans it with the ground. sources takes several pieces with weights; the same seed gives the same layout. blender_instances stays for points you choose yourself.",
   },
   {
+    id: "shell",
+    goal: "Seashell, snail or ammonite",
+    examples: ["conch", "snail shell", "ammonite", "nautilus", "spiral shell"],
+    steps: ["blender_shell", "blender_set_origin", "blender_material_procedural", "blender_render_preview"],
+    note: "blender_shell grows a generating curve along a logarithmic spiral. W is the growth per whorl (1.3 to 1.5 for a spire, about 2 for an ammonite), D the distance of the curve from the axis (small for a snail, 0.5 for a coil), T the drop per whorl (0 gives a flat coil, 1 or more a spire), size the aperture in metres, ribs across the growth and spiral_ridges along it, lip a flared rim, thickness a hollow wall that opens at the aperture, handedness right or left. The shell winds downwards from an apex on top; keep D times W above 1 when T is 0, or the whorls overlap. Its UVs are in metres, so a stone or marble preset keeps its scale to the aperture.",
+  },
+  {
     id: "rock-set",
     goal: "Rock set",
     examples: ["boulders", "stones", "scatter rocks", "cliff pieces"],

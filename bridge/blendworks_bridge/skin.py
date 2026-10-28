@@ -15,9 +15,14 @@ def mean_gap(ring_a, ring_b):
 
 
 def skin(data, rings, closed_v=False, island=None, material=0, smooth=True):
+    indices = [[data.vertex(point) for point in ring] for ring in rings]
+    skin_between(data, indices, rings, closed_v, island, material, smooth)
+    return indices
+
+
+def skin_between(data, indices, rings, closed_v=False, island=None, material=0, smooth=True):
     if island is None:
         island = data.island_count()
-    indices = [[data.vertex(point) for point in ring] for ring in rings]
     count = len(rings)
     heights = [0.0]
     for index in range(1, count):
@@ -39,7 +44,6 @@ def skin(data, rings, closed_v=False, island=None, material=0, smooth=True):
                 (around[k2][j], heights[k + 1]),
             ]
             data.face(quad, uvs, island, material, smooth)
-    return indices
 
 
 def newell_normal(points):

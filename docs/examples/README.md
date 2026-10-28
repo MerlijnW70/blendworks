@@ -97,3 +97,24 @@ It runs these steps in order, and stops at the first failing command:
 4. **Renders.** A sun at 25 degrees, a world colour and three cameras, then the five renders.
 
 `BLENDWORKS_TERRAIN_RESOLUTION`, `BLENDWORKS_DROPLETS`, `BLENDWORKS_SWEEPS`, `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+## Shells
+
+`shells.py` builds three shells with commands only, gives each a material and renders them. It is the acceptance build of the `shell` job.
+
+```
+blender --background --factory-startup --python docs/examples/shells.py -- out
+```
+
+The script writes into `out`:
+- `shells.blend`;
+- four PNGs: `overview` and one close-up each of `conch`, `ammonite` and `ribbed_fan`;
+- `summary.json`: every command with its time and, for `shell`, whether the result is manifold, its volume and the thinnest wall.
+
+It runs these steps in order, and stops at the first failing command:
+1. **Scene.** A sky, a sun and a concrete floor.
+2. **Conch.** A high spire: `W` 1.42, `D` 0.15, `T` 0.9 over 6.5 whorls on an ellipse profile, 14 ribs per whorl, a flared lip and a 2 mm hollow wall.
+3. **Ammonite.** A flat coil: `W` 1.9, `D` 0.5, `T` 0 over 4 whorls on a tall ellipse, 18 ribs per whorl and a 3 mm wall, in a marble preset in metres.
+4. **Ribbed fan.** A flat fan like a scallop valve, but one piece and without ears or a hinge: an arched plate profile given as points, `W` 3 over half a whorl, with 28 radial ribs.
+5. **Materials and renders.** Each shell gets a stone or marble preset, its origin is set to the bottom centre, then the four renders.
+
+`BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.

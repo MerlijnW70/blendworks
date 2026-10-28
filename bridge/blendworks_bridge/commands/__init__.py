@@ -9,6 +9,7 @@ MODULES = (
     "modifiers",
     "geometry",
     "shapes",
+    "shell",
     "solids",
     "placement",
     "scatter",
