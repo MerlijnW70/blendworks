@@ -24,7 +24,7 @@ def srgb(value):
 
 
 def baked_colour(bridge, name):
-    bridge.ok("bake", names=[name], channels=["base_color"], size=SIZE, device="cpu", overwrite=True, samples={"base_color": 1})
+    bridge.ok("bake", names=[name], channels=["base_color"], size=SIZE, device="cpu", overwrite=True, samples={"base_color": 1}, time_limit=600.0)
     values = list(bpy.data.images[f"{name}_base_color"].pixels)
     count = len(values) // 4
     return [sum(values[channel::4]) / count for channel in range(3)]

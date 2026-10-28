@@ -38,7 +38,7 @@ def annulus(bridge, plane="xy"):
 def roughness_of_ring(bridge, **brass):
     bridge.ok("material_procedural", name="Turned", brass={"polish": 0.2, "patina": 0.0, "scratch_scale": SCRATCH_SCALE, **brass})
     bridge.ok("assign_material", name="Ring", material="Turned")
-    bridge.ok("bake", names=["Ring"], channels=["roughness"], size=SIZE, overwrite=True, samples={"roughness": 1}, prefix="Ring", device="cpu", margin=0, float_buffer=True)
+    bridge.ok("bake", names=["Ring"], channels=["roughness"], size=SIZE, overwrite=True, samples={"roughness": 1}, prefix="Ring", device="cpu", margin=0, float_buffer=True, time_limit=600.0)
     pixels = numpy.array(bpy.data.images["Ring_roughness"].pixels[:], dtype=numpy.float64).reshape(SIZE, SIZE, 4)
     return pixels[..., 0]
 

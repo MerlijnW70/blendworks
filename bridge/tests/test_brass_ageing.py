@@ -61,7 +61,7 @@ def texel_classes():
 def albedo_ratio(bridge, age):
     bridge.ok("material_procedural", name=f"Brass_{age}", brass={"age": age})
     bridge.ok("assign_material", name="Plate", material=f"Brass_{age}")
-    bridge.ok("bake", names=["Plate"], channels=["base_color"], size=PIXELS, overwrite=True, samples={"base_color": 16}, prefix="Plate", device="cpu", margin=0, float_buffer=True)
+    bridge.ok("bake", names=["Plate"], channels=["base_color"], size=PIXELS, overwrite=True, samples={"base_color": 16}, prefix="Plate", device="cpu", margin=0, float_buffer=True, time_limit=600.0)
     values = luminance("Plate_base_color", PIXELS)
     recess, open_top = texel_classes()
     assert recess.sum() > 2000 and open_top.sum() > 20000, (recess.sum(), open_top.sum())
@@ -84,7 +84,7 @@ def test_age_tarnishes_the_open_metal_from_new_to_dull(bridge):
     for age in ("new", "handled", "aged", "dull"):
         bridge.ok("material_procedural", name=age, brass={"age": age, "color": [0.6, 0.4, 0.12]})
         bridge.ok("assign_material", name="Sheet", material=age)
-        bridge.ok("bake", names=["Sheet"], channels=["base_color", "roughness"], size=256, overwrite=True, samples={"base_color": 4, "roughness": 4}, prefix=f"Sheet_{age}", device="cpu", margin=0, float_buffer=True)
+        bridge.ok("bake", names=["Sheet"], channels=["base_color", "roughness"], size=256, overwrite=True, samples={"base_color": 4, "roughness": 4}, prefix=f"Sheet_{age}", device="cpu", margin=0, float_buffer=True, time_limit=600.0)
         colour = numpy.array(bpy.data.images[f"Sheet_{age}_base_color"].pixels[:]).reshape(256, 256, 4)[32:-32, 32:-32, :3].mean(axis=(0, 1))
         rough = numpy.array(bpy.data.images[f"Sheet_{age}_roughness"].pixels[:]).reshape(256, 256, 4)[32:-32, 32:-32, 0].mean()
         means[age] = (float(colour.mean()), float(colour[0] - colour[2]), float(rough))

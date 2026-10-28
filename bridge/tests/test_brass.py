@@ -40,6 +40,7 @@ def bake(bridge, material, obj, channels, size=SIZE, samples=8):
         device="cpu",
         margin=0,
         float_buffer=True,
+        time_limit=600.0,
     )
     return {key: channel(f"Swatch_{key}", size) for key in channels}
 

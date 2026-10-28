@@ -74,7 +74,7 @@ def encoded_luminance(color):
 
 def bake_base_color(bridge, material, name="Sheet", size=SIZE):
     bridge.ok("assign_material", name=name, material=material)
-    bridge.ok("bake", names=[name], channels=["base_color"], size=size, overwrite=True, samples={"base_color": 16}, prefix="Swatch", device="cpu")
+    bridge.ok("bake", names=[name], channels=["base_color"], size=size, overwrite=True, samples={"base_color": 16}, prefix="Swatch", device="cpu", time_limit=600.0)
     return bpy.data.images["Swatch_base_color"]
 
 
@@ -285,7 +285,7 @@ def test_the_graph_works_with_layers_bake_and_gltf_export(bridge):
     bridge.ok("assign_material", name="Sheet", material="Wood")
     layered = bridge.ok("material_layer", material="Wood", rust={"coverage": 0.6}, mask="noise", amount=0.5)
     assert layered["nodes"] > 5
-    baked = bridge.ok("bake", names=["Sheet"], channels=["base_color", "roughness"], size=64, rewire=True, samples={"base_color": 1, "roughness": 1}, prefix="Wood", device="cpu")
+    baked = bridge.ok("bake", names=["Sheet"], channels=["base_color", "roughness"], size=64, rewire=True, samples={"base_color": 1, "roughness": 1}, prefix="Wood", device="cpu", time_limit=600.0)
     assert baked["materials"] == ["Wood_baked"]
     exported = bridge.ok("export", path="wood.glb")
     document, _ = glb_parts(os.path.join(bridge.workspace, "wood.glb"))

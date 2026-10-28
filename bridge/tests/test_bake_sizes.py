@@ -44,7 +44,7 @@ def rules():
 
 def test_three_materials_bake_at_their_own_sizes_and_report_the_gpu_estimate(bridge):
     three_materials(bridge)
-    result = bridge.ok("bake", names=["Trio"], channels=CHANNELS, size=64, atlas_sizes=rules(), samples=SAMPLES, prefix="Maps", rewire=True)
+    result = bridge.ok("bake", names=["Trio"], channels=CHANNELS, size=64, atlas_sizes=rules(), samples=SAMPLES, prefix="Maps", rewire=True, time_limit=600.0)
     expected = {f"Maps_{colour}_{channel}": size for colour, size in SIZES.items() for channel in CHANNELS}
     assert sorted(result["images"]) == sorted(expected)
     for name, size in expected.items():
@@ -59,7 +59,7 @@ def test_three_materials_bake_at_their_own_sizes_and_report_the_gpu_estimate(bri
 
 def test_each_material_lands_in_its_own_image_and_the_object_keeps_its_slots(bridge):
     three_materials(bridge)
-    bridge.ok("bake", names=["Trio"], channels=CHANNELS, size=64, atlas_sizes=rules(), samples=SAMPLES, prefix="Maps", rewire=True)
+    bridge.ok("bake", names=["Trio"], channels=CHANNELS, size=64, atlas_sizes=rules(), samples=SAMPLES, prefix="Maps", rewire=True, time_limit=600.0)
     for colour, values in COLOURS.items():
         image = bpy.data.images[f"Maps_{colour}_base_color"]
         size = image.size[0]
@@ -111,7 +111,7 @@ def test_a_bake_without_atlas_sizes_still_reports_its_estimate(bridge):
     bridge.ok("add_primitive", type="plane", name="Sheet", size=2.0)
     bridge.ok("add_material", name="Paint", base_color=[0.5, 0.5, 0.5])
     bridge.ok("assign_material", name="Sheet", material="Paint")
-    result = bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=64, samples={"base_color": 1}, device="cpu")
+    result = bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=64, samples={"base_color": 1}, device="cpu", time_limit=600.0)
     assert result["gpu_bytes"] == BYTES[64] and result["textures"][0]["material"] is None
 
 

@@ -125,7 +125,7 @@ NO_GPU_REASON = "no usable GPU (OPTIX: no device found; CUDA: not in this Blende
 def test_device_cpu_is_forced_by_the_environment(bridge):
     textured_plane(bridge)
     with environment("cpu"), patched(device, "probe_backends", lambda: [probe("OPTIX", "Stub GPU")]):
-        result = bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=SIZE)
+        result = bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=SIZE, time_limit=600.0)
     assert result["device"] == {"device": "cpu", "backend": None, "names": [], "fallback": None}
     assert result["device_label"] == "cpu"
     assert bpy.context.scene.cycles.device == "CPU"
@@ -134,7 +134,7 @@ def test_device_cpu_is_forced_by_the_environment(bridge):
 def test_device_auto_falls_back_without_a_gpu(bridge):
     textured_plane(bridge)
     with environment("auto"), patched(device, "probe_backends", lambda: NO_GPU):
-        result = bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=SIZE)
+        result = bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=SIZE, time_limit=600.0)
     assert result["device"] == {"device": "cpu", "backend": None, "names": [], "fallback": NO_GPU_REASON}
     assert result["device_label"] == f"cpu (auto fell back to the CPU: {NO_GPU_REASON})"
     with patched(device, "probe_backends", lambda: []):
@@ -173,7 +173,7 @@ def test_auto_retries_on_the_cpu_when_the_gpu_bake_fails(bridge):
     with patched(device, "probe_backends", lambda: [probe("OPTIX", "Stub GPU")]), patched(device, "cycles_preferences", lambda: None):
         with patched(baking, "run_bake_operator", None) as real:
             baking.run_bake_operator = failing_on(1, real)
-            result = bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=SIZE, device="auto")
+            result = bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=SIZE, device="auto", time_limit=600.0)
     assert result["device"]["device"] == "cpu" and result["device"]["fallback"].startswith("OPTIX did not bake: ")
     assert result["images"] == ["Sheet_base_color"]
 

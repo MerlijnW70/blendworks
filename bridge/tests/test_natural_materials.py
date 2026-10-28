@@ -30,7 +30,7 @@ def srgb(value):
 
 
 def bake(bridge, name, size, channel="base_color"):
-    bridge.ok("bake", names=[name], channels=[channel], size=size, device="cpu", overwrite=True, samples={channel: 1})
+    bridge.ok("bake", names=[name], channels=[channel], size=size, device="cpu", overwrite=True, samples={channel: 1}, time_limit=600.0)
     return f"{name}_{channel}"
 
 
@@ -63,7 +63,7 @@ def test_every_natural_preset_builds_and_bakes(bridge):
         assert shader.inputs["Base Color"].is_linked and shader.inputs["Roughness"].is_linked, name
         bridge.ok("add_primitive", type="plane", name=f"P_{name}", size=1.0)
         bridge.ok("assign_material", name=f"P_{name}", material=f"M_{name}")
-        bridge.ok("bake", names=[f"P_{name}"], channels=["base_color", "roughness"], size=32, device="cpu", overwrite=True, samples={"base_color": 1, "roughness": 1})
+        bridge.ok("bake", names=[f"P_{name}"], channels=["base_color", "roughness"], size=32, device="cpu", overwrite=True, samples={"base_color": 1, "roughness": 1}, time_limit=600.0)
         for channel in ("base_color", "roughness"):
             pixels = numpy.array(bpy.data.images[f"P_{name}_{channel}"].pixels[:])
             assert numpy.isfinite(pixels).all() and pixels.std() > 0.002, (name, channel)

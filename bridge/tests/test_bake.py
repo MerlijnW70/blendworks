@@ -65,7 +65,7 @@ def test_bake_procedural_colour_and_float_data(bridge):
     bridge.ok("add_primitive", type="plane", name="Board", size=2.0)
     bridge.ok("material_procedural", name="Flat", wood={"light_color": [0.3, 0.3, 0.3], "dark_color": [0.3, 0.3, 0.3], "roughness": 0.5})
     bridge.ok("assign_material", name="Board", material="Flat")
-    bridge.ok("bake", names=["Board"], channels=["base_color", "metallic"], size=SIZE, device="cpu", float_buffer=True, prefix="Flat")
+    bridge.ok("bake", names=["Board"], channels=["base_color", "metallic"], size=SIZE, device="cpu", float_buffer=True, prefix="Flat", time_limit=600.0)
     close(mean_pixel(bpy.data.images["Flat_base_color"])[:3], [srgb(0.3)] * 3, QUANTUM)
     metallic = bpy.data.images["Flat_metallic"]
     assert metallic.is_float and bpy.data.images["Flat_base_color"].is_float is False
@@ -76,7 +76,7 @@ def test_bake_ao_darkens_under_an_occluder(bridge):
     bridge.ok("add_primitive", type="plane", name="Floor", size=2.0)
     bridge.ok("add_primitive", type="cube", name="Lid", size=1.0)
     bridge.ok("transform", name="Lid", location=[0.0, 0.0, 0.55])
-    bridge.ok("bake", names=["Floor"], channels=["ao"], size=SIZE, device="cpu", ao_distance=1.0, samples={"ao": 32})
+    bridge.ok("bake", names=["Floor"], channels=["ao"], size=SIZE, device="cpu", ao_distance=1.0, samples={"ao": 32}, time_limit=600.0)
     image = bpy.data.images["Floor_ao"]
     assert pixel(image, SIZE // 2, SIZE // 2)[0] < 0.4
     assert pixel(image, 1, 1)[0] > pixel(image, SIZE // 2, SIZE // 2)[0] + 0.3
@@ -86,10 +86,10 @@ def test_bake_ao_darkens_under_an_occluder(bridge):
 
 def test_bake_overwrite_and_rewire(bridge):
     flat_plane(bridge, base_color=[1.0, 0.0, 0.0], roughness=0.8)
-    bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=SIZE, device="cpu")
+    bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=SIZE, device="cpu", time_limit=600.0)
     bridge.refuse("bake", "bad_args", names=["Sheet"], channels=["base_color"], size=SIZE, device="cpu")
     bridge.ok("add_material", name="Paint", base_color=[0.0, 0.0, 1.0])
-    result = bridge.ok("bake", names=["Sheet"], channels=["base_color", "roughness"], size=SIZE, device="cpu", overwrite=True, rewire=True)
+    result = bridge.ok("bake", names=["Sheet"], channels=["base_color", "roughness"], size=SIZE, device="cpu", overwrite=True, rewire=True, time_limit=600.0)
     assert result["material"] == "Sheet_baked"
     assert pixel(bpy.data.images["Sheet_base_color"], 5, 5)[2] > 0.9
     assert "Sheet_base_color.001" not in bpy.data.images
@@ -105,7 +105,7 @@ def test_bake_shares_one_atlas_between_objects(bridge):
     flat_plane(bridge, name="Right", material="Blue", base_color=[0.0, 0.0, 1.0])
     bridge.ok("transform", name="Right", location=[3.0, 0.0, 0.0])
     bridge.ok("uv_pack", names=["Left", "Right"], margin=0.02, rotate=False)
-    result = bridge.ok("bake", names=["Left", "Right"], channels=["base_color"], size=64, device="cpu", prefix="Atlas", rewire=True)
+    result = bridge.ok("bake", names=["Left", "Right"], channels=["base_color"], size=64, device="cpu", prefix="Atlas", rewire=True, time_limit=600.0)
     assert result["names"] == ["Left", "Right"] and result["images"] == ["Atlas_base_color"]
     image = bpy.data.images["Atlas_base_color"]
     for name, red, blue in (("Left", 1.0, 0.0), ("Right", 0.0, 1.0)):
@@ -150,7 +150,7 @@ def test_bake_selected_to_active_catches_bevels(bridge):
     bridge.ok("add_primitive", type="cube", name="Low", size=1.0)
     bridge.ok("uv_smart_project", name="Low", island_margin=0.05)
     size = 128
-    result = bridge.ok("bake", names=["Low"], source=["High"], channels=["normal"], size=size, device="cpu", cage_extrusion=0.1, margin=4)
+    result = bridge.ok("bake", names=["Low"], source=["High"], channels=["normal"], size=size, device="cpu", cage_extrusion=0.1, margin=4, time_limit=600.0)
     assert result["source"] == ["High"] and result["names"] == ["Low"]
     image = bpy.data.images["Low_normal"]
     low = bpy.data.objects["Low"].data

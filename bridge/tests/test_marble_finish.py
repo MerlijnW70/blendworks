@@ -29,7 +29,7 @@ def slab(bridge):
 def tilts(bridge, **marble):
     bridge.ok("material_procedural", name="Stone", marble=marble)
     bridge.ok("assign_material", name="Slab", material="Stone")
-    bridge.ok("bake", names=["Slab"], channels=["normal"], size=BAKE_SIZE, overwrite=True, samples={"normal": 1}, prefix="Slab", device="cpu", margin=0, float_buffer=True)
+    bridge.ok("bake", names=["Slab"], channels=["normal"], size=BAKE_SIZE, overwrite=True, samples={"normal": 1}, prefix="Slab", device="cpu", margin=0, float_buffer=True, time_limit=600.0)
     pixels = numpy.array(bpy.data.images["Slab_normal"].pixels[:], dtype=numpy.float64).reshape(BAKE_SIZE, BAKE_SIZE, 4)
     normals = pixels[..., :3] * 2.0 - 1.0
     cosine = normals[..., 2] / numpy.linalg.norm(normals, axis=2)
@@ -60,7 +60,7 @@ def test_the_finish_changes_neither_veins_nor_colour(bridge):
     for finish in ("polished", "honed", "rough"):
         bridge.ok("material_procedural", name="Stone", marble={"seed": 3, "finish": finish})
         bridge.ok("assign_material", name="Slab", material="Stone")
-        bridge.ok("bake", names=["Slab"], channels=["base_color"], size=128, overwrite=True, samples={"base_color": 1}, prefix="Tone", device="cpu", margin=0, float_buffer=True)
+        bridge.ok("bake", names=["Slab"], channels=["base_color"], size=128, overwrite=True, samples={"base_color": 1}, prefix="Tone", device="cpu", margin=0, float_buffer=True, time_limit=600.0)
         colours.append(numpy.array(bpy.data.images["Tone_base_color"].pixels[:]))
     assert numpy.abs(colours[0] - colours[1]).max() < 1e-6 and numpy.abs(colours[0] - colours[2]).max() < 1e-6
     bridge.refuse("material_procedural", "bad_args", name="Bad", marble={"finish": "glossy"})

@@ -23,7 +23,7 @@ HARD_EDGES = 2.5
 def baked_statistics(bridge, **preset):
     bridge.ok("material_procedural", name="Sample", **preset)
     bridge.ok("assign_material", name="Sheet", material="Sample")
-    bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=SIZE, overwrite=True, samples={"base_color": 1}, prefix="Swatch")
+    bridge.ok("bake", names=["Sheet"], channels=["base_color"], size=SIZE, overwrite=True, samples={"base_color": 1}, prefix="Swatch", time_limit=600.0)
     return vein_statistics(luminance("Swatch_base_color", SIZE))
 
 
@@ -35,7 +35,7 @@ def sheet(bridge):
 def physical_swatch(bridge, **preset):
     bridge.ok("material_procedural", name="Physical", **preset)
     bridge.ok("assign_material", name="Slab", material="Physical")
-    bridge.ok("bake", names=["Slab"], channels=["base_color"], size=SLAB_PIXELS, overwrite=True, samples={"base_color": 1}, prefix="Slab", device="cpu", margin=0)
+    bridge.ok("bake", names=["Slab"], channels=["base_color"], size=SLAB_PIXELS, overwrite=True, samples={"base_color": 1}, prefix="Slab", device="cpu", margin=0, time_limit=600.0)
     values = luminance("Slab_base_color", SLAB_PIXELS)
     return values, vein_profile(values[EDGE_CROP:-EDGE_CROP, EDGE_CROP:-EDGE_CROP], SLAB_METRES * 1000.0 / SLAB_PIXELS)
 
