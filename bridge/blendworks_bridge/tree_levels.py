@@ -32,12 +32,28 @@ class LevelPlan:
         self.rotate = args["rotate"]
         self.length_ratio = args["length_ratio"]
         self.curve = args["curve"]
+        self.curve_back = args["curve_back"]
+        self.curve_variation = args["curve_variation"]
+        self.rng = numpy.random.default_rng([args["seed"], 2])
         self.segments = args["segments"]
         self.length = args["height"]
         self.trunk_height = args["trunk_height"]
         self.shape = args["envelope"]
         if self.trunk_height >= self.length:
             raise bad_args("trunk_height must be below height, the trunk length, for levels")
+
+    def bend(self, level, length, start, end):
+        curve = math.radians(per_level(self.curve, level))
+        back = math.radians(per_level(self.curve_back, level))
+        if back == 0.0:
+            angle = curve * (end - start) / length
+        else:
+            middle = 0.5 * length
+            angle = (2.0 * curve * max(0.0, min(end, middle) - start) + 2.0 * back * max(0.0, end - max(start, middle))) / length
+        variation = math.radians(per_level(self.curve_variation, level))
+        if variation > 0.0:
+            angle += variation * float(self.rng.uniform(-1.0, 1.0)) * (end - start) / length
+        return angle
 
     def child_setting(self, values, child_level):
         return per_level(values, child_level - 1)
@@ -125,7 +141,6 @@ class LevelGrowth:
         self.stems.append(stem)
         offsets = self.offsets(stem)
         arcs = arc_lengths(length, offsets, int(per_level(self.plan.segments, level)))
-        bend = math.radians(per_level(self.plan.curve, level)) / length
         position = self.nodes.positions[base].copy()
         previous = 0.0
         frames = {}
@@ -134,8 +149,9 @@ class LevelGrowth:
                 raise bad_args("the levels tree needs more nodes than max_nodes")
             step = arc - previous
             axis = numpy.cross(tangent, normal)
-            tangent = normalised(rotated(tangent, axis, bend * step))
-            normal = normalised(rotated(normal, axis, bend * step))
+            angle = self.plan.bend(level, length, previous, arc)
+            tangent = normalised(rotated(tangent, axis, angle))
+            normal = normalised(rotated(normal, axis, angle))
             position = position + tangent * step
             if position[2] <= self.base_height:
                 self.truncated += 1

@@ -228,3 +228,25 @@ It runs these steps in order, and stops at the first failing command:
 5. **Files and renders.** The `.blend` and `.glb`, then a ground plane and the renders.
 
 `BLENDWORKS_TREE_DETAIL` (a factor on the point and branch counts), `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+
+## Tree shapes
+
+`tree_shapes.py` grows, meshes and leafs a weeping willow, a gnarled old oak and a wind-bent coastal tree from the three `grow_tree` form presets, by commands only, and renders them. It is the acceptance build of the `tree-shape` job.
+
+```
+blender --background --factory-startup --python docs/examples/tree_shapes.py -- out
+```
+
+The script writes into `out`:
+- `tree-shapes.blend` and `tree-shapes.glb`, whose three bark nodes carry their skeletons in `extras.blendworks_skeleton`;
+- five PNGs on a soil ground: `willow`, `oak` and `coastal` (each tree), `row` (all three, the wind blowing to the right) and `oak_trunk` (the crooked trunk);
+- `summary.json`: every command with its time; for `grow_tree` the node counts, the pipe-model error and the growth report with its `form` (kinks, largest gnarl offset, largest sag curvature, pruned nodes); for `tree_mesh` and `tree_leaves` the triangles, the closed-shell report and the leaf counts.
+
+It runs these steps in order, and stops at the first failing command:
+1. **Skeletons.** `grow_tree` with `preset` `weeping_willow` (levels; the outer orders hang by gravitropism), `gnarled_oak` (colonisation with gnarl, kinks, a twisting trunk, upward phototropism and sag under the limbs' own weight) and `windswept_coastal` (colonisation bent by a wind along +X), each with roots.
+2. **Materials.** `bark`, `roots` and `fresh_wood` as in `tree_meshes.py`, `leaf` and a yellower `willow_leaf`, both cut out, and `soil`.
+3. **Bark.** `tree_mesh` on each skeleton with the `skin` junction and flared bases; the willow's twigs under 4 mm become bark cards.
+4. **Leaves.** `tree_leaves`: narrow 0.16 m cards hanging along the willow's two outer orders, 0.26 m leaves on the oak and 0.15 m leaves turned towards a low sun on the coastal tree.
+5. **Files and renders.** The `.blend` and `.glb`, then a ground plane and the renders.
+
+`BLENDWORKS_TREE_DETAIL` (a factor on the attraction point counts), `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.

@@ -6,7 +6,9 @@ from .errors import bad_args
 from .kit_limits import MAX_TREE_POINTS
 from .scatter_surface import read_surface
 from .tree_colonize import ROOT, SHOOT, Colonization, Group, Nodes, grow_lead, unit
+from .tree_form import Form, above_ground, form_active, reindex
 from .tree_levels import LevelGrowth, LevelPlan
+from .tree_presets import PRESETS
 from .tree_radii import Taper, branch_orders, pipe_radii
 from .tree_shapes import SHAPES, MeshEnvelope, RevolutionEnvelope
 from .tree_skeleton import Skeleton
@@ -20,20 +22,35 @@ LEVELS_DEFAULTS = {
     "rotate": [137.5],
     "length_ratio": [0.35, 0.4, 0.4],
     "curve": [0.0, 25.0, 15.0, 0.0],
+    "curve_back": [0.0],
+    "curve_variation": [0.0],
     "segments": [24, 8, 5, 3],
     "taper": 0.6,
     "ratio_power": 1.0,
 }
+BASE_DEFAULTS = {"method": "colonization", "height": 8.0, "trunk_height": 2.0, "envelope": "spherical", "tip_radius": 0.01}
+MERGED_FIELDS = ("gravitropism", "phototropism", "gnarl", "wind", "roots")
 ROOT_TOP_SHARE = 0.02
 UP = numpy.array([0.0, 0.0, 1.0])
 
 
+def with_preset(args):
+    preset = PRESETS[args.get("preset", "default")]
+    if "method" in args and "method" in preset and args["method"] != preset["method"]:
+        raise bad_args(f"preset {args['preset']} grows by method {preset['method']}; leave method out or pick another preset")
+    settings = {**BASE_DEFAULTS, **preset}
+    for name, value in args.items():
+        settings[name] = {**preset[name], **value} if name in MERGED_FIELDS and name in preset else value
+    return settings
+
+
 def with_defaults(args):
-    settings = dict(args)
-    own, other = (COLONIZATION_DEFAULTS, LEVELS_DEFAULTS) if args["method"] == "colonization" else (LEVELS_DEFAULTS, COLONIZATION_DEFAULTS)
+    settings = with_preset(args)
+    method = settings["method"]
+    own, other = (COLONIZATION_DEFAULTS, LEVELS_DEFAULTS) if method == "colonization" else (LEVELS_DEFAULTS, COLONIZATION_DEFAULTS)
     stray = sorted(name for name in other if name in args)
     if stray:
-        raise bad_args(f"{', '.join(stray)} {'applies' if len(stray) == 1 else 'apply'} to the other method; method {args['method']} does not use {'it' if len(stray) == 1 else 'them'}")
+        raise bad_args(f"{', '.join(stray)} {'applies' if len(stray) == 1 else 'apply'} to the other method; method {method} does not use {'it' if len(stray) == 1 else 'them'}")
     for name, value in own.items():
         settings.setdefault(name, value)
     return settings
@@ -141,12 +158,30 @@ def tip_radii(settings, grown, kinds):
     return tips
 
 
+def shape(settings, grown, positions, parents, kinds, tips, radii, orders):
+    form = Form(settings, settings["seed"], settings["height"])
+    positions, report = form.apply(positions, parents, kinds, orders, radii)
+    keep = above_ground(positions, parents, kinds)
+    report["pruned"] = int((~keep).sum())
+    grown.report["form"] = report
+    if keep.all():
+        return positions, parents, kinds, radii, orders
+    kept, parents = reindex(keep, parents)
+    taper = Taper(grown.taper.stem_of[kept], grown.taper.fraction[kept], grown.taper.taper) if grown.taper is not None else None
+    preset = grown.orders[kept] if grown.orders is not None else None
+    radii = pipe_radii(parents, tips[kept], settings["exponent"], taper)
+    return positions[kept], parents, kinds[kept], radii, branch_orders(parents, kinds[kept], radii, preset)
+
+
 def grow(ctx, args, location):
     settings = with_defaults(args)
     check_points(settings)
     grown = grow_colonization(ctx, settings, location) if settings["method"] == "colonization" else grow_levels(settings)
     positions, parents, kinds = (array.copy() for array in grown.nodes.view())
-    radii = pipe_radii(parents, tip_radii(settings, grown, kinds), settings["exponent"], grown.taper)
+    tips = tip_radii(settings, grown, kinds)
+    radii = pipe_radii(parents, tips, settings["exponent"], grown.taper)
     orders = branch_orders(parents, kinds, radii, grown.orders)
+    if form_active(settings):
+        positions, parents, kinds, radii, orders = shape(settings, grown, positions, parents, kinds, tips, radii, orders)
     skeleton = Skeleton(positions, parents, radii, orders, kinds, settings["exponent"], settings["tip_radius"], settings["method"])
     return skeleton, grown
