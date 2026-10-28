@@ -183,3 +183,26 @@ It runs these steps in order, and stops at the first failing command:
 3. **Worn stones.** Each is an ico sphere cut once by `fracture` (the larger piece is kept), then `chip` knocks corners off, `abrade` rounds the edges (amount 0.8 to 1) so the rim of the cut is a smooth fillet, and three `noise_displace` layers in metres follow: vertical lumps (`direction` z, 18 % of the size, which cannot tear the rim), ridged worley cracks (2 %) and fine grain (3 %). Then UVs, the `granite` material and a baked base colour.
 
 `BLENDWORKS_SHOT_SIZE`, `BLENDWORKS_SHOT_SAMPLES`, `BLENDWORKS_BAKE_SIZE` and `BLENDWORKS_FRAGMENTS` make a smaller, faster run. The judge scores of the three stones against the calibrated rock defaults are measured by `test/rocks-example.test.ts`.
+
+## L-system plants
+
+`lsystem_plants.py` grows four kinds of plant from the presets of *The Algorithmic Beauty of Plants* by commands only, gives them leaf and flower organs and materials, and renders them. It is the acceptance build of the `lsystem` job.
+
+```
+blender --background --factory-startup --python docs/examples/lsystem_plants.py -- out
+```
+
+The script writes into `out`:
+- `lsystem-plants.blend` and `lsystem-plants.glb`, whose six plant nodes carry their skeletons in `extras.blendworks_skeleton`;
+- five PNGs: `herb`, `bushes` (the three stochastic bushes side by side), `tree`, `fern` and `overview` (all of them);
+- `summary.json`: every command with its time and, for `lsystem`, the node, branching and organ counts, the height, the spread and the derivation report.
+
+It runs these steps in order, and stops at the first failing command:
+1. **Materials, ground and organs.** Procedural `leaf`, `bark`, `soil` and petal presets; a leaf and a flower made for each plant with `mesh_from_data`, `instances` (petals on a circle, realised) and `join`.
+2. **Herb.** `bush_1_25` (figure 1.25) for 5 steps: three branches at every apex, leaves on the internodes and a yellow flower at every apex.
+3. **Bushes.** `stochastic_1_27_leafy` (figure 1.27 with leaves and a flower) in seeds 4, 7 and 12: three plants that differ in their branching and belong to one species.
+4. **Tree.** `monopodial_2_6a` (figure 2.6, table 2.1) with leaves at the apices B and C whose size follows the branch length (`scale_by_parameter`).
+5. **Compound leaf.** `compound_leaf_5_11b` (figure 5.11b) with a small leaflet at every apex.
+6. **Files and renders.** The `.blend`, the `.glb` and the five renders.
+
+`BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.

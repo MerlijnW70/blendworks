@@ -113,6 +113,13 @@ export const WORKFLOWS: Workflow[] = [
     note: "Build one seed, petal, scale or leaf with its base at the origin and its length along X (blender_mesh_from_data with UVs), then blender_instances with phyllotaxis: mode disc (c metres, organ n at radius c*sqrt(n)), cone (radius, height), sphere (radius, polar_extent) or surface (a mesh of revolution), golden true for the exact angle 137.5078 degrees, scale_by_age and tilt_by_age with a curve, jitter with a seed. Organs sit on the surface normal with X pointing away from the centre; start gives a ring of petals around a disc of seeds.",
   },
   {
+    id: "lsystem-plant",
+    goal: "L-system plants",
+    examples: ["fern or compound leaf", "herb or flowering bush from a grammar", "stochastic plants of one species", "parametric L-system tree", "branching plant with leaves and flowers"],
+    steps: ["blender_lsystem", "blender_assign_material", "blender_material_procedural"],
+    note: "Build one leaf or flower with its base at the origin and its length along X (blender_mesh_from_data), then blender_lsystem with a preset from the book (bracketed_1_24a to f, bush_1_25, stochastic_1_27, monopodial_2_6a, ternary_2_8a, compound_leaf_5_11b) or your own axiom and rules such as F -> F[+F]F[-F]F; parametric modules F(l) and conditions as in A(x) : x > 3 -> B(x*2); a probability after a rule (: 0.5) makes it stochastic, and the seed picks the specimen. Turtle: F draws, + - turn, & ^ pitch, \ / roll, [ ] branch, ! thins, ' picks the next organ variant. organs places a mesh at each occurrence of a letter (apices stay in the string, so A or X can carry a flower) in the turtle's frame, heading along X. The plant is a skeleton for tree meshing; max_length and max_nodes refuse a grammar that grows too big before it runs.",
+  },
+  {
     id: "surface-detail",
     goal: "Wear and face edits",
     examples: ["dents", "battle damage", "taper faces", "find faces"],

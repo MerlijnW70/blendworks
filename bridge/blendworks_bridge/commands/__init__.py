@@ -25,6 +25,7 @@ MODULES = (
     "abrade",
     "remesh",
     "blob",
+    "lsystem",
     "clean",
     "engrave",
     "scales",
