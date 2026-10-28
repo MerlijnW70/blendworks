@@ -1,3 +1,4 @@
+FIXTURE_DEPS = ()
 import json
 import os
 import struct

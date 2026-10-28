@@ -1,6 +1,7 @@
 import { readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { waitFor } from "../setup/wait-for.js";
 import { acquireSlot, acquireSlotSync, queueDirectory, slotsDirectory } from "../../scripts/lib/slots.js";
 import { intervals, runProbe, scratch } from "./probes.js";
 
@@ -9,7 +10,7 @@ describe("Blender slots go to waiters in the order they asked", { timeout: 60_00
     const root = scratch("fair");
     const log = join(root, "log.txt");
     writeFileSync(log, "");
-    const runs = await Promise.all([runProbe("queue-probe.ts", [root, "1", log, "greedy", "400", "3", "0"]), runProbe("queue-probe.ts", [root, "1", log, "patient", "100", "1", "200"])]);
+    const runs = await Promise.all([runProbe("queue-probe.ts", [root, "1", log, "greedy", "ticket", "3", ""]), runProbe("queue-probe.ts", [root, "1", log, "patient", "100", "1", "greedy"])]);
     for (const run of runs) expect(run, run.stderr).toMatchObject({ code: 0 });
     const order = intervals(log)
       .sort((a, b) => a.start - b.start)
@@ -25,7 +26,8 @@ describe("Blender slots go to waiters in the order they asked", { timeout: 60_00
       order.push(name);
       setTimeout(() => slot.release(), 30);
     }));
-    await new Promise((done) => setTimeout(done, 100));
+    const queue = queueDirectory(slotsDirectory(root));
+    await waitFor(() => readdirSync(queue).length === 3, { description: "three tickets in the queue" });
     held.release();
     await Promise.all(waiters);
     expect(order).toEqual(["a", "b", "c"]);
@@ -43,7 +45,7 @@ describe("Blender slots go to waiters in the order they asked", { timeout: 60_00
     expect(readdirSync(queue)).toEqual([]);
     const held = await acquireSlot({ root, jobs: 1 });
     const pending = acquireSlot({ root, jobs: 1, pollMs: 5, timeoutMs: 5000 });
-    await new Promise((done) => setTimeout(done, 20));
+    await waitFor(() => readdirSync(queue).length === 1, { description: "the pending ticket in the queue" });
     held.release();
     const blocking = acquireSlotSync({ root, jobs: 1, pollMs: 5, timeoutMs: 2000 });
     blocking.release();

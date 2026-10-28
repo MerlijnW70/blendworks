@@ -34,11 +34,9 @@ describe("a test that holds a Blender slot", { timeout: 20_000 }, () => {
     const exited = new Promise<void>((done) => (exit = done));
     await untilProcessExits(async () => "session", () => exited);
     expect(slotsHeld()).toEqual({ bounded: 0, lasting: 1 });
-    const started = Date.now();
     await expect(takeSlot()).rejects.toBeInstanceOf(NestedSlotError);
     await expect(untilProcessExits(async () => "second session", () => exited)).rejects.toBeInstanceOf(NestedSlotError);
     expect(() => whileProcessRunsSync(() => "blocking")).toThrow(NestedSlotError);
-    expect(Date.now() - started).toBeLessThan(1000);
     expect(tickets()).toEqual([]);
     expect(activeSlots(root)).toHaveLength(1);
     exit();

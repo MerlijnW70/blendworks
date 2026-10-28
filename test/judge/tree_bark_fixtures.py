@@ -1,3 +1,4 @@
+FIXTURE_DEPS = ("bridge/blendworks_bridge",)
 import math
 import os
 import shutil

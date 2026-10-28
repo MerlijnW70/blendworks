@@ -1,3 +1,4 @@
+FIXTURE_DEPS = ()
 import os
 import sys
 

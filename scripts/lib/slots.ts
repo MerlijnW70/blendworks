@@ -1,10 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { mkdirSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { setTimeout as sleep } from "node:timers/promises";
 import { blenderJobs } from "../../src/blender.js";
-import { type FileLock, readOwner, processAlive, tryLock, waitStarted } from "./locks.js";
+import { trackHeartbeat, untrackHeartbeat } from "./heartbeat.js";
+import { type FileLock, fresh, holderAlive, readOwner, processAlive, tryLock, waitStarted } from "./locks.js";
 import { cacheRoot, ensureCacheRoot } from "./paths.js";
+import { asyncBackoff, syncBackoff, watchChanges } from "./slot-wait.js";
 import { currentStage, recordTiming } from "./timings.js";
 
 export type SlotOptions = { root?: string; jobs?: number; timeoutMs?: number; pollMs?: number; label?: string };
@@ -13,6 +14,12 @@ export type Slot = { index: number; waitedMs: number; release(): void };
 
 const acquisitionObservers = new Set<() => void>();
 let labeler: () => string | undefined = () => undefined;
+
+let attempts = 0;
+
+export function slotAttempts(): number {
+  return attempts;
+}
 
 export function observeAcquisitions(observer: () => void): () => void {
   acquisitionObservers.add(observer);
@@ -55,6 +62,7 @@ function joinQueue(directory: string): string {
   ticketSequence = (ticketSequence + 1) % 1_000_000;
   const ticket = `${String(Date.now()).padStart(15, "0")}-${String(ticketSequence).padStart(6, "0")}-${process.pid}-${randomUUID().slice(0, 8)}.ticket`;
   writeFileSync(join(queue, ticket), "", { flag: "wx" });
+  trackHeartbeat(join(queue, ticket));
   return ticket;
 }
 
@@ -67,6 +75,7 @@ function removeQuietly(path: string): void {
 }
 
 function leaveQueue(request: Request): void {
+  untrackHeartbeat(join(queueDirectory(request.directory), request.ticket));
   removeQuietly(join(queueDirectory(request.directory), request.ticket));
 }
 
@@ -84,7 +93,7 @@ function placeInQueue(request: Request, blocking: boolean): number {
     if (match === null || name >= request.ticket) continue;
     const pid = Number(match[3]);
     if (blocking && pid === process.pid) continue;
-    if (processAlive(pid)) ahead += 1;
+    if (processAlive(pid) && fresh(join(queue, name))) ahead += 1;
     else removeQuietly(join(queue, name));
   }
   return ahead;
@@ -93,8 +102,7 @@ function placeInQueue(request: Request, blocking: boolean): number {
 function busySlots(request: Request): number {
   let busy = 0;
   for (let index = 0; index < request.jobs; index += 1) {
-    const owner = readOwner(join(request.directory, `slot-${index}.lock`));
-    if (owner !== undefined && (owner === "unreadable" || processAlive(owner.pid))) busy += 1;
+    if (holderAlive(join(request.directory, `slot-${index}.lock`))) busy += 1;
   }
   return busy;
 }
@@ -113,6 +121,7 @@ function prepare(options: SlotOptions): Request {
 }
 
 function attempt(request: Request, blocking = false): Slot | undefined {
+  attempts += 1;
   return myTurn(request, blocking) ? takeFree(request) : undefined;
 }
 
@@ -147,15 +156,18 @@ export async function acquireSlot(options: SlotOptions = {}): Promise<Slot> {
     const immediate = attempt(request);
     if (immediate !== undefined) return immediate;
     const done = waitStarted();
+    const changes = watchChanges([request.directory, queueDirectory(request.directory)]);
+    const delays = asyncBackoff(request.pollMs);
     try {
       for (;;) {
-        await sleep(request.pollMs);
+        await changes.wait(delays.next());
         const slot = attempt(request);
         if (slot !== undefined) return slot;
         const failure = expired(request);
         if (failure !== undefined) throw failure;
       }
     } finally {
+      changes.close();
       done();
     }
   } finally {
@@ -169,9 +181,10 @@ export function acquireSlotSync(options: SlotOptions = {}): Slot {
     const immediate = attempt(request, true);
     if (immediate !== undefined) return immediate;
     const done = waitStarted();
+    const delays = syncBackoff(request.pollMs);
     try {
       for (;;) {
-        Atomics.wait(SLEEP_CELL, 0, 0, request.pollMs);
+        Atomics.wait(SLEEP_CELL, 0, 0, delays.next());
         const slot = attempt(request, true);
         if (slot !== undefined) return slot;
         const failure = expired(request);
@@ -215,7 +228,7 @@ export function activeSlots(root: string = cacheRoot()): { index: number; pid: n
     const match = /^slot-(\d+)\.lock$/.exec(name);
     if (match === null) continue;
     const owner = readOwner(join(slotsDirectory(root), name));
-    if (owner !== undefined && owner !== "unreadable" && processAlive(owner.pid)) out.push({ index: Number(match[1]), pid: owner.pid });
+    if (owner !== undefined && owner !== "unreadable" && holderAlive(join(slotsDirectory(root), name))) out.push({ index: Number(match[1]), pid: owner.pid });
   }
   return out.sort((a, b) => a.index - b.index);
 }

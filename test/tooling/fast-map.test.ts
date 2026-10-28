@@ -1,5 +1,9 @@
+import { readdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { BRIDGE_MODULES, discoverTests, selectRelated } from "../../scripts/lib/fast-map.js";
+import { BRIDGE_MODULES, bridgeModuleTests, discoverTests, selectRelated } from "../../scripts/lib/fast-map.js";
+import { repoRoot } from "../../scripts/lib/paths.js";
+import { scratch } from "./probes.js";
 
 const tests = discoverTests();
 
@@ -97,3 +101,53 @@ describe("the mapping table", () => {
     expect(orphans).toEqual([]);
   });
 });
+
+describe("the mapping by convention", () => {
+  it("selects bridge/tests/test_<stem>*.py for a module named <stem>", () => {
+    expect(pick("bridge/blendworks_bridge/commands/abrade.py").bridge).toEqual(["test_abrade.py"]);
+    expect(pick("bridge/blendworks_bridge/shell_wall.py").bridge).toEqual(["test_shell_wall.py"]);
+    expect(pick("bridge/blendworks_bridge/commands/mesh_edit.py").bridge).toEqual(["test_mesh_edit.py"]);
+    expect(pick("bridge/blendworks_bridge/bake_sizes.py").bridge).toEqual(["test_bake_sizes.py"]);
+  });
+
+  it("selects the tests of the module family when only a sibling has a test", () => {
+    expect(pick("bridge/blendworks_bridge/lsystem_rules.py").bridge).toEqual(["test_lsystem_grammar.py", "test_lsystem_turtle.py"]);
+  });
+
+  it("keeps the table as an override of the convention", () => {
+    expect(pick("bridge/blendworks_bridge/pbr.py").bridge).toEqual(["test_pbr.py", "test_textured_prop.py"]);
+  });
+
+  it("selects the tests that import the module when no test is named after it", () => {
+    const folder = scratch("claims");
+    writeFileSync(join(folder, "test_thing.py"), "import os\nfrom blendworks_bridge.widget import Widget\n");
+    writeFileSync(join(folder, "test_other.py"), "from blendworks_bridge.commands import gadget, widgetry\n");
+    const names = ["test_other.py", "test_thing.py"];
+    expect(bridgeModuleTests("bridge/blendworks_bridge/widget.py", names, folder)).toEqual({ tests: ["test_thing.py"], how: "claimed" });
+    expect(bridgeModuleTests("bridge/blendworks_bridge/commands/gadget.py", names, folder)).toEqual({ tests: ["test_other.py"], how: "claimed" });
+    expect(bridgeModuleTests("bridge/blendworks_bridge/gizmo.py", names, folder)).toEqual({ tests: [], how: "none" });
+  });
+
+  it("maps the bridge and source areas to their example tests", () => {
+    expect(pick("bridge/blendworks_bridge/tree_plan.py").vitest).toContain("test/tree-example.test.ts");
+    expect(pick("bridge/blendworks_bridge/commands/fracture.py").vitest).toContain("test/rocks-example.test.ts");
+    expect(pick("bridge/blendworks_bridge/scatter_masks.py").vitest).toContain("test/scatter-example.test.ts");
+    expect(pick("src/mcp/library/lsystem.ts").vitest).toContain("test/lsystem-example.test.ts");
+    expect(pick("bridge/blendworks_bridge/commands/scene.py").vitest).not.toContain("test/tree-example.test.ts");
+    for (const area of ["tree", "lsystem", "scatter", "shells", "phyllotaxis", "eroded-terrain", "noise-terrain", "rocks"]) expect(tests.blender, area).toContain(`test/${area}-example.test.ts`);
+  });
+
+  it("leaves no bridge module without a table entry, a convention hit, a claiming test or an example area", () => {
+    const modules = bridgeModules();
+    expect(modules.length).toBeGreaterThan(100);
+    const orphans = modules.filter((file) => bridgeModuleTests(file, tests.bridge).how === "none");
+    expect(orphans).toEqual([]);
+  });
+});
+
+function bridgeModules(folder = "bridge/blendworks_bridge"): string[] {
+  return readdirSync(join(repoRoot, folder), { withFileTypes: true }).flatMap((entry) => {
+    if (entry.isDirectory()) return entry.name === "__pycache__" ? [] : bridgeModules(`${folder}/${entry.name}`);
+    return entry.name.endsWith(".py") ? [`${folder}/${entry.name}`] : [];
+  });
+}

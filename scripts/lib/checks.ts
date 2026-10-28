@@ -1,40 +1,51 @@
 import { join } from "node:path";
 import { blenderJobs } from "../../src/blender.js";
-import { rememberDurations } from "./durations.js";
+import { execFileSync } from "node:child_process";
+import { describeChange, rememberDurations, saveBaseline } from "./durations.js";
 import { changedFiles, discoverTests, selectRelated } from "./fast-map.js";
-import { cacheRoot } from "./paths.js";
+import { cacheRoot, repoRoot } from "./paths.js";
 import { npmStep, runPhases, type Step } from "./pipeline.js";
 import { readTimingLog, timingReport, TIMINGS_VARIABLE } from "./timings.js";
 
 export function fullPhases(): Step[][] {
-  return [
-    [npmStep("rules"), npmStep("typecheck"), npmStep("build")],
-    [npmStep("test"), npmStep("test:bridge"), npmStep("build:addon")],
-  ];
+  return [[npmStep("rules"), npmStep("typecheck"), npmStep("build"), npmStep("build:addon"), npmStep("test"), npmStep("test:bridge")]];
 }
 
 export function fastPhases(vitest: string[], bridge: string[], needsFixtures: boolean): Step[][] {
-  const second: Step[] = [npmStep("test", vitest, needsFixtures ? {} : { BLENDWORKS_FIXTURES: "skip" })];
-  if (bridge.length > 0) second.push(npmStep("test:bridge", bridge));
-  return [[npmStep("rules"), npmStep("typecheck")], second];
+  const phase: Step[] = [npmStep("rules"), npmStep("typecheck"), npmStep("test", vitest, needsFixtures ? {} : { BLENDWORKS_FIXTURES: "skip" })];
+  if (bridge.length > 0) phase.push(npmStep("test:bridge", bridge));
+  return [phase];
 }
 
 export function timingLogPath(name: string, env: NodeJS.ProcessEnv = process.env): string {
   return join(cacheRoot(env), "timings", `${name}-${new Date().toISOString().replace(/[:.]/g, "-")}.jsonl`);
 }
 
-async function timedPhases(name: string, phases: Step[][]): Promise<boolean> {
+function git(args: string[]): string {
+  try {
+    return execFileSync("git", args, { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  } catch {
+    return "?";
+  }
+}
+
+export function onCleanMain(): boolean {
+  return git(["rev-parse", "--abbrev-ref", "HEAD"]) === "main" && git(["status", "--porcelain"]) === "";
+}
+
+async function timedPhases(name: string, phases: Step[][], refreshBaseline = false): Promise<boolean> {
   const log = timingLogPath(name);
   process.env[TIMINGS_VARIABLE] = log;
   const { passed, seconds } = await runPhases(phases);
   const timings = readTimingLog(log);
   for (const line of timingReport(timings, seconds, blenderJobs())) console.log(line);
   rememberDurations(timings);
+  if (passed && refreshBaseline) for (const line of describeChange(saveBaseline())) console.log(line);
   return passed;
 }
 
 export async function checkMain(): Promise<number> {
-  return (await timedPhases("check", fullPhases())) ? 0 : 1;
+  return (await timedPhases("check", fullPhases(), onCleanMain())) ? 0 : 1;
 }
 
 export async function fastMain(): Promise<number> {

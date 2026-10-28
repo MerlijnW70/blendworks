@@ -11,12 +11,32 @@ export function testFile(): string {
 export const WAIT_FOR_SLOT_MS = 45 * 60_000;
 export const ENVELOPE_GRACE_MS = 60_000;
 
+export type Timers = { now(): number; after(ms: number, run: () => void): () => void };
+
+export const realTimers: Timers = {
+  now: () => performance.now(),
+  after(ms, run) {
+    const timer = setTimeout(run, ms);
+    return () => clearTimeout(timer);
+  },
+};
+
+let timers: Timers = realTimers;
+
+export function useTimers(next: Timers): () => void {
+  const previous = timers;
+  timers = next;
+  return () => {
+    timers = previous;
+  };
+}
+
 let pending = 0;
 let pendingSince = 0;
 let settledWaitMs = 0;
 const listeners = new Set<() => void>();
 
-function waitedSoFar(now: number = performance.now()): number {
+function waitedSoFar(now: number = timers.now()): number {
   return settledWaitMs + (pending > 0 ? now - pendingSince : 0);
 }
 
@@ -32,13 +52,13 @@ observeAcquisitions(() => {
 
 observeWaits({
   waiting() {
-    if (pending === 0) pendingSince = performance.now();
+    if (pending === 0) pendingSince = timers.now();
     pending += 1;
     notify();
   },
   waited() {
     pending -= 1;
-    if (pending === 0) settledWaitMs += performance.now() - pendingSince;
+    if (pending === 0) settledWaitMs += timers.now() - pendingSince;
     notify();
   },
 });
@@ -67,10 +87,11 @@ export class WorkTimeout extends Error {
 
 export type WorkClock = { label: string; budgetMs: number; workMs(): number; waitMs(): number; waitAllowanceMs(): number; expired: Promise<never>; stop(): void };
 
-export function startWorkClock(label: string, budgetMs: number, now: () => number = () => performance.now()): WorkClock {
+export function startWorkClock(label: string, budgetMs: number): WorkClock {
+  const now = (): number => timers.now();
   const started = now();
   const waitAtStart = waitedSoFar(started);
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  let cancelTimer: () => void = () => undefined;
   let fail: (error: WorkTimeout) => void = () => undefined;
   const expired = new Promise<never>((_, reject) => {
     fail = reject;
@@ -79,8 +100,8 @@ export function startWorkClock(label: string, budgetMs: number, now: () => numbe
   const waitMs = (): number => waitedSoFar(now()) - waitAtStart;
   const workMs = (): number => now() - started - waitMs();
   const schedule = (): void => {
-    clearTimeout(timer);
-    timer = undefined;
+    cancelTimer();
+    cancelTimer = () => undefined;
     if (pending > 0) return;
     const left = budgetMs - workMs();
     if (left <= 0) {
@@ -88,10 +109,10 @@ export function startWorkClock(label: string, budgetMs: number, now: () => numbe
       fail(new WorkTimeout(label, budgetMs, workMs(), waitMs()));
       return;
     }
-    timer = setTimeout(schedule, Math.ceil(left));
+    cancelTimer = timers.after(Math.ceil(left), schedule);
   };
   const stop = (): void => {
-    clearTimeout(timer);
+    cancelTimer();
     listeners.delete(schedule);
   };
   listeners.add(schedule);

@@ -1,3 +1,4 @@
+FIXTURE_DEPS = ()
 import math
 import os
 import random

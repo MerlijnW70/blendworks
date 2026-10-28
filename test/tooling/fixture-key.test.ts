@@ -9,7 +9,7 @@ describe("the fixture cache key", () => {
     const base = freshDir("fixture-key");
     const bridge = join(base, "bridge", "blendworks_bridge", "commands");
     mkdirSync(bridge, { recursive: true });
-    writeFileSync(join(base, "fixtures.py"), "print(1)\n");
+    writeFileSync(join(base, "fixtures.py"), 'FIXTURE_DEPS = ("bridge/blendworks_bridge",)\nprint(1)\n');
     writeFileSync(join(bridge, "abrade.py"), "x = 1\n");
     const script = join(base, "fixtures.py");
     const before = fixtureKey(script, "5.2", base);

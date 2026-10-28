@@ -23,13 +23,37 @@ export const BRIDGE_MODULES: [RegExp, string[]][] = [
   [/^bridge\/blendworks_bridge\/(commands\/(objects|transforms)|selection|rig)\.py$/, ["test_objects.py"]],
   [/^bridge\/blendworks_bridge\/(commands\/)?pbr\.py$/, ["test_pbr.py", "test_textured_prop.py"]],
   [/^bridge\/blendworks_bridge\/(commands\/)?procedural\.py$/, ["test_procedural.py"]],
+  [/^bridge\/blendworks_bridge\/(analytic_paths|lofting|paths|revolve|skin|shading|uvlayout|builder|commands\/shapes)\.py$/, ["test_sweep.py", "test_sweep_analytic.py", "test_sweep_closed.py", "test_loft.py", "test_lathe.py"]],
+  [/^bridge\/blendworks_bridge\/(commands\/solids|extrusion|gears|chain)\.py$/, ["test_outline_solids.py", "test_roller_chain.py"]],
+  [/^bridge\/blendworks_bridge\/(blendfile|exporting|gltf_extras|policy)\.py$/, ["test_files.py", "test_autosave.py", "test_checkpoints.py", "test_export_hierarchy.py"]],
+  [/^bridge\/blendworks_bridge\/(copies|instancing|poisson)\.py$/, ["test_instances.py", "test_scatter.py", "test_scatter_options.py"]],
+  [/^bridge\/blendworks_bridge\/(cutmarks|slivers|flatfill)\.py$/, ["test_engrave.py", "test_engrave_cutters.py", "test_clean_mesh.py"]],
+  [/^bridge\/blendworks_bridge\/(graph_build|graph_read)\.py$/, ["test_material_nodes.py"]],
+  [/^bridge\/blendworks_bridge\/inspect_scene\.py$/, ["test_scene_info.py", "test_describe.py"]],
+  [/^bridge\/blendworks_bridge\/(masks|occlusion|scratches)\.py$/, ["test_procedural.py", "test_brass.py", "test_scratch_direction.py"]],
+  [/^bridge\/blendworks_bridge\/(normals|commands\/mesh_query)\.py$/, ["test_mesh_edit.py", "test_selection_kit.py"]],
+  [/^bridge\/blendworks_bridge\/(polyhedron)\.py$/, ["test_fracture.py", "test_chip.py"]],
+  [/^bridge\/blendworks_bridge\/commands\/blob\.py$/, ["test_remesh_blob.py"]],
+  [/^bridge\/blendworks_bridge\/(handler|__init__|commands\/__init__)\.py$/, CORE_BRIDGE],
   [/^bridge\/blendworks_bridge\/(commands\/render|device)\.py$/, ["test_render.py"]],
   [/^bridge\/blendworks_bridge\/commands\/run_python\.py$/, ["test_run_python.py"]],
   [/^bridge\/blendworks_bridge\/commands\/scene\.py$/, ["test_scene.py"]],
   [/^bridge\/blendworks_bridge\/(commands\/(uv|uv_pack)|texel)\.py$/, ["test_uv_texel.py"]],
   [/^bridge\/(addon\/.*|session\.py|build_addon\.py|build-addon\.mjs|blendworks_bridge\/transport\.py)$/, ["test_addon.py", "test_smoke.py"]],
   [/^bridge\/(package\/.*|blendworks_bridge\/commands\/lods)\.py$/, ["test_lods.py", "test_package_math.py"]],
-  [/^bridge\/blendworks_bridge\/.*\.py$/, CORE_BRIDGE],
+];
+
+export const BRIDGE_FALLBACK: [RegExp, string[]][] = [[/^bridge\/blendworks_bridge\/.*\.py$/, CORE_BRIDGE]];
+
+export const EXAMPLE_AREAS: [RegExp, string][] = [
+  [/(^|\/)(tree|trees)(_[a-z]+)?\.(py|ts)$/, "tree"],
+  [/(^|\/)lsystem(_[a-z]+)?\.(py|ts)$/, "lsystem"],
+  [/(^|\/)scatter(_[a-z]+)?\.(py|ts)$/, "scatter"],
+  [/(^|\/)shells?(_[a-z]+)?\.(py|ts)$/, "shells"],
+  [/(^|\/)phyllotaxis(_[a-z]+)?\.(py|ts)$/, "phyllotaxis"],
+  [/(^|\/)(erosion_[a-z]+|erode|heightgrid|heightfield)\.(py|ts)$/, "eroded-terrain"],
+  [/(^|\/)(noise(_[a-z]+)?|noise_displace|terrain)\.(py|ts)$/, "noise-terrain"],
+  [/(^|\/)(abrasion|abrade|fracturing|fracture|fragments|chip|blob|remesh)\.(py|ts)$/, "rocks"],
 ];
 
 function listTests(directory: string, prefix: string): string[] {
@@ -65,7 +89,39 @@ function bridgeImporters(helper: string, tests: string[]): string[] {
   return tests.filter((name) => new RegExp(`^(from|import) ${stem}\\b`, "m").test(readFileSync(join(repoRoot, "bridge", "tests", name), "utf8")));
 }
 
-function sourceTests(file: string, all: string[]): string[] {
+export type BridgeMapping = { tests: string[]; how: "table" | "convention" | "family" | "claimed" | "example" | "none" };
+
+function claimingTests(stem: string, tests: string[], folder: string): string[] {
+  const claim = new RegExp(String.raw`^\s*from blendworks_bridge(?:\.commands)?(?:\.${stem}\b| import [^\n]*\b${stem}\b)`, "m");
+  return tests.filter((name) => claim.test(readFileSync(join(folder, name), "utf8")));
+}
+
+export function bridgeModuleTests(file: string, tests: string[], folder: string = join(repoRoot, "bridge", "tests")): BridgeMapping {
+  const override = BRIDGE_MODULES.find(([pattern]) => pattern.test(file));
+  if (override !== undefined) return { tests: tests.filter((name) => override[1].includes(name)), how: "table" };
+  const stem = basename(file).replace(/\.py$/, "");
+  const named = tests.filter((name) => name.startsWith(`test_${stem}`));
+  const claimed = claimingTests(stem, tests, folder);
+  const together = [...new Set([...named, ...claimed])];
+  if (together.length > 0) return { tests: together, how: named.length > 0 ? "convention" : "claimed" };
+  const family = stem.split("_")[0] ?? stem;
+  const related = tests.filter((name) => name.startsWith(`test_${family}`));
+  if (related.length > 0) return { tests: related, how: "family" };
+  if (exampleAreas(file).length > 0) return { tests: [], how: "example" };
+  const fallback = BRIDGE_FALLBACK.find(([pattern]) => pattern.test(file));
+  return { tests: fallback === undefined ? [] : tests.filter((name) => fallback[1].includes(name)), how: "none" };
+}
+
+function exampleAreas(file: string): string[] {
+  return EXAMPLE_AREAS.filter(([pattern]) => pattern.test(file)).map(([, area]) => `test/${area}-example.test.ts`);
+}
+
+export function exampleTests(file: string, all: string[]): string[] {
+  const areas = exampleAreas(file);
+  return all.filter((test) => areas.includes(test));
+}
+
+function ownTests(file: string, all: string[]): string[] {
   const match = /^src\/(.+)\.ts$/.exec(file);
   if (match === null) return [];
   const path = match[1] ?? "";
@@ -87,6 +143,10 @@ function sourceTests(file: string, all: string[]): string[] {
     return direct.length > 0 ? direct : all.filter((test) => /^test\/(mcp|library)-/.test(test));
   }
   return [];
+}
+
+function sourceTests(file: string, all: string[]): string[] {
+  return [...new Set([...ownTests(file, all), ...exampleTests(file, all)])];
 }
 
 export function selectRelated(changed: string[], tests: TestSet): Selection {
@@ -111,8 +171,8 @@ export function selectRelated(changed: string[], tests: TestSet): Selection {
     if (/^bridge\/tests\/test_.*\.py$/.test(file)) add(tests.bridge.filter((test) => test === basename(file)), file, bridge);
     else if (/^bridge\/tests\/.*\.py$/.test(file)) add(bridgeImporters(file, tests.bridge), file, bridge);
     else if (/^bridge\//.test(file) && !/^bridge\/judge\//.test(file)) {
-      const hit = BRIDGE_MODULES.find(([pattern]) => pattern.test(file));
-      if (hit !== undefined) add(tests.bridge.filter((test) => hit[1].includes(test)), file, bridge);
+      if (file.endsWith(".py")) add(bridgeModuleTests(file, tests.bridge).tests, file, bridge);
+      add(exampleTests(file, everyVitest), file);
     }
   }
   return { vitest: [...new Set([...tests.plain, ...picked])].sort(), bridge: [...bridge].sort(), reasons };

@@ -1,3 +1,4 @@
+FIXTURE_DEPS = ("bridge/judge/judge_font.py",)
 import os
 import sys
 

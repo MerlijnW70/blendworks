@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
+import { STALE_AFTER_MS, trackHeartbeat, untrackHeartbeat } from "./heartbeat.js";
 
 const UNREADABLE_GRACE_MS = 5_000;
 const RECLAIM_GRACE_MS = 10_000;
@@ -55,7 +56,7 @@ export function readOwner(path: string): Owner | "unreadable" | undefined {
   return "unreadable";
 }
 
-function ageMs(path: string): number {
+export function ageMs(path: string): number {
   try {
     return Date.now() - statSync(path).mtimeMs;
   } catch {
@@ -84,11 +85,19 @@ function removeIfOwned(path: string, token: string): void {
   }
 }
 
-function isStale(path: string): boolean {
+export function fresh(path: string): boolean {
+  return ageMs(path) <= STALE_AFTER_MS;
+}
+
+export function holderAlive(path: string): boolean {
   const owner = readOwner(path);
   if (owner === undefined) return false;
-  if (owner === "unreadable") return ageMs(path) > UNREADABLE_GRACE_MS;
-  return !processAlive(owner.pid);
+  if (owner === "unreadable") return ageMs(path) <= UNREADABLE_GRACE_MS;
+  return processAlive(owner.pid) && fresh(path);
+}
+
+function isStale(path: string): boolean {
+  return readOwner(path) !== undefined && !holderAlive(path);
 }
 
 function reclaimStale(path: string): void {
@@ -135,11 +144,13 @@ export function tryLock(path: string): FileLock | undefined {
     return undefined;
   }
   installExitHook();
+  trackHeartbeat(path);
   const lock: FileLock = {
     path,
     token: owner.token,
     release() {
       if (!held.delete(lock)) return false;
+      untrackHeartbeat(path);
       removeIfOwned(path, owner.token);
       return true;
     },

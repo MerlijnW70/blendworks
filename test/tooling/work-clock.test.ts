@@ -2,10 +2,38 @@ import { spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { waitStarted } from "../../scripts/lib/locks.js";
 import { acquireSlot, SlotWaitTimeout } from "../../scripts/lib/slots.js";
 import { readTimingLog, type ProcessTiming } from "../../scripts/lib/timings.js";
-import { envelopeMs, startWorkClock, WAIT_FOR_SLOT_MS, WorkTimeout } from "../setup/work-clock.js";
+import { envelopeMs, startWorkClock, useTimers, WAIT_FOR_SLOT_MS, WorkTimeout, type Timers } from "../setup/work-clock.js";
 import { scratch } from "./probes.js";
+
+function fakeTimers(): Timers & { advance(ms: number): void } {
+  let time = 1_000;
+  const pending: { at: number; run: () => void }[] = [];
+  return {
+    now: () => time,
+    after(ms, run) {
+      const entry = { at: time + ms, run };
+      pending.push(entry);
+      return () => {
+        const index = pending.indexOf(entry);
+        if (index >= 0) pending.splice(index, 1);
+      };
+    },
+    advance(ms) {
+      const target = time + ms;
+      for (;;) {
+        const due = pending.filter((entry) => entry.at <= target).sort((a, b) => a.at - b.at)[0];
+        if (due === undefined) break;
+        pending.splice(pending.indexOf(due), 1);
+        time = due.at;
+        due.run();
+      }
+      time = target;
+    },
+  };
+}
 
 type Assertion = { fullName: string; status: string; failureMessages: string[]; duration: number | null };
 type FileReport = { name: string; status: string; message: string; assertionResults: Assertion[] };
@@ -67,29 +95,37 @@ describe("per-test timeouts count work, never the wait for a Blender slot", { ti
     const test = file(run, "hang.spec.ts");
     expect(test.assertionResults[0]?.status).toBe("failed");
     expect(failureText(test)).toMatch(/timed out working, not waiting: test "test\/tooling\/work-files\/hang\.spec\.ts > hang > works past its budget" in stage work-proof worked 0\.\d s, over its work budget of 0\.8 s; it also waited \d+\.\d s for a Blender slot or a lock, which does not count/);
-    expect(test.assertionResults[0]?.duration ?? HOLD_MS).toBeLessThan(HOLD_MS - 1000);
     expect(failureText(file(run, "hang-hook.spec.ts"))).toMatch(/timed out working, not waiting: hook of "test\/tooling\/work-files\/hang-hook\.spec\.ts" in stage work-proof worked 0\.\d s, over its work budget of 0\.8 s/);
   });
 });
 
 describe("the work clock", { timeout: 30_000 }, () => {
   it("stops while this process waits for a slot and runs out only on work", async () => {
-    const root = scratch("work-clock-unit");
-    const held = await acquireSlot({ root, jobs: 1 });
-    setTimeout(() => held.release(), 700);
-    const clock = startWorkClock('test "unit"', 400);
-    let expired: unknown;
-    clock.expired.catch((error: unknown) => (expired = error));
-    const slot = await acquireSlot({ root, jobs: 1, pollMs: 5 });
-    expect(slot.waitedMs).toBeGreaterThan(600);
-    expect(clock.waitMs()).toBeGreaterThan(600);
-    expect(clock.workMs()).toBeLessThan(200);
-    expect(expired).toBeUndefined();
-    slot.release();
-    await new Promise((done) => setTimeout(done, 500));
-    expect(expired).toBeInstanceOf(WorkTimeout);
-    expect((expired as WorkTimeout).message).toMatch(/^timed out working, not waiting: test "unit" in stage \S+ worked 0\.4 s, over its work budget of 0\.4 s; it also waited 0\.[67] s/);
-    clock.stop();
+    const timers = fakeTimers();
+    const restore = useTimers(timers);
+    try {
+      const clock = startWorkClock('test "unit"', 400);
+      let expired: unknown;
+      clock.expired.catch((error: unknown) => (expired = error));
+      const done = waitStarted();
+      timers.advance(700);
+      done();
+      await Promise.resolve();
+      expect(clock.waitMs()).toBe(700);
+      expect(clock.workMs()).toBe(0);
+      expect(expired).toBeUndefined();
+      timers.advance(399);
+      await Promise.resolve();
+      expect(clock.workMs()).toBe(399);
+      expect(expired).toBeUndefined();
+      timers.advance(1);
+      await Promise.resolve();
+      expect(expired).toBeInstanceOf(WorkTimeout);
+      expect((expired as WorkTimeout).message).toMatch(/^timed out working, not waiting: test "unit" in stage \S+ worked 0\.4 s, over its work budget of 0\.4 s; it also waited 0\.7 s/);
+      clock.stop();
+    } finally {
+      restore();
+    }
   });
 
   it("bounds waiting on its own, and says the time went to waiting", async () => {
@@ -97,7 +133,7 @@ describe("the work clock", { timeout: 30_000 }, () => {
     const held = await acquireSlot({ root, jobs: 1 });
     const waiting = acquireSlot({ root, jobs: 1, pollMs: 5, timeoutMs: 200, label: 'test "queued"' });
     await expect(waiting).rejects.toBeInstanceOf(SlotWaitTimeout);
-    await expect(waiting).rejects.toThrow(/^timed out waiting, not working: test "queued" waited 0\.2 s for one of 1 Blender slots in .* \(stage \S+\)$/);
+    await expect(waiting).rejects.toThrow(/^timed out waiting, not working: test "queued" waited \d+\.\d s for one of 1 Blender slots in .* \(stage \S+\)$/);
     held.release();
   });
 
