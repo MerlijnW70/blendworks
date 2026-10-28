@@ -29,6 +29,7 @@ DESIGN_COMMANDS = {
     "material_nodes", "material_info", "add_empty", "collection_create", "collection_link", "collection_unlink",
     "armature_create", "bone_add", "bone_edit", "bone_mirror", "rig_template", "rig_info", "vertex_group", "skin_bind",
     "ik_chain", "bone_constraint", "animation_preset", "clip_keys", "clip_edit", "clip_info", "clip_pose", "shape_key_add",
+    "camera_setup", "atmosphere", "render_final",
 }
 ASSET_LIBRARY_COMMANDS = {"set_world_hdri"}
 SLOW = {"slow": True, "timeout": 300, "max_timeout": 1800}

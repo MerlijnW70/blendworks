@@ -7,7 +7,7 @@ import tempfile
 import bpy
 from mathutils import Vector
 
-from .. import device, limits
+from .. import atmosphere_haze, device, limits, render_outputs
 from ..errors import bad_args, failed
 from ..preview import DIRECTIONS, SHADINGS, Shading, aim, frame_width, pixel_size
 from ..registry import command
@@ -73,9 +73,11 @@ def render_preview(ctx, args):
     quality = scene.render.image_settings.quality
     folder = tempfile.mkdtemp(prefix="blendworks-render-")
     report = {}
+    haze = atmosphere_haze.stored(scene)
     try:
-        with PreviewRig(scene) as rig, Shading(scene, ctx.view_layer, args["shading"]) as shading:
-            subjects = [obj for obj in scene.objects if not obj.name.startswith(TEMPORARY_PREFIX)]
+        with PreviewRig(scene) as rig, Shading(scene, ctx.view_layer, args["shading"]) as shading, PreviewHaze(scene, haze, args["shading"]) as preview_haze:
+            domain = atmosphere_haze.domain_object(haze) if haze is not None else None
+            subjects = [obj for obj in scene.objects if not obj.name.startswith(TEMPORARY_PREFIX) and obj != domain]
             if not any(obj.type == "LIGHT" and obj.visible_get(view_layer=ctx.view_layer) for obj in subjects):
                 rig.add_studio_lights()
             if scene.world is None:
@@ -83,7 +85,7 @@ def render_preview(ctx, args):
             configure(scene, engine, args)
             shots, distance = plan_shots(ctx, rig, camera, args, subjects, report)
             shading.apply([obj for obj in subjects if obj.visible_get(view_layer=ctx.view_layer)], pixel_size(distance, args["resolution"]) * 0.8)
-            images, choice = render_all(scene, shots, folder, args, choice, rig)
+            images, choice = render_all(scene, shots, folder, args, choice, rig, preview_haze.depth_settings(ctx.view_layer))
             report.update(shading.report)
     finally:
         settings.restore()
@@ -100,7 +102,34 @@ def render_preview(ctx, args):
         "geometry_objects": sum(1 for obj in scene.objects if obj.type in GEOMETRY_TYPES),
     }
     result.update(report)
+    if haze is not None:
+        result["atmosphere"] = preview_haze.mode
     return result
+
+
+class PreviewHaze:
+    def __init__(self, scene, settings, shading):
+        self.settings = settings
+        if settings is None:
+            self.mode = None
+        elif shading != "shaded":
+            self.mode = "hidden"
+        else:
+            self.mode = "depth haze" if settings["preview"] == "depth" else "volume"
+        self.hidden = atmosphere_haze.VolumeHidden(scene, settings) if self.mode in ("hidden", "depth haze") else None
+
+    def __enter__(self):
+        if self.hidden is not None:
+            self.hidden.__enter__()
+        return self
+
+    def __exit__(self, kind, error, trace):
+        if self.hidden is not None:
+            self.hidden.__exit__(kind, error, trace)
+        return False
+
+    def depth_settings(self, view_layer):
+        return (view_layer, self.settings) if self.mode == "depth haze" else None
 
 
 def check_arguments(args):
@@ -204,21 +233,16 @@ def configure(scene, engine, args):
         scene.eevee.taa_render_samples = args["samples"]
 
 
-def render_all(scene, shots, folder, args, choice, rig):
+def render_all(scene, shots, folder, args, choice, rig, haze=None):
+    def work():
+        return [render_view(scene, shot, folder, args, rig, haze) for shot in shots]
+
     if choice is None:
-        return [render_view(scene, shot, folder, args, rig) for shot in shots], None
-    try:
-        with device.DeviceScope(scene, choice):
-            return [render_view(scene, shot, folder, args, rig) for shot in shots], choice
-    except RuntimeError as error:
-        if choice.device != "gpu" or device.requested_mode(args.get("device")) != "auto":
-            raise failed(f"rendering on {choice.label()} failed: {error}") from error
-        fallback = device.Choice("cpu", fallback=f"{choice.backend} did not render: {error}")
-        with device.DeviceScope(scene, fallback):
-            return [render_view(scene, shot, folder, args, rig) for shot in shots], fallback
+        return work(), None
+    return render_outputs.on_device(scene, choice, args.get("device"), work)
 
 
-def render_view(scene, shot, folder, args, rig):
+def render_view(scene, shot, folder, args, rig, haze=None):
     camera, label, aim_at = shot
     if aim_at is not None:
         centre, direction, distance = aim_at
@@ -228,7 +252,10 @@ def render_view(scene, shot, folder, args, rig):
     file_format, mime_type, extension = FORMATS[args["format"]]
     path = os.path.join(folder, f"{len(os.listdir(folder))}{extension}")
     scene.render.filepath = path
-    bpy.ops.render.render(write_still=True)
+    if haze is None:
+        bpy.ops.render.render(write_still=True)
+    else:
+        render_outputs.render_hazed_still(scene, haze[0], camera, path, haze[1])
     if not os.path.isfile(path):
         raise failed(f"rendering {label} produced no image")
     with open(path, "rb") as handle:

@@ -176,6 +176,13 @@ export const WORKFLOWS: Workflow[] = [
     note: "Poly Haven's free CC0 assets: HDRIs light the scene, texture sets become PBR materials, and models serve as reference.",
   },
   {
+    id: "photographic-look",
+    goal: "Photographic final render",
+    examples: ["photoreal hero shot", "golden hour render with depth of field", "final render with haze", "beauty shot at full resolution"],
+    steps: ["blender_set_world_hdri", "blender_add_camera", "blender_camera_setup", "blender_atmosphere", "blender_render_preview", "blender_render_final"],
+    note: "Light with an HDRI, place a camera, then blender_camera_setup: focal_length, fstop with focus_object on the subject for depth of field, physical exposure (shutter, iso; exposure = reference_ev - EV100) or exposure in stops, and an AgX look such as base_contrast or punchy. blender_atmosphere adds haze by visibility in metres (contrast falls to 2 % there), height_falloff and ground_fog; previews show it as cheap depth haze. Check with blender_render_preview, then blender_render_final writes up to 4096 px with adaptive sampling, denoising and a time_limit, plus depth, normal, albedo and object_id passes, and motion_blur for animation.",
+  },
+  {
     id: "review",
     goal: "Check and deliver",
     examples: ["look at the model", "verify counts", "export the asset"],

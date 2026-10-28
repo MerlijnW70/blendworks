@@ -281,5 +281,11 @@
   {"id":"clip_edit-1","text":"The jump animation pops when it repeats; copy its first pose onto the last frame and make it cyclic","kind":"single","split":"heldout","expect":["blender_clip_edit"]},
   {"id":"clip_info-1","text":"List the animation clips with their frame ranges and durations","kind":"single","split":"heldout","expect":["blender_clip_info"]},
   {"id":"clip_pose-1","text":"Show the character at frame 12 of the run animation so I can preview that pose","kind":"single","split":"heldout","expect":["blender_clip_pose"],"alternatives":["blender_render_preview"]},
-  {"id":"shape_key_add-1","text":"Add a blend shape that puffs out the cheeks for facial animation","kind":"single","split":"heldout","expect":["blender_shape_key_add"]}
+  {"id":"shape_key_add-1","text":"Add a blend shape that puffs out the cheeks for facial animation","kind":"single","split":"heldout","expect":["blender_shape_key_add"]},
+  {"id":"render_final-1","text":"Render the hero shot at 3000 pixels wide with denoising and save it as a PNG","kind":"near-miss","split":"tune","expect":["blender_render_final"],"confusable":"blender_render_preview"},
+  {"id":"render_final-2","text":"Write a depth pass and an object ID mask next to the final image for compositing","kind":"single","split":"tune","expect":["blender_render_final"]},
+  {"id":"camera_setup-1","text":"Blur the background behind the rock with an f/2 aperture focused on it","kind":"single","split":"tune","expect":["blender_camera_setup"]},
+  {"id":"camera_setup-2","text":"Expose the shot like a real camera at 1/500 s and ISO 200","kind":"single","split":"tune","expect":["blender_camera_setup"]},
+  {"id":"atmosphere-1","text":"Make the far trees fade into a soft blue haze","kind":"single","split":"tune","expect":["blender_atmosphere"]},
+  {"id":"atmosphere-2","text":"Add morning mist lying low over the meadow","kind":"single","split":"tune","expect":["blender_atmosphere"]}
 ]

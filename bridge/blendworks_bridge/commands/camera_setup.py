@@ -1,0 +1,202 @@
+import math
+
+from mathutils import Vector
+
+from .. import camera_exposure
+from ..errors import bad_args
+from ..registry import command
+from ..schema import boolean, integer, length, number, obj, string
+from ..util import get_object, rounded
+
+SENSOR_FITS = {"auto": "AUTO", "horizontal": "HORIZONTAL", "vertical": "VERTICAL"}
+CIRCLE_OF_CONFUSION_DIVISOR = 1500.0
+PHYSICAL = obj(
+    {
+        "shutter": number("Shutter time in seconds, for example 0.004 for 1/250 s.", 1e-6, 60.0),
+        "iso": number("Sensor sensitivity (ISO).", 1.0, 409_600.0, 100.0),
+        "aperture": number("f-number for the exposure. Default: the camera's fstop, also when depth of field is off.", 0.5, 128.0),
+        "reference_ev": number(
+            "EV100 that Blender's exposure 0 stands for. Default 15: a scene that looks right at exposure 0 counts as "
+            "sunlit daylight (sunny 16 at ISO 100).",
+            -10.0,
+            30.0,
+            camera_exposure.REFERENCE_EV,
+        ),
+    },
+    ["shutter"],
+)
+PHYSICAL["description"] = "Exposure from a real camera: EV100 = log2(N^2 / t) - log2(ISO / 100), exposure = reference_ev - EV100."
+
+
+@command(
+    "camera_setup",
+    "Set a camera's lens, sensor, depth of field (f-stop, focus distance or object), shift and the scene exposure and AgX look.",
+    {
+        "name": string("Camera object to set up."),
+        "focal_length": number("Focal length in millimetres.", 1.0, 5000.0),
+        "sensor_width": number("Sensor width in millimetres (36 is full frame).", 1.0, 200.0),
+        "sensor_height": number("Sensor height in millimetres (24 is full frame). Only the side the sensor fit uses matters.", 1.0, 200.0),
+        "sensor_fit": string("Which side the sensor width spans; auto: the larger side.", list(SENSOR_FITS)),
+        "fstop": number("Aperture f-number; turns depth of field on. Smaller is blurrier.", 0.5, 128.0),
+        "depth_of_field": boolean("Turn depth of field on or off. Default: on when fstop or a focus is given."),
+        "focus_distance": length("Focus distance in metres, along the view axis."),
+        "focus_object": string("Object whose origin stays in focus, also when it moves."),
+        "aperture_blades": integer("Aperture blades for polygonal bokeh; 0 is round.", 0, 16),
+        "aperture_rotation": number("Rotation of the blades in degrees.", -180.0, 180.0),
+        "aperture_ratio": number("Anamorphic bokeh: width over height of the aperture.", 0.01, 10.0),
+        "shift_x": number("Horizontal lens shift, in frame widths.", -2.0, 2.0),
+        "shift_y": number("Vertical lens shift, in frame widths.", -2.0, 2.0),
+        "clip_start": length("Near clipping distance in metres."),
+        "clip_end": length("Far clipping distance in metres."),
+        "exposure": number("Scene exposure in stops (Blender's exposure); each stop doubles the brightness.", -32.0, 32.0),
+        "physical": PHYSICAL,
+        "view_transform": string(
+            f"Scene view transform. Blender's default and ours: {camera_exposure.DEFAULT_VIEW_TRANSFORM}.",
+            camera_exposure.VIEW_TRANSFORMS,
+        ),
+        "look": string(
+            "Look of the view transform (AgX looks such as punchy or high_contrast). Default: none.",
+            camera_exposure.LOOKS,
+        ),
+        "gamma": number("Display gamma; 1 is neutral.", 0.01, 5.0),
+    },
+    ["name"],
+    family="photography",
+    intents=(
+        "depth of field with an f-stop and focus distance",
+        "set exposure from shutter speed, ISO and aperture",
+        "AgX look and view transform for the render",
+        "focal length and sensor size of a camera",
+    ),
+    nearest=(("add_camera", "to create the camera first"), ("render_final", "to render from it")),
+)
+def camera_setup(ctx, args):
+    camera = get_object(args["name"])
+    if camera.type != "CAMERA":
+        raise bad_args(f"{camera.name} is not a camera")
+    check_arguments(args)
+    data = camera.data
+    set_lens(data, args)
+    set_depth_of_field(data, args)
+    exposure = choose_exposure(args, data)
+    camera_exposure.apply_view(ctx.scene.view_settings, args.get("view_transform"), args.get("look"), exposure, args.get("gamma"))
+    ctx.view_layer.update()
+    result = camera_report(camera)
+    result["view"] = camera_exposure.view_report(ctx.scene.view_settings)
+    if "physical" in args:
+        result["physical"] = camera_exposure.physical_exposure(args["physical"], data.dof.aperture_fstop)
+    return result
+
+
+def check_arguments(args):
+    if len(args) == 1:
+        raise bad_args("give at least one setting besides name")
+    if "focus_distance" in args and "focus_object" in args:
+        raise bad_args("give focus_distance or focus_object, not both")
+    if "exposure" in args and "physical" in args:
+        raise bad_args("give exposure or physical, not both")
+    if args.get("depth_of_field") is False and any(key in args for key in ("fstop", "focus_distance", "focus_object")):
+        raise bad_args("depth_of_field false cannot take fstop or a focus")
+    if "clip_start" in args and "clip_end" in args and args["clip_start"] >= args["clip_end"]:
+        raise bad_args("clip_start must be below clip_end")
+    if "focus_object" in args:
+        get_object(args["focus_object"])
+
+
+def set_lens(data, args):
+    if "focal_length" in args:
+        if data.type != "PERSP":
+            raise bad_args("focal_length needs a perspective camera")
+        data.lens = args["focal_length"]
+    if "sensor_width" in args:
+        data.sensor_width = args["sensor_width"]
+    if "sensor_height" in args:
+        data.sensor_height = args["sensor_height"]
+    if "sensor_fit" in args:
+        data.sensor_fit = SENSOR_FITS[args["sensor_fit"]]
+    for name in ("shift_x", "shift_y", "clip_start", "clip_end"):
+        if name in args:
+            setattr(data, name, args[name])
+    if data.clip_start >= data.clip_end:
+        raise bad_args("clip_start must stay below clip_end")
+
+
+def set_depth_of_field(data, args):
+    dof = data.dof
+    turned_on = args.get("depth_of_field")
+    if turned_on is None and any(key in args for key in ("fstop", "focus_distance", "focus_object")):
+        turned_on = True
+    if turned_on is not None:
+        dof.use_dof = turned_on
+    if "fstop" in args:
+        dof.aperture_fstop = args["fstop"]
+    if "focus_distance" in args:
+        dof.focus_object = None
+        dof.focus_distance = args["focus_distance"]
+    if "focus_object" in args:
+        dof.focus_object = get_object(args["focus_object"])
+    if "aperture_blades" in args:
+        if args["aperture_blades"] in (1, 2):
+            raise bad_args("aperture_blades is 0 (round) or at least 3")
+        dof.aperture_blades = args["aperture_blades"]
+    if "aperture_rotation" in args:
+        dof.aperture_rotation = math.radians(args["aperture_rotation"])
+    if "aperture_ratio" in args:
+        dof.aperture_ratio = args["aperture_ratio"]
+
+
+def choose_exposure(args, data):
+    if "exposure" in args:
+        return args["exposure"]
+    if "physical" in args:
+        return camera_exposure.physical_exposure(args["physical"], data.dof.aperture_fstop)["exposure"]
+    return None
+
+
+def focus_distance_of(camera):
+    dof = camera.data.dof
+    if dof.focus_object is None:
+        return dof.focus_distance
+    forward = camera.matrix_world.to_3x3() @ Vector((0.0, 0.0, -1.0))
+    offset = dof.focus_object.matrix_world.translation - camera.matrix_world.translation
+    return max(offset.dot(forward.normalized()), 0.0)
+
+
+def depth_of_field_limits(data, distance):
+    focal = data.lens / 1000.0
+    circle = data.sensor_width / CIRCLE_OF_CONFUSION_DIVISOR / 1000.0
+    hyperfocal = focal * focal / (data.dof.aperture_fstop * circle) + focal
+    if distance <= focal:
+        return {"near": rounded(distance), "far": rounded(distance), "hyperfocal": rounded(hyperfocal)}
+    near = distance * (hyperfocal - focal) / (hyperfocal + distance - 2.0 * focal)
+    far = distance * (hyperfocal - focal) / (hyperfocal - distance) if distance < hyperfocal else None
+    return {"near": rounded(near), "far": rounded(far) if far is not None else None, "hyperfocal": rounded(hyperfocal)}
+
+
+def camera_report(camera):
+    data = camera.data
+    dof = data.dof
+    report = {
+        "name": camera.name,
+        "type": data.type.lower(),
+        "focal_length": rounded(data.lens),
+        "sensor_width": rounded(data.sensor_width),
+        "sensor_height": rounded(data.sensor_height),
+        "sensor_fit": data.sensor_fit.lower(),
+        "field_of_view": rounded(math.degrees(data.angle)),
+        "shift": [rounded(data.shift_x), rounded(data.shift_y)],
+        "clip": [rounded(data.clip_start), rounded(data.clip_end)],
+        "depth_of_field": {"use": dof.use_dof},
+    }
+    if dof.use_dof:
+        distance = focus_distance_of(camera)
+        report["depth_of_field"].update(
+            {
+                "fstop": rounded(dof.aperture_fstop),
+                "focus_distance": rounded(distance),
+                "focus_object": dof.focus_object.name if dof.focus_object is not None else None,
+                "blades": dof.aperture_blades,
+                "sharp_range": depth_of_field_limits(data, distance) if data.type == "PERSP" else None,
+            }
+        )
+    return report

@@ -3,6 +3,7 @@ import os
 
 import bpy
 
+from .. import atmosphere_haze
 from ..blendfile import open_blend, save_atomically
 from ..errors import bad_args, failed, forbidden
 from ..gltf_extras import add_skeleton_extras
@@ -110,7 +111,10 @@ def chosen_objects(ctx, args):
         objects = [
             obj
             for obj in pool
-            if obj.name in ctx.scene.objects and obj.type in GEOMETRY_TYPES and (args["include_hidden"] or obj.visible_get(view_layer=ctx.view_layer))
+            if obj.name in ctx.scene.objects
+            and obj.type in GEOMETRY_TYPES
+            and not atmosphere_haze.is_domain(obj)
+            and (args["include_hidden"] or obj.visible_get(view_layer=ctx.view_layer))
         ]
     objects = [obj for obj in objects if obj.type in EXPORTABLE_TYPES]
     if not objects:

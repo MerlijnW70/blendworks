@@ -25,6 +25,7 @@ export const FAMILY_LINES: FamilyLine[] = [
   { family: "modifiers", priority: 60, text: "Modifiers: blender_add_modifier (displace, screw, lattice, shrinkwrap and more), blender_remesh." },
   { family: "from_data", priority: 60, text: "Data: blender_mesh_from_data builds a mesh from vertices and faces, with UVs." },
   { family: "lods", priority: 60, text: "Game assets: blender_generate_lods makes levels of detail." },
+  { family: "photography", priority: 70, text: "Photo: blender_camera_setup (lens, f-stop focus, exposure, AgX look), blender_atmosphere (haze), blender_render_final to a file." },
   { family: "lighting", priority: 70, text: "Lighting: blender_add_light, blender_add_camera, blender_set_world_hdri." },
   { family: "textures", priority: 70, text: "Images: blender_image_load, blender_image_new, blender_image_save." },
   { family: "faces", priority: 80, text: "Faces: blender_mesh_query finds faces, blender_transform_selection moves them." },
