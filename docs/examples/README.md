@@ -162,3 +162,24 @@ It runs these steps in order, and stops at the first failing command:
 4. **Material, files and renders.** The `bark` preset of `material_procedural` on all three, the `.blend` and `.glb`, then the renders.
 
 `BLENDWORKS_TREE_DETAIL` (a factor on the point and branch counts), `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+
+## Rocks
+
+`rocks.py` builds a fractured boulder with its fragments, a chipped block and three worn stones with commands only, renders them and exports each stone. It is the acceptance build of the `rocks` job.
+
+```
+blender --background --factory-startup --python docs/examples/rocks.py -- out
+node src/judge/bin.js judge out/rock.spec.json out/stone_a.glb --preview
+```
+
+The script writes into `out`:
+- `rocks.blend`, `stone_a.glb`, `stone_b.glb`, `stone_c.glb` and `rock.spec.json` (the `natural` rock rules with their calibrated defaults);
+- three PNGs: `overview`, `boulder` (the fragments, apart) and `stones`;
+- `summary.json`: every command with its time and mesh size.
+
+It runs these steps in order, and stops at the first failing command:
+1. **Boulder.** A cube of 2.2 x 1.5 x 1.3 m, chipped 14 times (30 cm to 50 cm deep) into an irregular convex block, then `fracture` (binary, 11 pieces, `min_size` 15 cm). Each fragment is pushed outward and tumbled by a few degrees. The cut faces share a light `fresh_rock` material through `fresh_material`.
+2. **Chipped block.** A cube with `chip` (10 chips, 30 cm deep): fresh, blocky and closed.
+3. **Worn stones.** Each is an ico sphere cut once by `fracture` (the larger piece is kept), then `chip` knocks corners off, `abrade` rounds the edges (amount 0.8 to 1) so the rim of the cut is a smooth fillet, and three `noise_displace` layers in metres follow: vertical lumps (`direction` z, 18 % of the size, which cannot tear the rim), ridged worley cracks (2 %) and fine grain (3 %). Then UVs, the `granite` material and a baked base colour.
+
+`BLENDWORKS_SHOT_SIZE`, `BLENDWORKS_SHOT_SAMPLES`, `BLENDWORKS_BAKE_SIZE` and `BLENDWORKS_FRAGMENTS` make a smaller, faster run. The judge scores of the three stones against the calibrated rock defaults are measured by `test/rocks-example.test.ts`.

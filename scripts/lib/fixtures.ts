@@ -1,4 +1,5 @@
-import { mkdirSync, readdirSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { basename, join } from "node:path";
 import { checkedBlender, type CheckedBlender } from "./blender-check.js";
 import { ensureEntry, hashFiles } from "./entry-cache.js";
@@ -22,8 +23,21 @@ export function fixtureSets(base: string = repoRoot): FixtureSet[] {
     .map((name) => ({ name: basename(name, ".py"), script: join(folder, name) }));
 }
 
-export function fixtureKey(script: string, blenderVersion: string): string {
-  return hashFiles([script], [`blender:${blenderVersion}`]).slice(0, KEY_LENGTH);
+export function bridgeTreeHash(base: string = repoRoot): string {
+  const root = join(base, "bridge", "blendworks_bridge");
+  const hash = createHash("sha256");
+  const visit = (dir: string, prefix: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      if (entry.isDirectory()) visit(join(dir, entry.name), `${prefix}${entry.name}/`);
+      else if (entry.name.endsWith(".py")) hash.update(`${prefix}${entry.name}\n`).update(readFileSync(join(dir, entry.name))).update("\n");
+    }
+  };
+  visit(root, "");
+  return hash.digest("hex");
+}
+
+export function fixtureKey(script: string, blenderVersion: string, base: string = repoRoot): string {
+  return hashFiles([script], [`blender:${blenderVersion}`, `bridge:${bridgeTreeHash(base)}`]).slice(0, KEY_LENGTH);
 }
 
 export async function ensureFixtureSet(root: string, blender: CheckedBlender, set: FixtureSet): Promise<Fixtures> {

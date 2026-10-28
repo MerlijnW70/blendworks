@@ -41,7 +41,7 @@ describe("--toolsets", () => {
 
   it("lists the core set, the search tool and the call tool by default, and every tool with all", async () => {
     harness = await headlessHarness();
-    expect(await names(harness)).toEqual(["blender_add_primitive", "blender_call", "blender_export", "blender_find_tools", "blender_render_preview", "blender_scene_info", "library_apply"]);
+    expect(await names(harness)).toEqual(["blender_add_primitive", "blender_call", "blender_export", "blender_find_tools", "blender_render_preview", "blender_scene_info"]);
     await harness.close();
     harness = await headlessHarness({}, { toolsets: { kind: "all" } });
     const all = await harness.client.listTools();

@@ -14,15 +14,15 @@ export const CORE_RANKING: string[] = [
   "blender_render_preview",
   "blender_uv_smart_project",
   "blender_new_scene",
-  "blender_displace_noise",
   "blender_add_material",
   "blender_delete",
   "blender_add_empty",
+  "blender_shade_smooth",
   "blender_bevel",
+  "blender_displace_noise",
   "blender_engrave",
   "blender_add_modifier",
   "blender_scene_info",
-  "library_apply",
 ];
 
 export const CORE_MAX_TOOLS = 12;

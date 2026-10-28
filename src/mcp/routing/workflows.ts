@@ -66,9 +66,9 @@ export const WORKFLOWS: Workflow[] = [
   {
     id: "rock-set",
     goal: "Rock set",
-    examples: ["boulders", "stones", "scatter rocks", "cliff pieces"],
-    steps: ["blender_add_primitive", "blender_noise_displace", "blender_displace_noise", "blender_shade_flat", "blender_material_procedural", "blender_instances", "blender_uv_smart_project", "blender_bake", "blender_generate_lods", "blender_export"],
-    note: "Start from an ico sphere, shape it with blender_noise_displace (fractal noise in metres: billow for lumps, worley ridged for cracks), add seeded dents or jitter with blender_displace_noise, give it the stone preset, and place variants with blender_instances at points; realize true merges them for export.",
+    examples: ["boulders", "stones", "scatter rocks", "cliff pieces", "fractured or chipped rocks", "worn pebbles"],
+    steps: ["blender_add_primitive", "blender_fracture", "blender_chip", "blender_abrade", "blender_noise_displace", "blender_shade_smooth", "blender_material_procedural", "blender_instances", "blender_uv_smart_project", "blender_bake", "blender_generate_lods", "blender_export"],
+    note: "Start from a convex block (a cube, or an ico sphere with subdivisions 3 or 4 scaled to size; blender_blob for an organic base, then blender_remesh). Fresh, blocky rocks: blender_fracture (binary gives about 6 faces and 8 vertices per piece, voronoi cells) then blender_chip, with a fresh_material for the cut faces. Worn rocks: keep one piece, blender_chip, then blender_abrade (edges round, large faces stay; amount up to 1), then blender_noise_displace in metres for grain (a lump layer near 4 % of the rock, ridged worley cracks near 1 %, fine fBm near 0.5 %), then shade smooth. blender_displace_noise only adds jitter or dents. Fracture and chip need a closed convex solid, so run them before any displacement; blender_remesh joins shells after a boolean. Give the stone preset, place variants with blender_instances at points; realize true merges them for export.",
   },
   {
     id: "pipes",
