@@ -111,10 +111,10 @@ describe("the sandbox on this machine", workBudget(120_000), () => {
   });
 
   it("stops Blender at the timeout", async () => {
-    const started = Date.now();
+    const started = performance.now();
     const { run, result } = await probe("sleep", 8_000);
     expect(run.timedOut).toBe(true);
     expect(result).toBeUndefined();
-    expect(Date.now() - started).toBeLessThan(30_000);
+    expect(performance.now() - started).toBeLessThan(30_000);
   });
 });

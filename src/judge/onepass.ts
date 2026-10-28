@@ -117,6 +117,7 @@ export function changedStage(out: string, records: StageRecord[]): { stage: Pass
 
 class StageClock {
   private readonly started = new Map<StageGroup, number>();
+  private readonly observed = new Map<number, number>();
   private seen = 0;
   current: PassStage;
   finished = false;
@@ -134,6 +135,7 @@ class StageClock {
 
   update(now: number): void {
     const events = readProgress(this.path);
+    events.slice(this.seen).forEach((_, offset) => this.observed.set(this.seen + offset, now));
     for (const event of events.slice(this.seen)) {
       if (event.event === "finish") this.finished = true;
       if (event.stage === null) continue;
@@ -146,6 +148,10 @@ class StageClock {
       }
     }
     this.seen = events.length;
+  }
+
+  observedAt(index: number, fallback: number): number {
+    return this.observed.get(index) ?? fallback;
   }
 
   elapsed(now: number): number {
@@ -175,10 +181,10 @@ export async function runPass(request: PassRequest): Promise<PassResult> {
   const script = request.script ?? join(SCRIPTS_DIR, PASS_SCRIPT);
   const view = { workDir: sandbox.workDir, writable: [out], readOnly: [...new Set([SCRIPTS_DIR, dirname(script), sandbox.delivery])] };
   const plan = planSandbox(sandbox.blender, script, args, sandbox.limits, sandbox.tools, request.device, view, { addressSpaceUntilGpu: request.addressSpaceUntilGpu === true });
-  let spawnedAt = Date.now();
+  let spawnedAt = performance.now();
   const clock = new StageClock(progressPath, request.stages);
   const started = () => {
-    spawnedAt = Date.now();
+    spawnedAt = performance.now();
     clock.begin(spawnedAt);
   };
   let aborted = false;
@@ -187,16 +193,19 @@ export async function runPass(request: PassRequest): Promise<PassResult> {
       aborted = true;
       return "finished";
     }
-    const now = Date.now();
+    const now = performance.now();
     clock.update(now);
     if (clock.finished) return "finished";
     return clock.elapsed(now) > request.budgets[STAGE_GROUP[clock.current]] ? "expired" : "running";
   };
   const result = await runSandboxed(plan, sandbox.workDir, { intervalMs: WATCH_INTERVAL_MS, started, check });
-  clock.update(Date.now());
+  const ended = performance.now();
+  clock.update(ended);
   const events = readProgress(progressPath);
-  const records: StageRecord[] = events.flatMap((event) =>
-    event.stage !== null && (event.event === "end" || event.event === "failed") ? [{ stage: event.stage, ok: event.event === "end", seconds: event.seconds ?? 0, endedAt: event.at * 1000, digest: event.digest ?? null }] : [],
+  const records: StageRecord[] = events.flatMap((event, index) =>
+    event.stage !== null && (event.event === "end" || event.event === "failed")
+      ? [{ stage: event.stage, ok: event.event === "end", seconds: event.seconds ?? 0, endedAt: clock.observedAt(index, ended), digest: event.digest ?? null }]
+      : [],
   );
   const changed = changedStage(out, records);
   const finished = events.some((event) => event.event === "finish") && !result.timedOut;

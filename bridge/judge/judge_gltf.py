@@ -1,9 +1,9 @@
 import base64
 import os
 import struct
-from urllib.parse import unquote
 
 from judge_common import JudgeError
+from judge_paths import check_reference
 
 GLB_BINARY_CHUNK = 0x004E4942
 MAX_IMAGE_SIDE = 16384
@@ -174,7 +174,10 @@ def read_uri(uri, directory, offset, length):
             return base64.b64decode(encoded + "=" * (-len(encoded) % 4))[offset : offset + length]
         except ValueError:
             raise JudgeError("corrupt", "the glTF has a malformed data URI") from None
-    with open(os.path.join(directory, unquote(uri)), "rb") as handle:
+    relative, problem = check_reference(uri, "uri")
+    if problem is not None:
+        raise JudgeError("external_reference", f"the glTF refers to a file the judge never opens: {uri[:120]}: {problem[1]}")
+    with open(os.path.join(directory, *relative.split("/")), "rb") as handle:
         handle.seek(offset)
         return handle.read(length)
 

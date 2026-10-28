@@ -1,0 +1,2 @@
+#!/bin/sh
+exec node /opt/blendworks-entry/judge/container/entry.js "$@"

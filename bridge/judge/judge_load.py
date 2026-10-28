@@ -1,13 +1,12 @@
 import json
 import os
 import struct
-from urllib.parse import unquote
-
 import bpy
 
 from judge_budget import check_budget
 from judge_common import JudgeError, is_inside
 from judge_gltf import glb_binary, precheck_gltf
+from judge_paths import check_reference
 
 FORMATS = {".glb": "glb", ".gltf": "gltf", ".fbx": "fbx", ".obj": "obj", ".blend": "blend"}
 GLB_MAGIC = b"glTF"
@@ -59,10 +58,10 @@ def gltf_referenced_files(path, document):
             uri = entry.get("uri") if isinstance(entry, dict) else None
             if not isinstance(uri, str) or uri.startswith("data:"):
                 continue
-            decoded = unquote(uri)
-            if ":" in decoded or decoded.startswith(("/", "\\")):
-                raise JudgeError("external_reference", f"the glTF refers to a file outside the asset folder: {uri[:120]}")
-            target = os.path.join(directory, decoded)
+            relative, problem = check_reference(uri, "uri")
+            if problem is not None:
+                raise JudgeError("external_reference", f"the glTF refers to a file the judge never opens: {uri[:120]}: {problem[1]}")
+            target = os.path.join(directory, *relative.split("/"))
             if not is_inside(target, directory):
                 raise JudgeError("external_reference", f"the glTF refers to a file outside the asset folder: {uri[:120]}")
             if not os.path.isfile(target):

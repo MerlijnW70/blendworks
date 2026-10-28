@@ -7,14 +7,14 @@ const LONGEST_PAUSE_MS = 100;
 const SLEEP_CELL = new Int32Array(new SharedArrayBuffer(4));
 
 export function withSharedAccess<T>(action: () => T, platform: NodeJS.Platform = process.platform): T {
-  const deadline = Date.now() + SHARED_ACCESS_MS;
+  const deadline = performance.now() + SHARED_ACCESS_MS;
   let pause = FIRST_PAUSE_MS;
   for (;;) {
     try {
       return action();
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
-      if (platform !== "win32" || code === undefined || !HELD_ELSEWHERE.has(code) || Date.now() >= deadline) throw error;
+      if (platform !== "win32" || code === undefined || !HELD_ELSEWHERE.has(code) || performance.now() >= deadline) throw error;
     }
     Atomics.wait(SLEEP_CELL, 0, 0, pause);
     pause = Math.min(pause * 2, LONGEST_PAUSE_MS);

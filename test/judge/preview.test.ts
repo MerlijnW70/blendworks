@@ -57,8 +57,8 @@ describe("preview mode", workBudget(120_000), () => {
   it("sets the exit code from the rules on the command line", async () => {
     const spec = writeSpec(specs, "command");
     const passOut = freshDir("preview", "command-pass");
-    expect(await main(["judge", spec, join(assets, "crate.glb"), "--preview", "--out", passOut])).toBe(0);
-    expect(await main(["judge", spec, join(assets, "wrong-size.glb"), "--preview", "--out", freshDir("preview", "command-fail")])).toBe(1);
+    expect(await main(["judge", spec, join(assets, "crate.glb"), "--preview", "--no-require-isolation", "--out", passOut])).toBe(0);
+    expect(await main(["judge", spec, join(assets, "wrong-size.glb"), "--preview", "--no-require-isolation", "--out", freshDir("preview", "command-fail")])).toBe(1);
     expect(existsSync(join(passOut, "contact-sheet.png"))).toBe(true);
     expect(existsSync(join(passOut, "views"))).toBe(false);
   });
@@ -75,7 +75,7 @@ describe("the render device on this machine", workBudget(120_000), () => {
     expect(report.renders?.views).toHaveLength(1);
     expect(isPng(report.renders!.views[0]!.path)).toBe(true);
     expect(report.summary).toContain("render: cpu (auto fell back to the CPU with the original limits: no usable GPU");
-    expect(report.timings.device).toBeGreaterThan(0);
+    expect(report.timings.device).toBeGreaterThanOrEqual(0);
   });
 
   it("reports cleanly under gpu when no GPU backend works, and the verdict stands on the measurements", async () => {

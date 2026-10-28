@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, posix } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BLENDER_VERSION, blenderThreadArguments } from "../blender.js";
+import { InfrastructureError } from "./isolation.js";
 import { kernelVariables, privateKernels } from "./kernel-cache.js";
 
 export const BLENDER_FLAGS = ["--background", "--factory-startup", "--disable-autoexec", "--python-exit-code", "1"] as const;
@@ -15,6 +16,8 @@ export const NAMESPACE_FLAGS = ["--user", "--map-root-user", "--mount", "--pid",
 export const SYSTEM_READ_ONLY = ["/usr", "/bin", "/sbin", "/lib", "/lib32", "/lib64", "/etc", "/sys"] as const;
 const GPU_DEVICES = ["/dev/dxg", "/dev/dri", "/dev/kfd", "/dev/nvidiactl", "/dev/nvidia-uvm", "/dev/nvidia-uvm-tools", "/dev/nvidia-modeset", "/dev/nvidia0", "/dev/nvidia1"];
 const NEW_ROOT = ".sandbox-root";
+export const SANDBOX_REFUSED = 97;
+const SANDBOX_MESSAGE = /blendworks-sandbox: ([^\n]*)/;
 
 export type Limits = { timeoutMs: number; memoryBytes: number };
 
@@ -151,6 +154,13 @@ export function planSandbox(blender: string, script: string, scriptArgs: string[
   return { command: command ?? blender, args, isolation, gpu, writable, lowIntegrity: false };
 }
 
+export function sandboxRefusal(plan: Pick<Plan, "command" | "args">, result: Pick<RunResult, "code" | "output">): InfrastructureError | null {
+  if (plan.command !== "unshare" || plan.args[0] !== NAMESPACE_FLAGS[0] || result.code !== SANDBOX_REFUSED) return null;
+  const message = SANDBOX_MESSAGE.exec(result.output);
+  if (message === null) return null;
+  return new InfrastructureError("sandbox", `the sandbox could not be built, so nothing was judged and this is not a verdict: ${message[1]!.slice(0, 400)}`);
+}
+
 export function sandboxEnvironment(home: string, gpu = false): NodeJS.ProcessEnv {
   const keep = ["PATH", "Path", "SystemRoot", "SYSTEMROOT", "windir", "LANG"];
   const environment: NodeJS.ProcessEnv = {};
@@ -212,7 +222,9 @@ export async function runSandboxed(plan: Plan, workDir: string, watch?: Watch): 
       });
       child.on("close", (code, signal) => {
         clear();
-        resolve({ code, signal, timedOut, output });
+        const refusal = sandboxRefusal(plan, { code, output });
+        if (refusal !== null) reject(refusal);
+        else resolve({ code, signal, timedOut, output });
       });
     });
   } finally {

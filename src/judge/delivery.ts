@@ -1,7 +1,9 @@
 import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { BlendScanError, blendReferences } from "./blend-refs.js";
 import { FbxError, fbxTextures } from "./fbx.js";
+import { checkReference, type ReferenceStyle } from "./path-policy.js";
 
 export const MAX_DELIVERED_FILES = 1024;
 const GLB_MAGIC = "glTF";
@@ -9,7 +11,6 @@ const GLB_JSON_CHUNK = 0x4e4f534a;
 const MTL_MAP = /^(map_\w+|bump|disp|decal|refl|norm)\s+(.+)$/i;
 const MTL_OPTION_ARGUMENTS: Record<string, number> = { o: 3, s: 3, t: 3, mm: 2, bm: 1, boost: 1, texres: 1, blendu: 1, blendv: 1, cc: 1, clamp: 1, imfchan: 1, type: 1 };
 
-const ABSOLUTE = "an absolute path or a scheme, which the judge never opens";
 const OUTSIDE = "the file is outside the asset folder";
 const NOT_A_FILE = "the reference is not a file";
 const MISSING = "the file is not in the asset folder";
@@ -34,7 +35,9 @@ export class DeliveryError extends Error {
   }
 }
 
-type Reference = { label: string; candidates: string[]; optional?: boolean };
+type Opened = { raw: string; style: ReferenceStyle; within?: string };
+
+type Reference = { label: string; candidates: string[]; opened: Opened[]; optional?: boolean };
 
 type Found = { relative: string; real: string };
 
@@ -73,7 +76,7 @@ function gltfReferences(path: string, format: string): Reference[] {
       } catch {
         decoded = uri;
       }
-      references.push({ label: `${key}[${index}] ${uri.slice(0, 200)}`, candidates: [decoded] });
+      references.push({ label: `${key}[${index}] ${uri.slice(0, 200)}`, candidates: [decoded], opened: [{ raw: uri, style: "uri" }] });
     });
   }
   return references;
@@ -97,8 +100,8 @@ function mtlFileName(rest: string): string {
 function objReferences(path: string, folder: string): Reference[] {
   const lines = readFileSync(path, "utf8").split(/\r?\n/);
   const libraries = lines.filter((line) => /^mtllib\s/.test(line)).map((line) => line.slice(6).trim()).filter((name) => name !== "");
-  const references: Reference[] = libraries.map((name) => ({ label: `mtllib ${name.slice(0, 200)}`, candidates: [name] }));
-  if (libraries.length === 0) references.push({ label: "implicit material library", candidates: [`${basename(path, extname(path))}.mtl`], optional: true });
+  const references: Reference[] = libraries.map((name) => ({ label: `mtllib ${name.slice(0, 200)}`, candidates: [name], opened: [{ raw: name, style: "path" }] }));
+  if (libraries.length === 0) references.push({ label: "implicit material library", candidates: [`${basename(path, extname(path))}.mtl`], opened: [], optional: true });
   for (const library of [...references]) {
     const found = locate(folder, library.candidates);
     if ("reason" in found) continue;
@@ -106,7 +109,11 @@ function objReferences(path: string, folder: string): Reference[] {
       const match = MTL_MAP.exec(line.trim());
       if (match === null) continue;
       const name = mtlFileName(match[2] ?? "");
-      if (name !== "") references.push({ label: `${match[1]} ${name.slice(0, 200)} in ${found.relative}`, candidates: [name, basename(name.replaceAll("\\", "/"))] });
+      if (name !== "") {
+        const within = dirname(found.relative) === "." ? undefined : dirname(found.relative);
+        const label = `${match[1]} ${name.slice(0, 200)} in ${found.relative}`;
+        references.push({ label, candidates: [name, basename(name.replaceAll("\\", "/"))], opened: [{ raw: name, style: "path", ...(within === undefined ? {} : { within }) }] });
+      }
     }
   }
   return references;
@@ -124,26 +131,45 @@ function fbxReferences(path: string): Reference[] {
   const references: Reference[] = [];
   const seen = new Set<string>();
   for (const texture of textures) {
-    if (texture.embedded) continue;
+    references.push({ label: `texture ${texture.opened.slice(0, 200)}`, candidates: [], opened: [{ raw: texture.opened, style: "path" }], optional: true });
+    if (texture.embedded || texture.names.length === 0) continue;
     const names = texture.names.map((name) => name.replaceAll("\\", "/"));
     if (names.some((name) => embedded.has(basename(name)))) continue;
     const key = names.join("|");
     if (seen.has(key)) continue;
     seen.add(key);
-    references.push({ label: `texture ${basename(names[0]!).slice(0, 200)}`, candidates: [...names, ...names.map((name) => basename(name))] });
+    references.push({ label: `texture ${basename(names[0]!).slice(0, 200)}`, candidates: [...names, ...names.map((name) => basename(name))], opened: [] });
   }
   return references;
+}
+
+function blendFileReferences(path: string): Reference[] {
+  let found;
+  try {
+    found = blendReferences(readFileSync(path));
+  } catch (error) {
+    if (error instanceof BlendScanError) throw new DeliveryError("corrupt", error.message);
+    throw error;
+  }
+  return found.map((entry) => ({ label: `${entry.kind} ${entry.name.slice(0, 120)} ${entry.path.slice(0, 200)}`, candidates: [], opened: [{ raw: entry.path, style: "blend" }], optional: true }));
+}
+
+export function refusal(opened: Opened): string | null {
+  const verdict = checkReference(opened.raw, opened.style);
+  if (verdict.ok || verdict.code !== "escape" || opened.within === undefined) return verdict.ok ? null : verdict.reason;
+  const inside = checkReference(`${opened.within}/${opened.raw}`, opened.style);
+  return inside.ok ? null : inside.reason;
 }
 
 function locate(folder: string, candidates: string[]): Found | { reason: string } {
   const reasons = new Set<string>();
   for (const candidate of candidates) {
-    const normal = candidate.replaceAll("\\", "/");
-    if (normal === "" || normal.includes(":") || normal.startsWith("/") || isAbsolute(candidate)) {
-      reasons.add(ABSOLUTE);
+    const verdict = checkReference(candidate, "path");
+    if (!verdict.ok) {
+      reasons.add(verdict.code === "escape" ? OUTSIDE : MISSING);
       continue;
     }
-    const target = resolve(folder, normal);
+    const target = resolve(folder, ...verdict.path.split("/"));
     if (!existsSync(target)) {
       reasons.add(MISSING);
       continue;
@@ -160,13 +186,14 @@ function locate(folder: string, candidates: string[]): Found | { reason: string 
     }
     return { relative: inside.split(sep).join("/"), real };
   }
-  return { reason: [OUTSIDE, NOT_A_FILE, MISSING, ABSOLUTE].find((reason) => reasons.has(reason)) ?? MISSING };
+  return { reason: [OUTSIDE, NOT_A_FILE, MISSING].find((reason) => reasons.has(reason)) ?? MISSING };
 }
 
 function references(path: string, format: string, folder: string): Reference[] {
   if (format === "glb" || format === "gltf") return gltfReferences(path, format);
   if (format === "obj") return objReferences(path, folder);
   if (format === "fbx") return fbxReferences(path);
+  if (format === "blend") return blendFileReferences(path);
   return [];
 }
 
@@ -176,7 +203,15 @@ export function copyDelivery(assetPath: string, format: string, into: string, ma
   const chosen = new Map<string, string>([[basename(real), real]]);
   const unresolved: string[] = [];
   const listed = references(real, format, folder);
+  const refused = [...new Set(listed.flatMap((reference) => reference.opened.flatMap((opened) => {
+    const reason = refusal(opened);
+    return reason === null ? [] : [`${reference.label}: ${reason}`];
+  })))].sort();
+  if (refused.length > 0) {
+    throw new DeliveryError("external_reference", `the delivery refers to files the judge never opens, so it is refused before Blender starts: ${refused.slice(0, 10).join("; ")}${refused.length > 10 ? `; and ${refused.length - 10} more` : ""}`);
+  }
   for (const reference of listed) {
+    if (reference.candidates.length === 0) continue;
     const found = locate(folder, reference.candidates);
     if ("reason" in found) {
       const entry = `${reference.label}: ${found.reason}`;
@@ -204,6 +239,6 @@ export function copyDelivery(assetPath: string, format: string, into: string, ma
     files,
     bytes: files.reduce((sum, file) => sum + file.bytes, 0),
     sha256: digest(manifest),
-    references: { files: listed.length, unresolved: unresolved.sort() },
+    references: { files: listed.filter((reference) => reference.candidates.length > 0).length, unresolved: unresolved.sort() },
   };
 }

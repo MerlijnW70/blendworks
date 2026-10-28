@@ -15,6 +15,7 @@ import { loadReferences, referenceStage, REFERENCE_FOLDER, silhouettesFrom, type
 import { hashRenders, interpretRenders, overBudget, renderBudget, type RenderAttempt } from "./render-stage.js";
 import { summarize, type Report, type Timings } from "./report.js";
 import { evaluateRules } from "./rules.js";
+import { checkIsolation, InfrastructureError, probeContainer, requireIsolation } from "./isolation.js";
 import { detectTools, type Limits, type Tools } from "./sandbox.js";
 import { DEFAULT_VIEWS, readSpec, SpecError, type AssetSpec } from "./spec.js";
 import { checkAsset, checkBlender, DEFAULT_BACKENDS, DEFAULTS, deviceMode, seconds, sha256, StageFailure, workOut, type Sandbox } from "./stages.js";
@@ -49,9 +50,12 @@ export type JudgeOptions = {
   afterCopy?: (delivery: Delivery) => void;
   afterPass?: (stages: PassStage[], result: PassResult) => void;
   visual?: VisualOptions;
+  requireIsolation?: boolean;
 };
 
-const OUTPUTS = ["report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "sheet.json", "contact-sheet.png", "views", "visual.json", "visual", "closeups", "package", REFERENCE_FOLDER, NATURAL_FOLDER];
+export const INFRASTRUCTURE_FILE = "infrastructure.json";
+
+const OUTPUTS = [INFRASTRUCTURE_FILE, "report.json", "summary.txt", "measurements.json", "validation.json", "render.json", "sheet.json", "contact-sheet.png", "views", "visual.json", "visual", "closeups", "package", REFERENCE_FOLDER, NATURAL_FOLDER];
 const STAGE_OUTPUTS = ["measurements.json", "render.json", "sheet.json", "contact-sheet.png"];
 
 function prepareOutDir(outDir: string): void {
@@ -196,6 +200,19 @@ export async function judge(options: JudgeOptions): Promise<Report> {
   const limits: Limits = { timeoutMs: options.timeoutMs ?? DEFAULTS.timeoutMs, memoryBytes: options.memoryBytes ?? DEFAULTS.memoryBytes };
   const maxTriangles = options.maxTriangles ?? DEFAULTS.maxTriangles;
   prepareOutDir(outDir);
+  try {
+    return await judgeIsolated(options, { outDir, specPath, assetPath, limits, maxTriangles, started });
+  } catch (error) {
+    if (error instanceof InfrastructureError) writeJson(join(outDir, INFRASTRUCTURE_FILE), { verdict: null, infrastructure: true, code: error.code, message: error.message });
+    throw error;
+  }
+}
+
+type Resolved = { outDir: string; specPath: string; assetPath: string; limits: Limits; maxTriangles: number; started: number };
+
+async function judgeIsolated(options: JudgeOptions, { outDir, specPath, assetPath, limits, maxTriangles, started }: Resolved): Promise<Report> {
+  const isolation = checkIsolation(options.tools ?? detectTools(), probeContainer());
+  if (options.requireIsolation === true) requireIsolation(isolation);
   const draft: Draft = {
     passed: false,
     preview: options.preview === true,
@@ -204,6 +221,7 @@ export async function judge(options: JudgeOptions): Promise<Report> {
     blender: null,
     sandbox: null,
     renderSandbox: null,
+    container: isolation.container,
     device: null,
     failure: null,
     rules: [],

@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { kernelCache, KERNELS, privateKernels, READY } from "../../src/judge/kernel-cache.js";
+import { kernelCache, KERNELS, privateKernels, READY, sealKernels } from "../../src/judge/kernel-cache.js";
 import { runSandboxed, type Plan } from "../../src/judge/sandbox.js";
 import { scratch } from "../tooling/probes.js";
 
@@ -23,6 +23,7 @@ function trust(): string {
   mkdirSync(optix, { recursive: true });
   writeFileSync(join(optix, "optix7cache.db"), "warmed");
   writeFileSync(join(kernelCache(root), READY), "");
+  expect(sealKernels(kernelCache(root))).toBe(true);
   return optix;
 }
 

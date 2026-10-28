@@ -1,6 +1,7 @@
 import { describeDevice, type RenderDevice } from "./device.js";
 import type { Measurements } from "./measurements.js";
 import type { RuleResult } from "./rules.js";
+import { containerText, type ContainerIsolation } from "./isolation.js";
 import type { Isolation } from "./sandbox.js";
 import type { Validation } from "./validator.js";
 import { motionLines } from "./motion-summary.js";
@@ -48,6 +49,7 @@ export type Report = {
   blender: string | null;
   sandbox: Isolation | null;
   renderSandbox: Isolation | null;
+  container?: ContainerIsolation | null;
   device: RenderDevice | null;
   failure: Failure | null;
   rules: RuleResult[];
@@ -159,6 +161,7 @@ export function summarize(report: Omit<Report, "summary">): string {
   if (report.device) lines.push(`  render: ${describeDevice(report.device)}`);
   if (report.renders) lines.push(...renderLines(report.renders));
   if (report.asset.setSha256 !== null) lines.push(`  delivery: ${report.asset.files.length} files, ${report.asset.setBytes} bytes, set sha256 ${report.asset.setSha256}`);
+  if (report.container) lines.push(`  isolation: ${containerText(report.container)}`);
   if (report.sandbox) lines.push(`  sandbox: ${isolationText(report.sandbox)}`);
   if (report.renderSandbox && (!report.sandbox || isolationText(report.renderSandbox) !== isolationText(report.sandbox))) {
     lines.push(`  render sandbox: ${isolationText(report.renderSandbox)}`);

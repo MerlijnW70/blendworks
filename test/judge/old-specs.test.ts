@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { containerText, probeContainer } from "../../src/judge/isolation.js";
 import { judge } from "../../src/judge/run.js";
 import { freshDir, makeFixtures, writeSpec } from "./helpers.js";
 import { CRATE_MEASUREMENTS } from "./measured.js";
@@ -17,7 +18,7 @@ beforeAll(withWorkBudget(180_000, () => {
   specs = freshDir("old-specs", "specs");
 }));
 
-const REPORT_KEYS = ["passed", "preview", "spec", "asset", "blender", "sandbox", "renderSandbox", "device", "failure", "rules", "measurements", "renders", "timings", "summary"];
+const REPORT_KEYS = ["passed", "preview", "spec", "asset", "blender", "sandbox", "renderSandbox", "container", "device", "failure", "rules", "measurements", "renders", "timings", "summary"];
 
 const MEASUREMENTS = CRATE_MEASUREMENTS;
 
@@ -65,7 +66,11 @@ describe("a spec without the new rules", workBudget(120_000), () => {
       .replace(/set sha256 [0-9a-f]{64}/, "set sha256 SET")
       .replace(/sandbox: .*/, "sandbox: SANDBOX")
       .replace(/time: .*/, "time: TIME");
-    expect(summary.split("\n")).toEqual(SUMMARY);
+    const container = probeContainer();
+    expect(written.container).toEqual(container);
+    const sandboxLine = SUMMARY.indexOf("  sandbox: SANDBOX");
+    const expected = container === null ? SUMMARY : [...SUMMARY.slice(0, sandboxLine), `  isolation: ${containerText(container)}`, ...SUMMARY.slice(sandboxLine)];
+    expect(summary.split("\n")).toEqual(expected);
     expect(existsSync(join(outDir, "validation.json"))).toBe(true);
     const measured = JSON.parse(readFileSync(join(outDir, "measurements.json"), "utf8")).measurements;
     expect(measured.textures).toMatchObject({ count: 0, gpuBytes: 0 });

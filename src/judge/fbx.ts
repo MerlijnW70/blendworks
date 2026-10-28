@@ -6,7 +6,7 @@ const FILE_KEYS = new Set(["FileName", "RelativeFilename", "Filename", "Path"]);
 const TEXTURE_NODES = new Set(["Texture", "Video"]);
 const ARRAY_ELEMENT_BYTES: Record<string, number> = { f: 4, d: 8, l: 8, i: 4, b: 1 };
 
-export type FbxTexture = { names: string[]; embedded: boolean };
+export type FbxTexture = { names: string[]; embedded: boolean; opened: string };
 
 export class FbxError extends Error {}
 
@@ -106,6 +106,26 @@ function strings(node: Node): string[] {
   return found;
 }
 
+function firstString(node: Node, key: string): string {
+  for (const child of node.children) {
+    if (child.name !== key) continue;
+    const value = child.properties[0];
+    return typeof value === "string" ? value : "";
+  }
+  return "";
+}
+
+function nodeName(node: Node): string {
+  const value = node.properties.find((property): property is string => typeof property === "string");
+  if (value === undefined) return "";
+  const split = value.indexOf("\u0000\u0001");
+  return split === -1 ? value : value.slice(0, split);
+}
+
+export function openedPath(relative: string, fileName: string, videoName: string, name: string): string {
+  return [relative, fileName, videoName].find((value) => value !== "") ?? name;
+}
+
 function embedded(node: Node): boolean {
   return node.children.some((child) => child.name === "Content" && child.properties.some((value) => value instanceof Uint8Array && value.length > 0));
 }
@@ -114,10 +134,15 @@ function walk(nodes: Node[], found: FbxTexture[]): void {
   for (const node of nodes) {
     if (TEXTURE_NODES.has(node.name)) {
       const names = strings(node);
-      if (names.length > 0) found.push({ names, embedded: node.name === "Video" && embedded(node) });
+      const opened = openedPath(firstString(node, "RelativeFilename"), firstString(node, "FileName"), firstString(node, "Filename"), nodeName(node));
+      found.push({ names, embedded: node.name === "Video" && embedded(node), opened });
     }
     walk(node.children, found);
   }
+}
+
+function asciiValue(block: string, key: string): string {
+  return new RegExp(`^\\s*${key}:\\s*"([^"]*)"`, "m").exec(block)?.[1] ?? "";
 }
 
 function asciiTextures(text: string): FbxTexture[] {
@@ -127,7 +152,9 @@ function asciiTextures(text: string): FbxTexture[] {
     const names: string[] = [];
     for (const match of block.matchAll(/^\s*(?:FileName|RelativeFilename|Filename):\s*"([^"]*)"/gm)) if (match[1]) names.push(match[1]);
     for (const match of block.matchAll(/P:\s*"(?:Path|FileName|RelativeFilename)",[^\n]*"([^"]*)"\s*$/gm)) if (match[1]) names.push(match[1]);
-    if (names.length > 0) found.push({ names, embedded: /^\s*Video:/.test(block) && /^\s*Content:\s*,?\s*"[^"]/m.test(block) });
+    const name = /^\s*(?:Texture|Video):[^,\n]*,\s*"(?:\w+::)?([^"]*)"/.exec(block)?.[1] ?? "";
+    const opened = openedPath(asciiValue(block, "RelativeFilename"), asciiValue(block, "FileName"), asciiValue(block, "Filename"), name);
+    found.push({ names, embedded: /^\s*Video:/.test(block) && /^\s*Content:\s*,?\s*"[^"]/m.test(block), opened });
   }
   return found;
 }

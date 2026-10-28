@@ -5,6 +5,7 @@ import { CLOSEUP_DEFAULTS, closeups, closeupsSummary } from "./closeups.js";
 import { DeviceError, deviceModeFromEnvironment, type DeviceMode } from "./device.js";
 import { diffReports, diffText, readReport, ReportError } from "./diff.js";
 import { PACKAGE_USAGE, PackageUsageError, packageAsset, parsePackage } from "../package/cli.js";
+import { INFRASTRUCTURE_EXIT, InfrastructureError } from "./isolation.js";
 import { DEFAULTS, judge } from "./run.js";
 import { SILHOUETTE_DEFAULTS, silhouettes, silhouettesSummary } from "./silhouettes.js";
 import { VIEWS } from "./spec-shapes.js";
@@ -14,12 +15,15 @@ import { EvalError, evalText, visualEval } from "./visual/eval.js";
 const DEVICE_HELP = `Rendering uses BLENDWORKS_DEVICE: auto (default) tries OptiX, CUDA, HIP, Metal and oneAPI
 inside the sandbox and falls back to the CPU; gpu fails with a reason when no GPU works; cpu never uses one.`;
 
-export const JUDGE_USAGE = `usage: blendworks judge <spec.json> <asset> [--out dir] [--preview]
+export const JUDGE_USAGE = `usage: blendworks judge <spec.json> <asset> [--out dir] [--preview] [--no-require-isolation]
   [--timeout seconds] [--render-timeout seconds] [--memory-mb n] [--max-triangles n] [--max-file-mb n]
 
 Measures the asset in a sandboxed headless Blender 5.2, renders the spec's views
 (24 samples, denoised, fixed seed and resolution), writes report.json, summary.txt
 and contact-sheet.png to the out dir (default artifacts/judge), and exits 0 only when every rule passes.
+--require-isolation is on: without the judge container, or user, mount and network namespaces with a
+memory cap, the judge refuses with an infrastructure error (exit 75, infrastructure.json), which is not
+a verdict. --no-require-isolation allows a local preview on Windows or a machine without namespaces.
 --preview measures and checks every rule and draws the UV layout, but renders no views.
 The verdict depends on the measurements alone: a render that fails or times out is reported
 and leaves the verdict as it is, unless the spec sets renders.required.
@@ -89,7 +93,13 @@ const SHARED_OPTIONS = {
 } as const;
 
 function parseJudge(argv: string[]) {
-  const { values, positionals } = parseArgs({ args: argv, allowPositionals: true, strict: true, options: { ...SHARED_OPTIONS, preview: { type: "boolean" }, "render-timeout": { type: "string" } } });
+  const { values, positionals } = parseArgs({
+    args: argv,
+    allowPositionals: true,
+    allowNegative: true,
+    strict: true,
+    options: { ...SHARED_OPTIONS, preview: { type: "boolean" }, "render-timeout": { type: "string" }, "require-isolation": { type: "boolean", default: true } },
+  });
   if (values.help) return { help: JUDGE_USAGE };
   const [specPath, assetPath, ...extra] = positionals;
   if (specPath === undefined || assetPath === undefined || extra.length > 0) throw new UsageError(JUDGE_USAGE);
@@ -99,6 +109,7 @@ function parseJudge(argv: string[]) {
     assetPath,
     outDir: values.out ?? "artifacts/judge",
     preview: values.preview === true,
+    requireIsolation: values["require-isolation"] !== false,
     device: deviceFromEnvironment(),
     timeoutMs: positive(values.timeout, "timeout", DEFAULTS.timeoutMs, 1000),
     renderTimeoutMs: positive(values["render-timeout"], "render-timeout", positive(values.timeout, "timeout", DEFAULTS.timeoutMs, 1000), 1000),
@@ -262,9 +273,15 @@ export async function main(argv: string[]): Promise<number> {
   if (command.command === "visual-eval") return runVisualEval(command);
   if (command.command === "judge") {
     const { command: _, ...options } = command;
-    const report = await judge(options);
-    console.log(report.summary);
-    return report.passed ? 0 : 1;
+    try {
+      const report = await judge(options);
+      console.log(report.summary);
+      return report.passed ? 0 : 1;
+    } catch (error) {
+      if (!(error instanceof InfrastructureError)) throw error;
+      console.error(`infrastructure error, not a verdict: ${error.message}`);
+      return INFRASTRUCTURE_EXIT;
+    }
   }
   if (command.command === "silhouettes") {
     const { command: _, ...options } = command;

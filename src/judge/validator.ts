@@ -3,6 +3,7 @@ import { createRequire } from "node:module";
 import { basename, dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { Worker } from "node:worker_threads";
 import { z } from "zod";
+import { checkReference } from "./path-policy.js";
 
 export const VALIDATOR_PACKAGE = "gltf-validator";
 export const VALIDATOR_DEFAULTS = { maxBytes: 128 * 1024 * 1024, heapMb: 2048, timeoutMs: 300_000 };
@@ -103,17 +104,10 @@ const messageSchema = z.union([
 ]);
 
 export function resolveResource(assetPath: string, uri: string): { path: string } | { refused: string } {
-  let decoded: string;
-  try {
-    decoded = decodeURIComponent(uri);
-  } catch {
-    return { refused: "the URI is not valid percent-encoding" };
-  }
-  if (decoded.includes(":") || decoded.startsWith("/") || decoded.startsWith("\\") || isAbsolute(decoded)) {
-    return { refused: "the URI has a scheme or an absolute path" };
-  }
+  const verdict = checkReference(uri, "uri");
+  if (!verdict.ok) return { refused: verdict.reason };
   const folder = realpathSync(dirname(assetPath));
-  const target = resolve(folder, decoded);
+  const target = resolve(folder, ...verdict.path.split("/"));
   let real: string;
   try {
     real = realpathSync(target);

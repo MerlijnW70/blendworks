@@ -22,6 +22,8 @@
     "clean": "tsx scripts/clean.mjs",
     "fixtures": "tsx scripts/fixtures.mjs",
     "equivalence": "tsx scripts/judge-equivalence.mjs",
+    "judge:image": "tsx scripts/judge-image.mjs",
+    "judge:command": "tsx scripts/judge-command.mjs",
     "install-claude": "npm run build && node dist/mcp/install-claude.js",
     "bench:tools": "tsx bench/tool-selection/run.ts",
     "bench:core": "tsx bench/tool-selection/core.ts",

@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync } from "node:fs";
 import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 import { blenderPath } from "../../src/blender.js";
 import { copyDelivery } from "../../src/judge/delivery.js";
 import { runPass, type PassStage, type StageGroup } from "../../src/judge/onepass.js";
@@ -52,6 +52,20 @@ describe("a stage that crashes or hangs in the one judge process", workBudget(24
     expect(result.interrupted!.failure.message).toContain("exited with code 3");
     expect(result.records.map((record) => record.stage)).toEqual(before);
     for (const record of result.records) expect(record.ok && record.seconds >= 0 && record.endedAt >= result.spawnedAt).toBe(true);
+  });
+
+  it("times its stages on the judge's own monotonic clock, so a wall clock that jumps never makes a stage end before Blender started", async () => {
+    const real = Date.now.bind(Date);
+    const jumped = vi.spyOn(Date, "now").mockImplementation(() => real() + 60_000);
+    try {
+      const result = await failIn("closeups", "exit");
+      expect(result.records.map((record) => record.stage)).toEqual(["measure", "reference", "views", "sheet"]);
+      for (const record of result.records) expect(record.endedAt - result.spawnedAt, record.stage).toBeGreaterThanOrEqual(0);
+      const ends = result.records.map((record) => record.endedAt);
+      expect([...ends].sort((first, second) => first - second)).toEqual(ends);
+    } finally {
+      jumped.mockRestore();
+    }
   });
 
   it("stops a stage that runs over its own budget and names that stage", async () => {

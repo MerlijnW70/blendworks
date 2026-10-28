@@ -63,7 +63,7 @@ describe("broken deliveries fail cleanly with a reason", workBudget(120_000), ()
   it("a .blend cut off half way", async () => {
     const whole = readFileSync(join(assets, "crate.blend"));
     writeFileSync(join(work, "cut.blend"), whole.subarray(0, Math.floor(whole.length / 2)));
-    expect(failure(await judged("cut.blend", { format: "blend" }))?.stage).toBe("measure");
+    expect(failure(await judged("cut.blend", { format: "blend" }))).toMatchObject({ stage: "asset", code: "corrupt" });
   });
 
   it("an .obj with no geometry", async () => {
@@ -75,14 +75,14 @@ describe("broken deliveries fail cleanly with a reason", workBudget(120_000), ()
     const document = JSON.parse(readFileSync(join(assets, "crate.gltf"), "utf8"));
     document.buffers[0].uri = "../assets/crate.bin";
     writeFileSync(join(work, "escape.gltf"), JSON.stringify(document));
-    expect(failure(await judged("escape.gltf", { format: "gltf" }))).toMatchObject({ stage: "measure", code: "external_reference" });
+    expect(failure(await judged("escape.gltf", { format: "gltf" }))).toMatchObject({ stage: "asset", code: "external_reference" });
   });
 
   it("a .gltf that points at an absolute path", async () => {
     const document = JSON.parse(readFileSync(join(assets, "crate.gltf"), "utf8"));
     document.buffers[0].uri = join(assets, "crate.bin");
     writeFileSync(join(work, "absolute.gltf"), JSON.stringify(document));
-    expect(failure(await judged("absolute.gltf", { format: "gltf" }))).toMatchObject({ stage: "measure", code: "external_reference" });
+    expect(failure(await judged("absolute.gltf", { format: "gltf" }))).toMatchObject({ stage: "asset", code: "external_reference" });
   });
 
   it("a mesh whose modifiers may make more triangles than the cap, refused before they run: 6 faces x 4^2 quads x 2 = 192", async () => {
@@ -123,10 +123,10 @@ describe("the blendworks judge command", workBudget(120_000), () => {
     copyFileSync(join(assets, "wrong-size.glb"), join(work, "wrong-size.glb"));
     const spec = writeSpec(work, "command", { views: ["three-quarter"] });
     const passOut = freshDir("broken", "command-pass");
-    expect(await main(["judge", spec, join(work, "crate.glb"), "--out", passOut])).toBe(0);
+    expect(await main(["judge", spec, join(work, "crate.glb"), "--no-require-isolation", "--out", passOut])).toBe(0);
     expect(JSON.parse(readFileSync(join(passOut, "report.json"), "utf8")).blender).toMatch(/^5\.2\.\d+$/);
     expect(existsSync(join(passOut, "contact-sheet.png"))).toBe(true);
-    expect(await main(["judge", spec, join(work, "wrong-size.glb"), "--out", freshDir("broken", "command-fail")])).toBe(1);
+    expect(await main(["judge", spec, join(work, "wrong-size.glb"), "--no-require-isolation", "--out", freshDir("broken", "command-fail")])).toBe(1);
   });
 
   it("exits 2 on wrong usage", async () => {

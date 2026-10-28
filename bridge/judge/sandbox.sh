@@ -1,6 +1,11 @@
 set -eu
 new=$1
 shift
+mountinfo_script="$(dirname "$0")/mountinfo.awk"
+fail() {
+  echo "blendworks-sandbox: $1" >&2
+  exit 97
+}
 mount -t tmpfs -o mode=0755 blendworks-root "$new"
 mkdir -p "$new/proc" "$new/tmp" "$new/dev"
 mount -t proc proc "$new/proc"
@@ -13,6 +18,10 @@ for device in null zero full random urandom tty; do
   mount --bind "/dev/$device" "$new/dev/$device"
 done
 place() {
+  case "$1" in
+    *"
+"*) fail "a sandbox path holds a line break: refused" ;;
+  esac
   if [ ! -e "$1" ] && [ ! -L "$1" ]; then
     return 1
   fi
@@ -29,10 +38,18 @@ place() {
   fi
   mount --rbind "$1" "$new$1"
 }
+mounts() {
+  BLENDWORKS_TOP="$new$1" BLENDWORKS_MODE="$2" awk -f "$mountinfo_script" /proc/self/mountinfo
+}
 read_only() {
-  awk -v top="$new$1" '$5 == top || index($5, top "/") == 1 { print $5 }' /proc/self/mountinfo | while read -r point; do
-    mount -o remount,bind,ro "$point"
+  points=$(mounts "$1" points) || fail "cannot read the mounts under $1"
+  tab=$(printf '\t')
+  printf '%s\n' "$points" | while IFS= read -r line; do
+    if [ -n "$line" ]; then
+      mount -o "${line%%"$tab"*}" "${line#*"$tab"}" || true
+    fi
   done
+  report=$(mounts "$1" check) || fail "$1 is not read-only in the sandbox: $report"
 }
 while [ "$1" != "--" ]; do
   place "$1" || true
