@@ -206,3 +206,25 @@ It runs these steps in order, and stops at the first failing command:
 6. **Files and renders.** The `.blend`, the `.glb` and the five renders.
 
 `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+
+## Tree meshes
+
+`tree_meshes.py` turns the oak, conifer and windswept skeletons of `grow_trees.py` (it imports that script and grows the same three trees) into bark meshes with leaves, by commands only, and renders them. It is the acceptance build of the `tree-mesh` job.
+
+```
+blender --background --factory-startup --python docs/examples/tree_meshes.py -- out
+```
+
+The script writes into `out`:
+- `tree-meshes.blend` and `tree-meshes.glb`, whose three bark nodes carry their skeletons in `extras.blendworks_skeleton`;
+- nine PNGs on a soil ground: `oak`, `conifer` and `windswept` (each tree), `row` (all three), `oak_base` and `windswept_base` (the flared base), `oak_bark` and `conifer_bark` (bark close-ups) and `oak_fork` (the junctions where the oak's trunk forks);
+- `summary.json`: every command with its time and, for `tree_mesh` and `tree_leaves`, the triangles, the closed-shell report, the self-intersections, the materials and the leaf counts.
+
+It runs these steps in order, and stops at the first failing command:
+1. **Skeletons.** The three `grow_tree` calls of `grow_trees.py`.
+2. **Materials.** `bark` (the preset in UV coordinates with the grain along `v`, so it follows every branch in metres), a darker `roots`, `fresh_wood` for cut ends, `leaf` with its cut-out and translucency, `needles` and `soil`.
+3. **Bark.** `tree_mesh` on each skeleton with the default `skin` junction, a stronger trunk flare gathered towards the roots and swollen root bases; the conifer drops its twigs under 4 mm, which end in fresh wood.
+4. **Leaves.** `tree_leaves` puts 0.2 m leaf cards on the oak and 0.18 m cards turned towards a low sun on the windswept tree, and a needle cluster (nine needles in the golden angle, built with `mesh_from_data`) along the two outer orders of the conifer.
+5. **Files and renders.** The `.blend` and `.glb`, then a ground plane and the renders.
+
+`BLENDWORKS_TREE_DETAIL` (a factor on the point and branch counts), `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.

@@ -26,6 +26,8 @@ MODULES = (
     "remesh",
     "blob",
     "lsystem",
+    "tree_mesh",
+    "tree_leaves",
     "clean",
     "engrave",
     "scales",

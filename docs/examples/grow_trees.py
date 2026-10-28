@@ -12,8 +12,7 @@ from blendworks_bridge import Handler
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 OUT = os.path.abspath(ARGS[0] if ARGS else os.path.join(os.getcwd(), "grow-trees"))
 DEVICE = os.environ.get("BLENDWORKS_DEVICE", "auto")
-os.makedirs(OUT, exist_ok=True)
-HANDLER = Handler(OUT, allow_python=False, desktop=False)
+HANDLER = None
 LOG = []
 
 SHOT_SIZE = int(os.environ.get("BLENDWORKS_SHOT_SIZE", "900"))
@@ -38,12 +37,14 @@ def cmd(name, /, **args):
     return result
 
 
-def count(value):
-    return max(1, int(round(value * DETAIL)))
+def counter(detail):
+    return lambda value: max(1, int(round(value * detail)))
 
 
-def trees():
-    cmd(
+def trees(send=None, detail=None):
+    send = send or cmd
+    count = counter(DETAIL if detail is None else detail)
+    send(
         "grow_tree",
         name="oak",
         method="colonization",
@@ -62,7 +63,7 @@ def trees():
         roots={"points": count(1800), "depth": 1.4, "radius": 3.2, "influence": 1.0, "kill": 0.3, "step": 0.16, "tropism": [0.0, 0.0, -0.25]},
         limit=0,
     )
-    cmd(
+    send(
         "grow_tree",
         name="conifer",
         method="levels",
@@ -84,9 +85,9 @@ def trees():
         roots={"points": count(900), "depth": 1.0, "radius": 2.2, "shape": "hemispherical", "tip_radius": 0.008},
         limit=0,
     )
-    cmd("add_primitive", type="sphere", name="wind_crown", radius=1.0, segments=48, rings=24, location=[SPACING + 2.6, 0.0, 4.6])
-    cmd("transform", name="wind_crown", scale=[4.2, 2.6, 1.9], rotation=[0.0, 12.0, 0.0])
-    cmd(
+    send("add_primitive", type="sphere", name="wind_crown", radius=1.0, segments=48, rings=24, location=[SPACING + 2.6, 0.0, 4.6])
+    send("transform", name="wind_crown", scale=[4.2, 2.6, 1.9], rotation=[0.0, 12.0, 0.0])
+    send(
         "grow_tree",
         name="windswept",
         method="colonization",
@@ -103,7 +104,7 @@ def trees():
         roots={"points": count(900), "depth": 1.0, "radius": 2.4, "tropism": [-0.25, 0.0, -0.35]},
         limit=0,
     )
-    cmd("delete", names=["wind_crown"])
+    send("delete", names=["wind_crown"])
 
 
 def materials():
@@ -129,6 +130,9 @@ def shots():
 
 
 def main():
+    global HANDLER
+    os.makedirs(OUT, exist_ok=True)
+    HANDLER = Handler(OUT, allow_python=False, desktop=False)
     cmd("new_scene")
     trees()
     materials()
@@ -140,4 +144,5 @@ def main():
     print(json.dumps({"seconds": round(sum(entry["seconds"] for entry in LOG), 1), "commands": len(LOG)}))
 
 
-main()
+if __name__ == "__main__":
+    main()

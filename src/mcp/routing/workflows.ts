@@ -120,6 +120,13 @@ export const WORKFLOWS: Workflow[] = [
     note: "Build one leaf or flower with its base at the origin and its length along X (blender_mesh_from_data), then blender_lsystem with a preset from the book (bracketed_1_24a to f, bush_1_25, stochastic_1_27, monopodial_2_6a, ternary_2_8a, compound_leaf_5_11b) or your own axiom and rules such as F -> F[+F]F[-F]F; parametric modules F(l) and conditions as in A(x) : x > 3 -> B(x*2); a probability after a rule (: 0.5) makes it stochastic, and the seed picks the specimen. Turtle: F draws, + - turn, & ^ pitch, \ / roll, [ ] branch, ! thins, ' picks the next organ variant. organs places a mesh at each occurrence of a letter (apices stay in the string, so A or X can carry a flower) in the turtle's frame, heading along X. The plant is a skeleton for tree meshing; max_length and max_nodes refuse a grammar that grows too big before it runs.",
   },
   {
+    id: "tree",
+    goal: "Tree with leaves",
+    examples: ["oak with roots and leaves", "spruce with needles", "game tree with a triangle budget"],
+    steps: ["blender_grow_tree", "blender_tree_mesh", "blender_tree_leaves", "blender_material_procedural"],
+    note: "blender_grow_tree grows the skeleton; blender_tree_mesh turns it into one closed bark mesh (junction skin or voxel, flare, root_flare, bark_noise, lod for a triangle budget, min_radius drops twigs) with UVs in metres and the slots bark, fresh_wood and roots; blender_tree_leaves puts leaf cards (or a needle cluster as source) on the twig tips and outer orders. Then material_procedural bark with coordinates uv and grain y, leaf with cutout, and export: the skeleton rides along in the glTF extras.",
+  },
+  {
     id: "surface-detail",
     goal: "Wear and face edits",
     examples: ["dents", "battle damage", "taper faces", "find faces"],

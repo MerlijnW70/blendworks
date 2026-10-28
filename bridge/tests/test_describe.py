@@ -16,7 +16,7 @@ DESIGN_COMMANDS = {
     "mesh_from_data", "curve_from_points", "text_object",
     "lathe", "sweep", "loft", "extrude_outline", "gear", "sprocket", "roller_chain",
     "instances", "rivet_line", "generate_lods", "add_modifier", "mesh_query", "transform_selection", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell",
-    "grow_tree", "tree_skeleton", "lsystem",
+    "grow_tree", "tree_skeleton", "lsystem", "tree_mesh", "tree_leaves",
     "fracture", "chip", "abrade", "remesh", "blob",
     "add_material", "assign_material", "vertex_colors",
     "uv_smart_project", "uv_unwrap", "uv_info", "uv_pack",
@@ -35,7 +35,7 @@ DECLARED_METADATA = {
     "boolean": dict(SLOW, destructive=True, destructive_when="cutter_action is delete"),
     "image_save": {"writes_files": True, "destructive": True, "destructive_when": "the file already exists", "slow": False},
     **{name: SLOW for name in ("decimate", "import", "uv_pack", "set_world_hdri", "apply_modifier", "sweep", "loft", "instances",
-                               "rivet_line", "roller_chain", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell", "grow_tree", "lsystem", "fracture", "chip", "abrade", "remesh", "blob", "mesh_from_data", "generate_lods", "clean_mesh", "engrave")},
+                               "rivet_line", "roller_chain", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell", "grow_tree", "tree_mesh", "tree_leaves", "lsystem", "fracture", "chip", "abrade", "remesh", "blob", "mesh_from_data", "generate_lods", "clean_mesh", "engrave")},
 }
 SCHEMA_KEYS = {"type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",
                "maximum", "exclusiveMinimum", "minItems", "maxItems", "minLength", "maxLength", "default"}
