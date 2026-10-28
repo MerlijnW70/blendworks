@@ -86,8 +86,8 @@ def test_a_notched_ring_goes_from_a_collapsed_baseline_to_the_coverage_worked_ou
     baseline = bridge.ok("uv_smart_project", name="Ring")
     assert baseline["uv_area"] < 0.01 and baseline["coverage"] < 0.01
     start = bridge.ok("uv_smart_project", name="Ring", island_margin=0.002, min_island_area=0.002)
-    assert start["islands"]["before"] == 1380 and start["islands"]["after"] < 100
-    assert start["islands"]["merged"] == 1380 - start["islands"]["after"]
+    assert start["islands"]["before"] == 1444 and start["islands"]["after"] < 100, (start, baseline)
+    assert start["islands"]["merged"] == 1444 - start["islands"]["after"]
     assert start["coverage"] > 0.15 and start["overlap"] < 0.01 and start["outside"] is False
     ratio, count = box_ratio("Ring")
     stated = 0.7 * ratio

@@ -2,6 +2,7 @@ import bmesh
 import numpy
 
 from .noise_stack import stack_field
+from .portable_math import acos
 
 MAX_VOLUME_LOSS = 0.10
 STEP = 0.6
@@ -154,7 +155,7 @@ def vertex_normals(points, triangles):
         first = corners[:, (corner + 1) % 3] - corners[:, corner]
         second = corners[:, (corner + 2) % 3] - corners[:, corner]
         cosine = numpy.einsum("ij,ij->i", first, second) / numpy.maximum(numpy.linalg.norm(first, axis=1) * numpy.linalg.norm(second, axis=1), 1e-300)
-        numpy.add.at(normals, triangles[:, corner], face_normals * numpy.arccos(numpy.clip(cosine, -1.0, 1.0))[:, None])
+        numpy.add.at(normals, triangles[:, corner], face_normals * acos(numpy.clip(cosine, -1.0, 1.0))[:, None])
     length = numpy.linalg.norm(normals, axis=1)
     return normals / numpy.where(length > 0.0, length, 1.0)[:, None]
 

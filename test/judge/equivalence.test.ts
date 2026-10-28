@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { beforeAll, describe, expect, inject, it } from "vitest";
 import { judge } from "../../src/judge/run.js";
-import { differences, equivalenceCases, judgeCase, type FixtureFolders } from "../../scripts/lib/equivalence.js";
+import { differences, equivalenceCases, judgeCase, PLATFORM_NOISE, type FixtureFolders } from "../../scripts/lib/equivalence.js";
 import { freshDir } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
 import { withWorkBudget, workBudget } from "../setup/work-clock.js";
@@ -29,7 +29,7 @@ describe("the one-pass judge against the stored reports of the judge before it",
   it("gives every fixture the same rules, measured values and verdict", async () => {
     const work = freshDir("equivalence", "work");
     const found: { id: string; differences: string[] }[] = [];
-    for (const entry of equivalenceCases(folders)) found.push({ id: entry.id, differences: differences(baseline[entry.id], await judgeCase((options) => judge(options), entry, folders, work)) });
+    for (const entry of equivalenceCases(folders)) found.push({ id: entry.id, differences: differences(baseline[entry.id], await judgeCase((options) => judge(options), entry, folders, work), PLATFORM_NOISE) });
     expect(found.filter((entry) => entry.differences.length > 0)).toEqual([]);
   });
 });

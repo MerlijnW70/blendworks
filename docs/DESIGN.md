@@ -13,7 +13,7 @@ Blender is 5.2 LTS ([download](https://www.blender.org/download/lts/)). `src/ble
 - **Standard locations:** otherwise the first that exists. On Windows, `Program Files\Blender Foundation\Blender 5.2\blender.exe`, the same under `%LOCALAPPDATA%\Programs`, and `~\tools\blender\blender.exe`. On Linux and WSL, `~/tools/blender/blender`, `~/blender/blender`, `/opt/blender/blender` and the system folders. On macOS, `/Applications/Blender.app`.
 - **`PATH`:** last, a `blender` on the path.
 
-The error for a missing Blender lists the places it looked and the download link. `npm run doctor` reports what it finds and checks that the version is 5.2. `BLENDWORKS_JOBS` (default 2) caps how many Blender processes run at once in tests and scripts.
+The error for a missing Blender lists the places it looked and the download link. `npm run doctor` reports what it finds and checks that the version is 5.2. `BLENDWORKS_JOBS` (default 2) caps how many Blender processes run at once in tests and scripts. Each of them runs with `--threads` set to the CPU count divided by it; a session's Blender does too when `BLENDWORKS_JOBS` is set, and otherwise uses every CPU, so a desktop session renders at full speed while a shared machine, such as the judge container with its limit of 256 processes and threads, is not overrun.
 
 ## 1. The bridge protocol
 
@@ -972,6 +972,19 @@ blendworks visual-eval test/fixtures/visual/labelled.json --dir proof=artifacts/
 - The judge pins the Blender version and refuses others.
 - Clips are evaluated at fixed frames, and silhouettes are rendered on the CPU with one ray through each pixel centre, so both repeat exactly. A mask made by `blendworks silhouettes` from an asset scores IoU 1 against that asset.
 - The visual judge is not deterministic: the same renders can score differently on another run. Medians over samples damp that, the record keeps every answer, and an advisory visual result never changes the verdict.
+
+### Across platforms and thread counts
+
+Paid code jobs are judged on Linux, in the judge image, with fewer CPUs than a desktop. The bridge therefore gives the same mesh and UVs on Windows and Linux and at any `--threads`, for the same Blender version:
+
+- **No platform maths in decisions.** The C library (`math.sin`, `math.acos`, Blender's own `sinf` and quaternion maths) and numpy's float64 transcendental functions differ in the last bit between Windows and Linux builds. Bridge code whose result decides geometry uses only `+ - * /` and `sqrt`, which IEEE 754 rounds exactly everywhere, or `portable_math.acos`, a port of fdlibm's `acos` built from those operations (within 1 ulp of the correctly rounded value). `abrade` weights face angles with it.
+- **No order the platform chooses.** `uv_smart_project` picks its projections in the bridge, with Blender's Smart UV Project method: faces sorted by area, largest first, with equal areas kept in face order; seeds and members chosen within the angle limit as Blender does; areas and normals in float64 from the vertex positions. Blender's operator sorts with the C library's `qsort`, whose order for equal areas differs between Windows and Linux, so a ring of equal notches split into 1380 islands on Windows and 1440 on Linux; the bridge gives 1444 on both. The islands are then packed by Blender's packer (axis-aligned rotation, box shapes), which gives the same layout on both.
+- **No order the threads choose.** Blender's manifold boolean returns the same vertices and faces at every thread count but numbers the edges in a thread-dependent order, and the cleanup after a cut walks the edges in order. `engrave` sorts the edges by their vertices after the boolean, so its cleanup, and with it the triangles it leaves, no longer depend on the thread count.
+- **What stays.** Blender's own float32 evaluation of deformed meshes (armature skinning, quaternion to matrix) still differs by an ulp between the Windows and Linux builds, so a bound or size measured on a skinned, posed mesh can differ by one unit in its sixth decimal. The equivalence test (`test/judge/equivalence.test.ts`) therefore allows exactly that, and only for the fields that are linear in the vertex positions: `bounds` min and max, `size`, and the measured value of `size.x`, `size.y` and `size.z`. Every other value, every count and every verdict is compared exactly; `npm run equivalence` compares exactly.
+
+### The check inside the judge image
+
+`npx tsx scripts/check-container.mjs --image <ref>` runs `npm run check` in the judge image through its `patch` entry point, as Solive's docker sandbox does for a paid code job: no network, a read-only root, all capabilities dropped, user 65534, 256 processes, 1024 open files, 8 GB of memory, 4 CPUs and a 6 GB `/tmp` (`--memory`, `--cpus` and `--tmp` change the box). Without `--patch` it checks the current commit: the patch is `git diff` from the image's commit (its `org.blendworks.commit` label) to `HEAD`, so build the image from `main` and run it on a branch. With `--patch <file>` it checks that delivery, for example a past one. The image can also come from `BLENDWORKS_JUDGE_IMAGE`. It prints the entry point's result and exits 0 when the check passes, 1 when it fails and 3 when nothing was judged.
 
 ## 6. Asset library
 

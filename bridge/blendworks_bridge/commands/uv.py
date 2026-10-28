@@ -10,6 +10,7 @@ from ..registry import command
 from ..schema import boolean, integer, number, string
 from ..texel import density, pack, scale_to_density
 from ..uv_coverage import merge_islands
+from ..uv_project import project_by_angle
 from ..util import EditMesh, get_mesh_object, rounded
 
 GRID = 256
@@ -75,16 +76,20 @@ def apply_texel_density(ctx, obj, args, margin):
 def uv_smart_project(ctx, args):
     obj = uv_mesh_object(args["name"])
     merging = args["min_island_area"] > 0
+    if len(obj.data.uv_layers) == 0:
+        obj.data.uv_layers.new(name="UVMap")
+    project_by_angle(obj, math.radians(args["angle_limit"]))
     run_in_edit_mode(
         ctx,
         obj,
-        lambda: bpy.ops.uv.smart_project(
-            angle_limit=math.radians(args["angle_limit"]),
+        lambda: bpy.ops.uv.pack_islands(
+            udim_source="CLOSEST_UDIM",
+            rotate=True,
+            rotate_method="AXIS_ALIGNED_Y",
+            scale=True,
             margin_method="FRACTION",
-            island_margin=0.0 if merging else args["island_margin"],
-            area_weight=0.0,
-            correct_aspect=True,
-            scale_to_bounds=False,
+            margin=0.0 if merging else args["island_margin"],
+            shape_method="AABB",
         ),
     )
     islands = None

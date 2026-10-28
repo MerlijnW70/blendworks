@@ -7,6 +7,7 @@ import { type Plan, runSandboxed } from "../../src/judge/sandbox.js";
 import { startSession } from "../../src/session.js";
 import { acquireSlot, activeSlots } from "../../scripts/lib/slots.js";
 import { cacheRoot } from "../../scripts/lib/paths.js";
+import { FAKE_BLENDER } from "../setup/fake-blender.js";
 import { intervals, maxOverlap, scratch } from "./probes.js";
 
 const LIST_SLOTS = `
@@ -15,12 +16,6 @@ const dir = require("node:path").join(process.argv[1], "slots");
 process.stdout.write(String(fs.existsSync(dir) ? fs.readdirSync(dir).filter((name) => /^slot-\\d+\\.lock$/.test(name)).length : 0));
 `;
 
-const LOG_RUN = `
-const fs = require("node:fs");
-const [log, label, hold] = process.argv.slice(1);
-fs.appendFileSync(log, "start " + label + " " + Date.now() + "\\n");
-setTimeout(() => fs.appendFileSync(log, "end " + label + " " + Date.now() + "\\n"), Number(hold));
-`;
 
 const saved = { cache: process.env["BLENDWORKS_CACHE"], jobs: process.env["BLENDWORKS_JOBS"] };
 let root = "";
@@ -71,7 +66,7 @@ describe("Blender slots are held per process", { timeout: 60_000 }, () => {
   it("runSandboxed lets two callers of one file run one after the other with one slot", async () => {
     const log = join(root, "log.txt");
     writeFileSync(log, "");
-    await Promise.all(["x", "y", "z"].map((label) => runSandboxed(plan(["-e", LOG_RUN, log, label, "250"]), root)));
+    await Promise.all(["x", "y", "z"].map((label) => runSandboxed(plan(["-e", FAKE_BLENDER, log, label, "250"]), root)));
     const seen = intervals(log);
     expect(seen).toHaveLength(3);
     expect(maxOverlap(seen)).toBe(1);

@@ -38,16 +38,6 @@ export function intervals(log: string): Interval[] {
 }
 
 export function maxOverlap(items: Interval[]): number {
-  const edges = items.flatMap((item) => [
-    { time: item.start, delta: 1 },
-    { time: item.end, delta: -1 },
-  ]);
-  edges.sort((a, b) => a.time - b.time || a.delta - b.delta);
-  let current = 0;
-  let best = 0;
-  for (const edge of edges) {
-    current += edge.delta;
-    best = Math.max(best, current);
-  }
-  return best;
+  if (items.some((item) => !Number.isFinite(item.start) || !Number.isFinite(item.end) || item.end < item.start)) return Number.NaN;
+  return Math.max(0, ...items.map((item) => items.filter((other) => other === item || (other.start <= item.start && item.start < other.end)).length));
 }

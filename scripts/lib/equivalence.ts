@@ -131,11 +131,31 @@ export async function judgeCase(judge: Judge, entry: EquivalenceCase, folders: F
   return verdictAndValues(report, [folder, assets]);
 }
 
-export function differences(before: unknown, after: unknown, at = ""): string[] {
+export type Tolerance = (field: string) => number;
+
+export const EXACT: Tolerance = () => 0;
+
+const LAST_PLACE = 1e-6;
+const POSITION_FIELDS = [/\/bounds\/(min|max)\/[012]$/, /\/size\/[012]$/, /^\/rules\/size\.[xyz]\/measured$/];
+
+export const PLATFORM_NOISE: Tolerance = (field) => (POSITION_FIELDS.some((pattern) => pattern.test(field)) ? LAST_PLACE : 0);
+
+function within(before: unknown, after: unknown, allowed: number): boolean {
+  return allowed > 0 && typeof before === "number" && typeof after === "number" && Math.round(Math.abs(before - after) / LAST_PLACE) <= Math.round(allowed / LAST_PLACE);
+}
+
+function fieldName(container: unknown, key: string, field: string): string {
+  const entry = Array.isArray(container) ? (container as unknown[])[Number(key)] : undefined;
+  const rule = entry !== null && typeof entry === "object" ? (entry as { rule?: unknown }).rule : undefined;
+  return `${field}/${typeof rule === "string" ? rule : key}`;
+}
+
+export function differences(before: unknown, after: unknown, tolerance: Tolerance = EXACT, at = "", field = ""): string[] {
   if (JSON.stringify(before) === JSON.stringify(after)) return [];
+  if (within(before, after, tolerance(field))) return [];
   if (before !== null && after !== null && typeof before === "object" && typeof after === "object" && Array.isArray(before) === Array.isArray(after)) {
     const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
-    return [...keys].flatMap((key) => differences((before as Record<string, unknown>)[key], (after as Record<string, unknown>)[key], `${at}/${key}`));
+    return [...keys].flatMap((key) => differences((before as Record<string, unknown>)[key], (after as Record<string, unknown>)[key], tolerance, `${at}/${key}`, fieldName(before, key, field)));
   }
   return [`${at || "/"}: ${JSON.stringify(before)?.slice(0, 200)} became ${JSON.stringify(after)?.slice(0, 200)}`];
 }

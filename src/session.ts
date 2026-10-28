@@ -2,7 +2,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
-import { blenderPath } from "./blender.js";
+import { blenderJobs, blenderPath, blenderThreadArguments, JOBS_VARIABLE } from "./blender.js";
 import { type BridgeReply, readLine } from "./mcp/protocol.js";
 
 export const SESSION_SCRIPT = fileURLToPath(new URL("../bridge/session.py", import.meta.url));
@@ -85,8 +85,9 @@ function sessionEnvironment(options: SessionOptions): NodeJS.ProcessEnv {
   return env;
 }
 
-export function sessionArguments(workspace: string, allowPython: boolean): string[] {
-  const args = ["--background", "--factory-startup", "--python-exit-code", "1", "--python", SESSION_SCRIPT, "--", "--workspace", workspace];
+export function sessionArguments(workspace: string, allowPython: boolean, env: NodeJS.ProcessEnv = process.env): string[] {
+  const threads = env[JOBS_VARIABLE] === undefined || env[JOBS_VARIABLE] === "" ? [] : blenderThreadArguments(blenderJobs(env));
+  const args = ["--background", "--factory-startup", ...threads, "--python-exit-code", "1", "--python", SESSION_SCRIPT, "--", "--workspace", workspace];
   return allowPython ? [...args, "--allow-python"] : args;
 }
 

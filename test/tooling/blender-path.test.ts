@@ -1,4 +1,4 @@
-import { delimiter, join } from "node:path";
+import { posix, win32 } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   BLENDER_DOWNLOAD_URL,
@@ -8,7 +8,8 @@ import {
   resolveBlender,
 } from "../../src/blender.js";
 
-const HOME = join("home", "dev");
+const HOME = posix.join("/home", "dev");
+const WINDOWS_HOME = "C:\\Users\\dev";
 
 function only(...present: string[]): (path: string) => boolean {
   return (path) => present.includes(path);
@@ -28,8 +29,8 @@ describe("resolving Blender", () => {
   });
 
   it("falls back to blender on PATH after the default locations", () => {
-    const onPath = join("/usr/games", "blender");
-    const found = resolveBlender({ env: { PATH: ["/bin", "/usr/games"].join(delimiter) }, platform: "linux", home: HOME, exists: only(onPath) });
+    const onPath = posix.join("/usr/games", "blender");
+    const found = resolveBlender({ env: { PATH: ["/bin", "/usr/games"].join(posix.delimiter) }, platform: "linux", home: HOME, exists: only(onPath) });
     expect(found).toEqual({ path: onPath, source: "PATH" });
   });
 
@@ -51,9 +52,33 @@ describe("resolving Blender", () => {
   });
 
   it("accepts a bare command name in BLENDER when it is on PATH", () => {
-    const where = join("/opt/tools", "blender-lts");
+    const where = posix.join("/opt/tools", "blender-lts");
     const found = resolveBlender({ env: { BLENDER: "blender-lts", PATH: "/opt/tools" }, platform: "linux", home: HOME, exists: only(where) });
     expect(found).toEqual({ path: where, source: "BLENDER" });
+  });
+
+  it("builds Windows paths with Windows rules and Linux paths with POSIX rules, whatever the host", () => {
+    const windows = defaultBlenderLocations("win32", { ProgramFiles: "C:\\Program Files", LOCALAPPDATA: "C:\\Users\\dev\\AppData\\Local" }, WINDOWS_HOME);
+    expect(windows).toEqual([
+      "C:\\Program Files\\Blender Foundation\\Blender 5.2\\blender.exe",
+      "C:\\Users\\dev\\AppData\\Local\\Programs\\Blender Foundation\\Blender 5.2\\blender.exe",
+      "C:\\Users\\dev\\tools\\blender\\blender.exe",
+    ]);
+    expect(defaultBlenderLocations("win32", {}, WINDOWS_HOME)[1]).toBe("C:\\Users\\dev\\AppData\\Local\\Programs\\Blender Foundation\\Blender 5.2\\blender.exe");
+    expect(defaultBlenderLocations("linux", {}, HOME)).toEqual(["/home/dev/tools/blender/blender", "/home/dev/blender/blender", "/opt/blender/blender", "/usr/local/bin/blender", "/usr/bin/blender", "/snap/bin/blender"]);
+    expect(defaultBlenderLocations("darwin", {}, "/Users/dev")[1]).toBe("/Users/dev/Applications/Blender.app/Contents/MacOS/Blender");
+  });
+
+  it("splits PATH and joins its folders by the rules of the platform it looks on", () => {
+    const windowsPath = { Path: ["C:\\Windows", "D:\\Apps\\Blender"].join(win32.delimiter) };
+    expect(resolveBlender({ env: windowsPath, platform: "win32", home: WINDOWS_HOME, exists: only("D:\\Apps\\Blender\\blender.exe") })).toEqual({ path: "D:\\Apps\\Blender\\blender.exe", source: "PATH" });
+    const linuxPath = { PATH: ["/bin", "/opt/c:d"].join(posix.delimiter) };
+    expect(resolveBlender({ env: linuxPath, platform: "linux", home: HOME, exists: only("/opt/c/blender", "/opt/c:d/blender") }).path).toBe("/opt/c/blender");
+  });
+
+  it("takes a Windows path in BLENDER as a path on Windows and a bare name elsewhere", () => {
+    expect(resolveBlender({ env: { BLENDER: "D:\\Blender\\blender.exe" }, platform: "win32", home: WINDOWS_HOME, exists: only("D:\\Blender\\blender.exe") })).toEqual({ path: "D:\\Blender\\blender.exe", source: "BLENDER" });
+    expect(() => resolveBlender({ env: { BLENDER: "D:\\Blender\\blender.exe", PATH: "/bin" }, platform: "linux", home: HOME, exists: () => false })).toThrow(/which is not on PATH/);
   });
 
   it("holds no machine-specific path", () => {

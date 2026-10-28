@@ -1,6 +1,6 @@
 import { scenario } from "./scenario.js";
 
-scenario("file A", 0, [
-  { label: "a1", holdMs: 400, gapAfterMs: 2500 },
-  { label: "a2", holdMs: 400, gapAfterMs: 0 },
+scenario("file A", [
+  { label: "a1", holdMs: 400 },
+  { label: "a2", holdMs: 400, after: "end b1" },
 ]);

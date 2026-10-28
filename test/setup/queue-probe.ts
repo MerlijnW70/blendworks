@@ -8,8 +8,9 @@ const fakeBlender = `
 const fs = require("node:fs");
 const path = require("node:path");
 const [log, label, hold, queue] = process.argv.slice(1);
-fs.appendFileSync(log, "start " + label + " " + Date.now() + "\\n");
-const finish = () => fs.appendFileSync(log, "end " + label + " " + Date.now() + "\\n");
+const now = () => Number(process.hrtime.bigint() / 1000000n);
+fs.appendFileSync(log, "start " + label + " " + now() + "\\n");
+const finish = () => fs.appendFileSync(log, "end " + label + " " + now() + "\\n");
 if (hold === "ticket") {
   const poll = setInterval(() => {
     if (fs.existsSync(queue) && fs.readdirSync(queue).some((name) => name.endsWith(".ticket"))) {

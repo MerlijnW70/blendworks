@@ -66,9 +66,9 @@ afterEach(async () => {
 
 describe("the ready handshake", () => {
   it("resolves only after the bridge answered describe, even when it is slow", async () => {
-    const started = Date.now();
+    const started = performance.now();
     await open(ANSWERS_LATE, 5000);
-    expect(Date.now() - started).toBeGreaterThanOrEqual(380);
+    expect(performance.now() - started).toBeGreaterThanOrEqual(380);
   });
 
   it("fails with the exit code and the last output when Blender exits early", async () => {

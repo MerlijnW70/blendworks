@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { availableParallelism, homedir, platform } from "node:os";
-import { delimiter, isAbsolute, join } from "node:path";
+import { posix, win32 } from "node:path";
 
 export const BLENDER_VERSION = "5.2";
 export const BLENDER_DOWNLOAD_URL = "https://www.blender.org/download/lts/";
@@ -32,7 +32,12 @@ export class BlenderNotFoundError extends Error {
   }
 }
 
+function pathRules(os: NodeJS.Platform): typeof posix {
+  return os === "win32" ? win32 : posix;
+}
+
 export function defaultBlenderLocations(os: NodeJS.Platform, env: NodeJS.ProcessEnv, home: string): string[] {
+  const { join } = pathRules(os);
   if (os === "win32") {
     const programFiles = env["ProgramFiles"] ?? "C:\\Program Files";
     const local = env["LOCALAPPDATA"] ?? join(home, "AppData", "Local");
@@ -47,6 +52,7 @@ export function defaultBlenderLocations(os: NodeJS.Platform, env: NodeJS.Process
 }
 
 function onPath(name: string, os: NodeJS.Platform, env: NodeJS.ProcessEnv, exists: (path: string) => boolean): string | undefined {
+  const { delimiter, join } = pathRules(os);
   const file = os === "win32" && !/\.exe$/i.test(name) ? `${name}.exe` : name;
   const folders = (env["PATH"] ?? env["Path"] ?? "").split(delimiter).filter((folder) => folder !== "");
   return folders.map((folder) => join(folder, file)).find((candidate) => exists(candidate));
@@ -65,7 +71,8 @@ export function resolveBlender(lookup: BlenderLookup = {}): ResolvedBlender {
   const exists = lookup.exists ?? existsSync;
   const requested = env[BLENDER_VARIABLE];
   if (requested !== undefined && requested !== "") {
-    if (isAbsolute(requested) || /[\/]/.test(requested)) {
+    const rules = pathRules(os);
+    if (rules.isAbsolute(requested) || requested.includes("/") || requested.includes(rules.sep)) {
       if (exists(requested)) return { path: requested, source: "BLENDER" };
       throw notFound(`${BLENDER_VARIABLE} is set to ${requested}, which does not exist.`, []);
     }

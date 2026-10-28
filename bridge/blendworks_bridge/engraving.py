@@ -1,3 +1,4 @@
+import bmesh
 import bpy
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
@@ -63,6 +64,19 @@ def apply_cutter(ctx, target, data, cutting, uv_name, solver):
         remove_stand_in(cutter)
 
 
+def sort_edges(mesh):
+    bm = bmesh.new()
+    try:
+        bm.from_mesh(mesh)
+        bm.verts.index_update()
+        count = len(bm.verts)
+        bm.edges.sort(key=lambda edge: min(edge.verts[0].index, edge.verts[1].index) * count + max(edge.verts[0].index, edge.verts[1].index))
+        bm.to_mesh(mesh)
+    finally:
+        bm.free()
+    mesh.update()
+
+
 def rounded_volume(report, other=None):
     if report["volume"] is None or (other is not None and other["volume"] is None):
         return None
@@ -74,6 +88,7 @@ def cut(ctx, target, data, cutting, clean, what):
     solver, reason = choose_solver(before)
     uv_name = target.data.uv_layers.active.name if target.data.uv_layers.active is not None else None
     apply_cutter(ctx, target, data, cutting, uv_name, solver)
+    sort_edges(target.data)
     sharp = mark_cut_edges(target)
     cleaned = clean_object(target, max_aspect=SLIVER_ASPECT) if clean else None
     after = mesh_report(target.data)
