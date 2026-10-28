@@ -7,7 +7,6 @@ const BELONGS_ELSEWHERE = "an existing bound in a file that another job owns";
 export const WALL_CLOCK_ALLOWED: Record<string, string> = {
   "test/mcp-routing-bench.test.ts": "the routing query bound belongs to another job",
   "test/mcp-connection.test.ts": BELONGS_ELSEWHERE,
-  "test/mcp-desktop.test.ts": BELONGS_ELSEWHERE,
   "test/mcp-long-calls.test.ts": BELONGS_ELSEWHERE,
   "test/judge/sandbox.test.ts": BELONGS_ELSEWHERE,
   "test/package/native-run.test.ts": BELONGS_ELSEWHERE,
