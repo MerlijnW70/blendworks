@@ -55,6 +55,10 @@ function explain(error: unknown, tool: string): string {
   return `failed: ${error instanceof Error ? error.message : String(error)}`;
 }
 
+function reasonOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 function parse<S extends z.ZodType>(schema: S, args: unknown): z.infer<S> {
   const parsed = schema.safeParse(args ?? {});
   if (!parsed.success) throw new LibraryError("refused", `bad arguments: ${describeArgsError(parsed.error)}`);
@@ -118,30 +122,34 @@ export class Library {
     return this.tools.some((tool) => tool.name === name);
   }
 
-  async call(name: string, args: unknown, bridge: BridgeAccess): Promise<CallToolResult> {
+  async call(name: string, args: unknown, bridge: BridgeAccess, signal?: AbortSignal): Promise<CallToolResult> {
     try {
-      if (name === "library_search") return { content: [text(await this.search(parse(searchArgs, args)))] };
-      if (name === "library_preview") return await this.preview(parse(previewArgs, args));
-      if (name === "library_download") return { content: [text(await this.download(parse(downloadArgs, args)))] };
-      if (name === "library_apply") return this.applied(await applyAsset(bridge, this.options.workspace, parse(applyArgs, args)));
+      if (signal?.aborted) throw new LibraryError("cancelled", `${name} was cancelled before it started`);
+      if (name === "library_search") return { content: [text(await this.search(parse(searchArgs, args), signal))] };
+      if (name === "library_preview") return await this.preview(parse(previewArgs, args), signal);
+      if (name === "library_download") return { content: [text(await this.download(parse(downloadArgs, args), signal))] };
+      if (name === "library_apply") {
+        const cancellable: BridgeAccess = { commands: bridge.commands, request: (cmd, requestArgs, options) => bridge.request(cmd, requestArgs, { ...(signal === undefined ? {} : { signal }), ...options }) };
+        return this.applied(await applyAsset(cancellable, this.options.workspace, parse(applyArgs, args)));
+      }
       return failure(`Unknown tool ${name}; the library tools start with ${LIBRARY_PREFIX}.`);
     } catch (error) {
       return failure(explain(error, name));
     }
   }
 
-  private async checkCategory(types: readonly AssetType[], category: string): Promise<void> {
+  private async checkCategory(types: readonly AssetType[], category: string, signal?: AbortSignal): Promise<void> {
     const known = new Set<string>();
-    for (const type of types) for (const name of Object.keys(await this.client.categories(type))) known.add(name);
+    for (const type of types) for (const name of Object.keys(await this.client.categories(type, signal))) known.add(name);
     if ([...known].some((name) => name.toLowerCase() === category.toLowerCase())) return;
     const sample = [...known].filter((name) => name !== "all").slice(0, 40);
     throw new LibraryError("refused", `"${category}" is not a Poly Haven category for ${types.join(", ")}; known categories include ${sample.join(", ")}`);
   }
 
-  private async search(args: z.infer<typeof searchArgs>): Promise<Record<string, unknown>> {
+  private async search(args: z.infer<typeof searchArgs>, signal?: AbortSignal): Promise<Record<string, unknown>> {
     const types = args.type === undefined ? ASSET_TYPES : [args.type];
-    if (args.category !== undefined) await this.checkCategory(types, args.category);
-    const listing = Object.assign({}, ...(await Promise.all(types.map((type) => this.client.assets(type)))));
+    if (args.category !== undefined) await this.checkCategory(types, args.category, signal);
+    const listing = Object.assign({}, ...(await Promise.all(types.map((type) => this.client.assets(type, signal)))));
     const page = filterListing(listing, {
       ...(args.query === undefined ? {} : { text: args.query }),
       ...(args.category === undefined ? {} : { categories: [args.category] }),
@@ -149,16 +157,26 @@ export class Library {
       page: args.page,
       perPage: args.per_page,
     });
-    const results = await inBatches(page.matches, RESOLUTION_LOOKUPS, async ({ id, asset }) => {
-      const type = typeOf(asset);
-      return summary(id, asset, resolutionsOf(type, await this.client.files(id, type)));
+    const settled = await inBatches(page.matches, RESOLUTION_LOOKUPS, async ({ id, asset }) => {
+      try {
+        const type = typeOf(asset);
+        return { id, name: asset.name, summary: summary(id, asset, resolutionsOf(type, await this.client.files(id, type, signal))) };
+      } catch (error) {
+        if (signal?.aborted) throw error;
+        return { id, name: asset.name, error };
+      }
     });
-    return { total: page.total, page: page.page, pages: page.pages, per_page: args.per_page, results };
+    const results = settled.flatMap((entry) => ("summary" in entry ? [entry.summary] : []));
+    const failed = settled.flatMap((entry) => ("error" in entry ? [entry] : []));
+    const first = failed[0];
+    if (results.length === 0 && first !== undefined && first.error instanceof LibraryError && failed.every((entry) => entry.error instanceof LibraryError && entry.error.code === "offline")) throw first.error;
+    const unavailable = failed.map((entry) => ({ id: entry.id, name: entry.name, reason: reasonOf(entry.error) }));
+    return { total: page.total, page: page.page, pages: page.pages, per_page: args.per_page, results, ...(unavailable.length === 0 ? {} : { unavailable }) };
   }
 
-  private async preview(args: z.infer<typeof previewArgs>): Promise<CallToolResult> {
-    const asset = await this.client.info(args.id);
-    const thumbnail = await this.client.thumbnail(asset, args.size, THUMBNAIL_MAX_BYTES);
+  private async preview(args: z.infer<typeof previewArgs>, signal?: AbortSignal): Promise<CallToolResult> {
+    const asset = await this.client.info(args.id, signal);
+    const thumbnail = await this.client.thumbnail(asset, args.size, THUMBNAIL_MAX_BYTES, signal);
     return {
       content: [
         text(`${asset.name} (${typeOf(asset)}, ${args.id}): thumbnail ${thumbnail.width}x${thumbnail.height} px, ${thumbnail.data.length} bytes.`),
@@ -177,10 +195,10 @@ export class Library {
     return undefined;
   }
 
-  private async download(args: z.infer<typeof downloadArgs>): Promise<Record<string, unknown>> {
+  private async download(args: z.infer<typeof downloadArgs>, signal?: AbortSignal): Promise<Record<string, unknown>> {
     const key = args.id.toLowerCase();
     while (this.busy.has(key)) await this.busy.get(key)?.catch(() => undefined);
-    const work = this.downloadNow(args);
+    const work = this.downloadNow(args, signal);
     this.busy.set(key, work);
     try {
       return await work;
@@ -189,12 +207,12 @@ export class Library {
     }
   }
 
-  private async downloadNow(args: z.infer<typeof downloadArgs>): Promise<Record<string, unknown>> {
+  private async downloadNow(args: z.infer<typeof downloadArgs>, signal?: AbortSignal): Promise<Record<string, unknown>> {
     const local = await this.localCopy(args);
     if (local !== undefined) return downloadResult(local, true);
-    const asset = await this.client.info(args.id);
+    const asset = await this.client.info(args.id, signal);
     const type = typeOf(asset);
-    const plan = planDownload(type, await this.client.files(args.id, type), { resolution: args.resolution, format: args.format, maps: args.maps }, this.maxBytes);
+    const plan = planDownload(type, await this.client.files(args.id, type, signal), { resolution: args.resolution, format: args.format, maps: args.maps }, this.maxBytes);
     await cleanStaleTemporary(this.options.workspace, this.now());
     const record = await storeAsset({
       workspace: this.options.workspace,
@@ -205,6 +223,7 @@ export class Library {
       maxBytes: this.maxBytes,
       now: new Date(this.now()),
       concurrency: DOWNLOAD_CONCURRENCY,
+      signal,
     });
     return downloadResult(record, false);
   }

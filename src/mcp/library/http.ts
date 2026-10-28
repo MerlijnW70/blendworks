@@ -32,6 +32,10 @@ class HttpStatus extends Error {
 
 class IdleTimeout extends Error {}
 
+function cancelled(): LibraryError {
+  return new LibraryError("cancelled", "the request was cancelled");
+}
+
 function retryAfter(response: Response): number | undefined {
   const header = response.headers.get("retry-after");
   if (header === null) return undefined;
@@ -63,14 +67,16 @@ async function discard(response: Response): Promise<void> {
 export class Http {
   constructor(private readonly options: HttpOptions) {}
 
-  async get<T>(raw: string, accept: string, consume: (attempt: Attempt) => Promise<T>): Promise<T> {
+  async get<T>(raw: string, accept: string, consume: (attempt: Attempt) => Promise<T>, signal?: AbortSignal): Promise<T> {
     const start = checkedUrl(raw);
     let lastError: unknown;
     for (let attempt = 0; attempt <= this.options.retries; attempt += 1) {
+      if (signal?.aborted) throw cancelled();
       try {
-        return await this.once(start, accept, consume);
+        return await this.once(start, accept, consume, signal);
       } catch (error) {
         lastError = error;
+        if (signal?.aborted) throw cancelled();
         if (!retryable(error) || attempt === this.options.retries) break;
         const wait = error instanceof HttpStatus && error.retryAfterMs !== undefined ? error.retryAfterMs : this.options.backoffMs * 2 ** attempt;
         await this.options.sleep(wait);
@@ -89,8 +95,10 @@ export class Http {
     return new LibraryError("offline", `cannot reach ${url.hostname} after ${tries} attempts (${causeOf(error)})`);
   }
 
-  private async once<T>(start: URL, accept: string, consume: (attempt: Attempt) => Promise<T>): Promise<T> {
+  private async once<T>(start: URL, accept: string, consume: (attempt: Attempt) => Promise<T>, outer?: AbortSignal): Promise<T> {
     const controller = new AbortController();
+    const onAbort = () => controller.abort(outer?.reason);
+    outer?.addEventListener("abort", onAbort, { once: true });
     let timer: NodeJS.Timeout | undefined;
     let timedOut = false;
     const touch = () => {
@@ -113,6 +121,7 @@ export class Http {
       throw error;
     } finally {
       clearTimeout(timer);
+      outer?.removeEventListener("abort", onAbort);
     }
   }
 

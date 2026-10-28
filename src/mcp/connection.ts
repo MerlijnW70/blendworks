@@ -1,9 +1,11 @@
+import { BLENDER_FIX, FailureLog } from "./failure-log.js";
 import { type BridgeArgs, BridgeError, type BridgeLink } from "./protocol.js";
 import { RECOVER_COMMAND, RECOVER_TIMEOUT_MS, recoverScene } from "./recovery.js";
 import { type BridgeCommand, FALLBACK_TIMEOUT_MS } from "./schema.js";
 
 export const PROGRESS_INTERVAL_MS = 10_000;
 export const CLOSE_LIMIT_MS = 6_000;
+export const RESTART_DELAYS_MS = [500, 2_000];
 
 export interface ConnectionOptions {
   open: () => Promise<BridgeLink>;
@@ -12,6 +14,12 @@ export interface ConnectionOptions {
   timeoutFor?: (cmd: string) => number;
   progressIntervalMs?: number;
   closeLimitMs?: number;
+  restartDelaysMs?: number[];
+  deadAfterFailures?: number;
+  failureWindowMs?: number;
+  deadCooldownMs?: number;
+  sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
 }
 
 export interface Progress {
@@ -75,15 +83,17 @@ function within<T>(work: Promise<T>, limitMs: number): Promise<T | undefined> {
 export class BridgeConnection {
   private link: BridgeLink | undefined;
   private lostReason: string | undefined;
-  private deadReason: string | undefined;
+  private readonly failures: FailureLog;
   private readonly waiting: Job[] = [];
   private running: Job | undefined;
   private closing: Promise<void> | undefined;
   private timeouts = new Map<string, number>();
+  private maxTimeouts = new Map<string, number>();
   private offersRecover = false;
   restarts = 0;
 
   constructor(private readonly options: ConnectionOptions, initial?: BridgeLink) {
+    this.failures = new FailureLog(options);
     if (initial !== undefined) this.adopt(initial);
   }
 
@@ -97,6 +107,7 @@ export class BridgeConnection {
 
   useCommands(commands: BridgeCommand[]): void {
     this.timeouts = new Map(commands.map((command) => [command.name, command.timeoutMs]));
+    this.maxTimeouts = new Map(commands.map((command) => [command.name, command.maxTimeoutMs]));
     this.offersRecover = commands.some((command) => command.name === RECOVER_COMMAND);
   }
 
@@ -105,17 +116,36 @@ export class BridgeConnection {
     return this.timeouts.get(cmd) ?? FALLBACK_TIMEOUT_MS;
   }
 
+  private get now(): number {
+    return (this.options.now ?? Date.now)();
+  }
+
+  private pause(ms: number): Promise<void> {
+    return (this.options.sleep ?? ((wait: number) => new Promise<void>((done) => setTimeout(done, wait))))(ms);
+  }
+
+  private dead(): string | undefined {
+    return this.closing !== undefined ? "the connection was closed" : this.failures.dead(this.now);
+  }
+
   async connect(): Promise<void> {
     if (this.link !== undefined) return;
+    let link: BridgeLink;
     try {
-      this.adopt(await this.options.open());
+      link = await this.options.open();
     } catch (error) {
-      throw new BridgeError("disconnected", `cannot start ${this.label}: ${message(error)}`);
+      throw new BridgeError("disconnected", `cannot start ${this.label}: ${message(error)}. ${BLENDER_FIX}.`);
     }
+    if (this.closing !== undefined) {
+      await within(link.kill().catch(() => undefined), this.closeLimitMs);
+      throw new BridgeError("disconnected", "the connection was closed");
+    }
+    this.adopt(link);
   }
 
   request(cmd: string, args: BridgeArgs, options: RequestOptions = {}): Promise<CallOutcome> {
-    if (this.deadReason !== undefined) return Promise.reject(new BridgeError("disconnected", this.deadReason));
+    const dead = this.dead();
+    if (dead !== undefined) return Promise.reject(new BridgeError("disconnected", dead));
     if (options.signal?.aborted) return Promise.reject(new BridgeError("cancelled", `${cmd} was cancelled before it started`));
     return new Promise<CallOutcome>((resolve, reject) => {
       const job = this.createJob(cmd, args, options, resolve, reject);
@@ -126,7 +156,6 @@ export class BridgeConnection {
 
   close(): Promise<void> {
     if (this.closing !== undefined) return this.closing;
-    this.deadReason = "the connection was closed";
     for (const job of this.waiting.splice(0)) job.reject(new BridgeError("disconnected", "the connection was closed before the request ran"));
     this.running?.interrupt(new Closed());
     const link = this.link;
@@ -217,7 +246,8 @@ export class BridgeConnection {
   private async execute(job: Job): Promise<void> {
     const notices: string[] = [];
     try {
-      if (this.deadReason !== undefined) throw new BridgeError("disconnected", this.deadReason);
+      const dead = this.dead();
+      if (dead !== undefined) throw new BridgeError("disconnected", dead);
       if (this.link === undefined || this.lostReason !== undefined) notices.push(await this.recoverBeforeCall());
       const link = this.link;
       if (link === undefined) throw new BridgeError("disconnected", `${this.label} is not connected`);
@@ -245,10 +275,21 @@ export class BridgeConnection {
     });
   }
 
+  private timeoutHint(cmd: string): string {
+    const max = this.maxTimeouts.get(cmd);
+    const limit = max === undefined ? "" : ` (at most ${seconds(max)} for ${cmd})`;
+    return ` To wait longer, pass timeout_seconds${limit}.`;
+  }
+
   private async recoverFrom(error: unknown, link: BridgeLink, job: Job): Promise<unknown> {
     if (error instanceof Closed) return new BridgeError("disconnected", `${job.cmd} was stopped because the connection was closed`);
-    if (error instanceof Timeout) return new BridgeError("timeout", await this.recoverAfterStop(link, `${job.cmd} got no reply within ${seconds(job.timeoutMs)}`));
-    if (error instanceof Cancelled) return new BridgeError("cancelled", await this.recoverAfterStop(link, `${job.cmd} was cancelled while it ran`));
+    if (error instanceof Timeout) {
+      return new BridgeError("timeout", `${await this.recoverAfterStop(link, `${job.cmd} got no reply within ${seconds(job.timeoutMs)}`, true)}${this.timeoutHint(job.cmd)}`);
+    }
+    if (error instanceof Cancelled) return new BridgeError("cancelled", await this.recoverAfterStop(link, `${job.cmd} was cancelled while it ran`, true));
+    if (error instanceof BridgeError && error.code === "protocol") {
+      return new BridgeError("protocol", await this.recoverAfterStop(link, `${job.cmd} got a reply that could not be read (${error.message})`, false));
+    }
     if (error instanceof BridgeError && error.code === "disconnected" && this.link === link) {
       return new BridgeError("crashed", await this.recoverAfterCrash(link, job.cmd, error.message));
     }
@@ -273,11 +314,11 @@ export class BridgeConnection {
     return `${what}. ${await this.restartAndRecover(what)}`;
   }
 
-  private async recoverAfterStop(link: BridgeLink, what: string): Promise<string> {
+  private async recoverAfterStop(link: BridgeLink, what: string, mayBeBusy: boolean): Promise<string> {
     this.link = undefined;
     if (!this.options.owned) {
       await link.close().catch(() => undefined);
-      return `${what}. Desktop Blender may still be busy; the next request reconnects to it.`;
+      return `${what}. ${mayBeBusy ? "Desktop Blender may still be busy; the" : "The"} next request reconnects to ${mayBeBusy ? "it" : this.label}.`;
     }
     await within(link.kill().catch(() => undefined), this.closeLimitMs);
     return `${what}. Stopped the session. ${await this.restartAndRecover(what)}`;
@@ -301,20 +342,29 @@ export class BridgeConnection {
   }
 
   private async restart(what: string): Promise<void> {
-    let link: BridgeLink;
-    try {
-      link = await this.options.open();
-    } catch (error) {
-      this.link = undefined;
-      this.deadReason = `${what}, and a fresh session failed to start: ${message(error)}`;
-      throw new BridgeError("crashed", this.deadReason);
+    const delays = this.options.restartDelaysMs ?? RESTART_DELAYS_MS;
+    let failure: unknown;
+    for (let attempt = 0; attempt <= delays.length; attempt += 1) {
+      if (this.closing !== undefined) throw new BridgeError("disconnected", "the connection was closed");
+      try {
+        const link = await this.options.open();
+        if (this.closing !== undefined) {
+          await within(link.kill().catch(() => undefined), this.closeLimitMs);
+          throw new BridgeError("disconnected", "the connection was closed");
+        }
+        this.adopt(link);
+        this.restarts += 1;
+        this.failures.clear();
+        return;
+      } catch (error) {
+        if (error instanceof BridgeError && error.code === "disconnected" && this.closing !== undefined) throw error;
+        failure = error;
+        const wait = delays[attempt];
+        if (wait !== undefined) await this.pause(wait);
+      }
     }
-    if (this.closing !== undefined) {
-      await within(link.kill().catch(() => undefined), this.closeLimitMs);
-      throw new BridgeError("disconnected", "the connection was closed");
-    }
-    this.adopt(link);
-    this.restarts += 1;
+    this.link = undefined;
+    throw new BridgeError("crashed", this.failures.note(`${what}, and a fresh session failed to start after ${delays.length + 1} attempt${delays.length === 0 ? "" : "s"}: ${message(failure)}`, this.now));
   }
 
   private async reconnect(): Promise<void> {

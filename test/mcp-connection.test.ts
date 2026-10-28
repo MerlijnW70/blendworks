@@ -98,11 +98,12 @@ describe("a crashed headless session", () => {
       },
       owned: true,
       label: "headless Blender session",
+      restartDelaysMs: [],
     });
     await connection.connect();
-    await expect(connection.request("slow", {})).rejects.toThrow(/a fresh session failed to start: blender exited with code 1/);
+    await expect(connection.request("slow", {})).rejects.toThrow(/a fresh session failed to start after 1 attempt: blender exited with code 1/);
     await expect(connection.request("scene_info", {})).rejects.toThrow(/a fresh session failed to start/);
-    expect(starts).toBe(2);
+    expect(starts).toBe(3);
     await connection.close();
   });
 });

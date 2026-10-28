@@ -1,8 +1,10 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { killLiveSessions } from "../session.js";
 import { desktopPort } from "./desktop.js";
 import { startHeadlessSession } from "./headless.js";
+import { installProcessGuards } from "./hygiene.js";
 import { parseOptions, USAGE } from "./options.js";
-import { startBlendworks } from "./start.js";
+import { beginBlendworks } from "./start.js";
 
 async function main(): Promise<void> {
   const options = parseOptions(process.argv.slice(2));
@@ -12,7 +14,7 @@ async function main(): Promise<void> {
   }
   const timeoutMs = options.timeoutMs;
   const log = (line: string) => console.error(line);
-  const started = await startBlendworks({
+  const begun = beginBlendworks({
     workspace: options.workspace,
     port: desktopPort(),
     allowPython: options.allowPython,
@@ -21,14 +23,19 @@ async function main(): Promise<void> {
     ...(timeoutMs === undefined ? {} : { timeoutFor: () => timeoutMs }),
     log,
   });
-  const shutdown = async () => {
-    await started.connection.close().catch(() => undefined);
-    process.exit(0);
+  const shutdown = async (exitCode: number) => {
+    await begun.stop().catch(() => undefined);
+    process.exit(exitCode);
   };
-  process.stdin.on("close", () => void shutdown());
-  process.on("SIGINT", () => void shutdown());
-  process.on("SIGTERM", () => void shutdown());
-  await started.server.connect(new StdioServerTransport());
+  installProcessGuards(process, { shutdown, killChildren: killLiveSessions, log });
+  process.stdin.on("close", () => void shutdown(0));
+  process.on("SIGINT", () => void shutdown(0));
+  process.on("SIGTERM", () => void shutdown(0));
+  begun.ready.then(
+    (started) => log(`blendworks: ready (${started.mode} mode, ${started.commands.length} commands)`),
+    (error: unknown) => log(`blendworks: Blender did not start: ${error instanceof Error ? error.message : String(error)}; tool calls report this, and the server tries again on the next call`),
+  );
+  await begun.server.connect(new StdioServerTransport());
 }
 
 main().catch((error: unknown) => {

@@ -65,12 +65,10 @@ describe("the Poly Haven client", () => {
     const badMd5 = structuredClone(files);
     (badMd5.hdri["1k"] as Record<string, Record<string, unknown>>)["hdr"] = { ...badMd5.hdri["1k"]?.["hdr"], md5: "not-an-md5" };
     polyHaven.serveFiles("abandoned_parking", badMd5);
-    expect((await refusal(client.files("abandoned_parking", "hdri"))).message).toContain("hdri.1k.hdr.md5");
+    expect(await client.files("abandoned_parking", "hdri")).toMatchObject({ hdri: badMd5.hdri });
 
-    const foreign = structuredClone(files);
-    (foreign.hdri["1k"] as Record<string, Record<string, unknown>>)["hdr"] = { ...foreign.hdri["1k"]?.["hdr"], url: "https://evil.example/sky.hdr" };
-    polyHaven.serveFiles("abandoned_parking", foreign);
-    expect((await refusal(client.files("abandoned_parking", "hdri"))).message).toContain("Poly Haven host");
+    polyHaven.serveFiles("blue_photo_studio", { hdri: "nothing" });
+    expect((await refusal(client.files("blue_photo_studio", "hdri"))).code).toBe("invalid");
 
     polyHaven.route("https://api.polyhaven.com/categories/hdris", () => new Response("<html>maintenance</html>", { status: 200 }));
     expect((await refusal(client.categories("hdri"))).message).toContain("not JSON");

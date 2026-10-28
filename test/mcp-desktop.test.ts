@@ -70,13 +70,14 @@ describe("choosing the bridge", () => {
       workspace: scratchDir(),
       port: (silent.address() as AddressInfo).port,
       allowPython: false,
+      desktopSlowAnswerMs: 1500,
       startHeadless: headlessStub(new FakeBridge(), counter),
     });
     started.push(one);
     const waited = Date.now() - before;
     expect(one.mode).toBe("headless");
     expect(counter.starts).toBe(1);
-    expect(waited).toBeGreaterThanOrEqual(950);
+    expect(waited).toBeGreaterThanOrEqual(1450);
     expect(waited).toBeLessThan(3000);
   });
 
@@ -85,7 +86,7 @@ describe("choosing the bridge", () => {
     const { port, server } = await slowDesktop.listen();
     servers.push(server);
     const counter = { starts: 0 };
-    const one = await startBlendworks({ workspace: scratchDir(), port, allowPython: false, startHeadless: headlessStub(new FakeBridge(), counter) });
+    const one = await startBlendworks({ workspace: scratchDir(), port, allowPython: false, desktopSlowAnswerMs: 1200, startHeadless: headlessStub(new FakeBridge(), counter) });
     started.push(one);
     expect(one.mode).toBe("headless");
   });

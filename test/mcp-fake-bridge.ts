@@ -13,6 +13,8 @@ export interface FakeOptions {
   crashOn?: Set<string>;
   delayMs?: number;
   noRecover?: boolean;
+  garble?: Set<string>;
+  wide?: boolean;
 }
 
 type Spec = { description: string; schema: Record<string, unknown>; dangerous?: boolean; [meta: string]: unknown };
@@ -69,6 +71,12 @@ const BASE_COMMANDS: Record<string, Spec> = {
   slow: { ...EDIT, description: "Wait before replying.", schema: object({ ms: { type: "integer", description: "Wait in ms.", minimum: 0, maximum: 10000 } }) },
 };
 
+const WIDE: Spec = {
+  ...EDIT,
+  description: "Take many named settings.",
+  schema: object(Object.fromEntries(Array.from({ length: 60 }, (_, index) => [`setting_${index}`, { type: "string", description: `Setting number ${index}, free text.`, maxLength: 100 }]))),
+};
+
 const RUN_PYTHON: Spec = {
   ...EDIT,
   destructive: true,
@@ -92,6 +100,7 @@ export class FakeBridge {
   commands(): Record<string, Spec> {
     const commands: Record<string, Spec> = this.options.allowPython ? { ...BASE_COMMANDS, run_python: RUN_PYTHON } : { ...BASE_COMMANDS };
     if (this.options.noRecover) delete commands["recover"];
+    if (this.options.wide) commands["wide_schema"] = WIDE;
     return commands;
   }
 
@@ -111,6 +120,11 @@ export class FakeBridge {
         return;
       }
       if (this.options.hang?.has(request.cmd)) return;
+      if (this.options.garble?.has(request.cmd)) {
+        output.write(`{"id":${request.id},"ok":tr
+`);
+        return;
+      }
       this.inFlight += 1;
       this.maxInFlight = Math.max(this.maxInFlight, this.inFlight);
       const delay = request.cmd === "slow" ? Number(request.args["ms"] ?? 0) : (this.options.delayMs ?? 0);

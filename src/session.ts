@@ -3,21 +3,13 @@ import { resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { blenderPath } from "./blender.js";
+import { type BridgeReply, readLine } from "./mcp/protocol.js";
 
 export const SESSION_SCRIPT = fileURLToPath(new URL("../bridge/session.py", import.meta.url));
 
-export type BridgeErrorCode = "bad_args" | "not_found" | "failed" | "forbidden";
 export type BridgeResult = Record<string, unknown>;
-export type BridgeId = number | string | null;
 
-export interface BridgeFailure {
-  code: BridgeErrorCode;
-  message: string;
-}
-
-export type BridgeReply =
-  | { id: BridgeId; ok: true; result: BridgeResult }
-  | { id: BridgeId; ok: false; error: BridgeFailure };
+export type { BridgeReply };
 
 export interface SessionOptions {
   workspace?: string;
@@ -27,6 +19,9 @@ export interface SessionOptions {
   env?: NodeJS.ProcessEnv;
   autosaveSeconds?: number | "off";
   onStderr?: (line: string) => void;
+  onDropped?: (message: string) => void;
+  readyTimeoutMs?: number;
+  args?: string[];
 }
 
 export interface RequestOptions {
@@ -39,10 +34,10 @@ export interface SessionExit {
 }
 
 export class BridgeCommandError extends Error {
-  readonly code: BridgeErrorCode;
+  readonly code: string;
   readonly command: string;
 
-  constructor(command: string, failure: BridgeFailure) {
+  constructor(command: string, failure: { code: string; message: string }) {
     super(`${command}: ${failure.code}: ${failure.message}`);
     this.name = "BridgeCommandError";
     this.code = failure.code;
@@ -50,8 +45,13 @@ export class BridgeCommandError extends Error {
   }
 }
 
+export type SessionErrorKind = "start" | "exited" | "timeout" | "protocol";
+
 export class SessionError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    readonly kind: SessionErrorKind = "start",
+  ) {
     super(message);
     this.name = "SessionError";
   }
@@ -90,9 +90,28 @@ export function sessionArguments(workspace: string, allowPython: boolean): strin
   return allowPython ? [...args, "--allow-python"] : args;
 }
 
+const liveChildren = new Set<ChildProcessWithoutNullStreams>();
+
+export function killLiveSessions(): void {
+  for (const child of liveChildren) child.kill();
+  liveChildren.clear();
+}
+
+async function becomeReady(session: BlenderSession, timeoutMs: number): Promise<void> {
+  try {
+    await session.call("describe", {}, { timeoutMs });
+  } catch (error) {
+    await session.kill();
+    const tail = session.stderrTail().slice(-1500).trim();
+    const cause = error instanceof SessionError && error.kind === "timeout" ? `the bridge did not answer within ${Math.round(timeoutMs / 100) / 10} s` : error instanceof Error ? error.message : String(error);
+    throw new SessionError(`Blender started but the bridge never became ready: ${cause}${tail === "" ? "" : `; its last output:
+${tail}`}`, "start");
+  }
+}
+
 export async function startSession(options: SessionOptions = {}): Promise<Session> {
   const workspace = resolve(options.workspace ?? "workspace");
-  const child = spawn(options.blender ?? blenderPath(), sessionArguments(workspace, options.allowPython ?? false), {
+  const child = spawn(options.blender ?? blenderPath(), options.args ?? sessionArguments(workspace, options.allowPython ?? false), {
     env: sessionEnvironment(options),
     stdio: ["pipe", "pipe", "pipe"],
     windowsHide: true,
@@ -101,7 +120,9 @@ export async function startSession(options: SessionOptions = {}): Promise<Sessio
     child.once("spawn", () => resolveSpawn());
     child.once("error", (error) => rejectSpawn(new SessionError(`could not start Blender: ${error.message}`)));
   });
-  return new BlenderSession(child, workspace, options);
+  const session = new BlenderSession(child, workspace, options);
+  if (options.readyTimeoutMs !== undefined) await becomeReady(session, options.readyTimeoutMs);
+  return session;
 }
 
 class BlenderSession implements Session {
@@ -110,6 +131,7 @@ class BlenderSession implements Session {
   private readonly child: ChildProcessWithoutNullStreams;
   private readonly pending = new Map<number, Pending>();
   private readonly timeoutMs: number;
+  private readonly onDropped: (message: string) => void;
   private nextId = 0;
   private stderr = "";
   private exit: SessionExit | undefined;
@@ -118,10 +140,13 @@ class BlenderSession implements Session {
     this.child = child;
     this.workspace = workspace;
     this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.onDropped = options.onDropped ?? (() => undefined);
+    liveChildren.add(child);
     this.exited = new Promise((resolveExit) => {
       child.once("exit", (code, signal) => {
+        liveChildren.delete(child);
         this.exit = { code, signal };
-        this.failAll(new SessionError(`Blender exited (code ${code}, signal ${signal}): ${this.stderrTail().slice(-2000)}`));
+        this.failAll(new SessionError(`Blender exited (code ${code}, signal ${signal}): ${this.stderrTail().slice(-2000)}`, "exited"));
         resolveExit(this.exit);
       });
     });
@@ -142,14 +167,14 @@ class BlenderSession implements Session {
   }
 
   send(cmd: string, args: BridgeResult = {}, options: RequestOptions = {}): Promise<BridgeReply> {
-    if (this.exit) return Promise.reject(new SessionError(`the session has exited (code ${this.exit.code})`));
+    if (this.exit) return Promise.reject(new SessionError(`the session has exited (code ${this.exit.code})`, "exited"));
     this.nextId += 1;
     const id = this.nextId;
     const timeoutMs = options.timeoutMs ?? this.timeoutMs;
     return new Promise<BridgeReply>((resolveReply, rejectReply) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        rejectReply(new SessionError(`${cmd} timed out after ${timeoutMs} ms`));
+        rejectReply(new SessionError(`${cmd} timed out after ${timeoutMs} ms`, "timeout"));
       }, timeoutMs);
       this.pending.set(id, { resolve: resolveReply, reject: rejectReply, timer });
       this.child.stdin.write(`${JSON.stringify({ id, cmd, args })}\n`);
@@ -180,20 +205,30 @@ class BlenderSession implements Session {
     return exit;
   }
 
-  private receive(line: string): void {
-    let reply: BridgeReply;
-    try {
-      reply = JSON.parse(line) as BridgeReply;
-    } catch {
-      this.stderr = (this.stderr + `unparsed stdout: ${line}\n`).slice(-STDERR_TAIL);
+  private receive(raw: string): void {
+    const line = readLine(raw);
+    if (line.kind === "ignored") return;
+    if (line.kind === "garbled") {
+      const waiting = line.id === undefined ? undefined : this.pending.get(line.id);
+      if (waiting === undefined || line.id === undefined) {
+        this.stderr = (this.stderr + `unparsed stdout: ${raw}
+`).slice(-STDERR_TAIL);
+        this.onDropped(`dropped an unreadable bridge line (${line.error.message})`);
+        return;
+      }
+      this.pending.delete(line.id);
+      clearTimeout(waiting.timer);
+      waiting.reject(new SessionError(line.error.message, "protocol"));
       return;
     }
-    if (typeof reply.id !== "number") return;
-    const waiting = this.pending.get(reply.id);
-    if (!waiting) return;
-    this.pending.delete(reply.id);
+    const waiting = this.pending.get(line.reply.id);
+    if (!waiting) {
+      this.onDropped(`dropped a bridge reply for request ${line.reply.id}, which nobody is waiting for`);
+      return;
+    }
+    this.pending.delete(line.reply.id);
     clearTimeout(waiting.timer);
-    waiting.resolve(reply);
+    waiting.resolve(line.reply);
   }
 
   private failAll(error: Error): void {

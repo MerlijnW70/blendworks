@@ -4,7 +4,7 @@ export const LICENSE = "CC0-1.0";
 export const LICENSE_URL = "https://creativecommons.org/publicdomain/zero/1.0/";
 export const LIBRARY_FOLDER = "library";
 
-export type LibraryErrorCode = "offline" | "refused" | "invalid" | "not_found" | "failed";
+export type LibraryErrorCode = "offline" | "refused" | "invalid" | "not_found" | "failed" | "cancelled";
 
 export class LibraryError extends Error {
   constructor(

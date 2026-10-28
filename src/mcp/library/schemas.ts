@@ -35,7 +35,7 @@ export const remoteFileSchema = fileSchema.extend({
 });
 export type RemoteFile = z.infer<typeof remoteFileSchema>;
 
-export const resolutionsSchema = z.record(z.string().regex(RESOLUTION), z.record(z.string().regex(FORMAT), remoteFileSchema));
+export const resolutionsSchema = z.record(z.string().max(20), z.record(z.string().max(20), z.unknown()));
 export type Resolutions = z.infer<typeof resolutionsSchema>;
 
 export const hdriFilesSchema = z.object({ hdri: resolutionsSchema });

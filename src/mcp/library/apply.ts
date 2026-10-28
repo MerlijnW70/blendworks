@@ -8,7 +8,7 @@ import { assetFolderPath, type LicenseRecord, readLocal, verifyLocal } from "./s
 
 export interface BridgeAccess {
   commands: BridgeCommand[];
-  request(cmd: string, args: BridgeArgs): Promise<CallOutcome>;
+  request(cmd: string, args: BridgeArgs, options?: { signal?: AbortSignal }): Promise<CallOutcome>;
 }
 
 export interface ApplyRequest {

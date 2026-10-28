@@ -108,7 +108,7 @@ export async function cleanStaleTemporary(workspace: Workspace, now: number): Pr
 }
 
 export interface Fetcher {
-  download(file: { url: string; size: number; md5: string }, target: string, budget: { left: number }): Promise<void>;
+  download(file: { url: string; size: number; md5: string }, target: string, budget: { left: number }, signal?: AbortSignal): Promise<void>;
 }
 
 function gltfReferences(text: string): string[] {
@@ -172,6 +172,7 @@ export interface StoreRequest {
   maxBytes: number;
   now: Date;
   concurrency: number;
+  signal?: AbortSignal | undefined;
 }
 
 export async function storeAsset(request: StoreRequest): Promise<LicenseRecord> {
@@ -189,7 +190,7 @@ export async function storeAsset(request: StoreRequest): Promise<LicenseRecord> 
     await pool(plan.files, request.concurrency, async (file) => {
       const target = inside(temporary, file.path);
       await mkdir(dirname(target), { recursive: true });
-      await request.fetcher.download(file, target, budget);
+      await request.fetcher.download(file, target, budget, request.signal);
     });
     await checkGltf(temporary, plan);
     const record: LicenseRecord = {

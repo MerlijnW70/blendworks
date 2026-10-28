@@ -56,3 +56,23 @@ export function parseReply(line: string): BridgeReply {
   const text = isRecord(error) && typeof error["message"] === "string" ? error["message"] : "the bridge reported a failure";
   return { id, ok: false, error: { code, message: text } };
 }
+
+const ID_IN_LINE = /"id"\s*:\s*(\d+)/;
+
+export type Line =
+  | { kind: "reply"; reply: BridgeReply }
+  | { kind: "ignored" }
+  | { kind: "garbled"; id: number | undefined; error: BridgeError };
+
+export function readLine(line: string): Line {
+  const trimmed = line.trim();
+  if (trimmed === "") return { kind: "ignored" };
+  try {
+    return { kind: "reply", reply: parseReply(trimmed) };
+  } catch (error) {
+    if (!(error instanceof BridgeError)) throw error;
+    if (/^\{\s*"id"\s*:\s*"quit"/.test(trimmed)) return { kind: "ignored" };
+    const found = trimmed.startsWith("{") ? ID_IN_LINE.exec(trimmed) : null;
+    return { kind: "garbled", id: found === null ? undefined : Number(found[1]), error };
+  }
+}

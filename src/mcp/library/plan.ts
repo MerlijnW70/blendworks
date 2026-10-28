@@ -1,5 +1,5 @@
 import { type AssetType, byResolution, checkRelativePath, fileNameOf, LibraryError, megabytes } from "./common.js";
-import type { RemoteFile, Resolutions, SetFiles } from "./schemas.js";
+import { type RemoteFile, remoteFileSchema, type Resolutions, type SetFiles } from "./schemas.js";
 import { NOT_MAPS, resolutionsOf } from "./search.js";
 
 export const FORMATS: Record<AssetType, readonly string[]> = { hdri: ["hdr", "exr"], texture: ["jpg", "png", "exr"], model: ["gltf"] };
@@ -35,15 +35,37 @@ function planned(path: string, file: { url: string; size: number; md5: string })
   return { path: checkRelativePath(path), url: file.url, size: file.size, md5: file.md5 };
 }
 
+function problemWith(listed: unknown): string | undefined {
+  const parsed = remoteFileSchema.safeParse(listed);
+  if (parsed.success) return undefined;
+  const issue = parsed.error.issues[0];
+  const where = issue === undefined || issue.path.length === 0 ? "the entry" : issue.path.map(String).join(".");
+  return `${where} ${issue?.message ?? "is invalid"}`;
+}
+
+function usableResolutions(resolutions: Resolutions | undefined, format: string): string[] {
+  return Object.entries(resolutions ?? {})
+    .filter(([, formats]) => problemWith(formats[format]) === undefined)
+    .map(([resolution]) => resolution)
+    .sort(byResolution);
+}
+
 function pick(resolutions: Resolutions | undefined, resolution: string, format: string, what: string): RemoteFile {
   const formats = resolutions?.[resolution];
   if (formats === undefined) {
     const offered = Object.keys(resolutions ?? {}).sort(byResolution);
     throw new LibraryError("refused", `${what} has no ${resolution} resolution; it offers ${offered.join(", ") || "none"}`);
   }
-  const file = formats[format];
-  if (file === undefined) throw new LibraryError("refused", `${what} has no ${format} file at ${resolution}; it offers ${Object.keys(formats).join(", ")}`);
-  return file;
+  const listed = formats[format];
+  if (listed === undefined) throw new LibraryError("refused", `${what} has no ${format} file at ${resolution}; it offers ${Object.keys(formats).join(", ")}`);
+  const problem = problemWith(listed);
+  if (problem !== undefined) {
+    const url = typeof (listed as { url?: unknown }).url === "string" ? ` (${String((listed as { url: string }).url).split("/").pop()})` : "";
+    const others = usableResolutions(resolutions, format).filter((other) => other !== resolution);
+    const advice = others.length > 0 ? `use another resolution, ${others.join(", ")}` : "no other resolution of this format is listed correctly";
+    throw new LibraryError("refused", `${what} at ${resolution}${url} is listed badly by Poly Haven (${problem}), so it is not downloaded; ${advice}`);
+  }
+  return listed as RemoteFile;
 }
 
 function availableMaps(files: SetFiles): string[] {

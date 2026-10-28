@@ -1,4 +1,4 @@
-import { type AssetType, byResolution, TYPE_BY_NUMBER } from "./common.js";
+import { type AssetType, byResolution, RESOLUTION, TYPE_BY_NUMBER } from "./common.js";
 import type { Asset, Listing, Resolutions, SetFiles } from "./schemas.js";
 
 export interface SearchQuery {
@@ -67,7 +67,7 @@ export function resolutionsOf(type: AssetType, files: SetFiles | { hdri: Resolut
       for (const resolution of Object.keys(resolutions)) found.add(resolution);
     }
   }
-  return [...found].sort(byResolution);
+  return [...found].filter((resolution) => RESOLUTION.test(resolution)).sort(byResolution);
 }
 
 export function typeOf(asset: Asset): AssetType {

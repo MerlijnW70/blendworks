@@ -68,28 +68,28 @@ export class PolyHavenClient {
     this.cache = new DiskCache(typeof cacheDir === "string" ? () => cacheDir : cacheDir, options.cacheTtlMs ?? DEFAULT_CACHE_TTL_MS, options.now ?? Date.now);
   }
 
-  async assets(type: AssetType): Promise<Listing> {
+  async assets(type: AssetType, signal?: AbortSignal): Promise<Listing> {
     const name = API_TYPE_NAMES[type];
-    return this.json(`assets-${name}`, `${API_BASE}/assets?t=${name}`, listingSchema);
+    return this.json(`assets-${name}`, `${API_BASE}/assets?t=${name}`, listingSchema, signal);
   }
 
-  async categories(type: AssetType): Promise<Record<string, number>> {
+  async categories(type: AssetType, signal?: AbortSignal): Promise<Record<string, number>> {
     const name = API_TYPE_NAMES[type];
-    return this.json(`categories-${name}`, `${API_BASE}/categories/${name}`, categoriesSchema);
+    return this.json(`categories-${name}`, `${API_BASE}/categories/${name}`, categoriesSchema, signal);
   }
 
-  async info(id: string): Promise<Asset> {
+  async info(id: string, signal?: AbortSignal): Promise<Asset> {
     checkAssetId(id);
-    return this.json(`info-${id}`, `${API_BASE}/info/${id}`, assetSchema);
+    return this.json(`info-${id}`, `${API_BASE}/info/${id}`, assetSchema, signal);
   }
 
-  async files(id: string, type: AssetType): Promise<SetFiles | { hdri: Resolutions }> {
+  async files(id: string, type: AssetType, signal?: AbortSignal): Promise<SetFiles | { hdri: Resolutions }> {
     checkAssetId(id);
-    if (type === "hdri") return this.json(`files-${id}`, `${API_BASE}/files/${id}`, hdriFilesSchema);
-    return this.json(`files-${id}`, `${API_BASE}/files/${id}`, setFilesSchema);
+    if (type === "hdri") return this.json(`files-${id}`, `${API_BASE}/files/${id}`, hdriFilesSchema, signal);
+    return this.json(`files-${id}`, `${API_BASE}/files/${id}`, setFilesSchema, signal);
   }
 
-  async thumbnail(asset: Asset, size: number, maxBytes: number): Promise<Thumbnail> {
+  async thumbnail(asset: Asset, size: number, maxBytes: number, signal?: AbortSignal): Promise<Thumbnail> {
     const url = new URL(asset.thumbnail_url);
     url.search = new URLSearchParams({ width: String(size), height: String(size), format: "png" }).toString();
     return this.http.get(url.href, "image/png", async (attempt) => {
@@ -98,10 +98,10 @@ export class PolyHavenClient {
         throw new LibraryError("invalid", "the thumbnail Poly Haven sent is not a PNG image");
       }
       return { data, width: data.readUInt32BE(16), height: data.readUInt32BE(20) };
-    });
+    }, signal);
   }
 
-  async download(expected: ExpectedFile, target: string, budget: { left: number }): Promise<void> {
+  async download(expected: ExpectedFile, target: string, budget: { left: number }, signal?: AbortSignal): Promise<void> {
     await this.http.get(expected.url, "*/*", async (attempt) => {
       const declared = Number(attempt.response.headers.get("content-length") ?? "NaN");
       if (Number.isFinite(declared) && declared !== expected.size) {
@@ -142,11 +142,11 @@ export class PolyHavenClient {
       if (md5 !== expected.md5) {
         throw new LibraryError("refused", `${expected.url} has md5 ${md5}, but Poly Haven publishes ${expected.md5}; the download is refused`);
       }
-    });
+    }, signal);
     budget.left -= expected.size;
   }
 
-  private async json<S extends z.ZodType>(key: string, url: string, schema: S): Promise<z.infer<S>> {
+  private async json<S extends z.ZodType>(key: string, url: string, schema: S, signal?: AbortSignal): Promise<z.infer<S>> {
     const cached = await this.cache.read(key);
     if (cached !== undefined) {
       const parsed = schema.safeParse(cached);
@@ -166,7 +166,7 @@ export class PolyHavenClient {
         throw new LibraryError("invalid", `Poly Haven sent an unexpected response from ${new URL(url).pathname}, so it was refused: ${describeIssues(parsed.error)}`);
       }
       return parsed.data as z.infer<S>;
-    });
+    }, signal);
     await this.cache.write(key, data).catch(() => undefined);
     return data;
   }

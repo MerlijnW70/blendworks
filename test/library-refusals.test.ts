@@ -66,7 +66,7 @@ describe("host refusals", () => {
     (files.hdri["1k"] as Record<string, { url: string }>)["hdr"] = { ...files.hdri["1k"]?.["hdr"], url: "https://evil.example/abandoned_parking_1k.hdr" } as { url: string };
     harness.polyHaven.serveFiles("abandoned_parking", files);
     const result = await call(harness, "library_download", { id: "abandoned_parking", resolution: "1k" });
-    expect(texts(result)).toMatch(/^invalid: Poly Haven sent an unexpected response from \/files\/abandoned_parking, so it was refused: hdri\.1k\.hdr\.url/);
+    expect(texts(result)).toMatch(/^refused: this HDRI at 1k \(abandoned_parking_1k\.hdr\) is listed badly by Poly Haven \(url is not an https URL on a Poly Haven host\)/);
     expect(harness.polyHaven.requested("https://evil.example")).toEqual([]);
   });
 });
@@ -89,13 +89,13 @@ describe("path refusals", () => {
     for (const path of ["../escape.bin", "textures/../../escape.jpg", "/etc/escape", "C:/escape.bin", "textures\\..\\escape.jpg", "textures/./x.jpg", "", "LICENSE.json"]) {
       const harness = libraryHarness();
       const files = fixture("files-Barrel_01.json") as SetFiles;
-      const gltf = files["gltf"]?.["1k"]?.["gltf"];
+      const gltf = files["gltf"]?.["1k"]?.["gltf"] as { include?: Record<string, unknown> } | undefined;
       if (gltf === undefined) throw new Error("fixture lacks the 1k glTF");
       gltf.include = { [path]: { url: BARREL.bin, size: 12, md5: "0".repeat(32) } };
       harness.polyHaven.serveFiles("Barrel_01", files);
       const result = await call(harness, "library_download", { id: "Barrel_01", resolution: "1k" });
       expect(result.isError, path).toBe(true);
-      expect(texts(result)).toMatch(path === "" ? /^invalid: .*gltf\.1k\.gltf\.include/ : /^refused: /);
+      expect(texts(result)).toMatch(/^refused: /);
       expect(harness.polyHaven.requested("https://dl.polyhaven.org/")).toEqual([]);
       expect(assetFiles(harness)).toEqual(["library/"]);
     }
