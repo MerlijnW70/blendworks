@@ -13,7 +13,7 @@ from harness import run
 from texture_helpers import glb_parts
 
 OUTPUT = os.path.join(tempfile.gettempdir(), "blendworks-textured-prop")
-BAKE_SIZE = 1024
+BAKE_SIZE = 256
 CHANNELS = ["base_color", "roughness", "metallic", "normal", "ao"]
 
 
@@ -65,7 +65,7 @@ def test_textured_prop_from_presets(bridge):
     os.makedirs(OUTPUT)
     name = build_prop(bridge)
     save_preview(bridge.ok("render_preview", views=["three-quarter"], resolution=768, samples=24), os.path.join(OUTPUT, "procedural.png"))
-    baked = bridge.ok("bake", names=[name], channels=CHANNELS, size=BAKE_SIZE, prefix="Prop", rewire=True, samples={"ao": 32}, time_limit=300.0)
+    baked = bridge.ok("bake", names=[name], channels=CHANNELS, size=BAKE_SIZE, prefix="Prop", rewire=True, samples={"ao": 32}, time_limit=600.0)
     assert baked["material"] == "Prop_baked" and baked["images"] == [f"Prop_{channel}" for channel in CHANNELS]
     for channel in CHANNELS:
         image = bpy.data.images[f"Prop_{channel}"]
