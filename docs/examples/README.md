@@ -62,6 +62,29 @@ It runs these steps in order, and stops at the first failing command:
 
 `BLENDWORKS_TERRAIN_RESOLUTION`, `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
 
+## Phyllotaxis
+
+`phyllotaxis.py` builds a sunflower head, a pine cone and a succulent rosette with commands only, with materials, and renders close-ups. It is the acceptance build of the `phyllotaxis` job.
+
+```
+blender --background --factory-startup --python docs/examples/phyllotaxis.py -- out
+```
+
+The script writes into `out`:
+- `phyllotaxis.blend`;
+- seven PNGs: `sunflower`, `sunflower-seeds`, `pine-cone`, `pine-cone-top`, `rosette`, `rosette-top` and `overview`;
+- `summary.json`: every command with its time and, for `instances`, the count, the divergence and the area per organ.
+
+It runs these steps in order, and stops at the first failing command:
+1. **Materials.** `soil`, a yellow `leaf` for petals, dark `dirt` seeds, `bark` for the scales and a pale green `leaf` for the succulent.
+2. **Organs.** Each organ (a seed, a petal, a cone scale, a rosette leaf) is built once with `mesh_from_data`: a lens-shaped blade with its base at the origin, its length along X and UVs over the unit square, so the leaf veins follow it.
+3. **Sunflower.** 1,100 seeds on a `disc` (`c` 4.2 mm, `golden`), each growing from 55 % of its size with the index (`scale_by_age`); then two rings of petals through the same disc with `start` 1100 and 1500, so they sit just outside the last seeds, opening wider with the index (`tilt_by_age`) and with a seeded `jitter`.
+4. **Pine cone.** 89 scales on a `cone` (radius 3.6 cm, height 10 cm), growing from 40 % with the index and opening from 6 to 40 degrees towards the base, over a bark core cone.
+5. **Rosette.** 89 leaves on a `sphere` cap of `polar_extent` 112 degrees, small and upright at the heart and larger and open at the edge, around a sphere.
+6. **Renders.** Seven views.
+
+`BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+
 ## Natural dressing
 
 `natural_dressing.py` dresses the terrain and rock of `noise_terrain.py` with natural materials, with commands only, and renders close-ups. It is the acceptance build of the `natural-materials` job.

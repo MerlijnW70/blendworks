@@ -236,5 +236,9 @@
   {"id":"probe-12","text":"Set the Lid's rotation_euler to 0, 0, 45 degrees","kind":"single","split":"probe","expect":["blender_transform"]},
   {"id":"probe-13","text":"Write a script that places 12 copies of the Bolt around a circle of radius 0.1 m","kind":"single","split":"probe","expect":["blender_instances"]},
   {"id":"probe-14","text":"Loop over the faces of the Tower and move the ones facing up 2 cm higher","kind":"single","split":"probe","expect":["blender_transform_selection"],"alternatives":["blender_extrude"]},
-  {"id":"probe-15","text":"Use a script to apply all modifiers of the Pipe","kind":"single","split":"probe","expect":["blender_apply_modifier"]}
+  {"id":"probe-15","text":"Use a script to apply all modifiers of the Pipe","kind":"single","split":"probe","expect":["blender_apply_modifier"]},
+  {"id":"instances-4","text":"Build a sunflower head with a thousand seeds in the golden angle spiral on a disc and a ring of petals around the rim","kind":"near-miss","split":"heldout","expect":["blender_instances"],"confusable":"blender_scatter"},
+  {"id":"instances-5","text":"Cover a cone with overlapping scales that open wider towards the base, like a pine cone","kind":"near-miss","split":"heldout","expect":["blender_instances"],"confusable":"blender_array"},
+  {"id":"instances-6","text":"Arrange 55 leaves into a succulent rosette on a dome, each turned 137.5 degrees from the one before","kind":"single","split":"heldout","expect":["blender_instances"]},
+  {"id":"instances-7","text":"Lay out seeds in a Fibonacci spiral where the radius grows with the square root of the seed number","kind":"single","split":"tune","expect":["blender_instances"]}
 ]

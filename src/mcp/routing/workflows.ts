@@ -106,6 +106,13 @@ export const WORKFLOWS: Workflow[] = [
     note: "Build one bolt with blender_lathe, then blender_instances (on a circle, along a curve or at points) or blender_rivet_line; realize true merges them for export.",
   },
   {
+    id: "phyllotaxis",
+    goal: "Sunflowers, pine cones and rosettes",
+    examples: ["sunflower head with seeds and petals", "pine cone with overlapping scales", "succulent rosette of leaves", "organs in the golden angle"],
+    steps: ["blender_mesh_from_data", "blender_instances", "blender_material_procedural"],
+    note: "Build one seed, petal, scale or leaf with its base at the origin and its length along X (blender_mesh_from_data with UVs), then blender_instances with phyllotaxis: mode disc (c metres, organ n at radius c*sqrt(n)), cone (radius, height), sphere (radius, polar_extent) or surface (a mesh of revolution), golden true for the exact angle 137.5078 degrees, scale_by_age and tilt_by_age with a curve, jitter with a seed. Organs sit on the surface normal with X pointing away from the centre; start gives a ring of petals around a disc of seeds.",
+  },
+  {
     id: "surface-detail",
     goal: "Wear and face edits",
     examples: ["dents", "battle damage", "taper faces", "find faces"],

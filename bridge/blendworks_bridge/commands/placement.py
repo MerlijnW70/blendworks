@@ -12,12 +12,13 @@ from ..instancing import (
 )
 from ..kit_limits import MAX_INSTANCES, MAX_PATH_POINTS
 from ..paths import object_curve
+from ..phyllotaxis import CURVES, MODES, Layout, phyllotaxis_layout
 from ..registry import command
 from ..revolve import lathe_data
 from ..schema import array, boolean, described, integer, length, number, obj, point3, points3, string, vector3
 from ..util import get_mesh_object, mesh_counts, require_free_name, vec
 
-PLACEMENT_MODES = ("points", "waypoints", "curve", "edges", "circle")
+PLACEMENT_MODES = ("points", "waypoints", "curve", "edges", "circle", "phyllotaxis")
 
 CIRCLE = described(
     obj(
@@ -34,6 +35,57 @@ CIRCLE = described(
     "Place instances on a circle.",
 )
 
+def age_curve(description, minimum, maximum, unit):
+    return described(
+        obj(
+            {
+                "from": number(f"{unit} of the first organ.", minimum, maximum),
+                "to": number(f"{unit} of the last organ.", minimum, maximum),
+                "curve": string("How the value runs from the first organ to the last, by the organ's share of the way (0 to 1): linear t, ease_in t^2, ease_out 1-(1-t)^2, smooth 3t^2-2t^3.", CURVES, "linear"),
+            },
+            ["from", "to"],
+        ),
+        description,
+    )
+
+
+PHYLLOTAXIS = described(
+    obj(
+        {
+            "count": integer("Number of organs.", 1, MAX_INSTANCES),
+            "mode": string(
+                "disc: radius c*sqrt(n) on the XY plane. cylinder: constant radius, height growing linearly with n. cone: apex up at height, base radius at z 0, spaced down the slope so each organ has the same area. sphere: Archimedes bands of equal area from the top pole. surface: the same, on the target, a mesh of revolution about its own Z axis.",
+                MODES,
+                "disc",
+            ),
+            "c": length("disc: scale in metres, organ n at radius c*sqrt(n). cone: the same along the slope from the apex, default fills the slope down to the base edge.", maximum=10_000.0),
+            "divergence": number("Angle in degrees between successive organs; default 137.5.", 0.0, 360.0),
+            "golden": boolean("Use the exact golden angle 360 * (1 - 1/phi) = 137.50776 degrees instead of divergence.", False),
+            "radius": length("cylinder, cone, sphere: radius in metres.", maximum=10_000.0),
+            "height": length("cylinder: height reached by the last organ. cone: height of the cone.", maximum=10_000.0),
+            "polar_extent": number("sphere: angle from the top pole to the last organ's band edge, in degrees (default 180 covers the whole sphere, 120 makes a rosette cap).", 1.0, 180.0),
+            "target": string("surface: mesh object of revolution about its own Z axis, scaled uniformly; organs sit on the outer profile."),
+            "start": integer("Index of the first organ; organs are numbered start, start+1, ... Disc radii and every angle follow the index.", 0, 1_000_000, 0),
+            "scale_by_age": age_curve("Scale of each organ from its place in the sequence (first organ to last), multiplying scale.", 0.0001, 1000.0, "Scale"),
+            "tilt_by_age": age_curve("Opening of each organ from its place in the sequence: its X axis lifts towards the surface normal by this many degrees, as petals and scales open. Needs align frame or radial.", -180.0, 180.0, "Angle in degrees"),
+            "jitter": described(
+                obj(
+                    {
+                        "amount": number("Position shift as a share of the spacing between organs.", 0.0, 1.0, 0.0),
+                        "rotation": number("Turn about the organ's Z axis, up to this many degrees either way.", 0.0, 180.0, 0.0),
+                        "scale": number("Scale change, up to this share either way.", 0.0, 0.99, 0.0),
+                        "seed": integer("Seed; the same seed gives the same result.", 0, 2**31 - 1, 0),
+                    },
+                    ["seed"],
+                ),
+                "Optional seeded randomness; without it the arrangement is exact and identical every run.",
+            ),
+        },
+        ["count"],
+    ),
+    "Place organs in the golden-angle arrangement of sunflower heads, pine cones and rosettes (organ n at angle n * divergence). The organ's X axis points away from the centre along the surface and Z is the surface normal with align frame; with align radial, X points away from the axis and Z up.",
+)
+
 COMMON = {
     "name": string("Name of the group (linked copies) or of the realised mesh; copies are named name_000, name_001 and so on.", default="Instances"),
     "spacing": length("Distance in metres between instances along waypoints, a curve or edges.", maximum=10_000.0),
@@ -41,7 +93,7 @@ COMMON = {
     "offset": number("Distance in metres from the start of the path to the first instance (with spacing).", 0.0, 10_000.0),
     "up": vector3("Direction instances' Z axis leans toward along a path, at the start.", [0.0, 0.0, 1.0]),
     "align": string(
-        "none keeps the world axes; frame turns X along the path (or the circle tangent) and Z to the up or normal direction; radial (circle only) turns X away from the centre.",
+        "none keeps the world axes; frame turns X along the path (or the circle tangent) and Z to the up or normal direction; radial (circle and phyllotaxis) turns X away from the centre.",
         ["none", "frame", "radial"],
         "frame",
     ),
@@ -60,11 +112,15 @@ def placements_from(ctx, args):
         raise bad_args(f"give the places as exactly one of {', '.join(PLACEMENT_MODES)}")
     mode = given[0]
     align = args["align"]
-    if align == "radial" and mode != "circle":
-        raise bad_args("align radial works only with circle")
+    if align == "radial" and mode not in ("circle", "phyllotaxis"):
+        raise bad_args("align radial works only with circle and phyllotaxis")
     stray = [key for key in ("spacing", "count", "offset") if key in args]
-    if mode in ("points", "circle") and stray:
+    if mode in ("points", "circle", "phyllotaxis") and stray:
         raise bad_args(f"{', '.join(stray)} works only with waypoints, curve or edges")
+    if mode == "phyllotaxis":
+        spec = args["phyllotaxis"]
+        target = get_mesh_object(spec["target"]) if "target" in spec else None
+        return phyllotaxis_layout(spec, align, target)
     if mode == "points":
         return point_placements(args["points"], args.get("normals"), align)
     if "normals" in args:
@@ -110,7 +166,7 @@ def place_copies(ctx, args, mesh, matrices):
 
 @command(
     "instances",
-    "Place linked copies (sharing one mesh) of an object at points, along waypoints, a curve or an edge loop at a spacing, or on a circle; realize merges them into one mesh.",
+    "Place linked copies of an object at points, along waypoints, a curve or edge loop, on a circle, or in a golden-angle phyllotaxis; realize merges them.",
     {
         **COMMON,
         "source": string("Mesh object whose mesh is copied; its own transform is not used."),
@@ -121,17 +177,24 @@ def place_copies(ctx, args, mesh, matrices):
         "edges": string("Places along the edge loop or edge chain of this mesh object, in world space."),
         "closed": boolean("Treat waypoints or a curve as a closed loop."),
         "circle": CIRCLE,
+        "phyllotaxis": PHYLLOTAXIS,
     },
     ["source"],
     slow=True,
     family="placement",
-    intents=("linked copies along a curve, edge loop or waypoints", "copies on a circle or at points", "scatter copies"),
+    intents=("linked copies along a curve, edge loop or waypoints", "copies on a circle or at points", "scatter copies", "sunflower seeds, pine cone scales or a rosette in the golden angle"),
     nearest=(("duplicate", "for one copy"), ("rivet_line", "for rivets between two points")),
 )
 def instances(ctx, args):
     source = get_mesh_object(args["source"])
-    matrices = finish_placements(placements_from(ctx, args), args["rotation"], args["scale"], args.get("rotations"), args.get("scales"))
-    return place_copies(ctx, args, source.data, matrices)
+    placed = placements_from(ctx, args)
+    layout = placed if isinstance(placed, Layout) else None
+    placements = layout.placements if layout is not None else placed
+    matrices = finish_placements(placements, args["rotation"], args["scale"], args.get("rotations"), args.get("scales"))
+    result = place_copies(ctx, args, source.data, matrices)
+    if layout is not None:
+        result["phyllotaxis"] = layout.summary
+    return result
 
 
 def rivet_mesh(name, radius, height):

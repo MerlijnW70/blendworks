@@ -18,8 +18,8 @@ import { withWorkBudget, workBudget } from "./setup/work-clock.js";
 
 useBlenderSlot();
 
-export const HELDOUT_TOP5_HITS = 74;
-export const HELDOUT_TOP1_HITS = 66;
+export const HELDOUT_TOP5_HITS = 78;
+export const HELDOUT_TOP1_HITS = 70;
 export const CORE_TOKEN_BUDGET = 16_500;
 export const MAX_SEARCH_MS = 20;
 
@@ -82,7 +82,7 @@ describe("tool routing on the real bridge", workBudget(240_000), () => {
     const first = scoreRouting(intents, rank, "heldout");
     const again = scoreRouting(intents, rank, "heldout");
     expect(again.misses).toEqual(first.misses);
-    expect(first.top5.total).toBe(76);
+    expect(first.top5.total).toBe(79);
     expect(first.top5.hits).toBeGreaterThanOrEqual(HELDOUT_TOP5_HITS);
     expect(first.top1.hits).toBeGreaterThanOrEqual(HELDOUT_TOP1_HITS);
     expect(first.top5.rate).toBeGreaterThanOrEqual(0.95);
