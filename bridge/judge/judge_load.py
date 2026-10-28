@@ -4,9 +4,12 @@ import struct
 import bpy
 
 from judge_budget import check_budget
-from judge_common import JudgeError, is_inside
+from judge_common import JudgeError, is_inside, quoted
+from judge_finite import check_finite
 from judge_gltf import glb_binary, precheck_gltf
+from judge_images import bound_images
 from judge_paths import check_reference
+from judge_parity import match_render_settings
 
 FORMATS = {".glb": "glb", ".gltf": "gltf", ".fbx": "fbx", ".obj": "obj", ".blend": "blend"}
 GLB_MAGIC = b"glTF"
@@ -60,12 +63,12 @@ def gltf_referenced_files(path, document):
                 continue
             relative, problem = check_reference(uri, "uri")
             if problem is not None:
-                raise JudgeError("external_reference", f"the glTF refers to a file the judge never opens: {uri[:120]}: {problem[1]}")
+                raise JudgeError("external_reference", f"the glTF refers to a file the judge never opens: {quoted(uri)}: {problem[1]}")
             target = os.path.join(directory, *relative.split("/"))
             if not is_inside(target, directory):
-                raise JudgeError("external_reference", f"the glTF refers to a file outside the asset folder: {uri[:120]}")
+                raise JudgeError("external_reference", f"the glTF refers to a file outside the asset folder: {quoted(uri)}")
             if not os.path.isfile(target):
-                raise JudgeError("missing_reference", f"the glTF refers to a missing file: {uri[:120]}")
+                raise JudgeError("missing_reference", f"the glTF refers to a missing file: {quoted(uri)}")
             referenced.append(os.path.realpath(target))
     return sorted(set(referenced))
 
@@ -77,7 +80,7 @@ def run_importer(operator, **arguments):
         raise
     except Exception as error:
         first_line = str(error).strip().splitlines()[0] if str(error).strip() else type(error).__name__
-        raise JudgeError("import_failed", f"the importer refused the file: {first_line[:300]}") from None
+        raise JudgeError("import_failed", f"the importer refused the file: {quoted(first_line, 300)}") from None
     if "FINISHED" not in result:
         raise JudgeError("import_failed", "the importer did not finish")
 
@@ -93,7 +96,7 @@ def load_blend_data(path):
     except MemoryError:
         raise
     except Exception as error:
-        raise JudgeError("corrupt", f"the .blend file cannot be read: {str(error).strip()[:300]}") from None
+        raise JudgeError("corrupt", f"the .blend file cannot be read: {quoted(str(error).strip(), 300)}") from None
     loaded = target.scenes[0]
     if loaded is None:
         raise JudgeError("corrupt", "the .blend scene could not be loaded")
@@ -162,10 +165,7 @@ def expose_everything(scene):
         for flag in ("visible_camera", "visible_diffuse", "visible_glossy", "visible_transmission", "visible_shadow"):
             if hasattr(obj, flag):
                 setattr(obj, flag, True)
-        for modifier in obj.modifiers:
-            modifier.show_viewport = modifier.show_render
-            if modifier.type in {"SUBSURF", "MULTIRES"}:
-                modifier.levels = modifier.render_levels
+    match_render_settings(scene)
 
 
 def load_asset(path, triangle_cap):
@@ -188,6 +188,8 @@ def load_asset(path, triangle_cap):
     else:
         unit_scale = load_blend_data(path)
     refused = refuse_external_files(os.path.dirname(os.path.abspath(path)))
+    check_finite(scene)
+    bound_images()
     expose_everything(scene)
     apply_unit_scale(scene, unit_scale)
     scene.frame_current = MEASURE_FRAME

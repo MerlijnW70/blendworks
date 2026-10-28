@@ -3,6 +3,8 @@ import type { Tools } from "./sandbox.js";
 
 export const CONTAINER_MARKERS = ["/.dockerenv", "/run/.containerenv"] as const;
 export const INFRASTRUCTURE_EXIT = 75;
+export const INFRASTRUCTURE_CODES = ["isolation", "sandbox", "timeout", "memory_cap", "file_lock"] as const;
+export type InfrastructureCode = (typeof INFRASTRUCTURE_CODES)[number];
 
 export type ContainerIsolation = {
   marker: string | null;
@@ -21,7 +23,7 @@ export type ProbeSources = {
 
 export class InfrastructureError extends Error {
   constructor(
-    readonly code: "isolation" | "sandbox",
+    readonly code: InfrastructureCode,
     message: string,
   ) {
     super(message);

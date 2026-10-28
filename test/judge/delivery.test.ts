@@ -66,10 +66,10 @@ describe("the judge judges a private copy", workBudget(180_000), () => {
     expect(embedded.asset.files.map((file) => file.path)).toEqual(["embedded.fbx"]);
     const missing = await judged("fbx-missing", join(integrity, "missing.fbx"), { format: "fbx", selfContained: true });
     expect(missing.rules.filter((rule) => !rule.pass).map((rule) => rule.rule)).toEqual(["selfContained"]);
-    expect(missing.measurements?.references.unresolved).toEqual(["texture missing.png: the file is not in the asset folder"]);
+    expect(missing.measurements?.references.unresolved).toEqual(['texture "missing.png": the file is not in the asset folder']);
     const lenient = await judged("fbx-missing-lenient", join(integrity, "missing.fbx"), { format: "fbx" });
     expect(lenient.passed).toBe(true);
-    expect(lenient.summary).toContain("unresolved references: texture missing.png: the file is not in the asset folder");
+    expect(lenient.summary).toContain('unresolved references: texture "missing.png": the file is not in the asset folder');
   });
 
   it("reads texture names from binary FBX records and from Video content", () => {
@@ -123,6 +123,6 @@ describe("importer limits before Blender evaluates anything", workBudget(180_000
     expect(arrays.failure?.message).toContain("may make up to 12000000 triangles");
     const nodes = await judged("geometry-nodes", join(integrity, "geometry-nodes.blend"), { format: "blend" });
     expect(nodes.failure).toMatchObject({ stage: "measure", code: "unbounded_geometry" });
-    expect(nodes.failure?.message).toContain("nodes modifier Nodes cannot be bounded before it runs");
+    expect(nodes.failure?.message).toContain('nodes modifier "Nodes" cannot be bounded before it runs');
   });
 });

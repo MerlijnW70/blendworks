@@ -9,7 +9,7 @@ from ctypes import wintypes
 judge_dir, folder = sys.argv[1], sys.argv[2]
 sys.path.insert(0, judge_dir)
 
-from judge_common import SHARED_ACCESS_SECONDS, read_bytes, shared_access, write_json
+from judge_common import SHARED_ACCESS_SECONDS, FileLockError, read_bytes, shared_access, write_json
 
 GENERIC_READ = 0x80000000
 OPEN_ALWAYS = 4
@@ -32,6 +32,8 @@ def timed(action):
         return {"ok": True, "seconds": round(time.monotonic() - started, 3)}
     except PermissionError as error:
         return {"ok": False, "seconds": round(time.monotonic() - started, 3), "error": str(error)}
+    except FileLockError as error:
+        return {"ok": False, "seconds": round(time.monotonic() - started, 3), "error": error.code}
 
 
 def append(path):

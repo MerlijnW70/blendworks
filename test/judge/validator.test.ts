@@ -73,7 +73,7 @@ describe("the Khronos glTF validator", workBudget(120_000), () => {
     expect(report.rules.find((rule) => rule.rule === "gltf.validator.maxErrors")).toEqual({ rule: "gltf.validator.maxErrors", measured: 3, limit: 0, pass: false });
     expect(report.validation?.issues.filter((issue) => issue.code === "ACCESSOR_MAX_MISMATCH")).toHaveLength(3);
     expect(report.summary).toContain("FAIL  gltf.validator.maxErrors  measured 3; required at most 0");
-    expect(report.summary).toContain("    error ACCESSOR_MAX_MISMATCH at /accessors/0/max/0: Declared maximum value");
+    expect(report.summary).toContain('    error ACCESSOR_MAX_MISMATCH at "/accessors/0/max/0": "Declared maximum value');
     expect(JSON.parse(readFileSync(join(outDir, "validation.json"), "utf8"))).toMatchObject({ ok: true, errors: 3 });
     const clean = await judged("plain.glb", { ...PLAIN_SPEC, gltf: { validator: { maxErrors: 0, maxWarnings: 0 } } });
     expect(failing(clean.report)).toEqual([]);

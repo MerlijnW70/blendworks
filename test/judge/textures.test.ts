@@ -115,7 +115,7 @@ describe("texture rules on generated PBR assets", workBudget(120_000), () => {
       { name: "trim", maps: ["baseColor", "metallicRoughness", "emissive", "occlusion"] },
     ]);
     expect(report.measurements?.textures?.gpuBytes).toBe(BASE + BASE_TRIM + ORM + EMIT);
-    expect(report.summary).toContain("FAIL  textures.required     measured materials 2, missing [normal: painted, trim]; required [baseColor, metallicRoughness, normal, emissive, occlusion]");
+    expect(report.summary).toContain("FAIL  textures.required     measured materials 2, missing [\"normal: painted, trim\"]; required [baseColor, metallicRoughness, normal, emissive, occlusion]");
   });
 
   it("reports a data map in the sRGB colour space as a mismatch of its own", async () => {
@@ -124,7 +124,7 @@ describe("texture rules on generated PBR assets", workBudget(120_000), () => {
     const textures = report.measurements!.textures!;
     expect(textures.colourSpaceMismatches).toEqual({ count: 1, items: [{ image: "normal", kind: "normal", colourSpace: "sRGB", expected: "Non-Color" }] });
     expect(textures.images.find((entry) => entry.name === "normal")).toMatchObject({ colourSpace: "sRGB", embedded: true, source: "generated" });
-    expect(report.summary).toContain("  colour spaces: 1 wrong\n    normal as normal is sRGB, expected Non-Color");
+    expect(report.summary).toContain('  colour spaces: 1 wrong\n    "normal" as normal is sRGB, expected Non-Color');
   });
 
   it("fails textures.embedded for a .gltf whose images are files beside it, and still renders them", async () => {

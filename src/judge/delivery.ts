@@ -4,6 +4,7 @@ import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } 
 import { BlendScanError, blendReferences } from "./blend-refs.js";
 import { FbxError, fbxTextures } from "./fbx.js";
 import { checkReference, type ReferenceStyle } from "./path-policy.js";
+import { quoted } from "./untrusted.js";
 
 export const MAX_DELIVERED_FILES = 1024;
 const GLB_MAGIC = "glTF";
@@ -76,7 +77,7 @@ function gltfReferences(path: string, format: string): Reference[] {
       } catch {
         decoded = uri;
       }
-      references.push({ label: `${key}[${index}] ${uri.slice(0, 200)}`, candidates: [decoded], opened: [{ raw: uri, style: "uri" }] });
+      references.push({ label: `${key}[${index}] ${quoted(uri, 200)}`, candidates: [decoded], opened: [{ raw: uri, style: "uri" }] });
     });
   }
   return references;
@@ -100,7 +101,7 @@ function mtlFileName(rest: string): string {
 function objReferences(path: string, folder: string): Reference[] {
   const lines = readFileSync(path, "utf8").split(/\r?\n/);
   const libraries = lines.filter((line) => /^mtllib\s/.test(line)).map((line) => line.slice(6).trim()).filter((name) => name !== "");
-  const references: Reference[] = libraries.map((name) => ({ label: `mtllib ${name.slice(0, 200)}`, candidates: [name], opened: [{ raw: name, style: "path" }] }));
+  const references: Reference[] = libraries.map((name) => ({ label: `mtllib ${quoted(name, 200)}`, candidates: [name], opened: [{ raw: name, style: "path" }] }));
   if (libraries.length === 0) references.push({ label: "implicit material library", candidates: [`${basename(path, extname(path))}.mtl`], opened: [], optional: true });
   for (const library of [...references]) {
     const found = locate(folder, library.candidates);
@@ -111,7 +112,7 @@ function objReferences(path: string, folder: string): Reference[] {
       const name = mtlFileName(match[2] ?? "");
       if (name !== "") {
         const within = dirname(found.relative) === "." ? undefined : dirname(found.relative);
-        const label = `${match[1]} ${name.slice(0, 200)} in ${found.relative}`;
+        const label = `${match[1]} ${quoted(name, 200)} in ${quoted(found.relative, 200)}`;
         references.push({ label, candidates: [name, basename(name.replaceAll("\\", "/"))], opened: [{ raw: name, style: "path", ...(within === undefined ? {} : { within }) }] });
       }
     }
@@ -131,14 +132,14 @@ function fbxReferences(path: string): Reference[] {
   const references: Reference[] = [];
   const seen = new Set<string>();
   for (const texture of textures) {
-    references.push({ label: `texture ${texture.opened.slice(0, 200)}`, candidates: [], opened: [{ raw: texture.opened, style: "path" }], optional: true });
+    references.push({ label: `texture ${quoted(texture.opened, 200)}`, candidates: [], opened: [{ raw: texture.opened, style: "path" }], optional: true });
     if (texture.embedded || texture.names.length === 0) continue;
     const names = texture.names.map((name) => name.replaceAll("\\", "/"));
     if (names.some((name) => embedded.has(basename(name)))) continue;
     const key = names.join("|");
     if (seen.has(key)) continue;
     seen.add(key);
-    references.push({ label: `texture ${basename(names[0]!).slice(0, 200)}`, candidates: [...names, ...names.map((name) => basename(name))], opened: [] });
+    references.push({ label: `texture ${quoted(basename(names[0]!), 200)}`, candidates: [...names, ...names.map((name) => basename(name))], opened: [] });
   }
   return references;
 }
@@ -151,7 +152,7 @@ function blendFileReferences(path: string): Reference[] {
     if (error instanceof BlendScanError) throw new DeliveryError("corrupt", error.message);
     throw error;
   }
-  return found.map((entry) => ({ label: `${entry.kind} ${entry.name.slice(0, 120)} ${entry.path.slice(0, 200)}`, candidates: [], opened: [{ raw: entry.path, style: "blend" }], optional: true }));
+  return found.map((entry) => ({ label: `${entry.kind} ${quoted(entry.name)} ${quoted(entry.path, 200)}`, candidates: [], opened: [{ raw: entry.path, style: "blend" }], optional: true }));
 }
 
 export function refusal(opened: Opened): string | null {

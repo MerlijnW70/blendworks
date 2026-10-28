@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { isInfrastructure } from "./infrastructure.js";
 import { boxCountingDimension, solidity } from "./natural-measures.js";
 import { atLeast, atMost, rangeChecks, setChecks, setLines, type Check } from "./natural-checks.js";
 import type { NaturalMeasurements, NaturalSilhouettes } from "./natural-schema.js";
@@ -38,7 +39,7 @@ export function naturalSilhouettes(result: PassResult, sandbox: Sandbox, outDir:
   try {
     rendered = silhouettesFrom(result, sandbox).natural;
   } catch (error) {
-    if (error instanceof StageFailure) return failed(`the natural silhouettes did not render: ${error.failure.message}`);
+    if (error instanceof StageFailure && !isInfrastructure(error.failure)) return failed(`the natural silhouettes did not render: ${error.failure.message}`);
     throw error;
   }
   if (rendered === undefined) return failed("the reference stage rendered no natural silhouettes");

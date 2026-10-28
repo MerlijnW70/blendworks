@@ -1,10 +1,11 @@
+import hashlib
 import json
 import os
 
 import bpy
 
 from judge_armature import measure_rig
-from judge_common import JudgeError, positive_int
+from judge_common import JudgeError, positive_int, read_bytes
 from judge_geometry import Measurer
 from judge_load import load_asset
 from judge_motion import measure_motion
@@ -53,6 +54,12 @@ def weight_tolerance(text):
     return value
 
 
+def visibility_seed(text, asset):
+    if text:
+        return text
+    return hashlib.sha256(read_bytes(asset)).hexdigest()
+
+
 def measure_extras(measurements, asset, file_format, extras, weights, depsgraph):
     scene = bpy.context.scene
     if "rig" in extras:
@@ -73,7 +80,8 @@ def measure(asset, options, limits, uv_grid_path):
     natural = natural_parts(options["natural"])
     loaded = load_asset(asset, triangle_cap)
     scene = bpy.context.scene
-    measurer = Measurer(triangle_cap, tolerance, integrity=True, objects=objects, colours="colours" in extras)
+    seed = visibility_seed(options["visibility-seed"], asset)
+    measurer = Measurer(triangle_cap, tolerance, integrity=True, objects=objects, colours="colours" in extras, seed=seed)
     depsgraph = bpy.context.evaluated_depsgraph_get()
     measurer.measure(depsgraph)
     measurements = measurer.result()

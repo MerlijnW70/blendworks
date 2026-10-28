@@ -43,7 +43,7 @@ describe("floating parts", workBudget(120_000), () => {
       pass: false,
     });
     expect(report.passed).toBe(false);
-    expect(report.summary).toContain("FAIL  parts.maxFloating  measured floating 2, parts [Body part 2, Lamp part 0], tolerance 0.001; required at most 0");
+    expect(report.summary).toContain("FAIL  parts.maxFloating  measured floating 2, parts [\"Body part 2\", \"Lamp part 0\"], tolerance 0.001; required at most 0");
     expect((await judged("floating.glb", { maxFloating: 2 }, "two")).passed).toBe(true);
   });
 

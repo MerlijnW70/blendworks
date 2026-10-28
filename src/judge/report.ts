@@ -9,6 +9,7 @@ import { naturalLines } from "./natural.js";
 import { referenceLines, type ReferenceRecord } from "./reference.js";
 import { visualLines, type VisualRecord } from "./visual/record.js";
 import { packageLines, type PackageReport } from "../package/report.js";
+import { plainText, quoted, safeLine, UNTRUSTED_NOTICE } from "./untrusted.js";
 
 export type Failure = { stage: "spec" | "asset" | "validate" | "blender" | "measure" | "reference" | "device" | "render" | "closeups" | "package"; code: string; message: string };
 
@@ -66,9 +67,9 @@ export type Report = {
 const LISTED_ISSUES = 10;
 const MEBIBYTE = 1024 * 1024;
 
-function show(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (Array.isArray(value)) return `[${value.map(show).join(", ")}]`;
+function show(value: unknown, nested = false, fromAsset = true): string {
+  if (typeof value === "string") return nested && fromAsset ? quoted(value) : plainText(value);
+  if (Array.isArray(value)) return `[${value.map((entry) => show(entry, true, fromAsset)).join(", ")}]`;
   if (value !== null && typeof value === "object" && "at" in value) {
     const { at, distanceFromRequired, tolerance } = value as { at: unknown; distanceFromRequired?: unknown; tolerance?: unknown };
     if (distanceFromRequired !== undefined) return `${show(at)}, ${show(distanceFromRequired)} m from the required point`;
@@ -76,7 +77,7 @@ function show(value: unknown): string {
   }
   if (value !== null && typeof value === "object") {
     return Object.entries(value)
-      .map(([key, entry]) => `${key} ${show(entry)}`)
+      .map(([key, entry]) => `${plainText(key)} ${show(entry, true, fromAsset)}`)
       .join(", ");
   }
   return String(value);
@@ -115,7 +116,7 @@ function textureLines(textures: NonNullable<Measurements["textures"]>): string[]
   const { count, items } = textures.colourSpaceMismatches;
   if (count === 0) return [...lines, "  colour spaces: right for every map"];
   lines.push(`  colour spaces: ${count} wrong`);
-  for (const item of items) lines.push(`    ${item.image} as ${item.kind} is ${item.colourSpace}, expected ${item.expected}`);
+  for (const item of items) lines.push(`    ${quoted(item.image)} as ${item.kind} is ${plainText(item.colourSpace, 64)}, expected ${item.expected}`);
   if (count > items.length) lines.push(`    and ${count - items.length} more`);
   return lines;
 }
@@ -124,9 +125,9 @@ function validationLines(validation: Validation | null): string[] {
   if (validation === null) return ["  glTF validator: no result"];
   const { errors, warnings, infos, hints, issues, refused } = validation;
   const lines = [`  glTF validator ${validation.validator}: ${errors} errors, ${warnings} warnings, ${infos} infos, ${hints} hints`];
-  for (const issue of issues.slice(0, LISTED_ISSUES)) lines.push(`    ${issue.severity} ${issue.code} at ${issue.pointer ?? "the file"}: ${issue.message}`);
+  for (const issue of issues.slice(0, LISTED_ISSUES)) lines.push(`    ${issue.severity} ${plainText(issue.code, 100)} at ${issue.pointer === null ? "the file" : quoted(issue.pointer, 200)}: ${quoted(issue.message, 300)}`);
   if (issues.length > LISTED_ISSUES) lines.push(`    and ${issues.length - LISTED_ISSUES} more in report.json`);
-  for (const entry of refused) lines.push(`    not opened: ${entry}`);
+  for (const entry of refused) lines.push(`    not opened: ${plainText(entry)}`);
   return lines;
 }
 
@@ -137,17 +138,17 @@ function integrityLines(measurements: Measurements): string[] {
   ];
   if (measurements.uv.outsideUnitSquare > 0) lines.push(`  uv: ${measurements.uv.outsideUnitSquare} of the mapped surface has UVs outside 0-1, wrapped for coverage and overlap`);
   if (measurements.unitScale !== 1) lines.push(`  units: the .blend scale ${measurements.unitScale} converted to metres`);
-  if (measurements.references.unresolved.length > 0) lines.push(`  unresolved references: ${measurements.references.unresolved.slice(0, LISTED_ISSUES).join("; ")}`);
+  if (measurements.references.unresolved.length > 0) lines.push(`  unresolved references: ${measurements.references.unresolved.slice(0, LISTED_ISSUES).map((entry) => plainText(entry, 400)).join("; ")}`);
   return lines;
 }
 
 export function summarize(report: Omit<Report, "summary">): string {
   const title = report.spec.name ?? "asset";
-  const lines = [`${report.passed ? "PASS" : "FAIL"}  ${title}  (${report.asset.path})`];
-  if (report.failure) lines.push(`  ${report.failure.stage} failed: ${report.failure.message} [${report.failure.code}]`);
-  const width = Math.max(0, ...report.rules.map((rule) => rule.rule.length));
+  const lines = [`${report.passed ? "PASS" : "FAIL"}  ${plainText(title, 200)}  (${quoted(report.asset.path, 400)})`];
+  if (report.failure) lines.push(`  ${report.failure.stage} failed: ${plainText(report.failure.message)} [${plainText(report.failure.code, 64)}]`);
+  const width = Math.max(0, ...report.rules.map((rule) => plainText(rule.rule, 200).length));
   for (const rule of report.rules) {
-    lines.push(`  ${rule.pass ? "pass" : "FAIL"}  ${rule.rule.padEnd(width)}  measured ${show(rule.measured)}; required ${comparison(rule.rule)}${show(rule.limit)}`);
+    lines.push(`  ${rule.pass ? "pass" : "FAIL"}  ${plainText(rule.rule, 200).padEnd(width)}  measured ${show(rule.measured)}; required ${comparison(rule.rule)}${show(rule.limit, false, false)}`);
   }
   const passed = report.rules.filter((rule) => rule.pass).length;
   lines.push(`  ${passed} of ${report.rules.length} rules pass`);
@@ -167,5 +168,6 @@ export function summarize(report: Omit<Report, "summary">): string {
     lines.push(`  render sandbox: ${isolationText(report.renderSandbox)}`);
   }
   lines.push(`  time: ${timingText(report.timings)}`);
-  return lines.join("\n");
+  lines.push(UNTRUSTED_NOTICE);
+  return lines.map(safeLine).join("\n");
 }

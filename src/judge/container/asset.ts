@@ -45,7 +45,7 @@ export function judgeAsset(request: AssetRequest): EntryResult {
   const [command, args] = pinned(process.execPath, [cli, "judge", specJson, asset, "--out", out, "--timeout", String(limits.stage), "--render-timeout", String(limits.render)]);
   const run = spawnSync(command, args, { env, stdio: ["ignore", "inherit", "inherit"], timeout: limits.total * 1000, killSignal: "SIGKILL" });
   const stopped = run.signal !== null || (run.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT";
-  if (stopped) return result("asset", "fail", `the judge ran past its ${limits.total} s limit and was stopped`, { commit: request.commit, isolation: request.isolation, details: { limits } });
+  if (stopped) return result("asset", "error", `the judge ran past its ${limits.total} s limit and was stopped; that is a limit of this machine, not a verdict`, { commit: request.commit, isolation: request.isolation, details: { limits } });
   const verdict = run.status === null ? "error" : (JUDGE_EXIT[run.status] ?? "error");
   const report = readReport(join(out, "report.json"));
   const infrastructure = existsSync(join(out, "infrastructure.json")) ? readFileSync(join(out, "infrastructure.json"), "utf8") : null;

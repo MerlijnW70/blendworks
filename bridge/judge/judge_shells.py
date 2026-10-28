@@ -48,22 +48,25 @@ def vertex_parts(graph):
     return len({parts.find(index) for index in range(len(graph.verts))})
 
 
-def face_shells(graph):
+def face_shells(graph, hidden_slots=frozenset()):
     shells = DisjointSet(len(graph.faces))
     for edge in graph.edges:
-        linked = edge.link_faces
+        linked = [face for face in edge.link_faces if face.material_index not in hidden_slots]
         for face in linked[1:]:
             shells.union(linked[0].index, face.index)
     members = {}
     for face in graph.faces:
-        members.setdefault(shells.find(face.index), []).append(face)
+        if face.material_index not in hidden_slots:
+            members.setdefault(shells.find(face.index), []).append(face)
     return list(members.values())
 
 
-def is_closed(faces):
+def is_closed(faces, hidden_slots=frozenset()):
     for face in faces:
         for edge in face.edges:
             if len(edge.link_faces) != 2 or not edge.is_contiguous:
+                return False
+            if hidden_slots and any(other.material_index in hidden_slots for other in edge.link_faces):
                 return False
     return True
 
@@ -85,7 +88,7 @@ def signed_volume(faces):
     return volume, extent
 
 
-def mesh_topology(mesh, weld_distance):
+def mesh_topology(mesh, weld_distance, hidden_slots=frozenset()):
     topology = empty_topology()
     shells = {"count": 0, "closed": 0, "inverted": 0}
     graph = bmesh.new()
@@ -96,9 +99,9 @@ def mesh_topology(mesh, weld_distance):
         graph.faces.index_update()
         edge_defects(graph, topology)
         topology["looseParts"] = vertex_parts(graph)
-        for faces in face_shells(graph):
+        for faces in face_shells(graph, hidden_slots):
             shells["count"] += 1
-            if not is_closed(faces):
+            if not is_closed(faces, hidden_slots):
                 continue
             shells["closed"] += 1
             volume, extent = signed_volume(faces)

@@ -75,8 +75,9 @@ describe.runIf(windows)("a judge file that another process holds for a moment, a
     }
   });
 
-  it("fails after the bounded wait when the file stays held", () => {
+  it("fails after the bounded wait when the file stays held, as a file lock that is not a verdict", () => {
     expect(probe.bounded.ok).toBe(false);
+    expect(probe.bounded.error).toBe("file_lock");
     expect(probe.bounded.seconds).toBeGreaterThanOrEqual(probe.bound);
   });
 

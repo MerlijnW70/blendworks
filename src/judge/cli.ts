@@ -11,6 +11,7 @@ import { SILHOUETTE_DEFAULTS, silhouettes, silhouettesSummary } from "./silhouet
 import { VIEWS } from "./spec-shapes.js";
 import { StageFailure } from "./stages.js";
 import { EvalError, evalText, visualEval } from "./visual/eval.js";
+import { plainText } from "./untrusted.js";
 
 const DEVICE_HELP = `Rendering uses BLENDWORKS_DEVICE: auto (default) tries OptiX, CUDA, HIP, Metal and oneAPI
 inside the sandbox and falls back to the CPU; gpu fails with a reason when no GPU works; cpu never uses one.`;
@@ -279,7 +280,7 @@ export async function main(argv: string[]): Promise<number> {
       return report.passed ? 0 : 1;
     } catch (error) {
       if (!(error instanceof InfrastructureError)) throw error;
-      console.error(`infrastructure error, not a verdict: ${error.message}`);
+      console.error(`infrastructure error, not a verdict: ${plainText(error.message)}`);
       return INFRASTRUCTURE_EXIT;
     }
   }
@@ -290,7 +291,7 @@ export async function main(argv: string[]): Promise<number> {
       return 0;
     } catch (error) {
       if (!(error instanceof StageFailure)) throw error;
-      console.error(`silhouettes failed: ${error.failure.stage}: ${error.failure.message} [${error.failure.code}]`);
+      console.error(`silhouettes failed: ${error.failure.stage}: ${plainText(error.failure.message)} [${error.failure.code}]`);
       return 1;
     }
   }
@@ -302,7 +303,7 @@ export async function main(argv: string[]): Promise<number> {
       return run.passed ? 0 : 1;
     } catch (error) {
       if (!(error instanceof StageFailure)) throw error;
-      console.error(`package failed: ${error.failure.stage}: ${error.failure.message} [${error.failure.code}]`);
+      console.error(`package failed: ${error.failure.stage}: ${plainText(error.failure.message)} [${error.failure.code}]`);
       return 1;
     }
   }
@@ -312,7 +313,7 @@ export async function main(argv: string[]): Promise<number> {
     return 0;
   } catch (error) {
     if (!(error instanceof StageFailure)) throw error;
-    console.error(`close-ups failed: ${error.failure.stage}: ${error.failure.message} [${error.failure.code}]`);
+    console.error(`close-ups failed: ${error.failure.stage}: ${plainText(error.failure.message)} [${error.failure.code}]`);
     return 1;
   }
 }

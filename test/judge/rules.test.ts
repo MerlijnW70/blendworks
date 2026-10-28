@@ -92,7 +92,7 @@ describe("the rules", () => {
       renders: null,
       timings: { measure: null, device: null, render: null, sheet: null, total: 0 },
     });
-    expect(text.split("\n")[0]).toBe("FAIL  wooden crate  (crate.glb)");
+    expect(text.split("\n")[0]).toBe('FAIL  wooden crate  ("crate.glb")');
     expect(text).toContain("FAIL  triangles.max      measured 900; required at most 800");
     expect(text).toContain("12 of 13 rules pass");
   });

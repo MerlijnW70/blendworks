@@ -41,13 +41,16 @@ describe("the verdict depends on the measurements only", workBudget(180_000), ()
     }
   });
 
-  it("fails renders.required when the render times out, and passes it when the views render", async () => {
-    const slow = await judged("required-slow", "crate.glb", { renderTimeoutMs: 1 }, { renders: { required: true } });
-    expect(slow.passed).toBe(false);
-    expect(slow.failure).toBeNull();
-    expect(slow.rules.filter((rule) => !rule.pass)).toEqual([
-      { rule: "renders.required", measured: "failed: Blender took longer than 0.001 s and was stopped", limit: "rendered", pass: false },
-    ]);
+  it("gives no verdict when only renders.required fails because the render timed out, a fail when other rules fail too, and a pass when the views render", async () => {
+    const outDir = freshDir("verdict", "reports", "required-slow");
+    const slow = judge({ specPath: writeSpec(specs, "required-slow", { views: ["front", "three-quarter"], renders: { required: true } }), assetPath: join(assets, "crate.glb"), outDir, device: "cpu", renderTimeoutMs: 1 });
+    await expect(slow).rejects.toMatchObject({ name: "InfrastructureError", code: "timeout" });
+    expect(existsSync(join(outDir, "report.json"))).toBe(false);
+    expect(existsSync(join(outDir, "infrastructure.json"))).toBe(true);
+    const wrong = await judged("required-slow-wrong", "wrong-size.glb", { renderTimeoutMs: 1 }, { renders: { required: true } });
+    expect(wrong.passed).toBe(false);
+    expect(wrong.failure).toBeNull();
+    expect(wrong.rules.filter((rule) => !rule.pass).map((rule) => rule.rule)).toEqual(["size.x", "renders.required"]);
     const rendered = await judged("required-fast", "crate.glb", {}, { renders: { required: true }, views: ["front"] });
     expect(rendered.passed).toBe(true);
     expect(rendered.rules.find((rule) => rule.rule === "renders.required")).toEqual({ rule: "renders.required", measured: "rendered", limit: "rendered", pass: true });

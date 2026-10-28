@@ -69,7 +69,7 @@ export function planPass(input: PlanInput): PassPlan {
   const viewCount = (spec.views ?? DEFAULT_VIEWS).length;
   const views = render.preview !== true && !samplesOverBudget(viewCount, render);
   const stages: PassStage[] = ["measure"];
-  const args = ["--max-triangles", String(input.maxTriangles), ...measureArgs(spec)];
+  const args = ["--max-triangles", String(input.maxTriangles), "--visibility-seed", input.delivery.sha256, ...measureArgs(spec)];
   const references = spec.reference !== undefined && input.references !== null;
   if (references || wantsNaturalSilhouettes(spec.natural)) stages.push("reference");
   if (spec.reference !== undefined && input.references !== null) args.push(...silhouetteArgs(input.references, referencePassFrame(spec.reference, upAxis(spec))));

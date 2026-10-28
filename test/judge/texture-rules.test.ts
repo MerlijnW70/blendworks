@@ -178,7 +178,7 @@ describe("old specs", () => {
     expect(plain.map((rule) => rule.rule)).toEqual(["format", "triangles.max", "size.x", "size.y", "size.z", "origin", "manifold", "materials.min", "materials.max", "uv.required", "uv.maxOverlap", "objects.max", "fileSize.maxBytes"]);
     const text = summarize(report(plain, CRATE));
     expect(text).not.toMatch(/textures|validator|colour/);
-    expect(text.split("\n")).toHaveLength(17);
+    expect(text.split("\n")).toHaveLength(18);
   });
 });
 
@@ -194,8 +194,8 @@ describe("the summary of the new rules", () => {
     expect(text).toContain("textures.maxGpuBytes        measured 178956968; required at most 268435456");
     expect(text).toContain("gltf.validator.maxWarnings  measured 2; required at most 2");
     expect(text).toContain("  textures: 2 images, GPU estimate 178956968 bytes (170.7 MiB, RGBA8 with mips)");
-    expect(text).toContain("  colour spaces: 2 wrong\n    normal as normal is sRGB, expected Non-Color\n    and 1 more");
-    expect(text).toContain("  glTF validator 2.0.0-dev.3.10: 1 errors, 2 warnings, 0 infos, 0 hints\n    error ACCESSOR_VECTOR3_NON_UNIT at /meshes/2: not of unit length: 0.");
+    expect(text).toContain('  colour spaces: 2 wrong\n    "normal" as normal is sRGB, expected Non-Color\n    and 1 more');
+    expect(text).toContain("  glTF validator 2.0.0-dev.3.10: 1 errors, 2 warnings, 0 infos, 0 hints\n    error ACCESSOR_VECTOR3_NON_UNIT at \"/meshes/2\": \"not of unit length: 0.");
     expect(text).toContain("    not opened: http://x/a.png: the URI has a scheme or an absolute path");
   });
 });

@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { containerText, probeContainer } from "../../src/judge/isolation.js";
 import { judge } from "../../src/judge/run.js";
+import { UNTRUSTED_NOTICE } from "../../src/judge/untrusted.js";
 import { freshDir, makeFixtures, writeSpec } from "./helpers.js";
 import { CRATE_MEASUREMENTS } from "./measured.js";
 import { useBlenderSlot } from "../setup/slot.js";
@@ -23,7 +24,7 @@ const REPORT_KEYS = ["passed", "preview", "spec", "asset", "blender", "sandbox",
 const MEASUREMENTS = CRATE_MEASUREMENTS;
 
 const SUMMARY = [
-  "PASS  wooden crate  (ASSET)",
+  'PASS  wooden crate  ("ASSET")',
   "  pass  format             measured glb; required glb",
   "  pass  triangles.max      measured 12; required at most 800",
   "  pass  size.x             measured 1; required between [0.95, 1.05]",
@@ -44,6 +45,7 @@ const SUMMARY = [
   "  delivery: 1 files, 2784 bytes, set sha256 SET",
   "  sandbox: SANDBOX",
   "  time: TIME",
+  UNTRUSTED_NOTICE,
 ];
 
 describe("a spec without the new rules", workBudget(120_000), () => {
@@ -59,8 +61,8 @@ describe("a spec without the new rules", workBudget(120_000), () => {
       ["format", "triangles.max", "size.x", "size.y", "size.z", "origin", "manifold", "materials.min", "materials.max", "uv.required", "uv.maxOverlap", "objects.max", "fileSize.maxBytes"].map((rule) => [rule, true]),
     );
     const summary = report.summary
-      .split(report.asset.path)
-      .join("ASSET")
+      .split(JSON.stringify(report.asset.path))
+      .join('"ASSET"')
       .split(report.renders!.contactSheet!)
       .join("SHEET")
       .replace(/set sha256 [0-9a-f]{64}/, "set sha256 SET")

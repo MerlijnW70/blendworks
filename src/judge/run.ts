@@ -16,6 +16,7 @@ import { hashRenders, interpretRenders, overBudget, renderBudget, type RenderAtt
 import { summarize, type Report, type Timings } from "./report.js";
 import { evaluateRules } from "./rules.js";
 import { checkIsolation, InfrastructureError, probeContainer, requireIsolation } from "./isolation.js";
+import { EvidenceLedger, infrastructureError, isInfrastructure } from "./infrastructure.js";
 import { detectTools, type Limits, type Tools } from "./sandbox.js";
 import { DEFAULT_VIEWS, readSpec, SpecError, type AssetSpec } from "./spec.js";
 import { checkAsset, checkBlender, DEFAULT_BACKENDS, DEFAULTS, deviceMode, seconds, sha256, StageFailure, workOut, type Sandbox } from "./stages.js";
@@ -230,6 +231,7 @@ async function judgeIsolated(options: JudgeOptions, { outDir, specPath, assetPat
     timings: emptyTimings(),
   };
   const workDir = mkdtempSync(join(tmpdir(), "blendworks-judge-"));
+  const ledger = new EvidenceLedger();
   try {
     let spec: AssetSpec;
     try {
@@ -263,10 +265,19 @@ async function judgeIsolated(options: JudgeOptions, { outDir, specPath, assetPat
       collectOutputs(workDir, outDir, draft);
     }
     draft.rules.push(...renderRules(spec, draft.renders));
+    ledger.note(draft.renders?.failure, ["render", "visual"]);
     renderedNaturalRules(draft, spec);
     if (spec.visual !== undefined) {
       const rendered = attempt;
-      draft.visual = await visualStage({ spec, renders: draft.renders, outDir, closeups: () => closeupImages(bundle, rendered, outDir), options: options.visual ?? {} });
+      const closeups = async () => {
+        try {
+          return await closeupImages(bundle, rendered, outDir);
+        } catch (error) {
+          if (error instanceof StageFailure) ledger.note(error.failure, ["visual"]);
+          throw error;
+        }
+      };
+      draft.visual = await visualStage({ spec, renders: draft.renders, outDir, closeups, options: options.visual ?? {} });
       const closeupSeconds = rendered === null ? null : stageSeconds(rendered.result, "closeups");
       if (closeupSeconds !== null) draft.timings.closeups = closeupSeconds;
       draft.rules.push(...visualRules(draft.visual));
@@ -274,11 +285,13 @@ async function judgeIsolated(options: JudgeOptions, { outDir, specPath, assetPat
     if (wantsPackage(spec)) await packageStage(draft, spec, delivery, bundle.sandbox, outDir, maxTriangles, options);
   } catch (error) {
     if (!(error instanceof StageFailure)) throw error;
+    if (isInfrastructure(error.failure)) throw infrastructureError(error.failure);
     draft.failure = error.failure;
     collectOutputs(workDir, outDir, draft);
   } finally {
     rmSync(workDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
+  if (draft.failure === null) ledger.settle(draft.rules);
   if (draft.failure) draft.rules.unshift({ rule: draft.failure.stage, measured: draft.failure.message, limit: "to complete", pass: false });
   draft.passed = draft.failure === null && draft.rules.length > 0 && draft.rules.every((rule) => rule.pass);
   draft.timings.total = seconds(performance.now() - started);

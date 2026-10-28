@@ -64,21 +64,21 @@ function gltf(buffers: unknown[], images: unknown[] = []): string {
 
 describe("references refused before Blender starts", workBudget(120_000), () => {
   it("OBJ material libraries that are absolute or UNC", async () => {
-    await refusedBeforeBlender(delivery("obj-absolute", { "crate.obj": `mtllib /etc/blendworks-secret.mtl\n${CUBE_OBJ}` }), "obj", "mtllib /etc/blendworks-secret.mtl: the reference is an absolute or UNC path");
+    await refusedBeforeBlender(delivery("obj-absolute", { "crate.obj": `mtllib /etc/blendworks-secret.mtl\n${CUBE_OBJ}` }), "obj", 'mtllib "/etc/blendworks-secret.mtl": the reference is an absolute or UNC path');
     await refusedBeforeBlender(delivery("obj-unc", { "crate.obj": `mtllib \\\\judge-host\\share\\crate.mtl\n${CUBE_OBJ}` }), "obj", "the reference is an absolute or UNC path");
   });
 
   it("MTL maps with a drive, or that leave the folder behind their options", async () => {
     const drive = delivery("mtl-drive", { "crate.obj": `mtllib crate.mtl\n${CUBE_OBJ}`, "crate.mtl": "newmtl painted\nmap_Kd C:\\host\\secret.png\n" });
-    await refusedBeforeBlender(drive, "obj", "map_Kd C:\\host\\secret.png in crate.mtl: the reference has a scheme, a drive or a stream name");
+    await refusedBeforeBlender(drive, "obj", 'map_Kd "C:\\\\host\\\\secret.png" in "crate.mtl": the reference has a scheme, a drive or a stream name');
     const escape = delivery("mtl-escape", { "crate.obj": `mtllib crate.mtl\n${CUBE_OBJ}`, "crate.mtl": "newmtl painted\nmap_Kd -s 1 1 1 -bm 0.5 ../host/secret.png\n" });
-    await refusedBeforeBlender(escape, "obj", "map_Kd ../host/secret.png in crate.mtl: the reference leaves the asset folder");
+    await refusedBeforeBlender(escape, "obj", 'map_Kd "../host/secret.png" in "crate.mtl": the reference leaves the asset folder');
     const nested = delivery("mtl-nested", { "crate.obj": `mtllib materials/crate.mtl\n${CUBE_OBJ}`, "materials/crate.mtl": "newmtl painted\nmap_Kd ../wood.png\n", "wood.png": "png" });
     await passesTheCheck(nested, "obj");
   });
 
   it("binary FBX textures with an absolute path or one that leaves the folder", async () => {
-    await refusedBeforeBlender(join(fixtures, "delivery", "absolute.fbx"), "fbx", /texture .*secret\.png: the reference (is an absolute or UNC path|has a scheme, a drive or a stream name)/);
+    await refusedBeforeBlender(join(fixtures, "delivery", "absolute.fbx"), "fbx", /texture ".*secret\.png": the reference (is an absolute or UNC path|has a scheme, a drive or a stream name)/);
     await refusedBeforeBlender(join(fixtures, "delivery", "escaping.fbx"), "fbx", "the reference leaves the asset folder");
     await passesTheCheck(join(fixtures, "delivery", "inside.fbx"), "fbx");
   });
@@ -107,7 +107,7 @@ describe("references refused before Blender starts", workBudget(120_000), () => 
 
   it(".blend image paths that are absolute, UNC or leave the folder, compressed or not, and linked libraries", async () => {
     for (const name of ["absolute-image", "compressed-absolute-image", "unc-image", "escaping-image", "linked-library"]) {
-      await refusedBeforeBlender(join(fixtures, "delivery", `${name}.blend`), "blend", name === "linked-library" ? "library " : "image secret");
+      await refusedBeforeBlender(join(fixtures, "delivery", `${name}.blend`), "blend", name === "linked-library" ? "library " : 'image "secret"');
     }
     await passesTheCheck(join(fixtures, "delivery", "packed-image.blend"), "blend");
   });

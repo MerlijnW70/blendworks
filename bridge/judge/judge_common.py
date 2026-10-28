@@ -10,6 +10,11 @@ SHARED_ACCESS_FIRST_PAUSE = 0.01
 SHARED_ACCESS_LONGEST_PAUSE = 0.1
 DEFAULT_MAX_TRIANGLES = 2_000_000
 MEMORY_KINDS = ("address-space", "data")
+QUOTED_LENGTH = 120
+ELLIPSIS = "\u2026"
+UNSAFE_CHARACTERS = "".join(chr(code) for code in (*range(0x20), *range(0x7F, 0xA0), *range(0x200B, 0x2010), *range(0x202A, 0x202F), *range(0x2066, 0x206A), 0x2028, 0x2029, 0xFEFF))
+LOCK_MARKER = "blendworks-judge: file_lock:"
+LOCK_EXIT = 76
 
 
 class JudgeError(Exception):
@@ -18,6 +23,23 @@ class JudgeError(Exception):
         self.code = code
         self.message = message
         self.extra = extra or {}
+
+
+class FileLockError(JudgeError):
+    def __init__(self, message):
+        super().__init__("file_lock", message)
+
+
+def plain(text):
+    flat = "".join(" " if character in UNSAFE_CHARACTERS else character for character in str(text))
+    return " ".join(flat.split())
+
+
+def quoted(text, length=QUOTED_LENGTH):
+    flat = plain(text)
+    if len(flat) > length:
+        flat = flat[: length - 1] + ELLIPSIS
+    return json.dumps(flat, ensure_ascii=False)
 
 
 def script_arguments():
@@ -60,9 +82,9 @@ def shared_access(action):
     while True:
         try:
             return action()
-        except PermissionError:
+        except PermissionError as error:
             if time.monotonic() >= deadline:
-                raise
+                raise FileLockError(f"a file stayed locked by another process for more than {SHARED_ACCESS_SECONDS} s: {quoted(error.filename or '')}") from None
         time.sleep(pause)
         pause = min(pause * 2, SHARED_ACCESS_LONGEST_PAUSE)
 
@@ -87,7 +109,10 @@ def read_bytes(path):
 
 
 def json_bytes(payload):
-    return json.dumps(payload, indent=2, sort_keys=True).encode("utf-8")
+    try:
+        return json.dumps(payload, indent=2, sort_keys=True, allow_nan=False).encode("utf-8")
+    except ValueError:
+        raise JudgeError("non_finite", "a measured value is not a finite number, so the judge writes no result for it") from None
 
 
 def write_json(path, payload):
@@ -203,14 +228,40 @@ def memory_cap_from(options):
     return apply_memory_cap(positive_int(options["memory-mb"], "memory-mb") * 1024 * 1024, options["memory-kind"])
 
 
+def failure_payload(error):
+    return {**error.extra, "ok": False, "error": {"code": error.code, "message": error.message}}
+
+
+def memory_payload():
+    return {"ok": False, "error": {"code": "memory_cap", "message": "the asset needs more memory than the cap allows"}}
+
+
+def write_payload(out_path, payload):
+    try:
+        return write_json(out_path, payload), payload
+    except FileLockError:
+        raise
+    except JudgeError as error:
+        failed = failure_payload(error)
+        return write_json(out_path, failed), failed
+
+
 def run_guarded(out_path, work):
     try:
         payload = {"ok": True, **work()}
     except JudgeError as error:
-        payload = {**error.extra, "ok": False, "error": {"code": error.code, "message": error.message}}
+        payload = failure_payload(error)
     except MemoryError:
-        payload = {"ok": False, "error": {"code": "memory_cap", "message": "the asset needs more memory than the cap allows"}}
-    write_json(out_path, payload)
+        payload = memory_payload()
+    try:
+        write_payload(out_path, payload)
+    except FileLockError as error:
+        exit_on_lock(error)
+
+
+def exit_on_lock(error):
+    print(f"{LOCK_MARKER} {error.message}", file=sys.stderr, flush=True)
+    os._exit(LOCK_EXIT)
 
 
 def rounded(values):

@@ -250,10 +250,10 @@ describe("the rig, skin, animation and vertex colour rules", () => {
       renders: null,
       timings: { measure: null, device: null, render: null, sheet: null, total: 1 },
     });
-    expect(text).toContain("  rig: 1 armature, 9 bones (9 deform), depth 3, roots hips");
+    expect(text).toContain("  rig: 1 armature, 9 bones (9 deform), depth 3, roots \"hips\"");
     expect(text).toContain("  skin: 1 skinned mesh, 56 vertices, at most 2 influences, 0 unweighted, 0 not normalized (tolerance 0.01); bound in rest pose (gltf, 9 joints)");
     expect(text).toContain("  animation: 1 clip, size over every sampled frame 0.460 x 0.793 x 1.701 m");
-    expect(text).toContain("    walk: 1 s at 24 fps, 16 keyframes, 25 frames sampled, loop error 0 m, root motion 0 m");
+    expect(text).toContain("    \"walk\": 1 s at 24 fps, 16 keyframes, 25 frames sampled, loop error 0 m, root motion 0 m");
     expect(text).toContain("  vertex colours: on 2 of 2 meshes, 2 attributes: 2 corner, 0 point; 2 byte, 0 float");
     expect(text).toContain("  pass  animation.boundsWithin.size.y  measured 0.79306; required between [0.1, 0.9]");
   });

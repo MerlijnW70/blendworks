@@ -3,7 +3,9 @@ from math import inf
 
 from judge_colours import ColourCollector
 from judge_common import JudgeError, distance, rounded
+from judge_finite import check_world
 from judge_objects import ObjectTable
+from judge_opacity import OpacityReader, transparent
 from judge_parts import PartCollector
 from judge_shells import empty_topology, mesh_topology
 from judge_surface import Surface, triangle_area
@@ -35,10 +37,29 @@ def world_coordinates(mesh, matrix):
     return world
 
 
-def face_vertices(mesh):
+def face_vertices(mesh, opaque_faces=None):
     loops = array("i", [0]) * len(mesh.loops)
     mesh.loops.foreach_get("vertex_index", loops)
-    return set(loops)
+    if opaque_faces is None:
+        return set(loops)
+    starts = array("i", [0]) * len(mesh.polygons)
+    mesh.polygons.foreach_get("loop_start", starts)
+    totals = array("i", [0]) * len(mesh.polygons)
+    mesh.polygons.foreach_get("loop_total", totals)
+    return {vertex for face, (start, total) in enumerate(zip(starts, totals)) if opaque_faces[face] for vertex in loops[start : start + total]}
+
+
+def own_realization(instance):
+    return instance.is_instance and instance.parent is not None and instance.parent.original == instance.object.original and instance.parent.type != "MESH"
+
+
+def face_material(obj, mesh, index):
+    slots = obj.material_slots
+    if 0 <= index < len(slots) and slots[index].material is not None:
+        return slots[index].material
+    if 0 <= index < len(mesh.materials) and mesh.materials[index] is not None:
+        return mesh.materials[index]
+    return None
 
 
 def triangle_areas(mesh, world):
@@ -58,10 +79,12 @@ def extend(low, high, points):
 
 
 class Measurer:
-    def __init__(self, triangle_cap, floating_tolerance=None, integrity=True, objects=False, colours=False):
+    def __init__(self, triangle_cap, floating_tolerance=None, integrity=True, objects=False, colours=False, seed=""):
         self.triangle_cap = triangle_cap
         self.parts = None if floating_tolerance is None else PartCollector(floating_tolerance, WELD_DISTANCE)
-        self.surface = Surface(DEGENERATE_AREA, WELD_DISTANCE) if integrity else None
+        self.surface = Surface(DEGENERATE_AREA, WELD_DISTANCE, seed) if integrity else None
+        self.opacity = OpacityReader()
+        self.faces_seen = False
         self.table = ObjectTable() if objects else None
         self.colours = ColourCollector() if colours else None
         self.triangles = 0
@@ -82,7 +105,7 @@ class Measurer:
     def measure(self, depsgraph):
         for instance in depsgraph.object_instances:
             obj = instance.object
-            if obj.type not in GEOMETRY_TYPES:
+            if obj.type not in GEOMETRY_TYPES or own_realization(instance):
                 continue
             matrix = instance.matrix_world.copy()
             owner = instance.parent if instance.is_instance and instance.parent is not None else obj
@@ -106,22 +129,30 @@ class Measurer:
         self.objects += 1
         self.roots[root.name] = root
         world = world_coordinates(mesh, matrix)
-        on_faces = [world[index] for index in face_vertices(mesh)]
+        check_world(world, matrix, label)
+        hidden_slots = self.transparent_slots(obj, mesh)
+        opaque_faces = self.opaque_faces(mesh, hidden_slots)
+        self.faces_seen = self.faces_seen or len(mesh.polygons) > 0
+        on_faces = [world[index] for index in face_vertices(mesh, opaque_faces)]
         extend(self.low, self.high, on_faces)
         areas = triangle_areas(mesh, world)
         materials = self.collect_materials(obj, mesh)
         if self.parts is not None:
             self.parts.add(label, mesh, matrix)
         if self.surface is not None:
-            self.surface.add(mesh, world, areas)
+            self.surface.add(mesh, world, areas, opaque_faces)
         if self.table is not None:
             low, high = [inf, inf, inf], [-inf, -inf, -inf]
             extend(low, high, on_faces)
             self.table.add(label, triangles, low, high, tuple(matrix.translation), materials)
-        shells = self.datablocks.get(data_key)
+        seen = self.datablocks.setdefault(data_key, {})
+        shells = seen.get(hidden_slots)
+        if shells is None and seen:
+            shells = mesh_topology(mesh, WELD_DISTANCE, hidden_slots)[1]
+            seen[hidden_slots] = shells
         if shells is None:
-            topology, shells = mesh_topology(mesh, WELD_DISTANCE)
-            self.datablocks[data_key] = shells
+            topology, shells = mesh_topology(mesh, WELD_DISTANCE, hidden_slots)
+            seen[hidden_slots] = shells
             for key, value in topology.items():
                 self.topology[key] += value
             if len(mesh.polygons) > 0:
@@ -132,6 +163,23 @@ class Measurer:
                     self.meshes_without_uv += 1
         for key, value in shells.items():
             self.shells[key] += value
+
+    def transparent_slots(self, obj, mesh):
+        if len(mesh.polygons) == 0:
+            return frozenset()
+        indices = array("i", [0]) * len(mesh.polygons)
+        mesh.polygons.foreach_get("material_index", indices)
+        used = set(indices)
+        if getattr(obj, "is_holdout", False):
+            return frozenset(used)
+        return frozenset(index for index in used if transparent(self.opacity.material(face_material(obj, mesh, index))))
+
+    def opaque_faces(self, mesh, hidden_slots):
+        if not hidden_slots:
+            return None
+        indices = array("i", [0]) * len(mesh.polygons)
+        mesh.polygons.foreach_get("material_index", indices)
+        return [index not in hidden_slots for index in indices]
 
     def collect_materials(self, obj, mesh):
         if len(mesh.polygons) == 0:
@@ -159,6 +207,8 @@ class Measurer:
     def result(self):
         if self.objects == 0:
             raise JudgeError("no_geometry", "the asset holds no mesh geometry")
+        if self.low[0] == inf and self.faces_seen:
+            raise JudgeError("no_geometry", "the asset holds no faces that render opaque: every face is fully transparent or a holdout")
         if self.low[0] == inf:
             raise JudgeError("no_geometry", "the asset holds no faces, only loose vertices or edges")
         size = [self.high[axis] - self.low[axis] for axis in range(3)]

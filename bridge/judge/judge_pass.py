@@ -5,7 +5,24 @@ import time
 
 import bpy
 
-from judge_common import DEFAULT_MAX_TRIANGLES, DEFAULT_MEMORY_MB, JudgeError, apply_memory_cap, cap_address_space, lift_address_space, memory_kind, positive_int, read_bytes, shared_access, write_json
+from judge_common import (
+    DEFAULT_MAX_TRIANGLES,
+    DEFAULT_MEMORY_MB,
+    FileLockError,
+    JudgeError,
+    apply_memory_cap,
+    cap_address_space,
+    exit_on_lock,
+    failure_payload,
+    lift_address_space,
+    memory_kind,
+    memory_payload,
+    positive_int,
+    read_bytes,
+    shared_access,
+    write_json,
+    write_payload,
+)
 from judge_device import CPU, GPU_BACKENDS
 from judge_load import load_asset
 from judge_measure_stage import measure, read_measurements, uv_grid_file
@@ -35,6 +52,7 @@ PASS_DEFAULTS = {
     "extras": "",
     "weight-tolerance": str(DEFAULT_WEIGHT_TOLERANCE),
     "natural": "",
+    "visibility-seed": "",
     "natural-instances": "*",
     "natural-sizes": "sphere:*",
     "reference-views": "",
@@ -69,7 +87,7 @@ class Progress:
         self.path = path
 
     def mark(self, event, stage, seconds=None, digest=None):
-        line = json.dumps({"event": event, "stage": stage, "at": time.time(), "seconds": seconds, "digest": digest}) + "\n"
+        line = json.dumps({"event": event, "stage": stage, "at": time.time(), "seconds": seconds, "digest": digest}, allow_nan=False) + "\n"
 
         def append():
             with open(self.path, "a", encoding="utf-8") as handle:
@@ -146,10 +164,6 @@ def stage_digest(out_dir, stage, written):
     return digest.hexdigest()
 
 
-def failure_payload(error):
-    return {**error.extra, "ok": False, "error": {"code": error.code, "message": error.message}}
-
-
 def run_stage(context, progress, stage):
     output = os.path.join(context.out_dir, OUTPUTS[stage])
     os.makedirs(os.path.dirname(output), exist_ok=True)
@@ -162,8 +176,8 @@ def run_stage(context, progress, stage):
     except JudgeError as error:
         payload = failure_payload(error)
     except MemoryError:
-        payload = {"ok": False, "error": {"code": "memory_cap", "message": "the asset needs more memory than the cap allows"}}
-    written = write_json(output, payload)
+        payload = memory_payload()
+    written, payload = write_payload(output, payload)
     progress.mark("end" if payload["ok"] else "failed", stage, round(time.perf_counter() - started, 3), stage_digest(context.out_dir, stage, written))
     if stage == "measure" and payload["ok"]:
         context.prepare_scene()
@@ -201,5 +215,8 @@ def run_stages(context, progress, stages):
 def run_pass(asset, out_dir, options):
     progress = Progress(os.path.join(out_dir, PROGRESS))
     stages = chosen_stages(options["stages"])
-    run_stages(Context(asset, out_dir, options), progress, stages)
-    progress.mark("finish", None)
+    try:
+        run_stages(Context(asset, out_dir, options), progress, stages)
+        progress.mark("finish", None)
+    except FileLockError as error:
+        exit_on_lock(error)

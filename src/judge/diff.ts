@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { z } from "zod";
+import { plainText, quoted } from "./untrusted.js";
 
 const ruleSchema = z.object({ rule: z.string(), measured: z.unknown(), limit: z.unknown(), pass: z.boolean() });
 
@@ -112,9 +113,10 @@ export function diffReports(before: JudgeReport, after: JudgeReport): Change[] {
   return changes;
 }
 
-function show(value: unknown): string {
+function show(value: unknown, fromAsset = true): string {
   if (value === null || value === undefined) return "(none)";
-  return typeof value === "string" ? value : JSON.stringify(value);
+  if (typeof value !== "string") return plainText(JSON.stringify(value), 2000);
+  return fromAsset ? quoted(value, 200) : plainText(value, 200);
 }
 
 function ruleLine(change: Change): string {
@@ -132,13 +134,14 @@ function ruleLine(change: Change): string {
 const HEADINGS: Record<Change["kind"], string> = { verdict: "verdict", input: "inputs", rule: "rules", measurement: "measurements", image: "images (sha256 per view)" };
 
 export function diffText(before: JudgeReport, after: JudgeReport, changes: Change[]): string {
-  const lines = [`A: ${before.passed ? "PASS" : "FAIL"}  ${before.asset.path}`, `B: ${after.passed ? "PASS" : "FAIL"}  ${after.asset.path}`];
+  const lines = [`A: ${before.passed ? "PASS" : "FAIL"}  ${quoted(before.asset.path, 400)}`, `B: ${after.passed ? "PASS" : "FAIL"}  ${quoted(after.asset.path, 400)}`];
   if (changes.length === 0) return [...lines, "no differences: same verdict, rules, measurements and images"].join("\n");
   for (const kind of Object.keys(HEADINGS) as Change["kind"][]) {
     const group = changes.filter((change) => change.kind === kind);
     if (group.length === 0) continue;
     lines.push(`${HEADINGS[kind]}: ${group.length} changed`);
-    for (const change of group) lines.push(kind === "rule" ? ruleLine(change) : `  ~ ${change.path}: ${show(change.before)} -> ${show(change.after)}`);
+    const fromAsset = kind === "measurement";
+    for (const change of group) lines.push(kind === "rule" ? ruleLine(change) : `  ~ ${plainText(change.path, 200)}: ${show(change.before, fromAsset)} -> ${show(change.after, fromAsset)}`);
   }
   return lines.join("\n");
 }

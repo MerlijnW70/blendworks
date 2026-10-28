@@ -2,7 +2,7 @@ import base64
 import os
 import struct
 
-from judge_common import JudgeError
+from judge_common import JudgeError, quoted
 from judge_paths import check_reference
 
 GLB_BINARY_CHUNK = 0x004E4942
@@ -176,7 +176,7 @@ def read_uri(uri, directory, offset, length):
             raise JudgeError("corrupt", "the glTF has a malformed data URI") from None
     relative, problem = check_reference(uri, "uri")
     if problem is not None:
-        raise JudgeError("external_reference", f"the glTF refers to a file the judge never opens: {uri[:120]}: {problem[1]}")
+        raise JudgeError("external_reference", f"the glTF refers to a file the judge never opens: {quoted(uri)}: {problem[1]}")
     with open(os.path.join(directory, *relative.split("/")), "rb") as handle:
         handle.seek(offset)
         return handle.read(length)

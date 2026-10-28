@@ -1,13 +1,13 @@
 from array import array
 from math import ceil, pi
 
-from judge_common import JudgeError
+from judge_common import JudgeError, quoted
 
 DEFORM_ONLY = {
     "ARMATURE", "CAST", "CLOTH", "COLLISION", "CORRECTIVE_SMOOTH", "CURVE", "DATA_TRANSFER", "DISPLACE", "DYNAMIC_PAINT", "HOOK",
     "LAPLACIANDEFORM", "LAPLACIANSMOOTH", "LATTICE", "MESH_DEFORM", "NORMAL_EDIT", "SHRINKWRAP", "SIMPLE_DEFORM", "SMOOTH",
     "SOFT_BODY", "SURFACE", "SURFACE_DEFORM", "UV_PROJECT", "UV_WARP", "VERTEX_WEIGHT_EDIT", "VERTEX_WEIGHT_MIX",
-    "VERTEX_WEIGHT_PROXIMITY", "WARP", "WAVE", "WEIGHTED_NORMAL", "MESH_CACHE",
+    "VERTEX_WEIGHT_PROXIMITY", "WARP", "WAVE", "WEIGHTED_NORMAL", "MESH_CACHE", "PARTICLE_SYSTEM",
 }
 SHRINKING = {"DECIMATE", "MASK", "BUILD", "WELD"}
 UNBOUNDED = {"NODES", "FLUID", "MESH_SEQUENCE_CACHE", "VOLUME_TO_MESH", "OCEAN", "REMESH"}
@@ -58,11 +58,11 @@ def array_count(modifier):
     if modifier.fit_type == "FIT_LENGTH":
         step = modifier.constant_offset_displace.length if modifier.use_constant_offset else 0.0
         if modifier.use_relative_offset and modifier.relative_offset_displace.length > 0:
-            raise Unbounded(f"array modifier {modifier.name} fits a length with a relative offset")
+            raise Unbounded(f"array modifier {quoted(modifier.name)} fits a length with a relative offset")
         if step <= 0:
-            raise Unbounded(f"array modifier {modifier.name} fits a length without a constant offset")
+            raise Unbounded(f"array modifier {quoted(modifier.name)} fits a length without a constant offset")
         return int(ceil(modifier.fit_length / step)) + 1
-    raise Unbounded(f"array modifier {modifier.name} fits a curve")
+    raise Unbounded(f"array modifier {quoted(modifier.name)} fits a curve")
 
 
 def cap_shape(modifier, estimate, depth):
@@ -78,7 +78,7 @@ def apply_modifier(modifier, shape, estimate, depth):
     if kind in DEFORM_ONLY or kind in SHRINKING:
         return shape
     if kind in UNBOUNDED:
-        raise Unbounded(f"{kind.lower().replace('_', ' ')} modifier {modifier.name} cannot be bounded before it runs")
+        raise Unbounded(f"{kind.lower().replace('_', ' ')} modifier {quoted(modifier.name)} cannot be bounded before it runs")
     if kind in {"SUBSURF", "MULTIRES"}:
         return subdivided(shape, modifier.render_levels)
     if kind == "TRIANGULATE":
@@ -116,7 +116,7 @@ def apply_modifier(modifier, shape, estimate, depth):
             other = estimate.collection_shape(modifier.collection, depth + 1)
         corners = 4 * (shape.corners + other.corners)
         return Shape(corners, corners, corners // 3, corners)
-    raise Unbounded(f"the {kind.lower()} modifier {modifier.name} is not one the judge can bound before it runs")
+    raise Unbounded(f"the {kind.lower()} modifier {quoted(modifier.name)} is not one the judge can bound before it runs")
 
 
 def curve_shape(obj):
@@ -202,7 +202,7 @@ class Estimate:
         if key in self.shapes:
             return self.shapes[key]
         if key in self.visiting:
-            raise Unbounded(f"object {obj.name[:80]} instances itself")
+            raise Unbounded(f"object {quoted(obj.name, 80)} instances itself")
         self.visiting.add(key)
         try:
             shape = added(self.own_shape(obj, depth), self.instanced_shape(obj, depth))
