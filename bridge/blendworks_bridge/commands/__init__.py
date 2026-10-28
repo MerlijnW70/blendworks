@@ -19,6 +19,7 @@ MODULES = (
     "noise_displace",
     "heightfield",
     "erode",
+    "trees",
     "clean",
     "engrave",
     "scales",

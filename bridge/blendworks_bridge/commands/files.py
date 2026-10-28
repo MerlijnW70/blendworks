@@ -5,6 +5,7 @@ import bpy
 
 from ..blendfile import open_blend, save_atomically
 from ..errors import bad_args, failed, forbidden
+from ..gltf_extras import add_skeleton_extras
 from ..exporting import check_options, forced_png, option_fields, resolved_tangents, run_exporter, shown, triangulated
 from ..operators import only_selected, operator_context
 from ..policy import REPLACES_FILE
@@ -67,6 +68,9 @@ def export(ctx, args):
         "options": {name: args[name] for name in ("apply_modifiers", "include_hidden", "yup")},
     }
     if file_format == "glb":
+        skeletons = add_skeleton_extras(path, objects)
+        if skeletons:
+            result["skeletons"] = skeletons
         result["options"].update({"tangents": tangents, "image_format": args.get("image_format", "auto"), "draco": args.get("draco", False)})
     return result
 

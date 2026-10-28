@@ -141,3 +141,24 @@ It runs these steps in order, and stops at the first failing command:
 5. **Materials and renders.** Each shell gets a stone or marble preset, its origin is set to the bottom centre, then the four renders.
 
 `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+
+## Grow trees
+
+`grow_trees.py` grows three tree skeletons with roots by commands only and renders them. It is the acceptance build of the `tree-skeleton` job.
+
+```
+blender --background --factory-startup --python docs/examples/grow_trees.py -- out
+```
+
+The script writes into `out`:
+- `grow-trees.blend` and `grow-trees.glb`, whose three tree nodes carry their skeletons in `extras.blendworks_skeleton`;
+- seven PNGs: `oak`, `conifer` and `windswept` (side views, shaded, roots included), `oak_top` and `conifer_top` (clay, looking straight down), `oak_base` (the trunk base and the roots) and `row` (all three);
+- `summary.json`: every command with its time and, for `grow_tree`, the node, tip, branching and root counts, the height, spread, root depth, base radius, largest pipe-model error and the growth report.
+
+It runs these steps in order, and stops at the first failing command:
+1. **Oak.** Space colonisation in a hemispherical crown 5.5 m wide from 2.6 m to 10 m, 4000 points, `influence` 1.6 m, `kill` 0.36 m, `step` 0.18 m and a slight upward tropism, with roots in a soil envelope 1.4 m deep and 3.2 m wide.
+2. **Conifer.** Weber–Penn levels: a 14 m trunk in a conical shape with 70 branches that turn by 137.5 degrees, each with up to 16 twigs, branches at 84 degrees curving up by 24 degrees, `taper` 0.55 and `ratio_power` 0.9, with roots.
+3. **Windswept.** A UV sphere stretched and tilted downwind is the crown envelope (a mesh envelope); colonisation with a tropism of `[0.45, 0, -0.08]` leans the trunk and streams the branches downwind; the roots lean upwind. The envelope is deleted afterwards.
+4. **Material, files and renders.** The `bark` preset of `material_procedural` on all three, the `.blend` and `.glb`, then the renders.
+
+`BLENDWORKS_TREE_DETAIL` (a factor on the point and branch counts), `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
