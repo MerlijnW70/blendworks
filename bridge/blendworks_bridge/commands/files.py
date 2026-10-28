@@ -6,7 +6,10 @@ import bpy
 from ..blendfile import open_blend, save_atomically
 from ..errors import bad_args, failed, forbidden
 from ..gltf_extras import add_skeleton_extras
-from ..exporting import check_options, forced_png, option_fields, resolved_tangents, run_exporter, shown, triangulated
+from ..bones import deforming_armatures
+from ..clips import unmuted_tracks
+from ..constraint_bake import baked_constraints
+from ..exporting import check_options, dropped_shape_keys, forced_png, option_fields, resolved_tangents, run_exporter, shown, triangulated
 from ..operators import only_selected, operator_context
 from ..policy import REPLACES_FILE
 from ..registry import command
@@ -17,12 +20,12 @@ from .checkpoints import DISCARD, ensure_may_replace, opened
 from .hierarchy import get_collection
 
 EXPORT_FORMATS = {"glb": ".glb", "fbx": ".fbx", "obj": ".obj"}
-EXPORTABLE_TYPES = GEOMETRY_TYPES + ("EMPTY",)
+EXPORTABLE_TYPES = GEOMETRY_TYPES + ("EMPTY", "ARMATURE")
 
 
 @command(
     "export",
-    "Export the scene, a collection or named objects to a .glb, .fbx or .obj file in the workspace; options for modifiers, hidden objects, up axis, tangents, texture format and Draco.",
+    "Export the scene, a collection or named objects to a .glb, .fbx or .obj file; rigs, skins and clips go along; options for modifiers, up axis, tangents, textures and Draco.",
     {
         "path": string("File path inside the workspace, relative to it.", max_length=1024),
         "format": string("File format. Default: from the path's extension.", list(EXPORT_FORMATS)),
@@ -49,15 +52,17 @@ def export(ctx, args):
         raise bad_args(f"a {file_format} export needs a {EXPORT_FORMATS[file_format]} path")
     check_options(file_format, args)
     path = ctx.workspace.output(args["path"], tuple(EXPORT_FORMATS.values()))
-    objects = chosen_objects(ctx, args)
+    objects = with_rigs(chosen_objects(ctx, args), ctx.scene)
     if args["ancestors"]:
         objects = with_ancestor_empties(objects, ctx.scene)
     tangents = resolved_tangents(args, objects) if file_format == "glb" else None
     active = objects[0]
+    clips = file_format == "glb" and args.get("animation", "clips") == "clips"
+    bake = clips and args.get("bake_constraints", True)
     with shown(objects, ctx.view_layer, args["include_hidden"]), forced_png(objects, args.get("image_format") == "png"), triangulated(objects, bool(tangents)):
-        with only_selected(ctx.view_layer, active, objects):
+        with baked_constraints(objects, bake) as baked, unmuted_tracks(objects, clips), only_selected(ctx.view_layer, active, objects):
             with bpy.context.temp_override(**operator_context(active, objects)):
-                run_exporter(file_format, path, args, tangents)
+                run_exporter(file_format, path, args, tangents, objects)
     if not os.path.isfile(path):
         raise failed(f"the {file_format} exporter wrote no file")
     result = {
@@ -72,7 +77,24 @@ def export(ctx, args):
         if skeletons:
             result["skeletons"] = skeletons
         result["options"].update({"tangents": tangents, "image_format": args.get("image_format", "auto"), "draco": args.get("draco", False)})
+        rigs = sorted(obj.name for obj in objects if obj.type == "ARMATURE")
+        if rigs:
+            result["armatures"] = rigs
+            result["options"]["animation"] = args.get("animation", "clips")
+            result["baked_constraints"] = baked
+        dropped = dropped_shape_keys(objects, args["apply_modifiers"])
+        if dropped:
+            result["warnings"] = [f"{name} has shape keys and modifiers; apply_modifiers drops its shape keys from the glb" for name in dropped]
     return result
+
+
+def with_rigs(objects, scene):
+    chosen = list(objects)
+    for obj in objects:
+        for rig in deforming_armatures(obj):
+            if rig not in chosen and rig.name in scene.objects:
+                chosen.append(rig)
+    return chosen
 
 
 def chosen_objects(ctx, args):
@@ -102,7 +124,7 @@ def with_ancestor_empties(objects, scene):
     for obj in objects:
         parent = obj.parent
         while parent is not None:
-            if parent.type == "EMPTY" and parent.name not in seen and parent.name in scene.objects:
+            if parent.type in ("EMPTY", "ARMATURE") and parent.name not in seen and parent.name in scene.objects:
                 seen.add(parent.name)
                 chosen.append(parent)
             parent = parent.parent
@@ -164,9 +186,10 @@ def import_command(ctx, args):
     extension = os.path.splitext(path)[1].lower()
     check_references(ctx.workspace, path, extension)
     before = {obj.as_pointer() for obj in bpy.data.objects}
-    with bpy.context.temp_override(**operator_context(None, [])):
+    override = {key: value for key, value in operator_context(None, []).items() if key not in ("object", "active_object")}
+    with bpy.context.temp_override(**override):
         if extension in (".glb", ".gltf"):
-            bpy.ops.import_scene.gltf(filepath=path)
+            bpy.ops.import_scene.gltf(filepath=path, disable_bone_shape=True)
         elif extension == ".fbx":
             bpy.ops.import_scene.fbx(filepath=path, use_image_search=False)
         else:

@@ -27,6 +27,8 @@ DESIGN_COMMANDS = {
     "load_blend", "checkpoint", "restore_checkpoint",
     "clean_mesh", "engrave", "engrave_scale",
     "material_nodes", "material_info", "add_empty", "collection_create", "collection_link", "collection_unlink",
+    "armature_create", "bone_add", "bone_edit", "bone_mirror", "rig_template", "rig_info", "vertex_group", "skin_bind",
+    "ik_chain", "bone_constraint", "animation_preset", "clip_keys", "clip_edit", "clip_info", "clip_pose", "shape_key_add",
 }
 ASSET_LIBRARY_COMMANDS = {"set_world_hdri"}
 SLOW = {"slow": True, "timeout": 300, "max_timeout": 1800}
@@ -35,7 +37,7 @@ DECLARED_METADATA = {
     "boolean": dict(SLOW, destructive=True, destructive_when="cutter_action is delete"),
     "image_save": {"writes_files": True, "destructive": True, "destructive_when": "the file already exists", "slow": False},
     **{name: SLOW for name in ("decimate", "import", "uv_pack", "set_world_hdri", "apply_modifier", "sweep", "loft", "instances",
-                               "rivet_line", "roller_chain", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell", "grow_tree", "tree_mesh", "tree_leaves", "lsystem", "fracture", "chip", "abrade", "remesh", "blob", "mesh_from_data", "generate_lods", "clean_mesh", "engrave")},
+                               "rivet_line", "roller_chain", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell", "grow_tree", "tree_mesh", "tree_leaves", "lsystem", "fracture", "chip", "abrade", "remesh", "blob", "mesh_from_data", "generate_lods", "clean_mesh", "engrave", "skin_bind")},
 }
 SCHEMA_KEYS = {"type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",
                "maximum", "exclusiveMinimum", "minItems", "maxItems", "minLength", "maxLength", "default"}

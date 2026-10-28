@@ -127,6 +127,13 @@ export const WORKFLOWS: Workflow[] = [
     note: "blender_grow_tree grows the skeleton; preset weeping_willow, gnarled_oak or windswept_coastal gives a form, and gravitropism and phototropism (by order and thinness), stiffness (sag), wind, gnarl, twist, kink_probability and, for levels, curve_back and curve_variation shape any tree. blender_tree_mesh turns it into one closed bark mesh (junction skin or voxel, flare, root_flare, bark_noise, lod for a triangle budget, min_radius drops twigs) with UVs in metres and the slots bark, fresh_wood and roots; blender_tree_leaves puts leaf cards (or a needle cluster as source) on the twig tips and outer orders. Then material_procedural bark with coordinates uv and grain y, leaf with cutout, and export: the skeleton rides along in the glTF extras.",
   },
   {
+    id: "character",
+    goal: "Characters",
+    examples: ["walking humanoid for a game", "four-legged animal that trots", "chest whose lid opens", "skinned mesh with clips"],
+    steps: ["blender_rig_template", "blender_skin_bind", "blender_animation_preset", "blender_clip_pose", "blender_render_preview", "blender_export"],
+    note: "Model the parts facing -Y with their feet at z 0, then blender_rig_template humanoid, quadruped, hinge, piston or wheel fitted to the meshes, with landmarks such as left_knee where the joints are; its bone_map goes into the judge spec's boneMap. blender_skin_bind binds with automatic weights, at most 4 per vertex, normalised; bones limits a mesh to some bones, rigid gives a head, hand or lid to one bone. blender_animation_preset walk, trot or idle loops by construction (root_motion moves the Root bone); props open, spin, turn or pump. blender_clip_keys keys your own poses and shape keys, blender_ik_chain and blender_bone_constraint pose limbs and are baked on export. Check frames with blender_clip_pose and blender_render_preview, then blender_export a .glb: every clip becomes a named animation, and the judge checks rig, skin and animation.",
+  },
+  {
     id: "surface-detail",
     goal: "Wear and face edits",
     examples: ["dents", "battle damage", "taper faces", "find faces"],

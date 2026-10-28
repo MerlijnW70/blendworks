@@ -7,7 +7,9 @@ from .errors import bad_args
 from .schema import boolean, integer, string
 
 IMAGE_FORMATS = ("auto", "png", "jpeg")
-GLB_ONLY = ("tangents", "image_format", "jpeg_quality", "draco", "draco_level")
+ANIMATION_MODES = ("clips", "actions", "none")
+GLB_ONLY = ("tangents", "image_format", "jpeg_quality", "draco", "draco_level", "animation", "bake_constraints")
+MAX_JOINT_INFLUENCES = 4
 DEFAULT_JPEG_QUALITY = 85
 DEFAULT_DRACO_LEVEL = 6
 
@@ -22,6 +24,8 @@ def option_fields():
         "jpeg_quality": integer(f"glb only, with image_format jpeg: quality from 1 to 100. Default {DEFAULT_JPEG_QUALITY}.", 1, 100),
         "draco": boolean("glb only: compress mesh geometry with Draco (KHR_draco_mesh_compression). Default false."),
         "draco_level": integer(f"glb only, with draco true: level from 0 (fast) to 10 (small). Default {DEFAULT_DRACO_LEVEL}.", 0, 10),
+        "animation": string("glb only: clips writes every clip (NLA track) as its own named animation, actions every action, none no animation. Default clips.", ANIMATION_MODES),
+        "bake_constraints": boolean("glb only, with clips: bake IK and other bone constraints into the keys of every clip, so engines play the constrained pose. Default true."),
     }
 
 
@@ -34,6 +38,8 @@ def check_options(file_format, args):
         raise bad_args("jpeg_quality applies with image_format jpeg")
     if "draco_level" in args and not args.get("draco", False):
         raise bad_args("draco_level applies with draco true")
+    if args.get("bake_constraints") and args.get("animation", "clips") != "clips":
+        raise bad_args("bake_constraints applies with animation clips")
 
 
 def uses_normal_map(obj):
@@ -148,7 +154,41 @@ def shown(objects, view_layer, active):
             obj.hide_viewport = disabled
 
 
-def glb_arguments(path, args, tangents):
+def has_tracks(objects):
+    for obj in objects:
+        for owner in (obj, obj.data.shape_keys if obj.type == "MESH" else None):
+            if owner is not None and owner.animation_data is not None and len(owner.animation_data.nla_tracks) > 0:
+                return True
+    return False
+
+
+def animation_arguments(args, objects):
+    mode = args.get("animation", "clips")
+    if mode == "none":
+        return {"export_animations": False}
+    return {
+        "export_animations": True,
+        "export_animation_mode": "NLA_TRACKS" if mode == "clips" and has_tracks(objects) else "ACTIONS",
+        "export_force_sampling": True,
+        "export_frame_step": 1,
+        "export_skins": True,
+        "export_all_influences": False,
+        "export_influence_nb": MAX_JOINT_INFLUENCES,
+        "export_def_bones": False,
+        "export_rest_position_armature": True,
+        "export_reset_pose_bones": True,
+        "export_morph": True,
+        "export_morph_animation": True,
+    }
+
+
+def dropped_shape_keys(objects, apply_modifiers):
+    if not apply_modifiers:
+        return []
+    return sorted(obj.name for obj in objects if obj.type == "MESH" and obj.data.shape_keys is not None and any(modifier.type != "ARMATURE" and modifier.show_viewport for modifier in obj.modifiers))
+
+
+def glb_arguments(path, args, tangents, objects=()):
     arguments = {
         "filepath": path,
         "export_format": "GLB",
@@ -167,6 +207,7 @@ def glb_arguments(path, args, tangents):
         arguments["export_image_quality"] = quality
     if args.get("draco", False):
         arguments["export_draco_mesh_compression_level"] = args.get("draco_level", DEFAULT_DRACO_LEVEL)
+    arguments.update(animation_arguments(args, objects))
     return arguments
 
 
@@ -175,7 +216,7 @@ def fbx_arguments(path, args):
         "filepath": path,
         "use_selection": True,
         "use_mesh_modifiers": args["apply_modifiers"],
-        "object_types": {"MESH", "EMPTY", "OTHER"},
+        "object_types": {"MESH", "EMPTY", "ARMATURE", "OTHER"},
         "path_mode": "STRIP",
         "axis_forward": "-Z" if args["yup"] else "Y",
         "axis_up": "Y" if args["yup"] else "Z",
@@ -194,9 +235,9 @@ def obj_arguments(path, args):
     }
 
 
-def run_exporter(file_format, path, args, tangents):
+def run_exporter(file_format, path, args, tangents, objects=()):
     if file_format == "glb":
-        bpy.ops.export_scene.gltf(**glb_arguments(path, args, tangents))
+        bpy.ops.export_scene.gltf(**glb_arguments(path, args, tangents, objects))
     elif file_format == "fbx":
         bpy.ops.export_scene.fbx(**fbx_arguments(path, args))
     else:

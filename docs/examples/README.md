@@ -250,3 +250,29 @@ It runs these steps in order, and stops at the first failing command:
 5. **Files and renders.** The `.blend` and `.glb`, then a ground plane and the renders.
 
 `BLENDWORKS_TREE_DETAIL` (a factor on the attraction point counts), `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+
+## Characters
+
+`characters.py` builds a stylised humanoid, a four-legged fox and a treasure chest from primitives and shape tools, rigs, skins and animates them, exports each and writes a judge spec for each, by commands only. It is the acceptance build of the `rig-animation` job; the models are in `character_models.py`.
+
+```
+blender --background --factory-startup --python docs/examples/characters.py -- out
+node src/judge/bin.js judge out/hero.spec.json out/hero.glb --out out/report-hero
+node src/judge/bin.js judge out/fox.spec.json out/fox.glb --out out/report-fox
+node src/judge/bin.js judge out/chest.spec.json out/chest.glb --out out/report-chest
+```
+
+The script writes into `out`:
+- `hero.glb`, `fox.glb` and `chest.glb` (and a `.blend` of each), every clip a named glTF animation;
+- `hero.spec.json`, `fox.spec.json` and `chest.spec.json`: the size, the `rig` rules with a `boneMap` from the template's bone map, the `skin` rules (at most 4 influences, none unweighted, normalised, rest pose), the `animation` rules (required clips, seamless loops, at most 4 s, root motion under 5 cm for the in-place clips, bounds within the size over every frame) and the glTF validator with 0 errors and 0 warnings;
+- animation frames as PNGs, named `<asset>-<clip>-<frame>-<view>.png`: eight walk frames of the hero and six trot frames of the fox from the side and the front, two idle frames of each from three-quarter, and four frames of the chest opening;
+- `summary.json`: every command with its time and, for `rig_template`, `skin_bind`, `animation_preset` and `export`, the bone count, the weights report, the stride, speed, cadence and hip drop, and the exported armatures.
+
+It runs these steps for each asset, in a new scene, and stops at the first failing command:
+1. **Model.** The hero (1.76 m) is a `lathe` torso flattened front to back, `sweep` legs and arms whose paths are rounded at the knees and elbows so they bend smoothly, sphere head, hands and eyes, and box shoes, joined into a body, a legs and an arms mesh. The fox is a `lathe` body lying along Y, `sweep` neck, snout, legs and tail, a sphere skull, cone ears and flattened sphere paws, joined into a body and a legs mesh. The chest is a box and a lid with iron bands and a lock.
+2. **Rig.** `rig_template` humanoid, quadruped or hinge, fitted to the meshes with landmarks at the joints the models were built around.
+3. **Skin.** `skin_bind` with automatic weights per mesh, limited to the bones that mesh should follow (`bones`), smoothed twice; the head, eyes, hands and paws are rigid parts picked with `near`. The chest binds with no automatic weights: its loose parts go rigidly to `Base` or `Lid`.
+4. **Animate.** `animation_preset` walk and idle for the hero, trot and idle for the fox, open (105°, 48 frames) for the chest. All loop seamlessly in place.
+5. **Export, frames and spec.** `export` writes the glb with its armature, `clip_pose` and `render_preview` take the frames, and the spec goes next to the glb.
+
+`BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make smaller, faster renders, `BLENDWORKS_CHARACTER_SHOTS=0` skips them, and `BLENDWORKS_CHARACTERS` (for example `hero,chest`) builds only some assets. `test/characters-example.test.ts` runs the script and judges the three assets.
