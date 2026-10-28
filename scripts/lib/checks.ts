@@ -4,15 +4,15 @@ import { execFileSync } from "node:child_process";
 import { describeChange, rememberDurations, saveBaseline } from "./durations.js";
 import { changedFiles, discoverTests, selectRelated } from "./fast-map.js";
 import { cacheRoot, repoRoot } from "./paths.js";
-import { npmStep, runPhases, type Step } from "./pipeline.js";
+import { npmStep, runPhases, type Step, VITEST_REPORTERS } from "./pipeline.js";
 import { readTimingLog, timingReport, TIMINGS_VARIABLE } from "./timings.js";
 
 export function fullPhases(): Step[][] {
-  return [[npmStep("rules"), npmStep("typecheck"), npmStep("build"), npmStep("build:addon"), npmStep("test"), npmStep("test:bridge")]];
+  return [[npmStep("rules"), npmStep("typecheck"), npmStep("build"), npmStep("build:addon"), npmStep("test", [], {}, VITEST_REPORTERS), npmStep("test:bridge")]];
 }
 
 export function fastPhases(vitest: string[], bridge: string[], needsFixtures: boolean): Step[][] {
-  const phase: Step[] = [npmStep("rules"), npmStep("typecheck"), npmStep("test", vitest, needsFixtures ? {} : { BLENDWORKS_FIXTURES: "skip" })];
+  const phase: Step[] = [npmStep("rules"), npmStep("typecheck"), npmStep("test", vitest, needsFixtures ? {} : { BLENDWORKS_FIXTURES: "skip" }, VITEST_REPORTERS)];
   if (bridge.length > 0) phase.push(npmStep("test:bridge", bridge));
   return [phase];
 }

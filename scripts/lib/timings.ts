@@ -6,7 +6,8 @@ export const STAGE_VARIABLE = "BLENDWORKS_STAGE";
 
 export type ProcessTiming = { kind: "process"; stage: string; label: string; waitMs: number; workMs: number; endedAt: number };
 export type FileTiming = { kind: "file"; stage: string; file: string; wallMs: number; waitMs: number; processes: number; endedAt: number };
-export type Timing = ProcessTiming | FileTiming;
+export type WaitTiming = { kind: "wait"; file: string; state: "begin" | "end"; waitedMs?: number };
+export type Timing = ProcessTiming | FileTiming | WaitTiming;
 
 export function currentStage(env: NodeJS.ProcessEnv = process.env): string {
   const stage = env[STAGE_VARIABLE];

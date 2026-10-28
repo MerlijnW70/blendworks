@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import { blenderJobs, blenderThreadArguments } from "../../src/blender.js";
 import { type SlotOptions, withSlot } from "./slots.js";
 
-export type RunOptions = Omit<SlotOptions, "timeoutMs"> & { cwd?: string; env?: NodeJS.ProcessEnv; timeoutMs?: number; waitTimeoutMs?: number };
+export type RunOptions = Omit<SlotOptions, "timeoutMs"> & { cwd?: string; env?: NodeJS.ProcessEnv; timeoutMs?: number; waitTimeoutMs?: number; onStart?: () => void };
 
 export type RunResult = { code: number | null; signal: NodeJS.Signals | null; stdout: string; stderr: string; seconds: number; waitedSeconds: number; timedOut: boolean };
 
@@ -36,7 +36,10 @@ function run(command: string, args: string[], options: RunOptions): Promise<Omit
 export function runUnderSlot(command: string, args: string[], options: RunOptions = {}): Promise<RunResult> {
   const { root, jobs, pollMs, label, waitTimeoutMs } = options;
   const slotOptions = { ...(root === undefined ? {} : { root }), ...(jobs === undefined ? {} : { jobs }), ...(pollMs === undefined ? {} : { pollMs }), ...(label === undefined ? {} : { label }), ...(waitTimeoutMs === undefined ? {} : { timeoutMs: waitTimeoutMs }) };
-  return withSlot(async (slot) => ({ ...(await run(command, args, options)), waitedSeconds: slot.waitedMs / 1000 }), slotOptions);
+  return withSlot(async (slot) => {
+    options.onStart?.();
+    return { ...(await run(command, args, options)), waitedSeconds: slot.waitedMs / 1000 };
+  }, slotOptions);
 }
 
 export function runBlender(blender: string, args: string[], options: RunOptions = {}): Promise<RunResult> {

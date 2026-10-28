@@ -986,6 +986,16 @@ Paid code jobs are judged on Linux, in the judge image, with fewer CPUs than a d
 
 `npx tsx scripts/check-container.mjs --image <ref>` runs `npm run check` in the judge image through its `patch` entry point, as Solive's docker sandbox does for a paid code job: no network, a read-only root, all capabilities dropped, user 65534, 256 processes, 1024 open files, 8 GB of memory, 4 CPUs and a 6 GB `/tmp` (`--memory`, `--cpus` and `--tmp` change the box). Without `--patch` it checks the current commit: the patch is `git diff` from the image's commit (its `org.blendworks.commit` label) to `HEAD`, so build the image from `main` and run it on a branch. With `--patch <file>` it checks that delivery, for example a past one. The image can also come from `BLENDWORKS_JUDGE_IMAGE`. It prints the entry point's result and exits 0 when the check passes, 1 when it fails and 3 when nothing was judged.
 
+### Progress and limits of the check
+
+`npm run check` runs its steps side by side and says what they are doing, so a long phase is never silent:
+
+- **A line per file.** As each test file ends, in the vitest step and in the bridge step, the check prints `ok   [phase] file seconds` or `FAIL [phase] file seconds`, one whole line at a time. The vitest step gets this from `test/setup/progress-reporter.ts`; the bridge runner announces its files itself. The files announce themselves to the check through marker lines that the check removes from the step output, only when `BLENDWORKS_PROGRESS=1`, which the check sets; test workers drop the variable.
+- **A heartbeat.** Every `BLENDWORKS_HEARTBEAT_S` seconds (default 60) the check prints `still running m:ss: <step> (<n> done; running <file> <s> s, ...), ...`, naming each step and the test files it still runs. The judge's quiet limit is 900 s, so a healthy phase, however long, never trips it; only a check that is truly stuck does.
+- **A limit per file.** A test file that runs longer than `BLENDWORKS_FILE_LIMIT_S` seconds (default 600) is stopped with its step, and the step fails with `FAIL <file> ran <s> s, past its limit of <n> s per test file`. Only the time a file works counts: the time it waits for a Blender slot or a lock does not, for a bridge test file (as before) and for a vitest file (the test workers append their waits to the timing log, which the check reads). A file that needs longer is listed in `EXEMPT_FILES` in `scripts/lib/file-limits.ts` with its reason; the limit does not apply to it.
+
+The final per-step summaries and the slowest-files report are unchanged.
+
 ## 6. Asset library
 
 The MCP server offers Poly Haven's free CC0 assets as a starting point: HDRIs for lighting, scanned PBR texture sets for real materials, and models for reference. The `library_` tools sit beside the `blender_` tools.
