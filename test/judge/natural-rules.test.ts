@@ -5,8 +5,8 @@ import { planPass } from "../../src/judge/judge-pass.js";
 import type { Measurements } from "../../src/judge/measurements.js";
 import { NATURAL_DEFAULTS } from "../../src/judge/natural-defaults.js";
 import type { NaturalMeasurements } from "../../src/judge/natural-schema.js";
-import { calibratedLimits, NATURAL_CLASSES, NATURAL_RULES } from "../../src/judge/natural-spec.js";
-import { naturalLines } from "../../src/judge/natural.js";
+import { calibratedLimits, citedLimits, NATURAL_CLASSES, NATURAL_RULES } from "../../src/judge/natural-spec.js";
+import { naturalLines, naturalRules, RENDERED_RULES } from "../../src/judge/natural.js";
 import { stageDigest } from "../../src/judge/onepass.js";
 import { evaluateRules } from "../../src/judge/rules.js";
 import { parseSpec, SpecError, specJsonSchema } from "../../src/judge/spec.js";
@@ -37,7 +37,8 @@ const ROCK_LIKE: NaturalMeasurements = {
 
 function judged(natural: Record<string, unknown>, measured: NaturalMeasurements | undefined) {
   const measurements: Measurements = { ...CRATE_MEASUREMENTS, ...(measured === undefined ? {} : { natural: measured }) };
-  return evaluateRules(parseSpec({ format: "glb", natural }), measurements).filter((rule) => rule.rule.startsWith("natural."));
+  const spec = parseSpec({ format: "glb", natural });
+  return [...evaluateRules(spec, measurements), ...naturalRules(spec.natural, measurements.natural, RENDERED_RULES)].filter((rule) => rule.rule.startsWith("natural."));
 }
 
 describe("the natural group of an asset spec", () => {
@@ -51,7 +52,7 @@ describe("the natural group of an asset spec", () => {
     for (const kind of NATURAL_CLASSES) {
       for (const rule of NATURAL_RULES) {
         const found = problems({ format: "glb", natural: { class: kind, [rule]: {} } });
-        if (calibratedLimits(kind, rule) === undefined) expect(found.join(" ")).toMatch(new RegExp(`natural\\.${rule}: ${rule} has no calibrated default for class ${kind}`));
+        if (calibratedLimits(kind, rule) === undefined && citedLimits(kind, rule) === undefined) expect(found.join(" ")).toMatch(new RegExp(`natural\\.${rule}: ${rule} has no calibrated default for class ${kind}`));
         else expect(found).toEqual([]);
       }
     }

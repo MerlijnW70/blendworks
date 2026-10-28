@@ -83,7 +83,7 @@ def measure(asset, options, limits, uv_grid_path):
     measurements["objectsAll"] = len(scene.objects)
     measure_extras(measurements, asset, loaded["format"], extras, weights, depsgraph)
     if natural:
-        measurements["natural"] = measure_natural(depsgraph, natural)
+        measurements["natural"] = measure_natural(depsgraph, natural, options["natural-instances"], options["natural-sizes"])
     return {"measurements": measurements, "limits": {**limits, "maxTriangles": triangle_cap}}
 
 

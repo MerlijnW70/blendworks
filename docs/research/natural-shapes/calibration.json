@@ -2,7 +2,7 @@
   "version": 1,
   "blender": "5.2.3",
   "resolution": "1k",
-  "thresholdRule": "For a lower limit, take the 5th percentile of the class's scans; for an upper limit, the 95th. When the measured stand-in nearest to the scans lies beyond that percentile by at least the measure's step (0.01 for D, 0.001 for solidity and shares, 0.1 degrees for p90), the threshold is the midpoint between the two, rounded to the step, and the measure separates the class. Otherwise the threshold is the percentile and the measure does not separate the class: a stand-in reaches the scans, or no stand-in has a value. Only separating measures become defaults.",
+  "thresholdRule": "For a lower limit, take the 5th percentile of the class's scans; for an upper limit, the 95th. When the measured stand-in nearest to the scans lies beyond that percentile by at least the measure's step (0.01 for D, 0.001 for solidity and shares, 0.1 degrees for p90), the threshold is the midpoint between the two, rounded to the step, and the measure separates the class. Otherwise the threshold is the percentile and the measure does not separate the class: a stand-in reaches the scans, or no stand-in has a value. A measure also separates only when at least 90 % of the class's scans have a value, so that no default rests on a minority of the scans. Only separating measures become defaults.",
   "assets": [
     {
       "id": "rock_09",
@@ -18,7 +18,10 @@
         "solidity": 0.93235,
         "p90": 39.1249,
         "flatShare": 0.1111,
-        "albedoCv": 0.265617
+        "albedoCv": 0.265617,
+        "repetition": 0.4998,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -57,6 +60,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -113,6 +128,65 @@
           "dimension": 1.005518,
           "solidity": 0.93235,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.4998,
+          "view": "right",
+          "shift": [
+            16,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.3102,
+              "shift": [
+                -16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.4998,
+              "shift": [
+                16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1224,
+              "shift": [
+                17,
+                259
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.2278,
+              "shift": [
+                -16,
+                3
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -131,7 +205,10 @@
         "solidity": 0.624128,
         "p90": 59.0662,
         "flatShare": 0.0952,
-        "albedoCv": 0.244907
+        "albedoCv": 0.244907,
+        "repetition": 0.5955,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -170,6 +247,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -226,6 +315,65 @@
           "dimension": 1.127443,
           "solidity": 0.624128,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.5955,
+          "view": "front",
+          "shift": [
+            17,
+            0
+          ],
+          "views": {
+            "front": {
+              "peak": 0.5955,
+              "shift": [
+                17,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.4667,
+              "shift": [
+                17,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0723,
+              "shift": [
+                -311,
+                12
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.2726,
+              "shift": [
+                17,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -244,7 +392,10 @@
         "solidity": 0.733932,
         "p90": 68.2628,
         "flatShare": 0.0156,
-        "albedoCv": 0.383925
+        "albedoCv": 0.383925,
+        "repetition": 0.2145,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -283,6 +434,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -339,6 +502,65 @@
           "dimension": 1.043054,
           "solidity": 0.733932,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.2145,
+          "view": "right",
+          "shift": [
+            16,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1996,
+              "shift": [
+                16,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.2145,
+              "shift": [
+                16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0597,
+              "shift": [
+                -86,
+                311
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0423,
+              "shift": [
+                -16,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -357,7 +579,10 @@
         "solidity": 0.921024,
         "p90": 20.5723,
         "flatShare": 0.4299,
-        "albedoCv": 0.047298
+        "albedoCv": 0.047298,
+        "repetition": 0.3061,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -424,6 +649,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 4,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 4,
+          "ks": null,
+          "failure": "4 sizes, fewer than the 50 a fit needs"
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -479,6 +716,65 @@
           "dimension": 1.004579,
           "solidity": 0.921024,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.3061,
+          "view": "front",
+          "shift": [
+            17,
+            0
+          ],
+          "views": {
+            "front": {
+              "peak": 0.3061,
+              "shift": [
+                17,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1439,
+              "shift": [
+                18,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1807,
+              "shift": [
+                16,
+                3
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0832,
+              "shift": [
+                111,
+                38
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -497,7 +793,10 @@
         "solidity": 0.969173,
         "p90": 20.5196,
         "flatShare": 0.209,
-        "albedoCv": 0.054448
+        "albedoCv": 0.054448,
+        "repetition": 0.1482,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -536,6 +835,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -592,6 +903,65 @@
           "dimension": 1.003944,
           "solidity": 0.969173,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1482,
+          "view": "right",
+          "shift": [
+            -17,
+            2
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1425,
+              "shift": [
+                16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1482,
+              "shift": [
+                -17,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0737,
+              "shift": [
+                53,
+                267
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0896,
+              "shift": [
+                28,
+                6
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -610,7 +980,10 @@
         "solidity": 0.836128,
         "p90": 66.7343,
         "flatShare": 0.0273,
-        "albedoCv": 0.322573
+        "albedoCv": 0.322573,
+        "repetition": 0.1461,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -649,6 +1022,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -705,6 +1090,65 @@
           "dimension": 1.018403,
           "solidity": 0.836128,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1461,
+          "view": "front",
+          "shift": [
+            32,
+            0
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1461,
+              "shift": [
+                32,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1199,
+              "shift": [
+                17,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.076,
+              "shift": [
+                -349,
+                19
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0742,
+              "shift": [
+                145,
+                32
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -723,7 +1167,10 @@
         "solidity": 0.943587,
         "p90": 28.4661,
         "flatShare": 0.0547,
-        "albedoCv": 0.321811
+        "albedoCv": 0.321811,
+        "repetition": 0.1709,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -762,6 +1209,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -818,6 +1277,65 @@
           "dimension": 1.011929,
           "solidity": 0.943587,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1709,
+          "view": "right",
+          "shift": [
+            -20,
+            2
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1369,
+              "shift": [
+                23,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1709,
+              "shift": [
+                -20,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0663,
+              "shift": [
+                -25,
+                40
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0626,
+              "shift": [
+                27,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -836,7 +1354,10 @@
         "solidity": 0.968251,
         "p90": 31.7515,
         "flatShare": 0.043,
-        "albedoCv": 0.259966
+        "albedoCv": 0.259966,
+        "repetition": 0.1424,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -875,6 +1396,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -931,6 +1464,65 @@
           "dimension": 1.010159,
           "solidity": 0.968251,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1424,
+          "view": "front",
+          "shift": [
+            297,
+            6
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1424,
+              "shift": [
+                297,
+                6
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1155,
+              "shift": [
+                16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0486,
+              "shift": [
+                292,
+                110
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0997,
+              "shift": [
+                30,
+                5
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -949,7 +1541,10 @@
         "solidity": 0.949438,
         "p90": 48.3616,
         "flatShare": 0.0193,
-        "albedoCv": 0.146461
+        "albedoCv": 0.146461,
+        "repetition": 0.114,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -988,6 +1583,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -1044,6 +1651,65 @@
           "dimension": 1.01301,
           "solidity": 0.949438,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.114,
+          "view": "front",
+          "shift": [
+            -16,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.114,
+              "shift": [
+                -16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0684,
+              "shift": [
+                27,
+                3
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0395,
+              "shift": [
+                356,
+                8
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.078,
+              "shift": [
+                18,
+                3
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -1062,7 +1728,10 @@
         "solidity": 0.957891,
         "p90": 41.8282,
         "flatShare": 0.0776,
-        "albedoCv": 0.245014
+        "albedoCv": 0.245014,
+        "repetition": 0.1256,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -1101,6 +1770,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -1157,6 +1838,65 @@
           "dimension": 1.013105,
           "solidity": 0.957891,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1256,
+          "view": "front",
+          "shift": [
+            -16,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1256,
+              "shift": [
+                -16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0866,
+              "shift": [
+                26,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0676,
+              "shift": [
+                -22,
+                6
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0834,
+              "shift": [
+                -23,
+                5
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -1175,7 +1915,10 @@
         "solidity": 0.465152,
         "p90": 16.5501,
         "flatShare": 0.2153,
-        "albedoCv": 0.244988
+        "albedoCv": 0.244988,
+        "repetition": 0.2763,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -1260,6 +2003,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 6,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 6,
+          "ks": null,
+          "failure": "6 sizes, fewer than the 50 a fit needs"
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -1315,6 +2070,65 @@
           "dimension": 1.018562,
           "solidity": 0.465152,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.2763,
+          "view": "front",
+          "shift": [
+            -156,
+            4
+          ],
+          "views": {
+            "front": {
+              "peak": 0.2763,
+              "shift": [
+                -156,
+                4
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.2331,
+              "shift": [
+                181,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1209,
+              "shift": [
+                317,
+                9
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.085,
+              "shift": [
+                250,
+                26
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -1333,7 +2147,10 @@
         "solidity": 0.856307,
         "p90": 39.1879,
         "flatShare": 0.022,
-        "albedoCv": 0.320889
+        "albedoCv": 0.320889,
+        "repetition": 0.0904,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -1372,6 +2189,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -1428,6 +2257,65 @@
           "dimension": 1.012615,
           "solidity": 0.856307,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.0904,
+          "view": "front",
+          "shift": [
+            -334,
+            13
+          ],
+          "views": {
+            "front": {
+              "peak": 0.0904,
+              "shift": [
+                -334,
+                13
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0447,
+              "shift": [
+                -35,
+                71
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0774,
+              "shift": [
+                316,
+                5
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0511,
+              "shift": [
+                -31,
+                34
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -1446,7 +2334,10 @@
         "solidity": 0.633611,
         "p90": 40.8014,
         "flatShare": 0.146,
-        "albedoCv": 0.175658
+        "albedoCv": 0.175658,
+        "repetition": 0.3831,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -1485,6 +2376,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -1541,6 +2444,65 @@
           "dimension": 1.017882,
           "solidity": 0.633611,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.3831,
+          "view": "front",
+          "shift": [
+            0,
+            22
+          ],
+          "views": {
+            "front": {
+              "peak": 0.3831,
+              "shift": [
+                0,
+                22
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.3743,
+              "shift": [
+                0,
+                17
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1403,
+              "shift": [
+                -30,
+                24
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.3068,
+              "shift": [
+                1,
+                18
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -1559,7 +2521,10 @@
         "solidity": 0.775469,
         "p90": 48.9582,
         "flatShare": 0.0933,
-        "albedoCv": 0.268243
+        "albedoCv": 0.268243,
+        "repetition": 0.7418,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -1598,6 +2563,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -1654,6 +2631,65 @@
           "dimension": 1.040573,
           "solidity": 0.775469,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.7418,
+          "view": "top",
+          "shift": [
+            17,
+            0
+          ],
+          "views": {
+            "front": {
+              "peak": 0.7112,
+              "shift": [
+                17,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0591,
+              "shift": [
+                -6,
+                15
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.7418,
+              "shift": [
+                17,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.6797,
+              "shift": [
+                15,
+                8
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -1672,7 +2708,10 @@
         "solidity": 0.532567,
         "p90": 68.0187,
         "flatShare": 0.0264,
-        "albedoCv": 0.324578
+        "albedoCv": 0.324578,
+        "repetition": 0.2859,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -1711,6 +2750,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -1767,6 +2818,65 @@
           "dimension": 1.069328,
           "solidity": 0.532567,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.2859,
+          "view": "front",
+          "shift": [
+            -16,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.2859,
+              "shift": [
+                -16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0982,
+              "shift": [
+                -4,
+                49
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.2355,
+              "shift": [
+                16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.2758,
+              "shift": [
+                15,
+                6
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -1785,7 +2895,10 @@
         "solidity": 0.142293,
         "p90": 54.6521,
         "flatShare": 0.0818,
-        "albedoCv": 0.291396
+        "albedoCv": 0.291396,
+        "repetition": 0.3025,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -1843,6 +2956,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 3,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 3,
+          "ks": null,
+          "failure": "3 sizes, fewer than the 50 a fit needs"
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -1898,6 +3023,65 @@
           "dimension": 1.15711,
           "solidity": 0.142293,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.3025,
+          "view": "right",
+          "shift": [
+            16,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1938,
+              "shift": [
+                -292,
+                4
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.3025,
+              "shift": [
+                16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.2044,
+              "shift": [
+                -1,
+                16
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.1864,
+              "shift": [
+                -14,
+                8
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -1916,7 +3100,10 @@
         "solidity": 0.174721,
         "p90": 95.6354,
         "flatShare": 0.0002,
-        "albedoCv": 0.170743
+        "albedoCv": 0.170743,
+        "repetition": 0.2158,
+        "sizeExponentLow": -2.6506,
+        "sizeExponentHigh": -2.6506
       },
       "natural": {
         "surfaceRoughness": {
@@ -1984,6 +3171,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 49200,
+          "unmeasured": 0,
+          "exponent": -2.6506,
+          "xMin": 0.09289145,
+          "xMax": 1.11675,
+          "tail": 301,
+          "ks": 0.1404,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -2039,6 +3238,65 @@
           "dimension": 1.573134,
           "solidity": 0.174721,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.2158,
+          "view": "top",
+          "shift": [
+            159,
+            0
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1773,
+              "shift": [
+                159,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0999,
+              "shift": [
+                6,
+                29
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.2158,
+              "shift": [
+                159,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0799,
+              "shift": [
+                106,
+                54
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -2057,7 +3315,10 @@
         "solidity": 0.270114,
         "p90": 95.1783,
         "flatShare": 0.3298,
-        "albedoCv": 0.197016
+        "albedoCv": 0.197016,
+        "repetition": 0.1856,
+        "sizeExponentLow": -1.5208,
+        "sizeExponentHigh": -1.5208
       },
       "natural": {
         "surfaceRoughness": {
@@ -2151,6 +3412,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 19432,
+          "unmeasured": 0,
+          "exponent": -1.5208,
+          "xMin": 0.5835998,
+          "xMax": 1.850293,
+          "tail": 98,
+          "ks": 0.0846,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -2206,6 +3479,65 @@
           "dimension": 1.469664,
           "solidity": 0.270114,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1856,
+          "view": "right",
+          "shift": [
+            1,
+            16
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1639,
+              "shift": [
+                1,
+                16
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1856,
+              "shift": [
+                1,
+                16
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1303,
+              "shift": [
+                338,
+                11
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.1244,
+              "shift": [
+                1,
+                16
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -2224,7 +3556,10 @@
         "solidity": 0.166976,
         "p90": 113.5845,
         "flatShare": 0.0071,
-        "albedoCv": 0.17751
+        "albedoCv": 0.17751,
+        "repetition": 0.1572,
+        "sizeExponentLow": -5.4396,
+        "sizeExponentHigh": -5.4396
       },
       "natural": {
         "surfaceRoughness": {
@@ -2292,6 +3627,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 25475,
+          "unmeasured": 0,
+          "exponent": -5.4396,
+          "xMin": 0.03600335,
+          "xMax": 1.16591,
+          "tail": 6804,
+          "ks": 0.0512,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -2347,6 +3694,65 @@
           "dimension": 1.649446,
           "solidity": 0.166976,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1572,
+          "view": "top",
+          "shift": [
+            163,
+            10
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1403,
+              "shift": [
+                312,
+                50
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1086,
+              "shift": [
+                -1,
+                25
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1572,
+              "shift": [
+                163,
+                10
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0826,
+              "shift": [
+                191,
+                126
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -2365,7 +3771,10 @@
         "solidity": 0.314936,
         "p90": 108.6607,
         "flatShare": 0.0447,
-        "albedoCv": 0.243567
+        "albedoCv": 0.243567,
+        "repetition": 0.3054,
+        "sizeExponentLow": -5.263,
+        "sizeExponentHigh": -5.263
       },
       "natural": {
         "surfaceRoughness": {
@@ -2414,6 +3823,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 117,
+          "unmeasured": 0,
+          "exponent": -5.263,
+          "xMin": 0.2291791,
+          "xMax": 2.539577,
+          "tail": 66,
+          "ks": 0.0825,
+          "failure": null
         },
         "silhouettes": {
           "size": 1024,
@@ -2470,6 +3891,65 @@
           "dimension": 1.283275,
           "solidity": 0.314936,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.3054,
+          "view": "right",
+          "shift": [
+            0,
+            17
+          ],
+          "views": {
+            "front": {
+              "peak": 0.2202,
+              "shift": [
+                1,
+                25
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.3054,
+              "shift": [
+                0,
+                17
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0725,
+              "shift": [
+                -24,
+                3
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.2149,
+              "shift": [
+                1,
+                16
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -2488,7 +3968,10 @@
         "solidity": 0.48375,
         "p90": 110.0906,
         "flatShare": 0.0339,
-        "albedoCv": 0.28274
+        "albedoCv": 0.28274,
+        "repetition": 0.1813,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -2527,6 +4010,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -2583,6 +4078,65 @@
           "dimension": 1.212979,
           "solidity": 0.48375,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1813,
+          "view": "right",
+          "shift": [
+            1,
+            29
+          ],
+          "views": {
+            "front": {
+              "peak": 0.0943,
+              "shift": [
+                2,
+                77
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1813,
+              "shift": [
+                1,
+                29
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0807,
+              "shift": [
+                -24,
+                41
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0944,
+              "shift": [
+                4,
+                25
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -2601,7 +4155,10 @@
         "solidity": 0.881755,
         "p90": 51.889,
         "flatShare": 0.1143,
-        "albedoCv": 0.291578
+        "albedoCv": 0.291578,
+        "repetition": 0.1609,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -2640,6 +4197,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -2696,6 +4265,65 @@
           "dimension": 1.026483,
           "solidity": 0.881755,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1609,
+          "view": "right",
+          "shift": [
+            -356,
+            4
+          ],
+          "views": {
+            "front": {
+              "peak": 0.137,
+              "shift": [
+                17,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1609,
+              "shift": [
+                -356,
+                4
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0528,
+              "shift": [
+                -30,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.05,
+              "shift": [
+                -77,
+                47
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -2714,7 +4342,10 @@
         "solidity": 0.930773,
         "p90": 34.3851,
         "flatShare": 0.1794,
-        "albedoCv": 0.209209
+        "albedoCv": 0.209209,
+        "repetition": 0.3213,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -2753,6 +4384,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -2809,6 +4452,65 @@
           "dimension": 1.013954,
           "solidity": 0.930773,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.3213,
+          "view": "right",
+          "shift": [
+            17,
+            0
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1254,
+              "shift": [
+                -310,
+                6
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.3213,
+              "shift": [
+                17,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0398,
+              "shift": [
+                2,
+                30
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0542,
+              "shift": [
+                -32,
+                24
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -2827,7 +4529,10 @@
         "solidity": 0.383217,
         "p90": 92.6694,
         "flatShare": 0.0063,
-        "albedoCv": 0.268205
+        "albedoCv": 0.268205,
+        "repetition": 0.0924,
+        "sizeExponentLow": -2.6078,
+        "sizeExponentHigh": -2.6078
       },
       "natural": {
         "surfaceRoughness": {
@@ -2885,6 +4590,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 4850,
+          "unmeasured": 0,
+          "exponent": -2.6078,
+          "xMin": 0.2825286,
+          "xMax": 1.924276,
+          "tail": 98,
+          "ks": 0.0764,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -2940,6 +4657,65 @@
           "dimension": 1.454525,
           "solidity": 0.383217,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.0924,
+          "view": "top",
+          "shift": [
+            51,
+            326
+          ],
+          "views": {
+            "front": {
+              "peak": 0.0491,
+              "shift": [
+                -20,
+                7
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0667,
+              "shift": [
+                309,
+                26
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0924,
+              "shift": [
+                51,
+                326
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0494,
+              "shift": [
+                -82,
+                52
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -2958,7 +4734,10 @@
         "solidity": 0.292991,
         "p90": 35.6421,
         "flatShare": 0.1372,
-        "albedoCv": 0.135806
+        "albedoCv": 0.135806,
+        "repetition": 0.1605,
+        "sizeExponentLow": -4.4857,
+        "sizeExponentHigh": -4.4857
       },
       "natural": {
         "surfaceRoughness": {
@@ -3025,6 +4804,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 53,
+          "unmeasured": 0,
+          "exponent": -4.4857,
+          "xMin": 0.3204597,
+          "xMax": 0.6869479,
+          "tail": 50,
+          "ks": 0.09,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -3080,6 +4871,65 @@
           "dimension": 1.176369,
           "solidity": 0.292991,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1605,
+          "view": "front",
+          "shift": [
+            212,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1605,
+              "shift": [
+                212,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1582,
+              "shift": [
+                -228,
+                29
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1456,
+              "shift": [
+                -220,
+                221
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0692,
+              "shift": [
+                181,
+                53
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -3098,7 +4948,10 @@
         "solidity": 0.149367,
         "p90": 128.3002,
         "flatShare": 0.0022,
-        "albedoCv": 0.305357
+        "albedoCv": 0.305357,
+        "repetition": 0.1592,
+        "sizeExponentLow": -2.9006,
+        "sizeExponentHigh": -2.9006
       },
       "natural": {
         "surfaceRoughness": {
@@ -3156,6 +5009,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 17022,
+          "unmeasured": 0,
+          "exponent": -2.9006,
+          "xMin": 0.1161909,
+          "xMax": 0.4060305,
+          "tail": 126,
+          "ks": 0.0547,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -3211,6 +5076,65 @@
           "dimension": 1.487833,
           "solidity": 0.149367,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1592,
+          "view": "front",
+          "shift": [
+            -16,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1592,
+              "shift": [
+                -16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1574,
+              "shift": [
+                20,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1105,
+              "shift": [
+                -319,
+                5
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.09,
+              "shift": [
+                49,
+                19
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -3229,7 +5153,10 @@
         "solidity": 0.110458,
         "p90": 15.9547,
         "flatShare": 0.5701,
-        "albedoCv": 0.56919
+        "albedoCv": 0.56919,
+        "repetition": 0.4759,
+        "sizeExponentLow": -4.218,
+        "sizeExponentHigh": -4.218
       },
       "natural": {
         "surfaceRoughness": {
@@ -3314,6 +5241,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 99,
+          "unmeasured": 0,
+          "exponent": -4.218,
+          "xMin": 0.03606598,
+          "xMax": 0.2038372,
+          "tail": 60,
+          "ks": 0.1046,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -3369,6 +5308,65 @@
           "dimension": 1.322466,
           "solidity": 0.110458,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.4759,
+          "view": "top",
+          "shift": [
+            -81,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1974,
+              "shift": [
+                80,
+                8
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.2513,
+              "shift": [
+                1,
+                16
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.4759,
+              "shift": [
+                -81,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.1554,
+              "shift": [
+                54,
+                31
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -3387,7 +5385,10 @@
         "solidity": 0.099254,
         "p90": 73.4883,
         "flatShare": 0.3037,
-        "albedoCv": 0.340684
+        "albedoCv": 0.340684,
+        "repetition": 0.1071,
+        "sizeExponentLow": -3.302,
+        "sizeExponentHigh": -3.302
       },
       "natural": {
         "surfaceRoughness": {
@@ -3472,6 +5473,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 438,
+          "unmeasured": 0,
+          "exponent": -3.302,
+          "xMin": 0.02831485,
+          "xMax": 0.3776518,
+          "tail": 296,
+          "ks": 0.1258,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -3527,6 +5540,65 @@
           "dimension": 1.373085,
           "solidity": 0.099254,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1071,
+          "view": "top",
+          "shift": [
+            344,
+            32
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1012,
+              "shift": [
+                -289,
+                74
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0687,
+              "shift": [
+                -15,
+                71
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1071,
+              "shift": [
+                344,
+                32
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0818,
+              "shift": [
+                71,
+                48
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -3545,7 +5617,10 @@
         "solidity": 0.333468,
         "p90": 95.8613,
         "flatShare": 0.0139,
-        "albedoCv": 0.490997
+        "albedoCv": 0.490997,
+        "repetition": 0.077,
+        "sizeExponentLow": -3.3805,
+        "sizeExponentHigh": -3.3805
       },
       "natural": {
         "surfaceRoughness": {
@@ -3639,6 +5714,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 41573,
+          "unmeasured": 0,
+          "exponent": -3.3805,
+          "xMin": 0.3987695,
+          "xMax": 1.209446,
+          "tail": 154,
+          "ks": 0.0493,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -3694,6 +5781,65 @@
           "dimension": 1.585111,
           "solidity": 0.333468,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.077,
+          "view": "right",
+          "shift": [
+            3,
+            16
+          ],
+          "views": {
+            "front": {
+              "peak": 0.0665,
+              "shift": [
+                -151,
+                16
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.077,
+              "shift": [
+                3,
+                16
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0732,
+              "shift": [
+                -279,
+                15
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0481,
+              "shift": [
+                46,
+                9
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -3712,7 +5858,10 @@
         "solidity": 0.092283,
         "p90": 84.5724,
         "flatShare": 0.0037,
-        "albedoCv": 0.247882
+        "albedoCv": 0.247882,
+        "repetition": 0.3121,
+        "sizeExponentLow": -1.8786,
+        "sizeExponentHigh": -1.8786
       },
       "natural": {
         "surfaceRoughness": {
@@ -3751,6 +5900,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1440,
+          "unmeasured": 0,
+          "exponent": -1.8786,
+          "xMin": 0.0084934,
+          "xMax": 0.362905,
+          "tail": 583,
+          "ks": 0.0802,
+          "failure": null
         },
         "silhouettes": {
           "size": 1024,
@@ -3807,6 +5968,65 @@
           "dimension": 1.336052,
           "solidity": 0.092283,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.3121,
+          "view": "top",
+          "shift": [
+            -349,
+            2
+          ],
+          "views": {
+            "front": {
+              "peak": 0.2318,
+              "shift": [
+                334,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1575,
+              "shift": [
+                -1,
+                20
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.3121,
+              "shift": [
+                -349,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.1725,
+              "shift": [
+                187,
+                95
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -3825,7 +6045,10 @@
         "solidity": 0.087122,
         "p90": 78.1432,
         "flatShare": 0.0027,
-        "albedoCv": 0.226776
+        "albedoCv": 0.226776,
+        "repetition": 0.1285,
+        "sizeExponentLow": -4.2323,
+        "sizeExponentHigh": -4.2323
       },
       "natural": {
         "surfaceRoughness": {
@@ -3892,6 +6115,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 416,
+          "unmeasured": 0,
+          "exponent": -4.2323,
+          "xMin": 0.1608372,
+          "xMax": 1.640301,
+          "tail": 350,
+          "ks": 0.1291,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -3947,6 +6182,65 @@
           "dimension": 1.40346,
           "solidity": 0.087122,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1285,
+          "view": "top",
+          "shift": [
+            359,
+            2
+          ],
+          "views": {
+            "front": {
+              "peak": 0.127,
+              "shift": [
+                229,
+                14
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0753,
+              "shift": [
+                -20,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1285,
+              "shift": [
+                359,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0846,
+              "shift": [
+                93,
+                51
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -3965,7 +6259,10 @@
         "solidity": 0.070905,
         "p90": 65.1469,
         "flatShare": 0.0522,
-        "albedoCv": 0.183852
+        "albedoCv": 0.183852,
+        "repetition": 0.1929,
+        "sizeExponentLow": -2.0581,
+        "sizeExponentHigh": -2.0581
       },
       "natural": {
         "surfaceRoughness": {
@@ -4032,6 +6329,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 165,
+          "unmeasured": 0,
+          "exponent": -2.0581,
+          "xMin": 0.02757796,
+          "xMax": 0.3787094,
+          "tail": 103,
+          "ks": 0.0604,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -4087,6 +6396,65 @@
           "dimension": 1.301155,
           "solidity": 0.070905,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1929,
+          "view": "right",
+          "shift": [
+            -1,
+            16
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1212,
+              "shift": [
+                120,
+                12
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1929,
+              "shift": [
+                -1,
+                16
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1374,
+              "shift": [
+                242,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.1457,
+              "shift": [
+                260,
+                152
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -4105,7 +6473,10 @@
         "solidity": 0.202872,
         "p90": 95.6551,
         "flatShare": 0.0039,
-        "albedoCv": 0.207588
+        "albedoCv": 0.207588,
+        "repetition": 0.1465,
+        "sizeExponentLow": -4.4726,
+        "sizeExponentHigh": -4.4726
       },
       "natural": {
         "surfaceRoughness": {
@@ -4144,6 +6515,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 528,
+          "unmeasured": 0,
+          "exponent": -4.4726,
+          "xMin": 0.01843366,
+          "xMax": 0.205271,
+          "tail": 479,
+          "ks": 0.1138,
+          "failure": null
         },
         "silhouettes": {
           "size": 1024,
@@ -4200,6 +6583,65 @@
           "dimension": 1.481882,
           "solidity": 0.202872,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1465,
+          "view": "front",
+          "shift": [
+            128,
+            3
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1465,
+              "shift": [
+                128,
+                3
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0629,
+              "shift": [
+                0,
+                17
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1381,
+              "shift": [
+                -128,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0464,
+              "shift": [
+                236,
+                117
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -4218,7 +6660,10 @@
         "solidity": 0.123659,
         "p90": 16.8296,
         "flatShare": 0.2798,
-        "albedoCv": 0.342237
+        "albedoCv": 0.342237,
+        "repetition": 0.466,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -4294,6 +6739,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 30,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 30,
+          "ks": null,
+          "failure": "30 sizes, fewer than the 50 a fit needs"
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -4349,6 +6806,65 @@
           "dimension": 1.156966,
           "solidity": 0.123659,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.466,
+          "view": "right",
+          "shift": [
+            -16,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.4603,
+              "shift": [
+                100,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.466,
+              "shift": [
+                -16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.2029,
+              "shift": [
+                196,
+                3
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.1724,
+              "shift": [
+                282,
+                131
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -4367,7 +6883,10 @@
         "solidity": 0.393922,
         "p90": 76.9995,
         "flatShare": 0.4585,
-        "albedoCv": 0.659136
+        "albedoCv": 0.659136,
+        "repetition": 0.1092,
+        "sizeExponentLow": -2.7739,
+        "sizeExponentHigh": -2.7739
       },
       "natural": {
         "surfaceRoughness": {
@@ -4443,6 +6962,18 @@
           ],
           "untexturedShare": 0
         },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 3818,
+          "unmeasured": 0,
+          "exponent": -2.7739,
+          "xMin": 0.09425898,
+          "xMax": 0.5220016,
+          "tail": 276,
+          "ks": 0.0485,
+          "failure": null
+        },
         "silhouettes": {
           "size": 1024,
           "views": {
@@ -4498,6 +7029,65 @@
           "dimension": 1.29493,
           "solidity": 0.393922,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1092,
+          "view": "top",
+          "shift": [
+            196,
+            7
+          ],
+          "views": {
+            "front": {
+              "peak": 0.099,
+              "shift": [
+                315,
+                10
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0726,
+              "shift": [
+                5,
+                37
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1092,
+              "shift": [
+                196,
+                7
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0834,
+              "shift": [
+                20,
+                17
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -4508,15 +7098,25 @@
       "classes": [
         "rock"
       ],
+      "measures": [
+        "dimension",
+        "solidity",
+        "p90",
+        "flatShare",
+        "albedoCv"
+      ],
       "source": "test/judge/natural_fixtures.py: UV sphere, 128 x 64 segments, with a single-colour texture",
       "licence": "generated",
-      "setSha256": "7d22e553c1181ccccf58a95ac60f3100348b7ab71aaa3ea6d82b170de185e24d",
+      "setSha256": "9967d1f6c876de7a33fd97b7fcf5c1f6ba780e42a092da36b3f892b440add52e",
       "values": {
         "dimension": 0.99872,
         "solidity": 0.997611,
         "p90": 0.8817,
         "flatShare": 1,
-        "albedoCv": 0
+        "albedoCv": 0,
+        "repetition": 0.3092,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -4555,6 +7155,18 @@
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -4611,6 +7223,65 @@
           "dimension": 0.99872,
           "solidity": 0.997611,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.3092,
+          "view": "top",
+          "shift": [
+            16,
+            4
+          ],
+          "views": {
+            "front": {
+              "peak": 0.2994,
+              "shift": [
+                16,
+                4
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.2985,
+              "shift": [
+                16,
+                4
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.3092,
+              "shift": [
+                16,
+                4
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.2598,
+              "shift": [
+                16,
+                4
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -4621,6 +7292,13 @@
       "classes": [
         "rock"
       ],
+      "measures": [
+        "dimension",
+        "solidity",
+        "p90",
+        "flatShare",
+        "albedoCv"
+      ],
       "source": "test/judge/natural_fixtures.py: ico sphere (5 subdivisions) displaced by Clouds (size 0.4, strength 0.25), scaled (1, 0.8, 0.6)",
       "licence": "generated",
       "setSha256": "f89d7b894e9bbb245f749c25fe477e1dbd186cf86623102d1bf345d21aebdae0",
@@ -4629,7 +7307,10 @@
         "solidity": 0.983246,
         "p90": 9.3526,
         "flatShare": 0.2898,
-        "albedoCv": null
+        "albedoCv": null,
+        "repetition": 0.2082,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -4657,6 +7338,18 @@
           "mean": null,
           "images": [],
           "untexturedShare": 1
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -4713,6 +7406,65 @@
           "dimension": 1.002524,
           "solidity": 0.983246,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.2082,
+          "view": "front",
+          "shift": [
+            -16,
+            1
+          ],
+          "views": {
+            "front": {
+              "peak": 0.2082,
+              "shift": [
+                -16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1109,
+              "shift": [
+                16,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0844,
+              "shift": [
+                155,
+                230
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0753,
+              "shift": [
+                128,
+                162
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -4723,6 +7475,13 @@
       "classes": [
         "rock"
       ],
+      "measures": [
+        "dimension",
+        "solidity",
+        "p90",
+        "flatShare",
+        "albedoCv"
+      ],
       "source": "test/judge/natural_fixtures.py: ico sphere (1 subdivision), vertices jittered by up to 15 %, scaled (1, 0.75, 0.55)",
       "licence": "generated",
       "setSha256": "32ab5d37c65710f22664cb86f4a62a4f2c42ef0c42a2b898036e390692d72339",
@@ -4731,7 +7490,10 @@
         "solidity": 0.996079,
         "p90": 0,
         "flatShare": 1,
-        "albedoCv": null
+        "albedoCv": null,
+        "repetition": 0.2156,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -4759,6 +7521,18 @@
           "mean": null,
           "images": [],
           "untexturedShare": 1
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -4815,6 +7589,65 @@
           "dimension": 1.000185,
           "solidity": 0.996079,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.2156,
+          "view": "front",
+          "shift": [
+            17,
+            0
+          ],
+          "views": {
+            "front": {
+              "peak": 0.2156,
+              "shift": [
+                17,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1857,
+              "shift": [
+                16,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1278,
+              "shift": [
+                25,
+                36
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.1451,
+              "shift": [
+                -22,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -4826,6 +7659,13 @@
         "tree",
         "plant"
       ],
+      "measures": [
+        "dimension",
+        "solidity",
+        "p90",
+        "flatShare",
+        "albedoCv"
+      ],
       "source": "test/judge/natural_fixtures.py: three-level tree of 40 tapered cylinders",
       "licence": "generated",
       "setSha256": "bcd841e4812e24c84eb71e5afee9d83740fe737b6582f65791a997adc7ccf404",
@@ -4834,7 +7674,10 @@
         "solidity": 0.236564,
         "p90": 105.5112,
         "flatShare": 0.4763,
-        "albedoCv": null
+        "albedoCv": null,
+        "repetition": 0.425,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -4862,6 +7705,18 @@
           "mean": null,
           "images": [],
           "untexturedShare": 1
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 40,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 40,
+          "ks": null,
+          "failure": "40 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -4918,6 +7773,1754 @@
           "dimension": 1.226624,
           "solidity": 0.236564,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.425,
+          "view": "front",
+          "shift": [
+            0,
+            28
+          ],
+          "views": {
+            "front": {
+              "peak": 0.425,
+              "shift": [
+                0,
+                28
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.3883,
+              "shift": [
+                0,
+                25
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.2518,
+              "shift": [
+                -13,
+                22
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.2792,
+              "shift": [
+                0,
+                17
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "tiled-plane",
+      "kind": "stand-in",
+      "classes": [
+        "rock",
+        "tree",
+        "plant"
+      ],
+      "measures": [
+        "repetition"
+      ],
+      "source": "test/judge/natural_sets_fixtures.py: 2 m plane with a value-noise texture tiled 4 x 4",
+      "licence": "generated",
+      "setSha256": "d165175332fc497a6fc651aa4084ed7864a5349e514b0cab154a0018ee6c5153",
+      "values": {
+        "dimension": null,
+        "solidity": null,
+        "p90": 0,
+        "flatShare": 1,
+        "albedoCv": 0.169249,
+        "repetition": 0.9645,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 1,
+          "lowestP90": 0,
+          "highestFlatShare": 1,
+          "items": [
+            {
+              "object": "TiledPlane",
+              "faces": 2,
+              "samples": 4096,
+              "radius": 0.0625,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": 0.169249,
+          "texels": 262144,
+          "mean": 0.556363,
+          "images": [
+            {
+              "image": "TiledPlane-colour",
+              "size": [
+                512,
+                512
+              ],
+              "texels": 262144,
+              "mean": 0.556363,
+              "cv": 0.169249
+            }
+          ],
+          "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": null,
+              "boxCounts": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "edgePixels": 0,
+              "solidity": null,
+              "area": 0,
+              "hullArea": 0,
+              "sha256": "87658cfaf8e619d7f15fe7179e5874c38663d3254302928d9c1e7eaacee0a9f4"
+            },
+            "right": {
+              "dimension": null,
+              "boxCounts": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "edgePixels": 0,
+              "solidity": null,
+              "area": 0,
+              "hullArea": 0,
+              "sha256": "87658cfaf8e619d7f15fe7179e5874c38663d3254302928d9c1e7eaacee0a9f4"
+            },
+            "top": {
+              "dimension": 0.99872,
+              "boxCounts": [
+                1734,
+                867,
+                433.5,
+                216.5,
+                108.5,
+                54.5
+              ],
+              "edgePixels": 3468,
+              "solidity": 1,
+              "area": 753424,
+              "hullArea": 753424,
+              "sha256": "c1ebeb1bf5f048378c28f38ca96b90a455b19b5ab13b9f892dd9d30b8f3b183f"
+            }
+          },
+          "dimension": null,
+          "solidity": null,
+          "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.9645,
+          "view": "front",
+          "shift": [
+            0,
+            17
+          ],
+          "views": {
+            "front": {
+              "peak": 0.9645,
+              "shift": [
+                0,
+                17
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.9645,
+              "shift": [
+                0,
+                17
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.8911,
+              "shift": [
+                0,
+                108
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.1665,
+              "shift": [
+                105,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "copies-identical",
+      "kind": "stand-in",
+      "classes": [
+        "rock",
+        "tree",
+        "plant"
+      ],
+      "measures": [
+        "repetition"
+      ],
+      "source": "test/judge/natural_sets_fixtures.py: 100 copies of one pebble in a 10 x 10 grid, same scale and rotation",
+      "licence": "generated",
+      "setSha256": "92930f12bc3a2ea326f245b84212febbaa0e9804423a3d66e6af24953030f2e5",
+      "values": {
+        "dimension": 0.953036,
+        "solidity": 0.123769,
+        "p90": 0,
+        "flatShare": 1,
+        "albedoCv": null,
+        "repetition": 0.9943,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 100,
+          "lowestP90": 0,
+          "highestFlatShare": 1,
+          "items": [
+            {
+              "object": "Pebble.000",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.001",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.002",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.003",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.004",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.005",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.006",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.007",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.008",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.009",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.010",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.011",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.012",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.013",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.014",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.015",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.016",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.017",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.018",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.019",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.020",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.021",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.022",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.023",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.024",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.025",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.026",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.027",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.028",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.029",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.030",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.031",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.032",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.033",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.034",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.035",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.036",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.037",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.038",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.039",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.040",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.041",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.042",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.043",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.044",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.045",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.046",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.047",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.048",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.049",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.050",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.051",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.052",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.053",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.054",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.055",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.056",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.057",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.058",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.059",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.060",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.061",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.062",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Pebble.063",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.041261,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": null,
+          "texels": 0,
+          "mean": null,
+          "images": [],
+          "untexturedShare": 1
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 100,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 100,
+          "ks": null,
+          "failure": "the sizes are all the same, so no power law fits"
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 0.987899,
+              "boxCounts": [
+                579.75,
+                289.0625,
+                143.1875,
+                67.296875,
+                34.90625,
+                19.859375
+              ],
+              "edgePixels": 1160,
+              "solidity": 0.38069,
+              "area": 6557,
+              "hullArea": 17224,
+              "sha256": "5430c4e2be242b61a5c9da155de21460eb8c0ef829bb15bbe9a40ba5af71f299"
+            },
+            "right": {
+              "dimension": 0.953036,
+              "boxCounts": [
+                459.75,
+                229.4375,
+                114.078125,
+                53.828125,
+                27.8125,
+                18.59375
+              ],
+              "edgePixels": 920,
+              "solidity": 0.278076,
+              "area": 4738,
+              "hullArea": 17038.5,
+              "sha256": "fae6284a65de33dcd1eec2e6a7d1d5ee16e1eec33e2decaf4efa35241cde1c74"
+            },
+            "top": {
+              "dimension": 1.017783,
+              "boxCounts": [
+                6609,
+                3301.375,
+                1644.234375,
+                794.359375,
+                379.71875,
+                200.53125
+              ],
+              "edgePixels": 13218,
+              "solidity": 0.123769,
+              "area": 91937,
+              "hullArea": 742809.5,
+              "sha256": "69f3ebe6ab807f7a7d3763244d5cd68fc1a97eaecf925085a3b528308fe070be"
+            }
+          },
+          "dimension": 0.953036,
+          "solidity": 0.123769,
+          "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.9943,
+          "view": "front",
+          "shift": [
+            46,
+            0
+          ],
+          "views": {
+            "front": {
+              "peak": 0.9943,
+              "shift": [
+                46,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.9838,
+              "shift": [
+                46,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.9913,
+              "shift": [
+                46,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.1859,
+              "shift": [
+                46,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
+        }
+      },
+      "failure": null
+    },
+    {
+      "id": "sizes-uniform",
+      "kind": "stand-in",
+      "classes": [
+        "rock",
+        "tree",
+        "plant"
+      ],
+      "measures": [
+        "sizeExponentLow",
+        "sizeExponentHigh"
+      ],
+      "source": "test/judge/natural_sets_fixtures.py: 300 stones with diameters drawn uniformly from 0.1 to 1 m",
+      "licence": "generated",
+      "setSha256": "163059559839e84a7c0d0220ed2b1b63455279d4995fc54434f2a31d81d7d08a",
+      "values": {
+        "dimension": 0.984064,
+        "solidity": 0.044305,
+        "p90": 0,
+        "flatShare": 1,
+        "albedoCv": null,
+        "repetition": 0.7867,
+        "sizeExponentLow": -0.1656,
+        "sizeExponentHigh": -0.1656
+      },
+      "natural": {
+        "surfaceRoughness": {
+          "samplesPerObject": 4096,
+          "radiusDivisor": 32,
+          "flatDegrees": 3,
+          "objects": 300,
+          "lowestP90": 0,
+          "highestFlatShare": 1,
+          "items": [
+            {
+              "object": "Stone.000",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.013429,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.001",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.00873,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.002",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.005616,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.003",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.021496,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.004",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.016044,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.005",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.030903,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.006",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.027075,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.007",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.026665,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.008",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.004572,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.009",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.018744,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.010",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.02021,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.011",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.004535,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.012",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.01655,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.013",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.012394,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.014",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.009214,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.015",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.025541,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.016",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.014963,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.017",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.006027,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.018",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.013505,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.019",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.028855,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.020",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.014082,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.021",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.008394,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.022",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.005002,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.023",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.01753,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.024",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.0219,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.025",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.014735,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.026",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.026984,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.027",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.017876,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.028",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.025553,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.029",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.01902,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.030",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.019741,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.031",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.014726,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.032",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.006211,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.033",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.022942,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.034",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.027267,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.035",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.023516,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.036",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.014925,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.037",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.005575,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.038",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.00835,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.039",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.018629,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.040",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.021655,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.041",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.003867,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.042",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.029645,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.043",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.023224,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.044",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.023442,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.045",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.030917,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.046",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.020586,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.047",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.016975,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.048",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.009436,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.049",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.022397,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.050",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.022794,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.051",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.02992,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.052",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.029393,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.053",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.016943,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.054",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.027103,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.055",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.03007,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.056",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.014846,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.057",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.020179,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.058",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.019817,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.059",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.016638,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.060",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.016317,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.061",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.009356,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.062",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.008401,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            },
+            {
+              "object": "Stone.063",
+              "faces": 80,
+              "samples": 4096,
+              "radius": 0.011798,
+              "p50": 0,
+              "p90": 0,
+              "flatShare": 1
+            }
+          ]
+        },
+        "albedoVariation": {
+          "cv": null,
+          "texels": 0,
+          "mean": null,
+          "images": [],
+          "untexturedShare": 1
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 300,
+          "unmeasured": 0,
+          "exponent": -0.1656,
+          "xMin": 0.1193972,
+          "xMax": 0.9985951,
+          "tail": 299,
+          "ks": 0.0413,
+          "failure": null
+        },
+        "silhouettes": {
+          "size": 1024,
+          "views": {
+            "front": {
+              "dimension": 0.984064,
+              "boxCounts": [
+                610.25,
+                300.9375,
+                148.015625,
+                71.078125,
+                41.734375,
+                19.515625
+              ],
+              "edgePixels": 1224,
+              "solidity": 0.26159,
+              "area": 4500,
+              "hullArea": 17202.5,
+              "sha256": "ba5424c49348fba4b76493330ab4613d7548015fea79d2698cb4bbaabc7d16db"
+            },
+            "right": {
+              "dimension": 0.992959,
+              "boxCounts": [
+                598.25,
+                295,
+                144.9375,
+                68.96875,
+                40.046875,
+                18.59375
+              ],
+              "edgePixels": 1199,
+              "solidity": 0.273136,
+              "area": 4433,
+              "hullArea": 16230,
+              "sha256": "fe76c758bf69ae2834e72f6c30e3458af1bb108180b04cb6d9919c7abb78f355"
+            },
+            "top": {
+              "dimension": 0.92731,
+              "boxCounts": [
+                5546.75,
+                2756.8125,
+                1377.53125,
+                750.765625,
+                500.453125,
+                193.796875
+              ],
+              "edgePixels": 11092,
+              "solidity": 0.044305,
+              "area": 30906,
+              "hullArea": 697580,
+              "sha256": "3fb00e8165272d779d5cd7b1428584f1bd0cf4638e967e8eb78aefa82b446af2"
+            }
+          },
+          "dimension": 0.984064,
+          "solidity": 0.044305,
+          "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.7867,
+          "view": "right",
+          "shift": [
+            75,
+            0
+          ],
+          "views": {
+            "front": {
+              "peak": 0.7024,
+              "shift": [
+                125,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.7867,
+              "shift": [
+                75,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.4033,
+              "shift": [
+                150,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.2479,
+              "shift": [
+                25,
+                0
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -4930,13 +9533,16 @@
       ],
       "source": "scripts/lib/natural-sources.ts: the rock of docs/examples/noise_terrain.py: billow, warped ridged Worley and fine fBm layers on a 6-subdivision ico sphere, base colour baked from the boulder stone material",
       "licence": "generated",
-      "setSha256": "02787872a5b13094cd8eab64becdfb2740368be5cc55c26f2d9dde816539dea2",
+      "setSha256": "d962f08212cfc4b6fd0a1f6ab124d7a7a139c2afeae54b47fa485db243c8db4d",
       "values": {
         "dimension": 1.00766,
         "solidity": 0.974859,
         "p90": 26.3235,
         "flatShare": 0.0237,
-        "albedoCv": 0.05409
+        "albedoCv": 0.035532,
+        "repetition": 0.1573,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -4959,9 +9565,9 @@
           ]
         },
         "albedoVariation": {
-          "cv": 0.05409,
+          "cv": 0.035532,
           "texels": 25838,
-          "mean": 0.572115,
+          "mean": 0.571379,
           "images": [
             {
               "image": "noise_rock_example_base_color",
@@ -4970,11 +9576,23 @@
                 512
               ],
               "texels": 25838,
-              "mean": 0.572115,
-              "cv": 0.05409
+              "mean": 0.571379,
+              "cv": 0.035532
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -5031,6 +9649,65 @@
           "dimension": 1.00766,
           "solidity": 0.974859,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1573,
+          "view": "top",
+          "shift": [
+            16,
+            3
+          ],
+          "views": {
+            "front": {
+              "peak": 0.131,
+              "shift": [
+                -267,
+                195
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1538,
+              "shift": [
+                -53,
+                267
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1573,
+              "shift": [
+                16,
+                3
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0723,
+              "shift": [
+                20,
+                3
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -5043,13 +9720,16 @@
       ],
       "source": "scripts/lib/natural-sources.ts: the example's first layer alone: billow perlin, 3 octaves",
       "licence": "generated",
-      "setSha256": "0bf55ae9e85dbef67d81b9fa6e2cd64c1e6e8a3b2d8defb3ee48e16a55d6516a",
+      "setSha256": "4fb3f4997f8ea17843fa4bf36c0f03ce3553cde42b5ba0fa4737d15c03235258",
       "values": {
         "dimension": 0.998998,
         "solidity": 0.993428,
         "p90": 5.1083,
         "flatShare": 0.72,
-        "albedoCv": 0.055912
+        "albedoCv": 0.037763,
+        "repetition": 0.3135,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -5072,9 +9752,9 @@
           ]
         },
         "albedoVariation": {
-          "cv": 0.055912,
+          "cv": 0.037763,
           "texels": 140117,
-          "mean": 0.572075,
+          "mean": 0.57126,
           "images": [
             {
               "image": "noise_rock_billow_base_color",
@@ -5083,11 +9763,23 @@
                 512
               ],
               "texels": 140117,
-              "mean": 0.572075,
-              "cv": 0.055912
+              "mean": 0.57126,
+              "cv": 0.037763
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -5144,6 +9836,65 @@
           "dimension": 0.998998,
           "solidity": 0.993428,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.3135,
+          "view": "right",
+          "shift": [
+            16,
+            2
+          ],
+          "views": {
+            "front": {
+              "peak": 0.2536,
+              "shift": [
+                15,
+                6
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.3135,
+              "shift": [
+                16,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.2743,
+              "shift": [
+                16,
+                4
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.2304,
+              "shift": [
+                16,
+                4
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -5156,13 +9907,16 @@
       ],
       "source": "scripts/lib/natural-sources.ts: one ridged Worley layer, 5 octaves",
       "licence": "generated",
-      "setSha256": "c6e3b859501385414f0991ad061e0be11513bfa90a71d76fd2853764381c15df",
+      "setSha256": "bc1e0175fb292e7f623c7fa98a4bad21a94143461812262897e41d111489f360",
       "values": {
         "dimension": 1.016626,
         "solidity": 0.960182,
         "p90": 40.8299,
         "flatShare": 0.0098,
-        "albedoCv": 0.064032
+        "albedoCv": 0.050041,
+        "repetition": 0.0777,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -5185,9 +9939,9 @@
           ]
         },
         "albedoVariation": {
-          "cv": 0.064032,
+          "cv": 0.050041,
           "texels": 2231,
-          "mean": 0.571866,
+          "mean": 0.57102,
           "images": [
             {
               "image": "noise_rock_ridged_base_color",
@@ -5196,11 +9950,23 @@
                 512
               ],
               "texels": 2231,
-              "mean": 0.571866,
-              "cv": 0.064032
+              "mean": 0.57102,
+              "cv": 0.050041
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -5257,6 +10023,65 @@
           "dimension": 1.016626,
           "solidity": 0.960182,
           "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.0777,
+          "view": "front",
+          "shift": [
+            299,
+            63
+          ],
+          "views": {
+            "front": {
+              "peak": 0.0777,
+              "shift": [
+                299,
+                63
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.0487,
+              "shift": [
+                20,
+                5
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.0654,
+              "shift": [
+                -266,
+                95
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.0545,
+              "shift": [
+                -17,
+                1
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
+          "failure": null
         }
       },
       "failure": null
@@ -5269,13 +10094,16 @@
       ],
       "source": "scripts/lib/natural-sources.ts: the example with a fourth, 8 cm fBm layer",
       "licence": "generated",
-      "setSha256": "592494be1692941b421cbb99f450e07e49ef729924dbe7d55f155406dd79f762",
+      "setSha256": "b89eb02d0829deb1a972555473d82a7b3ea550bf9cd73f43aafb19dd29b083fa",
       "values": {
         "dimension": 1.008384,
         "solidity": 0.974875,
         "p90": 26.9648,
         "flatShare": 0.0269,
-        "albedoCv": 0.053777
+        "albedoCv": 0.03526,
+        "repetition": 0.1515,
+        "sizeExponentLow": null,
+        "sizeExponentHigh": null
       },
       "natural": {
         "surfaceRoughness": {
@@ -5298,9 +10126,9 @@
           ]
         },
         "albedoVariation": {
-          "cv": 0.053777,
+          "cv": 0.03526,
           "texels": 22126,
-          "mean": 0.572116,
+          "mean": 0.571332,
           "images": [
             {
               "image": "noise_rock_fine_base_color",
@@ -5309,11 +10137,23 @@
                 512
               ],
               "texels": 22126,
-              "mean": 0.572116,
-              "cv": 0.053777
+              "mean": 0.571332,
+              "cv": 0.03526
             }
           ],
           "untexturedShare": 0
+        },
+        "sizeDistribution": {
+          "by": "sphere",
+          "objects": "*",
+          "count": 1,
+          "unmeasured": 0,
+          "exponent": null,
+          "xMin": null,
+          "xMax": null,
+          "tail": 1,
+          "ks": null,
+          "failure": "1 sizes, fewer than the 50 a fit needs"
         },
         "silhouettes": {
           "size": 1024,
@@ -5369,6 +10209,65 @@
           },
           "dimension": 1.008384,
           "solidity": 0.974875,
+          "failure": null
+        },
+        "repetition": {
+          "minShift": 16,
+          "minOverlap": 0.25,
+          "window": 33,
+          "minEnergy": 0.1,
+          "worst": 0.1515,
+          "view": "top",
+          "shift": [
+            -183,
+            284
+          ],
+          "views": {
+            "front": {
+              "peak": 0.1313,
+              "shift": [
+                -265,
+                196
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "right": {
+              "peak": 0.1503,
+              "shift": [
+                -53,
+                267
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "top": {
+              "peak": 0.1515,
+              "shift": [
+                -183,
+                284
+              ],
+              "size": [
+                480,
+                480
+              ]
+            },
+            "three-quarter": {
+              "peak": 0.076,
+              "shift": [
+                20,
+                2
+              ],
+              "size": [
+                480,
+                480
+              ]
+            }
+          },
           "failure": null
         }
       },
@@ -5448,6 +10347,24 @@
           "p75": 0.32112,
           "p95": 0.350181
         }
+      },
+      "repetition": {
+        "n": 12,
+        "values": {
+          "p5": 0.10338,
+          "p25": 0.1382,
+          "p50": 0.15955,
+          "p75": 0.28375,
+          "p95": 0.542865
+        }
+      },
+      "sizeExponentLow": {
+        "n": 0,
+        "values": null
+      },
+      "sizeExponentHigh": {
+        "n": 0,
+        "values": null
       }
     },
     "tree": {
@@ -5500,6 +10417,36 @@
           "p75": 0.287068,
           "p95": 0.308078
         }
+      },
+      "repetition": {
+        "n": 11,
+        "values": {
+          "p5": 0.15905,
+          "p25": 0.18345,
+          "p50": 0.2859,
+          "p75": 0.31335,
+          "p95": 0.56245
+        }
+      },
+      "sizeExponentLow": {
+        "n": 4,
+        "values": {
+          "p5": -5.41311,
+          "p25": -5.30715,
+          "p50": -3.9568,
+          "p75": -2.36815,
+          "p95": -1.69027
+        }
+      },
+      "sizeExponentHigh": {
+        "n": 4,
+        "values": {
+          "p5": -5.41311,
+          "p25": -5.30715,
+          "p50": -3.9568,
+          "p75": -2.36815,
+          "p95": -1.69027
+        }
       }
     },
     "plant": {
@@ -5551,6 +10498,36 @@
           "p50": 0.286781,
           "p75": 0.379427,
           "p95": 0.609666
+        }
+      },
+      "repetition": {
+        "n": 12,
+        "values": {
+          "p5": 0.08547,
+          "p25": 0.108675,
+          "p50": 0.15285,
+          "p75": 0.2227,
+          "p95": 0.470455
+        }
+      },
+      "sizeExponentLow": {
+        "n": 11,
+        "values": {
+          "p5": -4.47915,
+          "p25": -4.22515,
+          "p50": -3.302,
+          "p75": -2.69085,
+          "p95": -1.96835
+        }
+      },
+      "sizeExponentHigh": {
+        "n": 11,
+        "values": {
+          "p5": -4.47915,
+          "p25": -4.22515,
+          "p50": -3.302,
+          "p75": -2.69085,
+          "p95": -1.96835
         }
       }
     }
@@ -5652,6 +10629,57 @@
       "rule": "midpoint between the 5th percentile of the scans and the worst stand-in"
     },
     {
+      "measure": "repetition",
+      "class": "rock",
+      "direction": "max",
+      "scans": 12,
+      "standIns": 2,
+      "standInsMeasured": 2,
+      "realP5": 0.542865,
+      "realRange": [
+        0.0904,
+        0.5955
+      ],
+      "worstStandIn": 0.9645,
+      "threshold": 0.754,
+      "separates": true,
+      "realPassShare": 1,
+      "standInFailShare": 1,
+      "rule": "midpoint between the 95th percentile of the scans and the worst stand-in"
+    },
+    {
+      "measure": "sizeExponentLow",
+      "class": "rock",
+      "direction": "min",
+      "scans": 12,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": null,
+      "realRange": null,
+      "worstStandIn": null,
+      "threshold": null,
+      "separates": false,
+      "realPassShare": null,
+      "standInFailShare": null,
+      "rule": "no scan of the class has this measurement"
+    },
+    {
+      "measure": "sizeExponentHigh",
+      "class": "rock",
+      "direction": "max",
+      "scans": 12,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": null,
+      "realRange": null,
+      "worstStandIn": null,
+      "threshold": null,
+      "separates": false,
+      "realPassShare": null,
+      "standInFailShare": null,
+      "rule": "no scan of the class has this measurement"
+    },
+    {
       "measure": "dimension",
       "class": "tree",
       "direction": "min",
@@ -5747,6 +10775,63 @@
       "rule": "5th percentile of the scans"
     },
     {
+      "measure": "repetition",
+      "class": "tree",
+      "direction": "max",
+      "scans": 11,
+      "standIns": 2,
+      "standInsMeasured": 2,
+      "realP5": 0.56245,
+      "realRange": [
+        0.1572,
+        0.7418
+      ],
+      "worstStandIn": 0.9645,
+      "threshold": 0.763,
+      "separates": true,
+      "realPassShare": 1,
+      "standInFailShare": 1,
+      "rule": "midpoint between the 95th percentile of the scans and the worst stand-in"
+    },
+    {
+      "measure": "sizeExponentLow",
+      "class": "tree",
+      "direction": "min",
+      "scans": 11,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": -5.41311,
+      "realRange": [
+        -5.4396,
+        -1.5208
+      ],
+      "worstStandIn": -0.1656,
+      "threshold": -5.41311,
+      "separates": false,
+      "realPassShare": 0.2727,
+      "standInFailShare": 0,
+      "rule": "5th percentile of the scans"
+    },
+    {
+      "measure": "sizeExponentHigh",
+      "class": "tree",
+      "direction": "max",
+      "scans": 11,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": -1.69027,
+      "realRange": [
+        -5.4396,
+        -1.5208
+      ],
+      "worstStandIn": -0.1656,
+      "threshold": -0.93,
+      "separates": false,
+      "realPassShare": 0.3636,
+      "standInFailShare": 1,
+      "rule": "midpoint between the 95th percentile of the scans and the worst stand-in"
+    },
+    {
       "measure": "dimension",
       "class": "plant",
       "direction": "min",
@@ -5840,6 +10925,63 @@
       "realPassShare": 0.9167,
       "standInFailShare": 1,
       "rule": "5th percentile of the scans"
+    },
+    {
+      "measure": "repetition",
+      "class": "plant",
+      "direction": "max",
+      "scans": 12,
+      "standIns": 2,
+      "standInsMeasured": 2,
+      "realP5": 0.470455,
+      "realRange": [
+        0.077,
+        0.4759
+      ],
+      "worstStandIn": 0.9645,
+      "threshold": 0.717,
+      "separates": true,
+      "realPassShare": 1,
+      "standInFailShare": 1,
+      "rule": "midpoint between the 95th percentile of the scans and the worst stand-in"
+    },
+    {
+      "measure": "sizeExponentLow",
+      "class": "plant",
+      "direction": "min",
+      "scans": 12,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": -4.47915,
+      "realRange": [
+        -4.4857,
+        -1.8786
+      ],
+      "worstStandIn": -0.1656,
+      "threshold": -4.47915,
+      "separates": false,
+      "realPassShare": 0.8333,
+      "standInFailShare": 0,
+      "rule": "5th percentile of the scans"
+    },
+    {
+      "measure": "sizeExponentHigh",
+      "class": "plant",
+      "direction": "max",
+      "scans": 12,
+      "standIns": 1,
+      "standInsMeasured": 1,
+      "realP5": -1.96835,
+      "realRange": [
+        -4.4857,
+        -1.8786
+      ],
+      "worstStandIn": -0.1656,
+      "threshold": -1.07,
+      "separates": true,
+      "realPassShare": 0.9167,
+      "standInFailShare": 1,
+      "rule": "midpoint between the 95th percentile of the scans and the worst stand-in"
     }
   ],
   "defaults": {
@@ -5852,14 +10994,27 @@
       },
       "albedoVariation": {
         "min": 0.026
+      },
+      "repetition": {
+        "max": 0.754
       }
     },
     "tree": {
       "surfaceRoughness": {
         "flatShareMax": 0.365
+      },
+      "repetition": {
+        "max": 0.763
       }
     },
-    "plant": {}
+    "plant": {
+      "repetition": {
+        "max": 0.717
+      },
+      "sizeDistribution": {
+        "max": -1.07
+      }
+    }
   },
   "proceduralScores": [
     {
@@ -5881,7 +11036,13 @@
         {
           "limit": "natural.albedoVariation.min",
           "threshold": 0.026,
-          "value": 0.05409,
+          "value": 0.035532,
+          "pass": true
+        },
+        {
+          "limit": "natural.repetition.max",
+          "threshold": 0.754,
+          "value": 0.1573,
           "pass": true
         }
       ],
@@ -5906,7 +11067,13 @@
         {
           "limit": "natural.albedoVariation.min",
           "threshold": 0.026,
-          "value": 0.055912,
+          "value": 0.037763,
+          "pass": true
+        },
+        {
+          "limit": "natural.repetition.max",
+          "threshold": 0.754,
+          "value": 0.3135,
           "pass": true
         }
       ],
@@ -5931,7 +11098,13 @@
         {
           "limit": "natural.albedoVariation.min",
           "threshold": 0.026,
-          "value": 0.064032,
+          "value": 0.050041,
+          "pass": true
+        },
+        {
+          "limit": "natural.repetition.max",
+          "threshold": 0.754,
+          "value": 0.0777,
           "pass": true
         }
       ],
@@ -5956,11 +11129,481 @@
         {
           "limit": "natural.albedoVariation.min",
           "threshold": 0.026,
-          "value": 0.053777,
+          "value": 0.03526,
+          "pass": true
+        },
+        {
+          "limit": "natural.repetition.max",
+          "threshold": 0.754,
+          "value": 0.1515,
           "pass": true
         }
       ],
       "passes": true
+    }
+  ],
+  "textures": [
+    {
+      "id": "rock_09",
+      "class": "rock",
+      "image": "rock_09_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0928,
+      "tiled": 1
+    },
+    {
+      "id": "coast_rocks_01",
+      "class": "rock",
+      "image": "coast_rocks_01_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0722,
+      "tiled": 1
+    },
+    {
+      "id": "coast_rocks_05",
+      "class": "rock",
+      "image": "coast_rocks_05_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0664,
+      "tiled": 1
+    },
+    {
+      "id": "moon_rock_01",
+      "class": "rock",
+      "image": "moon_rock_01_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0621,
+      "tiled": 1
+    },
+    {
+      "id": "moon_rock_03",
+      "class": "rock",
+      "image": "moon_rock_03_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0868,
+      "tiled": 1
+    },
+    {
+      "id": "namaqualand_boulder_02",
+      "class": "rock",
+      "image": "namaqualand_boulder_02_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0533,
+      "tiled": 1
+    },
+    {
+      "id": "namaqualand_boulder_03",
+      "class": "rock",
+      "image": "namaqualand_boulder_03_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0559,
+      "tiled": 1
+    },
+    {
+      "id": "namaqualand_boulder_04",
+      "class": "rock",
+      "image": "namaqualand_boulder_04_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0507,
+      "tiled": 1
+    },
+    {
+      "id": "namaqualand_boulder_05",
+      "class": "rock",
+      "image": "namaqualand_boulder_05_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0509,
+      "tiled": 1
+    },
+    {
+      "id": "namaqualand_boulder_06",
+      "class": "rock",
+      "image": "namaqualand_boulder_06_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0513,
+      "tiled": 1
+    },
+    {
+      "id": "rock_moss_set_01",
+      "class": "rock",
+      "image": "rock_moss_set_01_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.2091,
+      "tiled": 1
+    },
+    {
+      "id": "stone_01",
+      "class": "rock",
+      "image": "stone_01_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0837,
+      "tiled": 1
+    },
+    {
+      "id": "dead_quiver_trunk",
+      "class": "tree",
+      "image": "dead_quiver_trunk_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0515,
+      "tiled": 1
+    },
+    {
+      "id": "dead_tree_trunk",
+      "class": "tree",
+      "image": "dead_tree_trunk_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0872,
+      "tiled": 1
+    },
+    {
+      "id": "dead_tree_trunk_02",
+      "class": "tree",
+      "image": "dead_tree_trunk_02_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0801,
+      "tiled": 1
+    },
+    {
+      "id": "dry_branches_medium_01",
+      "class": "tree",
+      "image": "dry_branches_medium_01_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1404,
+      "tiled": 1
+    },
+    {
+      "id": "fir_sapling",
+      "class": "tree",
+      "image": "fir_sapling_branches_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0564,
+      "tiled": 1
+    },
+    {
+      "id": "fir_sapling",
+      "class": "tree",
+      "image": "fir_sapling_twigs_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.2078,
+      "tiled": 1
+    },
+    {
+      "id": "othonna_cerarioides",
+      "class": "tree",
+      "image": "othonna_cerarioides_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1817,
+      "tiled": 1
+    },
+    {
+      "id": "pine_sapling_small",
+      "class": "tree",
+      "image": "pine_sapling_small_bark_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1811,
+      "tiled": 1
+    },
+    {
+      "id": "pine_sapling_small",
+      "class": "tree",
+      "image": "pine_sapling_small_twig_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0766,
+      "tiled": 1
+    },
+    {
+      "id": "quiver_tree_01",
+      "class": "tree",
+      "image": "quiver_tree_01_trunk_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0568,
+      "tiled": 1
+    },
+    {
+      "id": "quiver_tree_01",
+      "class": "tree",
+      "image": "quiver_tree_01_leaf_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1376,
+      "tiled": 1
+    },
+    {
+      "id": "quiver_tree_02",
+      "class": "tree",
+      "image": "quiver_tree_02_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0735,
+      "tiled": 1
+    },
+    {
+      "id": "tree_stump_01",
+      "class": "tree",
+      "image": "tree_stump_01_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.051,
+      "tiled": 1
+    },
+    {
+      "id": "tree_stump_02",
+      "class": "tree",
+      "image": "tree_stump_02_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0468,
+      "tiled": 1
+    },
+    {
+      "id": "didelta_spinosa",
+      "class": "plant",
+      "image": "didelta_spinosa_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1038,
+      "tiled": 1
+    },
+    {
+      "id": "fern_02",
+      "class": "plant",
+      "image": "fern_02_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1612,
+      "tiled": 1
+    },
+    {
+      "id": "leipoldtia_schultzei",
+      "class": "plant",
+      "image": "leipoldtia_schultzei_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0907,
+      "tiled": 1
+    },
+    {
+      "id": "nettle_plant",
+      "class": "plant",
+      "image": "nettle_plant_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.0833,
+      "tiled": 1
+    },
+    {
+      "id": "periwinkle_plant",
+      "class": "plant",
+      "image": "periwinkle_plant_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1636,
+      "tiled": 1
+    },
+    {
+      "id": "searsia_lucida",
+      "class": "plant",
+      "image": "searsia_lucida_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.133,
+      "tiled": 1
+    },
+    {
+      "id": "searsia_lucida",
+      "class": "plant",
+      "image": "searsia_lucida_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.133,
+      "tiled": 1
+    },
+    {
+      "id": "searsia_lucida",
+      "class": "plant",
+      "image": "searsia_lucida_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.133,
+      "tiled": 1
+    },
+    {
+      "id": "shrub_01",
+      "class": "plant",
+      "image": "shrub_01_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1187,
+      "tiled": 1
+    },
+    {
+      "id": "shrub_02",
+      "class": "plant",
+      "image": "shrub_02_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.2912,
+      "tiled": 1
+    },
+    {
+      "id": "shrub_03",
+      "class": "plant",
+      "image": "shrub_03_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1458,
+      "tiled": 1
+    },
+    {
+      "id": "shrub_04",
+      "class": "plant",
+      "image": "shrub_04_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1306,
+      "tiled": 1
+    },
+    {
+      "id": "weed_plant_02",
+      "class": "plant",
+      "image": "weed_plant_02_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.1274,
+      "tiled": 1
+    },
+    {
+      "id": "wild_rooibos_bush",
+      "class": "plant",
+      "image": "wild_rooibos_bush_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.2733,
+      "tiled": 1
+    },
+    {
+      "id": "wild_rooibos_bush",
+      "class": "plant",
+      "image": "wild_rooibos_bush_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.2733,
+      "tiled": 1
+    },
+    {
+      "id": "wild_rooibos_bush",
+      "class": "plant",
+      "image": "wild_rooibos_bush_diff_1k.jpg",
+      "size": [
+        512,
+        512
+      ],
+      "untiled": 0.2733,
+      "tiled": 1
     }
   ]
 }

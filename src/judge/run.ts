@@ -7,7 +7,8 @@ import { copyDelivery, DeliveryError, type Delivery } from "./delivery.js";
 import type { DeviceMode } from "./device.js";
 import { renderRules } from "./integrity-rules.js";
 import { deviceArgs, measuredFrom, planPass, stageSeconds, type PassPlan } from "./judge-pass.js";
-import { NATURAL_FOLDER, naturalSilhouettes } from "./natural.js";
+import { NATURAL_FOLDER, naturalRules, naturalSilhouettes, RENDERED_RULES } from "./natural.js";
+import { naturalRepetition } from "./natural-sets.js";
 import { wantsNaturalSilhouettes } from "./natural-spec.js";
 import { runPass, type PassRequest, type PassResult, type PassStage } from "./onepass.js";
 import { loadReferences, referenceStage, REFERENCE_FOLDER, silhouettesFrom, type LoadedReference } from "./reference.js";
@@ -112,6 +113,14 @@ function collectOutputs(workDir: string, outDir: string, draft: Draft): void {
   for (const view of views) withSharedAccess(() => cpSync(join(out, "views", basename(view.path)), view.path));
   if (draft.renders?.contactSheet && !existsSync(draft.renders.contactSheet)) draft.renders.contactSheet = null;
   hashRenders(draft.renders);
+}
+
+function renderedNaturalRules(draft: Draft, spec: AssetSpec): void {
+  if (spec.natural?.repetition === undefined || draft.measurements === null) return;
+  const views = draft.renders?.views ?? [];
+  const reason = draft.renders?.reason ?? (draft.renders?.failure ? draft.renders.failure.message : null);
+  draft.measurements.natural = { ...draft.measurements.natural, repetition: naturalRepetition(views, reason === null ? null : `the views did not render: ${reason}`) };
+  draft.rules.push(...naturalRules(spec.natural, draft.measurements.natural, RENDERED_RULES));
 }
 
 type Started = { version: string; asset: string; sandbox: Sandbox; plan: PassPlan; mode: DeviceMode | null; first: PassResult; run: (request: PassRequest) => Promise<PassResult> };
@@ -236,6 +245,7 @@ export async function judge(options: JudgeOptions): Promise<Report> {
       collectOutputs(workDir, outDir, draft);
     }
     draft.rules.push(...renderRules(spec, draft.renders));
+    renderedNaturalRules(draft, spec);
     if (spec.visual !== undefined) {
       const rendered = attempt;
       draft.visual = await visualStage({ spec, renders: draft.renders, outDir, closeups: () => closeupImages(bundle, rendered, outDir), options: options.visual ?? {} });

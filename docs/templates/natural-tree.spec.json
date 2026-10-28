@@ -8,7 +8,8 @@
   "brief": "A dead oak trunk about 4 m long, with cracked bark, broken branch stubs and moss on its lower side.",
   "natural": {
     "class": "tree",
-    "surfaceRoughness": {}
+    "surfaceRoughness": {},
+    "repetition": {}
   },
   "views": [
     "front",

@@ -1,7 +1,7 @@
 import { copyFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { defaultsFrom, deriveThreshold, MEASURES, PERCENTILES, percentile, thresholds } from "../../scripts/lib/natural-calibration.js";
+import { defaultsFrom, deriveThreshold, MEASURES, PERCENTILES, percentile, standsInFor, thresholds } from "../../scripts/lib/natural-calibration.js";
 import { DOC_END, DOC_START, type CalibrationDocument } from "../../scripts/lib/natural-calibration-doc.js";
 import { runCalibration, standInInputs, writeCalibration, type CalibrationInput } from "../../scripts/lib/natural-calibration-run.js";
 import { repoRoot } from "../../scripts/lib/paths.js";
@@ -19,9 +19,10 @@ let defaults = "";
 
 beforeAll(withWorkBudget(400_000, async () => {
   const assets = makeFixtureSet("natural_fixtures", "natural-calibration").assets;
+  const sets = makeFixtureSet("natural_sets_fixtures", "natural-calibration-sets").assets;
   const out = freshDir("natural-calibration", "out");
   const local = (id: string, kind: "rock" | "plant"): CalibrationInput => ({ id, kind: "scan", classes: [kind], path: join(assets, `${id}.glb`), source: join(assets, `${id}.glb`), licence: "local" });
-  const inputs = [local("rough-rock", "rock"), local("leaf-cloud", "plant"), ...standInInputs(assets)];
+  const inputs = [local("rough-rock", "rock"), local("leaf-cloud", "plant"), ...standInInputs({ natural_fixtures: assets, natural_sets_fixtures: sets })];
   const run = (dir: string) => runCalibration({ inputs, procedural: [{ id: "noise-rock", status: "skipped", reason: "offline" }], workDir: freshDir("natural-calibration", dir), blender: "5.2.3", resolution: "1k", exclusive: (task) => task() });
   first = await run("first");
   second = await run("second");
@@ -56,12 +57,12 @@ describe("the calibration on generated stand-ins, offline", workBudget(60_000), 
     for (const entry of first.thresholds) {
       const measure = MEASURES.find((candidate) => candidate.key === entry.measure)!;
       const scans = first.assets.filter((asset) => asset.kind === "scan" && asset.classes.includes(entry.class)).map((asset) => asset.values[measure.key] ?? null);
-      const standIns = first.assets.filter((asset) => asset.kind === "stand-in" && asset.classes.includes(entry.class)).map((asset) => asset.values[measure.key] ?? null);
+      const standIns = first.assets.filter((asset) => asset.kind === "stand-in" && asset.classes.includes(entry.class) && standsInFor(asset, measure.key)).map((asset) => asset.values[measure.key] ?? null);
       expect(entry).toEqual(deriveThreshold(measure, entry.class, scans, standIns));
     }
     const solidity = first.thresholds.find((entry) => entry.class === "rock" && entry.measure === "solidity")!;
     const rock = first.assets.find((asset) => asset.id === "rough-rock")!.values["solidity"]!;
-    const nearest = Math.min(...first.assets.filter((asset) => asset.kind === "stand-in" && asset.classes.includes("rock")).map((asset) => asset.values["solidity"]!));
+    const nearest = Math.min(...first.assets.filter((asset) => asset.kind === "stand-in" && asset.classes.includes("rock") && standsInFor(asset, "solidity")).map((asset) => asset.values["solidity"]!));
     expect(solidity.realP5).toBeCloseTo(percentile([rock], 95), 6);
     expect(solidity.threshold).toBeCloseTo((rock + nearest) / 2, 3);
     expect(first.defaults).toEqual(defaultsFrom(thresholds(first.assets)));

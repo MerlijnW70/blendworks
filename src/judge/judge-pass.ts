@@ -5,7 +5,8 @@ import type { DeviceMode } from "./device.js";
 import { measureOutputSchema, measurementsSchema, type Measurements } from "./measurements.js";
 import { motionExtras, withBoneScheme } from "./motion-rules.js";
 import { naturalViewArgs } from "./natural.js";
-import { naturalMeasureParts, wantsNaturalSilhouettes } from "./natural-spec.js";
+import { naturalMeasureOptions, naturalMeasureParts, wantsNaturalSilhouettes } from "./natural-spec.js";
+import { finishNatural } from "./natural-sets.js";
 import { weightTolerance } from "./motion-spec.js";
 import { wantsObjectList } from "./object-rules.js";
 import { passOutput, type PassResult, type PassStage, type StageGroup } from "./onepass.js";
@@ -48,7 +49,7 @@ function measureArgs(spec: AssetSpec): string[] {
   const extras = motionExtras(spec);
   if (extras.length > 0) args.push("--extras", extras.join(","), "--weight-tolerance", String(weightTolerance(spec.skin)));
   const natural = naturalMeasureParts(spec.natural);
-  if (natural.length > 0) args.push("--natural", natural.join(","));
+  if (natural.length > 0) args.push("--natural", natural.join(","), ...naturalMeasureOptions(spec.natural));
   return args;
 }
 
@@ -110,8 +111,9 @@ export function measuredFrom(result: PassResult, sandbox: Sandbox, spec: AssetSp
   const parsed = measureOutputSchema.safeParse(passOutput(sandbox, "measure"));
   if (!parsed.success) throw new StageFailure({ stage: "measure", code: "malformed", message: "the measuring script wrote malformed output" });
   if (!parsed.data.ok) throw new StageFailure({ stage: "measure", ...parsed.data.error });
-  const { format, ...rest } = parsed.data.measurements;
-  return withBoneScheme(spec, reported(spec, measurementsSchema.parse({ format, fileBytes: delivery.bytes, ...rest, references: delivery.references })));
+  const { format, natural, ...rest } = parsed.data.measurements;
+  const finished = finishNatural(natural);
+  return withBoneScheme(spec, reported(spec, measurementsSchema.parse({ format, fileBytes: delivery.bytes, ...rest, ...(finished === undefined ? {} : { natural: finished }), references: delivery.references })));
 }
 
 export function stageSeconds(result: PassResult, stage: PassStage): number | null {

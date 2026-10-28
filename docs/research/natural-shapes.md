@@ -291,11 +291,12 @@ Notes on the run:
 - **Procedural assets.** A third group, beside the scans and the primitive stand-ins: four rocks built through the bridge with `noise_displace` (`scripts/lib/natural-sources.ts`). One is the rock of `docs/examples/noise_terrain.py` (billow, warped ridged Worley and fine fBm layers on a 6-subdivision ico sphere); the others are its billow layer alone, one ridged Worley layer, and the example with a fourth, 8 cm layer. Each gets the example's `boulder` stone material, baked to a 512 px base-colour texture. They are measured and scored against the defaults, but they set no threshold. The script asks the bridge which commands it has and lists a recipe as not built when one is missing. Three of the four pass the rock defaults; the billow-only rock fails solidity (0.993) and roughness (p90 5.1°). The example rock passes solidity only narrowly (0.975 against 0.976), and every procedural albedo CV (0.054–0.064) sits near the moon rocks at the bottom of the scans, far below the typical scan (median 0.25).
 - **Changes from section 2.7.** The silhouettes keep alpha cut-outs (most plant scans are leaf cards), the box count averages over grid offsets on an 8-neighbour edge (a circle gives 1.00, see `docs/DESIGN.md`), and the mesh is not subdivided before the roughness is measured. The numbers are close to the earlier sample (`rock_09`: solidity 0.932 against 0.936, p90 39.1° against 40.0°).
 - **What it changed.** Solidity (`max` 0.976 for rocks) and the p90 roughness (`p90Min` 14 for rocks) keep their starting values. The rock flat share does not separate: the coarse `moon_rock_01` has a flat share of 0.43, above the displaced sphere's 0.29. The albedo lower bound falls from 0.15 to 0.026, because the moon rock scans vary little (0.047 and 0.054). The plant `D` of 1.4 is not a default: the 40-cylinder tree built here has a `D` of 1.23, above the plant scans' 5th percentile (1.17, the fern and the weed), so `D` separates bushy plants only with a limit the hirer chooses.
+- **Part two (P11, job B).** The run adds three measures. Repetition is measured on the judge's own renders (front, right, top and three-quarter at 512 px, so the run renders every asset) and on each scan's base-colour images; only the renders set a default. The size exponent is fitted to the bounding-sphere sizes of each asset's pieces. Each stand-in counts only for the measures it stands in for, and a measure separates only when at least 90 % of the class's scans have a value. Repetition separates every class (rock 0.754, tree 0.763, plant 0.717, against 0.965 for a tiled plane); the upper size limit separates plants only (−1.07, from their leaf pieces), because no rock scan and only 4 tree scans have 50 pieces. Every value of part one is unchanged by the second run.
 - **Check.** `npm run calibrate:natural -- --verify` judges `rock_09` and `namaqualand_boulder_02` and the stand-ins `clouds-ico` and `jittered-ico` with a rock spec built from the defaults, and exits 0 when the scans pass and the stand-ins fail.
 
 <!-- natural-calibration:start -->
 
-Measured by `npm run calibrate:natural` in Blender 5.2.3 on 35 Poly Haven scans at 1k (12 rock, 11 tree, 12 plant), 4 primitive stand-ins and 4 procedural assets. Every value per asset is in `natural-shapes/calibration.json`.
+Measured by `npm run calibrate:natural` in Blender 5.2.3 on 35 Poly Haven scans at 1k (12 rock, 11 tree, 12 plant), 7 primitive stand-ins and 4 procedural assets. Every value per asset is in `natural-shapes/calibration.json`.
 
 **Percentiles of the scans per class.**
 
@@ -306,31 +307,43 @@ Measured by `npm run calibrate:natural` in Blender 5.2.3 on 35 Poly Haven scans 
 | rock | normal deviation p90, degrees (lowest object) | 12 | 18.73 | 26.49 | 39.16 | 51.04 | 67.42 |
 | rock | flat share under 3 degrees (highest object) | 12 | 0.0176 | 0.0260 | 0.0662 | 0.1356 | 0.3119 |
 | rock | albedo luminance CV | 12 | 0.0512 | 0.2203 | 0.2525 | 0.3211 | 0.3502 |
+| rock | repetition peak (worst of front, right, top, three-quarter) | 12 | 0.1034 | 0.1382 | 0.1595 | 0.2838 | 0.5429 |
+| rock | size exponent of the pieces (lower limit) | 0 | n/a | n/a | n/a | n/a | n/a |
+| rock | size exponent of the pieces (upper limit) | 0 | n/a | n/a | n/a | n/a | n/a |
 | tree | box-counting D (lowest of front, right) | 11 | 1.016 | 1.034 | 1.157 | 1.376 | 1.611 |
 | tree | solidity (lowest of front, right, top) | 11 | 0.1546 | 0.2224 | 0.4838 | 0.7045 | 0.9063 |
 | tree | normal deviation p90, degrees (lowest object) | 11 | 37.59 | 50.42 | 68.02 | 102.15 | 111.84 |
 | tree | flat share under 3 degrees (highest object) | 11 | 0.0037 | 0.0301 | 0.0818 | 0.1301 | 0.2546 |
 | tree | albedo luminance CV | 11 | 0.1732 | 0.1873 | 0.2436 | 0.2871 | 0.3081 |
+| tree | repetition peak (worst of front, right, top, three-quarter) | 11 | 0.1590 | 0.1835 | 0.2859 | 0.3134 | 0.5625 |
+| tree | size exponent of the pieces (lower limit) | 4 | -5.413 | -5.307 | -3.957 | -2.368 | -1.690 |
+| tree | size exponent of the pieces (upper limit) | 4 | -5.413 | -5.307 | -3.957 | -2.368 | -1.690 |
 | plant | box-counting D (lowest of front, right) | 12 | 1.168 | 1.300 | 1.355 | 1.461 | 1.532 |
 | plant | solidity (lowest of front, right, top) | 12 | 0.0798 | 0.0975 | 0.1365 | 0.3031 | 0.3880 |
 | plant | normal deviation p90, degrees (lowest object) | 12 | 16.44 | 57.77 | 77.57 | 93.42 | 110.46 |
 | plant | flat share under 3 degrees (highest object) | 12 | 0.0025 | 0.0039 | 0.0331 | 0.2858 | 0.5087 |
 | plant | albedo luminance CV | 12 | 0.1622 | 0.2220 | 0.2868 | 0.3794 | 0.6097 |
+| plant | repetition peak (worst of front, right, top, three-quarter) | 12 | 0.0855 | 0.1087 | 0.1529 | 0.2227 | 0.4705 |
+| plant | size exponent of the pieces (lower limit) | 11 | -4.479 | -4.225 | -3.302 | -2.691 | -1.968 |
+| plant | size exponent of the pieces (upper limit) | 11 | -4.479 | -4.225 | -3.302 | -2.691 | -1.968 |
 
 **Stand-ins.**
 
-| Asset | Stands in for | dimension | solidity | p90 | flatShare | albedoCv |
-|---|---|---|---|---|---|---|
-| uv-sphere (stand-in) | rock | 0.999 | 0.9976 | 0.88 | 1.0000 | 0.0000 |
-| clouds-ico (stand-in) | rock | 1.003 | 0.9832 | 9.35 | 0.2898 | n/a |
-| jittered-ico (stand-in) | rock | 1.000 | 0.9961 | 0.00 | 1.0000 | n/a |
-| cylinder-tree (stand-in) | tree, plant | 1.227 | 0.2366 | 105.51 | 0.4763 | n/a |
-| noise-rock-example (procedural) | rock | 1.008 | 0.9749 | 26.32 | 0.0237 | 0.0541 |
-| noise-rock-billow (procedural) | rock | 0.999 | 0.9934 | 5.11 | 0.7200 | 0.0559 |
-| noise-rock-ridged (procedural) | rock | 1.017 | 0.9602 | 40.83 | 0.0098 | 0.0640 |
-| noise-rock-fine (procedural) | rock | 1.008 | 0.9749 | 26.96 | 0.0269 | 0.0538 |
+| Asset | Stands in for | dimension | solidity | p90 | flatShare | albedoCv | repetition | sizeExponentLow | sizeExponentHigh |
+|---|---|---|---|---|---|---|---|---|---|
+| uv-sphere (stand-in) | rock | 0.999 | 0.9976 | 0.88 | 1.0000 | 0.0000 | 0.3092 | n/a | n/a |
+| clouds-ico (stand-in) | rock | 1.003 | 0.9832 | 9.35 | 0.2898 | n/a | 0.2082 | n/a | n/a |
+| jittered-ico (stand-in) | rock | 1.000 | 0.9961 | 0.00 | 1.0000 | n/a | 0.2156 | n/a | n/a |
+| cylinder-tree (stand-in) | tree, plant | 1.227 | 0.2366 | 105.51 | 0.4763 | n/a | 0.4250 | n/a | n/a |
+| tiled-plane (stand-in) | rock, tree, plant | n/a | n/a | 0.00 | 1.0000 | 0.1692 | 0.9645 | n/a | n/a |
+| copies-identical (stand-in) | rock, tree, plant | 0.953 | 0.1238 | 0.00 | 1.0000 | n/a | 0.9943 | n/a | n/a |
+| sizes-uniform (stand-in) | rock, tree, plant | 0.984 | 0.0443 | 0.00 | 1.0000 | n/a | 0.7867 | -0.166 | -0.166 |
+| noise-rock-example (procedural) | rock | 1.008 | 0.9749 | 26.32 | 0.0237 | 0.0355 | 0.1573 | n/a | n/a |
+| noise-rock-billow (procedural) | rock | 0.999 | 0.9934 | 5.11 | 0.7200 | 0.0378 | 0.3135 | n/a | n/a |
+| noise-rock-ridged (procedural) | rock | 1.017 | 0.9602 | 40.83 | 0.0098 | 0.0500 | 0.0777 | n/a | n/a |
+| noise-rock-fine (procedural) | rock | 1.008 | 0.9749 | 26.96 | 0.0269 | 0.0353 | 0.1515 | n/a | n/a |
 
-**Thresholds and separation.** For a lower limit, take the 5th percentile of the class's scans; for an upper limit, the 95th. When the measured stand-in nearest to the scans lies beyond that percentile by at least the measure's step (0.01 for D, 0.001 for solidity and shares, 0.1 degrees for p90), the threshold is the midpoint between the two, rounded to the step, and the measure separates the class. Otherwise the threshold is the percentile and the measure does not separate the class: a stand-in reaches the scans, or no stand-in has a value. Only separating measures become defaults.
+**Thresholds and separation.** For a lower limit, take the 5th percentile of the class's scans; for an upper limit, the 95th. When the measured stand-in nearest to the scans lies beyond that percentile by at least the measure's step (0.01 for D, 0.001 for solidity and shares, 0.1 degrees for p90), the threshold is the midpoint between the two, rounded to the step, and the measure separates the class. Otherwise the threshold is the percentile and the measure does not separate the class: a stand-in reaches the scans, or no stand-in has a value. A measure also separates only when at least 90 % of the class's scans have a value, so that no default rests on a minority of the scans. Only separating measures become defaults.
 
 | Limit | Class | Scans P5 or P95 | Scan range | Nearest stand-in | Threshold | Scans passing | Stand-ins failing | Separates | Default |
 |---|---|---|---|---|---|---|---|---|---|
@@ -339,27 +352,75 @@ Measured by `npm run calibrate:natural` in Blender 5.2.3 on 35 Poly Haven scans 
 | `natural.surfaceRoughness.p90Min` | rock | 18.73 | 16.55–68.26 | 9.35 | 14.00 | 100 % | 100 % | yes | 14 |
 | `natural.surfaceRoughness.flatShareMax` | rock | 0.3119 | 0.0156–0.4299 | 0.2898 | 0.3119 | 92 % | 67 % | no | none |
 | `natural.albedoVariation.min` | rock | 0.0512 | 0.0473–0.3839 | 0.0000 | 0.0260 | 100 % | 100 % | yes | 0.026 |
+| `natural.repetition.max` | rock | 0.5429 | 0.0904–0.5955 | 0.9645 | 0.7540 | 100 % | 100 % | yes | 0.754 |
+| `natural.sizeDistribution.min` | rock | n/a | n/a | no value | n/a | n/a | n/a | no | none |
+| `natural.sizeDistribution.max` | rock | n/a | n/a | no value | n/a | n/a | n/a | no | none |
 | `natural.silhouetteDimension.min` | tree | 1.016 | 1.014–1.649 | 1.227 | 1.016 | 91 % | 0 % | no | none |
 | `natural.solidity.max` | tree | 0.9063 | 0.1423–0.9308 | 0.2366 | 0.9063 | 91 % | 0 % | no | none |
 | `natural.surfaceRoughness.p90Min` | tree | 37.59 | 34.39–113.58 | 105.51 | 37.59 | 91 % | 0 % | no | none |
 | `natural.surfaceRoughness.flatShareMax` | tree | 0.2546 | 0.0002–0.3298 | 0.4763 | 0.3650 | 100 % | 100 % | yes | 0.365 |
 | `natural.albedoVariation.min` | tree | 0.1732 | 0.1707–0.3246 | no value | 0.1732 | 91 % | 100 % | no (no stand-in has a value) | none |
+| `natural.repetition.max` | tree | 0.5625 | 0.1572–0.7418 | 0.9645 | 0.7630 | 100 % | 100 % | yes | 0.763 |
+| `natural.sizeDistribution.min` | tree | -5.413 | -5.440–-1.521 | -0.166 | -5.413 | 27 % | 0 % | no | none |
+| `natural.sizeDistribution.max` | tree | -1.690 | -5.440–-1.521 | -0.166 | -0.930 | 36 % | 100 % | no | none |
 | `natural.silhouetteDimension.min` | plant | 1.168 | 1.157–1.585 | 1.227 | 1.168 | 92 % | 0 % | no | none |
 | `natural.solidity.max` | plant | 0.3880 | 0.0709–0.3939 | 0.2366 | 0.3880 | 92 % | 0 % | no | none |
 | `natural.surfaceRoughness.p90Min` | plant | 16.44 | 15.95–128.30 | 105.51 | 16.44 | 92 % | 0 % | no | none |
 | `natural.surfaceRoughness.flatShareMax` | plant | 0.5087 | 0.0022–0.5701 | 0.4763 | 0.5087 | 92 % | 0 % | no | none |
 | `natural.albedoVariation.min` | plant | 0.1622 | 0.1358–0.6591 | no value | 0.1622 | 92 % | 100 % | no (no stand-in has a value) | none |
+| `natural.repetition.max` | plant | 0.4705 | 0.0770–0.4759 | 0.9645 | 0.7170 | 100 % | 100 % | yes | 0.717 |
+| `natural.sizeDistribution.min` | plant | -4.479 | -4.486–-1.879 | -0.166 | -4.479 | 83 % | 0 % | no | none |
+| `natural.sizeDistribution.max` | plant | -1.968 | -4.486–-1.879 | -0.166 | -1.070 | 92 % | 100 % | yes | -1.07 |
+
+**Repetition of the scans' base-colour textures.** The same measure as `natural.repetition`, on the luminance of each base-colour image of each scan (scaled to at most 512 px), untiled and tiled 2 x 2. It is not a rule input; it shows how far untiled scan textures lie from exact tiling.
+
+| Class | Images | Untiled: range | Untiled: P95 | Tiled 2 x 2: lowest |
+|---|---|---|---|---|
+| rock | 12 | 0.051–0.209 | 0.145 | 1.000 |
+| tree | 14 | 0.047–0.208 | 0.191 | 1.000 |
+| plant | 16 | 0.083–0.291 | 0.278 | 1.000 |
 
 **Procedural assets against the defaults.** They are a third group: measured and listed with the stand-ins above, but not used to set any threshold.
 
 | Procedural asset | Class | Against the defaults | Verdict |
 |---|---|---|---|
-| noise-rock-example | rock | solidity.max 0.9749 passes 0.976; surfaceRoughness.p90Min 26.3235 passes 14; albedoVariation.min 0.0541 passes 0.026 | pass |
-| noise-rock-billow | rock | solidity.max 0.9934 fails 0.976; surfaceRoughness.p90Min 5.1083 fails 14; albedoVariation.min 0.0559 passes 0.026 | fail |
-| noise-rock-ridged | rock | solidity.max 0.9602 passes 0.976; surfaceRoughness.p90Min 40.8299 passes 14; albedoVariation.min 0.0640 passes 0.026 | pass |
-| noise-rock-fine | rock | solidity.max 0.9749 passes 0.976; surfaceRoughness.p90Min 26.9648 passes 14; albedoVariation.min 0.0538 passes 0.026 | pass |
+| noise-rock-example | rock | solidity.max 0.9749 passes 0.976; surfaceRoughness.p90Min 26.3235 passes 14; albedoVariation.min 0.0355 passes 0.026; repetition.max 0.1573 passes 0.754 | pass |
+| noise-rock-billow | rock | solidity.max 0.9934 fails 0.976; surfaceRoughness.p90Min 5.1083 fails 14; albedoVariation.min 0.0378 passes 0.026; repetition.max 0.3135 passes 0.754 | fail |
+| noise-rock-ridged | rock | solidity.max 0.9602 passes 0.976; surfaceRoughness.p90Min 40.8299 passes 14; albedoVariation.min 0.0500 passes 0.026; repetition.max 0.0777 passes 0.754 | pass |
+| noise-rock-fine | rock | solidity.max 0.9749 passes 0.976; surfaceRoughness.p90Min 26.9648 passes 14; albedoVariation.min 0.0353 passes 0.026; repetition.max 0.1515 passes 0.754 | pass |
 
 <!-- natural-calibration:end -->
+
+### 2.9 Repetition, copies, branching and sizes (P11, job B)
+
+The four rules of job B are measured in the judge (`docs/DESIGN.md`, Natural measures 6 to 9). These are the measurements behind their definitions and defaults.
+
+**Repetition on renders [M].** Section 2.7 measured repetition on texture images. A judge view is a render: smooth shading and a flat grey background around the asset. On the judge's own 512 px views (front, right, top, three-quarter) of the fixtures of `test/judge/natural_fixtures.py`, the measure of 2.7 (mean-subtracted luminance, normalised over the overlap) gave:
+
+| Asset | Mean-subtracted luminance | After the 33 px box high-pass |
+|---|---|---|
+| displaced, textured rock (`rough-rock`) | 0.35–0.50 | 0.04–0.06 |
+| UV sphere, one colour | 0.80–0.90 | 0.26–0.31 |
+| cube | 0.85–0.88 | 0.14–0.62 |
+| 40-cylinder tree | 0.33–0.66 | 0.25–0.43 |
+
+Normalised over each overlapping window alone, without the 10 % energy floor, two windows of plain background scored 1.000 on the three-quarter views of every asset. So the judge subtracts the mean of the 33 × 33 px box around each pixel (the size of the 16 px exclusion), keeps the pixels whose box lies inside the view, and counts only shifts whose two windows each hold at least 10 % of the energy. The high-pass keeps the statements of 2.7 on synthetic images (`test/judge/natural-repetition.test.ts`, 512 px):
+
+| Image | Peak |
+|---|---|
+| value noise tiled 4 × 4 and 2 × 2 | 1.000 at the tile period |
+| the same noise, untiled | under 0.2 |
+| Poisson-disk splat (spacing 0.06 of the image, dots of 6 px) | 0.14 |
+| jittered 12 × 12 grid (jitter 0.2, dots of 8 px) | 0.31 |
+| exact 12 × 12 grid | 1.000 |
+
+A straight edge seen along itself still scores high (the cube's front view, 0.62), because a line repeats along its own direction; the calibration below says what that leaves for scans.
+
+**Instance repetition.** Pieces are matched by shape up to a similarity, not by vertex order: the first version compared vertices in index order and found realized copies of one pebble in a glb as two meshes, because Blender's glTF importer gave the welded vertices of the copies in the first row a different order from the rest. 100 identical copies give a share of 1.00 as linked objects and as one realized mesh; with a random scale in [0.5, 1.5] and a random yaw both give 0.02 (`test/judge/natural-sets.test.ts`). The default `max` 0.1 is the starting value of section 5, a design choice there, and stays one: no source sets a share, and a scan set reuses one leaf mesh as an artist chooses.
+
+**Leonardo [M].** On the synthetic trees of `test/judge/natural_sets_fixtures.py` (101 nodes, 20 branchings, 64-sided tubes per axis with the radius of each node at its ring; 16 of the 20 branchings measured) the median Δ is 2.000 for a tree built with Δ = 2 and 3.000 with Δ = 3, and a tree of equal 4 cm tubes whose skeleton says Δ = 2 measures 10 (the ceiling) and fails. On the three trees of `docs/examples/grow_trees.py`, exported as a glb of their preview tubes (bevel resolution 2), the medians are 2.002 (conifer, levels), 2.009 (oak) and 2.007 (windswept, both colonisation), all grown with exponent 2, over 1,414 measured branchings (the quartiles of all are 1.95 and 2.04). The default `[1.8, 2.3]` is Eloy's range for "a large number of species" [S53]. The skeleton is the worker's own data, so the judge measures every radius on the mesh and first checks that the skeleton fits it (`docs/DESIGN.md`, Natural measures 8). A skeleton forged over the one Δ = 2 junction of a mesh whose other branches are tubes of equal radius spans 1.2 m of a 3.7 m mesh and is refused; stretched over the mesh's trunk as well, it leaves 69 % of the surface farther than 5 % of the mesh's size from any edge and is refused; moved 10 m off its mesh, none of its nodes lies inside. On the closed bark meshes that `tree_mesh` builds from the same three skeletons (`docs/examples/tree_meshes.py`, fused junctions, flared bases, twigs under `min_radius` dropped) the medians are 2.003 (conifer), 2.006 (oak) and 2.033 (windswept) over 1,208 branchings; the conifer's dropped twigs leave 36 % of its skeleton outside the mesh and 232 of its 512 sampled branchings unmeasured, which is why the judge asks only half of a skeleton to lie inside and measures only the branchings that do. Attributing hits by the nearest centreline instead of by the skeleton's radii, and measuring only branchings that lie inside the mesh, leaves 4 of the 20 synthetic branchings and 8 % of the sampled example branchings unmeasured, and moves no median by more than 0.02.
+
+**Size distribution.** The fit is Clauset, Shalizi and Newman's maximum-likelihood power law with a fitted minimum [S56], closed at the largest size. On 2,000 sizes drawn from `x^-2` it lands within 0.15 of −2 on each of six draws; uniform sizes give −0.7 to 0.1. The open-ended fit of S56 makes a set drawn between two bounds, as `scatter` draws it, look steeper: for sizes from 1 to 8 drawn with exponent −2 the mean of `ln x` is (8/7)(1 − 1/8 − ln 8 / 8) = 0.703, so the open-ended estimate with the minimum at 1 is 1 + 1/0.703, an exponent of −2.42, where the closed fit gives −2. The rocks of `docs/examples/scatter_rocks.py` (774 pieces named `rubble_*`, scales drawn with exponent −2 between 0.3 and 2.4) fit −1.91 above 1.39 m.
 
 ## 3. Gap analysis against Blendworks
 
@@ -654,7 +715,7 @@ Each rule has fixtures generated in Blender: a sphere, a displaced sphere, a cyl
 
 ## 5. Judge rules for natural assets
 
-The first four rules (P11 job A) are now in the judge as the optional `natural` group, with defaults from the calibration of section 2.8; `docs/DESIGN.md` documents them. The thresholds below are the starting values. The source is a paper or a measurement from section 2.7 on a small sample, so the values should be recalibrated with P12 before a hirer relies on them.
+The first four rules (P11 job A) are now in the judge as the optional `natural` group, with defaults from the calibration of section 2.8; `docs/DESIGN.md` documents them. The other four (job B) followed, with the measurements of section 2.9: repetition with calibrated defaults per class, Leonardo with Eloy's range for trees, instance repetition with the starting value below, and the size distribution with a calibrated upper limit for plants only. The thresholds below are the starting values. The source is a paper or a measurement from section 2.7 on a small sample, so the values should be recalibrated with P12 before a hirer relies on them.
 
 | Rule | Measure | Starting threshold | Justification |
 |---|---|---|---|
@@ -776,6 +837,7 @@ All were opened while writing this report.
 | S53 | C. Eloy, "Leonardo's rule, self-similarity and wind-induced stresses in trees", Phys. Rev. Lett. 107 (2011), arXiv: https://arxiv.org/abs/1105.2591 |
 | S54 | scikit-image, `skimage.feature.shape_index` (citing Koenderink and van Doorn, Image and Vision Computing 10, 1992): https://scikit-image.org/docs/stable/api/skimage.feature.html |
 | S55 | M. F. Cohen, J. Shade, S. Hiller, O. Deussen, "Wang Tiles for Image and Texture Generation", SIGGRAPH 2003, abstract: https://history.siggraph.org/?p=115866 |
+| S56 | A. Clauset, C. R. Shalizi, M. E. J. Newman, "Power-law distributions in empirical data", SIAM Review 51 (2009), arXiv: https://arxiv.org/abs/0706.1062 |
 
 Reference assets (CC0, Poly Haven, see S45): https://polyhaven.com/a/rock_09, https://polyhaven.com/a/boulder_01, https://polyhaven.com/a/namaqualand_boulder_02, https://polyhaven.com/a/coast_rocks_05, https://polyhaven.com/a/rock_moss_set_01, https://polyhaven.com/a/dead_tree_trunk_02, https://polyhaven.com/a/searsia_lucida.
 

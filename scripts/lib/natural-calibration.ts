@@ -3,6 +3,7 @@ import { NATURAL_CLASSES, type NaturalClass, type NaturalLimitName, type Natural
 export const RESOLUTION = "1k";
 export const PERCENTILES = [5, 25, 50, 75, 95] as const;
 export const MIN_PER_CLASS = 8;
+export const MIN_COVERAGE = 0.9;
 
 export const SCANS: readonly { id: string; class: NaturalClass }[] = [
   { id: "rock_09", class: "rock" },
@@ -42,13 +43,19 @@ export const SCANS: readonly { id: string; class: NaturalClass }[] = [
   { id: "wild_rooibos_bush", class: "plant" },
 ];
 
-export type StandIn = { id: string; classes: readonly NaturalClass[]; description: string };
+export type StandIn = { id: string; set: string; classes: readonly NaturalClass[]; measures: readonly string[]; description: string };
+
+const SHAPE_MEASURES = ["dimension", "solidity", "p90", "flatShare", "albedoCv"];
+const EVERY_CLASS = ["rock", "tree", "plant"] as const;
 
 export const STAND_INS: readonly StandIn[] = [
-  { id: "uv-sphere", classes: ["rock"], description: "UV sphere, 128 x 64 segments, with a single-colour texture" },
-  { id: "clouds-ico", classes: ["rock"], description: "ico sphere (5 subdivisions) displaced by Clouds (size 0.4, strength 0.25), scaled (1, 0.8, 0.6)" },
-  { id: "jittered-ico", classes: ["rock"], description: "ico sphere (1 subdivision), vertices jittered by up to 15 %, scaled (1, 0.75, 0.55)" },
-  { id: "cylinder-tree", classes: ["tree", "plant"], description: "three-level tree of 40 tapered cylinders" },
+  { id: "uv-sphere", set: "natural_fixtures", classes: ["rock"], measures: SHAPE_MEASURES, description: "UV sphere, 128 x 64 segments, with a single-colour texture" },
+  { id: "clouds-ico", set: "natural_fixtures", classes: ["rock"], measures: SHAPE_MEASURES, description: "ico sphere (5 subdivisions) displaced by Clouds (size 0.4, strength 0.25), scaled (1, 0.8, 0.6)" },
+  { id: "jittered-ico", set: "natural_fixtures", classes: ["rock"], measures: SHAPE_MEASURES, description: "ico sphere (1 subdivision), vertices jittered by up to 15 %, scaled (1, 0.75, 0.55)" },
+  { id: "cylinder-tree", set: "natural_fixtures", classes: ["tree", "plant"], measures: SHAPE_MEASURES, description: "three-level tree of 40 tapered cylinders" },
+  { id: "tiled-plane", set: "natural_sets_fixtures", classes: EVERY_CLASS, measures: ["repetition"], description: "2 m plane with a value-noise texture tiled 4 x 4" },
+  { id: "copies-identical", set: "natural_sets_fixtures", classes: EVERY_CLASS, measures: ["repetition"], description: "100 copies of one pebble in a 10 x 10 grid, same scale and rotation" },
+  { id: "sizes-uniform", set: "natural_sets_fixtures", classes: EVERY_CLASS, measures: ["sizeExponentLow", "sizeExponentHigh"], description: "300 stones with diameters drawn uniformly from 0.1 to 1 m" },
 ];
 
 export type Direction = "min" | "max";
@@ -61,11 +68,18 @@ export const MEASURES: readonly Measure[] = [
   { key: "p90", rule: "surfaceRoughness", limit: "p90Min", direction: "min", digits: 1, label: "normal deviation p90, degrees (lowest object)" },
   { key: "flatShare", rule: "surfaceRoughness", limit: "flatShareMax", direction: "max", digits: 3, label: "flat share under 3 degrees (highest object)" },
   { key: "albedoCv", rule: "albedoVariation", limit: "min", direction: "min", digits: 3, label: "albedo luminance CV" },
+  { key: "repetition", rule: "repetition", limit: "max", direction: "max", digits: 3, label: "repetition peak (worst of front, right, top, three-quarter)" },
+  { key: "sizeExponentLow", rule: "sizeDistribution", limit: "min", direction: "min", digits: 2, label: "size exponent of the pieces (lower limit)" },
+  { key: "sizeExponentHigh", rule: "sizeDistribution", limit: "max", direction: "max", digits: 2, label: "size exponent of the pieces (upper limit)" },
 ];
 
 export type Values = Record<string, number | null>;
 
-export type MeasuredAsset = { id: string; kind: "scan" | "stand-in" | "procedural"; classes: NaturalClass[]; values: Values };
+export type MeasuredAsset = { id: string; kind: "scan" | "stand-in" | "procedural"; classes: NaturalClass[]; values: Values; measures?: string[] };
+
+export function standsInFor(asset: MeasuredAsset, measure: string): boolean {
+  return asset.measures === undefined || asset.measures.includes(measure);
+}
 
 export function percentile(values: readonly number[], p: number): number {
   const sorted = [...values].sort((a, b) => a - b);
@@ -130,7 +144,7 @@ export function deriveThreshold(measure: Measure, kind: NaturalClass, real: (num
     realRange: [roundTo(Math.min(...measured), 6), roundTo(Math.max(...measured), 6)],
     worstStandIn: worst === null ? null : roundTo(worst, 6),
     threshold,
-    separates: apart && standInFailShare === 1,
+    separates: apart && standInFailShare === 1 && measured.length >= MIN_COVERAGE * real.length,
     realPassShare: roundTo(realPassShare, 4),
     standInFailShare: standInFailShare === null ? null : roundTo(standInFailShare, 4),
     rule,
@@ -160,7 +174,7 @@ export function thresholds(assets: readonly MeasuredAsset[]): Threshold[] {
           measure,
           kind,
           scans.map((asset) => asset.values[measure.key] ?? null),
-          standIns.map((asset) => asset.values[measure.key] ?? null),
+          standIns.filter((asset) => standsInFor(asset, measure.key)).map((asset) => asset.values[measure.key] ?? null),
         ),
       );
     }

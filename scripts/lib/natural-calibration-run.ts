@@ -8,13 +8,17 @@ import { calibrationMarkdown, replaceCalibration, THRESHOLD_RULE, type Calibrate
 
 export type Exclusive = <T>(task: () => Promise<T>) => Promise<T>;
 
-export type CalibrationInput = { id: string; kind: MeasuredAsset["kind"]; classes: NaturalClass[]; path: string; source: string; licence: string };
+export type CalibrationInput = { id: string; kind: MeasuredAsset["kind"]; classes: NaturalClass[]; path: string; source: string; licence: string; measures?: string[] };
+
+export const CALIBRATION_VIEWS = ["front", "right", "top", "three-quarter"];
 
 const MEASURING_SPEC = {
   silhouetteDimension: { min: 0 },
   solidity: { max: 1 },
   surfaceRoughness: { p90Min: 0 },
   albedoVariation: { min: 0 },
+  repetition: { max: 1 },
+  sizeDistribution: { min: -12, max: 8, by: "sphere" },
 };
 
 export function valuesOf(natural: NaturalMeasurements | undefined): Values {
@@ -24,6 +28,9 @@ export function valuesOf(natural: NaturalMeasurements | undefined): Values {
     p90: natural?.surfaceRoughness?.lowestP90 ?? null,
     flatShare: natural?.surfaceRoughness?.highestFlatShare ?? null,
     albedoCv: natural?.albedoVariation?.cv ?? null,
+    repetition: natural?.repetition?.worst ?? null,
+    sizeExponentLow: natural?.sizeDistribution?.exponent ?? null,
+    sizeExponentHigh: natural?.sizeDistribution?.exponent ?? null,
   };
 }
 
@@ -32,13 +39,14 @@ export async function measureAsset(input: CalibrationInput, workDir: string, exc
   mkdirSync(folder, { recursive: true });
   const specPath = join(folder, "spec.json");
   const format = extname(input.path).slice(1).toLowerCase();
-  writeFileSync(specPath, `${JSON.stringify({ name: input.id, format, natural: { class: input.classes[0], ...MEASURING_SPEC } }, null, 2)}\n`);
-  const report = await exclusive(() => judge({ specPath, assetPath: input.path, outDir: join(folder, "judged"), preview: true }));
+  writeFileSync(specPath, `${JSON.stringify({ name: input.id, format, views: CALIBRATION_VIEWS, natural: { class: input.classes[0], ...MEASURING_SPEC } }, null, 2)}\n`);
+  const report = await exclusive(() => judge({ specPath, assetPath: input.path, outDir: join(folder, "judged") }));
   const natural = report.measurements?.natural;
   return {
     id: input.id,
     kind: input.kind,
     classes: input.classes,
+    ...(input.measures === undefined ? {} : { measures: input.measures }),
     source: input.source,
     licence: input.licence,
     setSha256: report.asset.setSha256,
@@ -48,13 +56,14 @@ export async function measureAsset(input: CalibrationInput, workDir: string, exc
   };
 }
 
-export function standInInputs(folder: string): CalibrationInput[] {
-  return STAND_INS.map((standIn) => ({
+export function standInInputs(folders: Record<string, string>): CalibrationInput[] {
+  return STAND_INS.filter((standIn) => folders[standIn.set] !== undefined).map((standIn) => ({
     id: standIn.id,
     kind: "stand-in",
     classes: [...standIn.classes],
-    path: join(folder, `${standIn.id}.glb`),
-    source: `test/judge/natural_fixtures.py: ${standIn.description}`,
+    measures: [...standIn.measures],
+    path: join(folders[standIn.set]!, `${standIn.id}.glb`),
+    source: `test/judge/${standIn.set}.py: ${standIn.description}`,
     licence: "generated",
   }));
 }
@@ -82,6 +91,7 @@ export async function runCalibration(run: CalibrationRun): Promise<CalibrationDo
     thresholds: found,
     defaults,
     proceduralScores: proceduralScores(assets, defaults),
+    textures: [],
   };
 }
 
@@ -97,7 +107,7 @@ export type Verified = { id: string; kind: CalibrationInput["kind"]; class: Natu
 
 export function defaultsSpec(kind: NaturalClass, format: string): Record<string, unknown> {
   const rules = NATURAL_RULES.filter((rule) => calibratedLimits(kind, rule) !== undefined);
-  return { name: `natural ${kind} defaults`, format, natural: { class: kind, ...Object.fromEntries(rules.map((rule) => [rule, {}])) } };
+  return { name: `natural ${kind} defaults`, format, views: CALIBRATION_VIEWS, natural: { class: kind, ...Object.fromEntries(rules.map((rule) => [rule, {}])) } };
 }
 
 export async function verifyDefaults(inputs: CalibrationInput[], workDir: string, exclusive: Exclusive): Promise<Verified[]> {
@@ -109,7 +119,7 @@ export async function verifyDefaults(inputs: CalibrationInput[], workDir: string
     const specPath = join(folder, "spec.json");
     writeFileSync(specPath, `${JSON.stringify(defaultsSpec(kind, extname(input.path).slice(1).toLowerCase()), null, 2)}
 `);
-    const report = await exclusive(() => judge({ specPath, assetPath: input.path, outDir: join(folder, "judged"), preview: true }));
+    const report = await exclusive(() => judge({ specPath, assetPath: input.path, outDir: join(folder, "judged") }));
     verified.push({ id: input.id, kind: input.kind, class: kind, passed: report.passed, rules: report.rules.map((rule) => ({ rule: rule.rule, pass: rule.pass, measured: rule.measured })) });
   }
   return verified;

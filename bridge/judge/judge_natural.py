@@ -5,9 +5,12 @@ from mathutils.kdtree import KDTree
 
 from judge_albedo import AlbedoCollector
 from judge_common import JudgeError
+from judge_instances import PieceCollector, name_pattern
+from judge_skeleton import SkeletonCollector
 
 GEOMETRY_TYPES = {"MESH", "CURVE", "SURFACE", "FONT", "META"}
-NATURAL_PARTS = ("roughness", "albedo")
+NATURAL_PARTS = ("roughness", "albedo", "instances", "sizes", "leonardo")
+SIZE_KINDS = ("sphere", "trunk")
 ROUGHNESS_SAMPLES = 4096
 RADIUS_DIVISOR = 32
 FLAT_DEGREES = 3.0
@@ -24,11 +27,22 @@ def natural_parts(text):
     return set(wanted)
 
 
+def size_option(text):
+    kind, _, pattern = text.partition(":")
+    if kind not in SIZE_KINDS:
+        raise JudgeError("usage", f"--natural-sizes takes {' or '.join(SIZE_KINDS)}, a colon and a name pattern")
+    return kind, pattern or "*"
+
+
 def world_vertices(mesh, matrix):
+    transform = np.array(matrix, dtype=np.float64)
+    return local_vertices(mesh) @ transform[:3, :3].T + transform[:3, 3]
+
+
+def local_vertices(mesh):
     local = np.empty(len(mesh.vertices) * 3, dtype=np.float32)
     mesh.vertices.foreach_get("co", local)
-    transform = np.array(matrix, dtype=np.float64)
-    return local.reshape(-1, 3).astype(np.float64) @ transform[:3, :3].T + transform[:3, 3]
+    return local.reshape(-1, 3).astype(np.float64)
 
 
 def triangle_corners(mesh):
@@ -108,6 +122,7 @@ def each_mesh(depsgraph, visit):
         matrix = instance.matrix_world.copy()
         owner = instance.parent if instance.is_instance and instance.parent is not None else obj
         label = obj.original.name if not instance.is_instance else f"{obj.original.name}@{owner.original.name}"
+        owner_name = owner.original.name
         mesh = obj.to_mesh()
         try:
             if mesh is None or len(mesh.vertices) == 0 or len(mesh.polygons) == 0:
@@ -115,17 +130,24 @@ def each_mesh(depsgraph, visit):
             mesh.calc_loop_triangles()
             if len(mesh.loop_triangles) == 0:
                 continue
-            visit(obj, mesh, matrix, label, obj.data.as_pointer() if obj.data is not None else label)
+            visit(obj, mesh, matrix, label, obj.data.as_pointer() if obj.data is not None else label, owner_name)
         finally:
             obj.to_mesh_clear()
 
 
-def measure_natural(depsgraph, parts):
+def measure_natural(depsgraph, parts, instances_pattern="*", sizes="sphere:*"):
     objects = []
     albedo = AlbedoCollector() if "albedo" in parts else None
+    size_kind, size_pattern = size_option(sizes) if "sizes" in parts else (None, None)
+    pieces = PieceCollector(instances_pattern if "instances" in parts else None, size_pattern if size_kind == "sphere" else None)
+    collect_pieces = "instances" in parts or size_kind == "sphere"
+    skeletons = SkeletonCollector("leonardo" in parts, name_pattern(size_pattern) if size_kind == "trunk" else None)
+    collect_skeletons = "leonardo" in parts or size_kind == "trunk"
 
-    def visit(obj, mesh, matrix, label, data_key):
-        world = world_vertices(mesh, matrix)
+    def visit(obj, mesh, matrix, label, data_key, owner):
+        local = local_vertices(mesh)
+        transform = np.array(matrix, dtype=np.float64)
+        world = local @ transform[:3, :3].T + transform[:3, 3]
         corners = triangle_corners(mesh)
         if "roughness" in parts:
             measured = object_roughness(world, corners)
@@ -133,6 +155,10 @@ def measure_natural(depsgraph, parts):
             objects.append(entry if measured is None else {"object": label[:120], **measured})
         if albedo is not None:
             albedo.add(obj, mesh, world, corners, data_key)
+        if collect_pieces:
+            pieces.add(owner, local, world, corners, data_key)
+        if collect_skeletons:
+            skeletons.add(obj, owner, matrix, local, corners, data_key)
 
     each_mesh(depsgraph, visit)
     result = {}
@@ -140,4 +166,12 @@ def measure_natural(depsgraph, parts):
         result["surfaceRoughness"] = roughness_result(sorted(objects, key=lambda entry: entry["object"]))
     if albedo is not None:
         result["albedoVariation"] = albedo.result()
+    if "instances" in parts:
+        result["instances"] = pieces.repetition()
+    if size_kind == "sphere":
+        result["sizeSamples"] = pieces.sphere_sizes()
+    if size_kind == "trunk":
+        result["sizeSamples"] = skeletons.trunk_sizes_result()
+    if "leonardo" in parts:
+        result["skeletons"] = skeletons.leonardo_result()
     return result

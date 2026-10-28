@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { boxCountingDimension, solidity } from "./natural-measures.js";
+import { atLeast, atMost, rangeChecks, setChecks, setLines, type Check } from "./natural-checks.js";
 import type { NaturalMeasurements, NaturalSilhouettes } from "./natural-schema.js";
 import { naturalLimits, NATURAL_RULES, wantsNaturalSilhouettes, type NaturalLimits, type NaturalRule, type NaturalRuleName } from "./natural-spec.js";
 import type { PassResult } from "./onepass.js";
@@ -69,17 +70,6 @@ export function naturalSilhouettes(result: PassResult, sandbox: Sandbox, outDir:
   };
 }
 
-type Check = { name: string; measured: number | null; limit: number; pass: (value: number, limit: number) => boolean };
-
-const atLeast = (value: number, limit: number) => value >= limit;
-const atMost = (value: number, limit: number) => value <= limit;
-
-function rangeChecks(measured: number | null, limits: NaturalLimits): Check[] {
-  return [
-    ...(limits.min === undefined ? [] : [{ name: "min", measured, limit: limits.min, pass: atLeast }]),
-    ...(limits.max === undefined ? [] : [{ name: "max", measured, limit: limits.max, pass: atMost }]),
-  ];
-}
 
 function checks(name: NaturalRuleName, limits: NaturalLimits, natural: NaturalMeasurements | undefined): { measured: Record<string, unknown>; checks: Check[] } {
   if (name === "silhouetteDimension") {
@@ -104,24 +94,31 @@ function checks(name: NaturalRuleName, limits: NaturalLimits, natural: NaturalMe
       ],
     };
   }
-  const albedo = natural?.albedoVariation;
-  const value = albedo?.cv ?? null;
-  return { measured: { cv: value, texels: albedo?.texels ?? 0, images: albedo?.images.length ?? 0 }, checks: rangeChecks(value, limits) };
+  if (name === "albedoVariation") {
+    const albedo = natural?.albedoVariation;
+    const value = albedo?.cv ?? null;
+    return { measured: { cv: value, texels: albedo?.texels ?? 0, images: albedo?.images.length ?? 0 }, checks: rangeChecks(value, limits) };
+  }
+  return setChecks(name, limits, natural);
 }
 
 function failure(silhouettes: NaturalSilhouettes | undefined): Record<string, string> {
   return silhouettes?.failure ? { failure: silhouettes.failure } : {};
 }
 
-export function naturalRules(rule: NaturalRule | undefined, natural: NaturalMeasurements | undefined): RuleResult[] {
+export const RENDERED_RULES: readonly NaturalRuleName[] = ["repetition"];
+const MEASURED_RULES = NATURAL_RULES.filter((name) => !RENDERED_RULES.includes(name));
+
+export function naturalRules(rule: NaturalRule | undefined, natural: NaturalMeasurements | undefined, names: readonly NaturalRuleName[] = MEASURED_RULES): RuleResult[] {
   if (rule === undefined) return [];
   const results: RuleResult[] = [];
-  for (const name of NATURAL_RULES) {
+  for (const name of names) {
     const resolved = naturalLimits(rule, name);
     if (resolved === undefined) continue;
     const found = checks(name, resolved.limits, natural);
     const pass = found.checks.length > 0 && found.checks.every((check) => check.measured !== null && check.pass(check.measured, check.limit));
-    results.push({ rule: `natural.${name}`, measured: found.measured, limit: { ...resolved.limits, class: rule.class, source: resolved.source }, pass });
+    const limit = { ...resolved.limits, ...resolved.options, class: rule.class, source: resolved.source, ...(resolved.cites === undefined ? {} : { cites: resolved.cites }) };
+    results.push({ rule: `natural.${name}`, measured: found.measured, limit, pass });
   }
   return results;
 }
@@ -140,5 +137,6 @@ export function naturalLines(natural: NaturalMeasurements | undefined): string[]
   }
   if (surfaceRoughness) parts.push(`roughness over ${surfaceRoughness.objects} objects: lowest p90 ${shown(surfaceRoughness.lowestP90)} deg, highest flat share ${shown(surfaceRoughness.highestFlatShare)}`);
   if (albedoVariation) parts.push(`albedo CV ${shown(albedoVariation.cv)} over ${albedoVariation.texels} texels of ${albedoVariation.images.length} images`);
+  parts.push(...setLines(natural));
   return parts.length === 0 ? [] : [`  natural: ${parts.join("; ")}`];
 }

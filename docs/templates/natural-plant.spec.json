@@ -13,7 +13,10 @@
     },
     "albedoVariation": {
       "min": 0.16
-    }
+    },
+    "repetition": {},
+    "instanceRepetition": {},
+    "sizeDistribution": {}
   },
   "views": [
     "front",

@@ -1,5 +1,6 @@
 import { NATURAL_CLASSES, type NaturalClass } from "../../src/judge/natural-spec.js";
-import { MEASURES, PERCENTILES, type ClassPercentiles, type Defaults, type MeasuredAsset, type ProceduralScore, type Threshold } from "./natural-calibration.js";
+import type { TextureRepetition } from "./natural-textures.js";
+import { MEASURES, PERCENTILES, percentile, type ClassPercentiles, type Defaults, type MeasuredAsset, type ProceduralScore, type Threshold } from "./natural-calibration.js";
 
 export const DOC_START = "<!-- natural-calibration:start -->";
 export const DOC_END = "<!-- natural-calibration:end -->";
@@ -19,10 +20,11 @@ export type CalibrationDocument = {
   thresholds: Threshold[];
   defaults: Defaults;
   proceduralScores: ProceduralScore[];
+  textures: TextureRepetition[];
 };
 
 export const THRESHOLD_RULE =
-  "For a lower limit, take the 5th percentile of the class's scans; for an upper limit, the 95th. When the measured stand-in nearest to the scans lies beyond that percentile by at least the measure's step (0.01 for D, 0.001 for solidity and shares, 0.1 degrees for p90), the threshold is the midpoint between the two, rounded to the step, and the measure separates the class. Otherwise the threshold is the percentile and the measure does not separate the class: a stand-in reaches the scans, or no stand-in has a value. Only separating measures become defaults.";
+  "For a lower limit, take the 5th percentile of the class's scans; for an upper limit, the 95th. When the measured stand-in nearest to the scans lies beyond that percentile by at least the measure's step (0.01 for D, 0.001 for solidity and shares, 0.1 degrees for p90), the threshold is the midpoint between the two, rounded to the step, and the measure separates the class. Otherwise the threshold is the percentile and the measure does not separate the class: a stand-in reaches the scans, or no stand-in has a value. A measure also separates only when at least 90 % of the class's scans have a value, so that no default rests on a minority of the scans. Only separating measures become defaults.";
 
 function cell(value: number | null | undefined, digits = 3): string {
   return value === null || value === undefined ? "n/a" : value.toFixed(digits);
@@ -81,6 +83,19 @@ function thresholdTable(document: CalibrationDocument): string[] {
   return lines;
 }
 
+function textureTable(document: CalibrationDocument): string[] {
+  if (document.textures.length === 0) return ["No texture images were read on this run."];
+  const lines = ["| Class | Images | Untiled: range | Untiled: P95 | Tiled 2 x 2: lowest |", "|---|---|---|---|---|"];
+  for (const kind of NATURAL_CLASSES) {
+    const entries = document.textures.filter((entry) => entry.class === kind);
+    const untiled = entries.map((entry) => entry.untiled).filter((value): value is number => value !== null);
+    const tiled = entries.map((entry) => entry.tiled).filter((value): value is number => value !== null);
+    if (untiled.length === 0) continue;
+    lines.push(`| ${kind} | ${entries.length} | ${cell(Math.min(...untiled))}–${cell(Math.max(...untiled))} | ${cell(percentile(untiled, 95))} | ${tiled.length === 0 ? "n/a" : cell(Math.min(...tiled))} |`);
+  }
+  return lines;
+}
+
 export function calibrationMarkdown(document: CalibrationDocument): string {
   const scans = document.assets.filter((asset) => asset.kind === "scan");
   const counts = NATURAL_CLASSES.map((kind) => `${scans.filter((asset) => asset.classes.includes(kind)).length} ${kind}`).join(", ");
@@ -100,6 +115,10 @@ export function calibrationMarkdown(document: CalibrationDocument): string {
     `**Thresholds and separation.** ${document.thresholdRule}`,
     "",
     ...thresholdTable(document),
+    "",
+    "**Repetition of the scans' base-colour textures.** The same measure as `natural.repetition`, on the luminance of each base-colour image of each scan (scaled to at most 512 px), untiled and tiled 2 x 2. It is not a rule input; it shows how far untiled scan textures lie from exact tiling.",
+    "",
+    ...textureTable(document),
     "",
     "**Procedural assets against the defaults.** They are a third group: measured and listed with the stand-ins above, but not used to set any threshold.",
     "",

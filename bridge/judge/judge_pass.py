@@ -35,6 +35,8 @@ PASS_DEFAULTS = {
     "extras": "",
     "weight-tolerance": str(DEFAULT_WEIGHT_TOLERANCE),
     "natural": "",
+    "natural-instances": "*",
+    "natural-sizes": "sphere:*",
     "reference-views": "",
     "natural-views": "",
     "reference-frame": "asset",

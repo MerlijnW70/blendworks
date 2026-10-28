@@ -1,0 +1,58 @@
+{
+  "name": "natural forest",
+  "format": "glb",
+  "size": {
+    "minExtent": 20.0,
+    "maxExtent": 200.0
+  },
+  "brief": "A stand of at least 50 trees of one species on a terrain tile, each carrying its skeleton in the glTF extras, with many thin trees and few thick ones.",
+  "natural": {
+    "class": "tree",
+    "leonardo": {},
+    "repetition": {},
+    "instanceRepetition": {},
+    "sizeDistribution": {
+      "min": -2.5,
+      "max": -1.5,
+      "by": "trunk"
+    }
+  },
+  "views": [
+    "front",
+    "right",
+    "top",
+    "three-quarter"
+  ],
+  "visual": {
+    "rubric": [
+      {
+        "id": "no-primitive",
+        "question": "Is the asset free of any recognisable base primitive (sphere, box, cylinder or cone) in its silhouette and its surface?",
+        "weight": 2
+      },
+      {
+        "id": "multi-scale",
+        "question": "Does the surface show detail at large, medium and small scale in the close-ups, at a size that fits the object's real size?",
+        "weight": 1
+      },
+      {
+        "id": "no-repetition",
+        "question": "Is the asset free of visibly repeated features, copies or tiling?",
+        "weight": 1
+      },
+      {
+        "id": "weathering",
+        "question": "Do wear, dirt, moss or erosion follow exposure and cavities, rather than a uniform noise?",
+        "weight": 1
+      },
+      {
+        "id": "material-variation",
+        "question": "Does the colour vary believably, without looking noisy or flat?",
+        "weight": 1
+      }
+    ],
+    "minScore": 0.7,
+    "samples": 3,
+    "required": false
+  }
+}

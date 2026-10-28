@@ -11,7 +11,8 @@
     "class": "rock",
     "solidity": {},
     "surfaceRoughness": {},
-    "albedoVariation": {}
+    "albedoVariation": {},
+    "repetition": {}
   },
   "views": [
     "front",
