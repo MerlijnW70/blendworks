@@ -6,6 +6,7 @@ import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { withSlot } from "../../scripts/lib/slots.js";
 import { baselineRanker } from "./baseline-router.js";
 import { ask, claudeAvailable } from "./claude.js";
+import { DOCS_COMMAND, docsFigures, type Figure, numbersTable, writeDocsFigures } from "./docs-numbers.js";
 import { type E2eScore, runE2e, systemPrompt } from "./e2e.js";
 import { type Intent, loadIntents, missingTools } from "./intents.js";
 import { estimateTokens, listingBytes, type RoutingScore, scoreRouting } from "./metrics.js";
@@ -24,6 +25,7 @@ const { values } = parseArgs({
     "measure-tokens": { type: "boolean", default: false },
     ids: { type: "string" },
     split: { type: "string", default: "heldout" },
+    docs: { type: "boolean", default: false },
   },
 });
 
@@ -53,6 +55,7 @@ async function main(): Promise<void> {
   const intents = loadIntents();
   const wanted = values.modes === undefined ? Object.keys(MODES) : values.modes.split(",");
   const report: Record<string, unknown> = { label: values.label, intents: { total: intents.length, heldout: intents.filter((intent) => intent.split === "heldout").length } };
+  let figures: Figure[] = [];
   await withSlot(async () => {
     const server = await startBenchServer();
     try {
@@ -104,6 +107,9 @@ async function main(): Promise<void> {
         }
         await client.close();
       }
+      const docs = await server.connect("bench-docs", { toolsets: { kind: "core", families: [] } });
+      figures = docsFigures({ all: fullListing.tools, core: (await docs.listing()).tools, intents });
+      await docs.close();
       await full.close();
       report["listings"] = listings;
       report["routing"] = routing;
@@ -119,6 +125,9 @@ async function main(): Promise<void> {
       await server.close();
     }
   }, { label: "bench:tools" });
+  report["figures"] = figures;
+  console.log(`the figures docs/DESIGN.md quotes (${values.docs ? "written there" : `write them with ${DOCS_COMMAND}`}):\n${numbersTable(figures)}`);
+  if (values.docs) writeDocsFigures(figures);
   mkdirSync(RESULTS, { recursive: true });
   const file = join(RESULTS, `${values.label}.json`);
   writeFileSync(file, `${JSON.stringify(report, null, 1)}\n`);

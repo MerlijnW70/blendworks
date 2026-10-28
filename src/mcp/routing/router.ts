@@ -3,7 +3,7 @@ import type { Route } from "./catalog.js";
 import { exampleCall } from "./examples.js";
 import { CALL_TOOL, PYTHON_TOOL, SEARCH_TOOL } from "./names.js";
 import type { ToolSearch } from "./search.js";
-import type { Workflow } from "./workflows.js";
+import { GOAL_LIST, type Workflow } from "./workflows.js";
 
 export const DEFAULT_LIMIT = 5;
 export const MAX_LIMIT = 10;
@@ -27,13 +27,13 @@ export function routerTools(families: string[]): Tool[] {
   return [
     {
       name: SEARCH_TOOL,
-      description: `Find the Blender tools for a task when the one you need is not listed: query by intent ("round the edges", "cut text into a ring") returns the best tools with their full schemas and an example call; goal ("engraved brass dial", "rock set") returns a workflow's tool sequence. Then call a tool by name, or through ${CALL_TOOL}.`,
+      description: `Find the Blender tools for a task when the one you need is not listed: query by intent ("round the edges", "cut text into a ring") returns the best tools with their full schemas and an example call; goal ("engraved brass dial", "rock set") returns a workflow's tool sequence and notes, and goal "${GOAL_LIST}" names every workflow. Then call a tool by name, or through ${CALL_TOOL}.`,
       inputSchema: {
         type: "object",
         additionalProperties: false,
         properties: {
           query: { type: "string", description: "What you want to do, in plain words.", minLength: 1, maxLength: MAX_TEXT },
-          goal: { type: "string", description: "The asset or result you are building, for a whole workflow.", minLength: 1, maxLength: MAX_TEXT },
+          goal: { type: "string", description: `The asset or result you are building, for a whole workflow; "${GOAL_LIST}" names every workflow.`, minLength: 1, maxLength: MAX_TEXT },
           families: { type: "array", description: "Only search these tool families.", items: { type: "string", enum: families }, minItems: 1, maxItems: families.length },
           limit: { type: "integer", description: "Number of tools to return.", minimum: 1, maximum: MAX_LIMIT, default: DEFAULT_LIMIT },
         },
@@ -92,11 +92,21 @@ function workflowBlock(workflow: Workflow, routes: Map<string, Route>): string {
   return [`Workflow "${workflow.goal}": ${workflow.steps.join(" > ")}.`, workflow.note, ...steps].join("\n");
 }
 
+export function isGoalList(goal: string | undefined): boolean {
+  return goal !== undefined && goal.trim().toLowerCase() === GOAL_LIST;
+}
+
+export function goalList(workflows: Workflow[]): string {
+  const lines = workflows.map((workflow) => `- ${workflow.goal}: ${workflow.examples.join("; ")}.`);
+  return ["Every workflow goal, with examples. Pass one as goal to get its tool sequence and notes:", ...lines].join("\n");
+}
+
 export function find(search: ToolSearch, args: FindArgs): Found {
   const routes = new Map(search.routes.map((route) => [route.name, route]));
   const sections: string[] = [];
   const names: string[] = [];
-  if (args.goal !== undefined) {
+  if (isGoalList(args.goal)) sections.push(goalList(search.workflows));
+  else if (args.goal !== undefined) {
     const matched = search.goal(args.goal);
     if (matched === undefined) sections.push(`No workflow matches the goal "${args.goal}".`);
     else {
@@ -104,7 +114,7 @@ export function find(search: ToolSearch, args: FindArgs): Found {
       names.push(...matched.workflow.steps.filter((name) => routes.has(name)));
     }
   }
-  const query = args.query ?? (args.goal !== undefined && names.length === 0 ? args.goal : undefined);
+  const query = args.query ?? (args.goal !== undefined && !isGoalList(args.goal) && names.length === 0 ? args.goal : undefined);
   if (query !== undefined) {
     const matches = search.search(query, { limit: args.limit, ...(args.families === undefined ? {} : { families: args.families }) });
     if (matches.length === 0) sections.push(`No tool matches "${query}". Try other words, or a goal.`);

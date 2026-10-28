@@ -96,7 +96,9 @@ describe("polish round 2 through MCP tools only", workBudget(1_800_000), () => {
     expect(names).toEqual(expect.arrayContaining(["blender_engrave", "blender_clean_mesh", "blender_sweep", "blender_uv_pack", "blender_bake", "blender_export"]));
     expect(names).not.toContain("blender_run_python");
     const instructions = client.getInstructions() ?? "";
-    for (const word of ["blender_engrave", "blender_clean_mesh", "marble", "atlas_sizes", "min_island_area", "coverage"]) expect(instructions).toContain(word);
+    for (const word of ["blender_engrave", "blender_clean_mesh", "marble"]) expect(instructions).toContain(word);
+    const texturing = texts((await client.callTool({ name: "blender_find_tools", arguments: { goal: "texture an asset" } })) as CallToolResult);
+    for (const word of ["atlas_sizes", "min_island_area", "coverage"]) expect(texturing).toContain(word);
   });
 
   it("builds an engraved ring and a veined plinth, bakes per material, exports and passes a strict judge", async () => {

@@ -1,15 +1,21 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { derivedCoreRanking } from "../bench/tool-selection/core-data.js";
+import { readFileSync } from "node:fs";
+import { sameMembers } from "../bench/tool-selection/core.js";
+import { derivedCoreScores } from "../bench/tool-selection/core-data.js";
+import { DESIGN_FILE, DOCS_COMMAND, docsFigures, staleFigures } from "../bench/tool-selection/docs-numbers.js";
 import { loadIntents, missingTools } from "../bench/tool-selection/intents.js";
 import { estimateTokens, listingBytes, scoreRouting } from "../bench/tool-selection/metrics.js";
-import { productSearch } from "../bench/tool-selection/modes.js";
+import { productRoutes, productSearch } from "../bench/tool-selection/modes.js";
 import { type BenchClient, type BenchServer, startBenchServer } from "../bench/tool-selection/server.js";
 import { startHeadlessSession } from "../src/mcp/headless.js";
-import { DEFERRED_TEXT_LIMIT, UPFRONT_TEXT_LIMIT } from "../src/mcp/instructions.js";
-import { CORE_RANKING } from "../src/mcp/routing/core.js";
+import { buildInstructions, DEFERRED_TEXT_LIMIT, UPFRONT_TEXT_LIMIT, WORKSPACE_RESERVE } from "../src/mcp/instructions.js";
+import { CORE_FILL } from "../src/mcp/routing/core.generated.js";
+import { CORE_HYSTERESIS, CORE_PINNED, CORE_WRITE_COMMAND, updateFill } from "../src/mcp/routing/core.js";
+import { toolSizes } from "../src/mcp/routing/disclosure.js";
+import { FAMILY_LINES } from "../src/mcp/routing/families.js";
 import { sampleObject } from "../src/mcp/routing/examples.js";
-import { toolNameOf } from "../src/mcp/routing/names.js";
+import { CALL_TOOL, LIBRARY_FAMILY, SEARCH_TOOL, toolNameOf } from "../src/mcp/routing/names.js";
 import { ArgumentCheck } from "../src/mcp/routing/validate.js";
 import { WORKFLOWS } from "../src/mcp/routing/workflows.js";
 import { texts } from "./mcp-helpers.js";
@@ -122,8 +128,47 @@ describe("tool routing on the real bridge", workBudget(240_000), () => {
     }
   });
 
-  it("chooses the core set from the usage data, the benchmark and the workflows", () => {
-    expect(CORE_RANKING).toEqual(derivedCoreRanking());
+  it("lists the pinned tools and the data fill as the core, and keeps the fill the generator keeps", async () => {
+    const client = await server.connect("routing-test-pinned");
+    const listed = (await client.listing()).tools.map((tool) => tool.name).filter((name) => name !== SEARCH_TOOL && name !== CALL_TOOL);
+    await client.close();
+    const advice = `run ${CORE_WRITE_COMMAND}`;
+    for (const name of CORE_PINNED) expect(listed, `${name} is pinned`).toContain(name);
+    expect(new Set(listed), advice).toEqual(new Set([...CORE_PINNED, ...CORE_FILL]));
+    const kept = updateFill(CORE_FILL, derivedCoreScores(), toolSizes(productRoutes(server.commands)));
+    expect(sameMembers(kept, CORE_FILL), `the core fill is ${CORE_FILL.join(", ")} but the data keep ${kept.join(", ")}: ${advice}`).toBe(true);
+  });
+
+  it("keeps the core when one workflow step is added to any tool, unless that lifts it past the hysteresis", () => {
+    const sizes = toolSizes(productRoutes(server.commands));
+    const scores = derivedCoreScores();
+    const weakest = Math.min(...CORE_FILL.map((name) => scores.get(name) ?? 0));
+    for (const name of [...sizes.keys()].filter((entry) => !CORE_PINNED.includes(entry) && !CORE_FILL.includes(entry))) {
+      const lifted = derivedCoreScores({ workflows: [...WORKFLOWS, { id: "one", goal: "One", examples: ["one"], steps: [name], note: "One." }] });
+      const changed = updateFill(CORE_FILL, lifted, sizes);
+      if (!sameMembers(changed, CORE_FILL)) {
+        expect(changed, name).toContain(name);
+        expect(lifted.get(name)! - weakest, name).toBeGreaterThan(CORE_HYSTERESIS);
+      }
+    }
+  });
+
+  it("names only real tools and families in the instructions", () => {
+    const tools = new Set(all.map((tool) => tool.name));
+    const families = new Set([...server.commands.map((command) => command.family), LIBRARY_FAMILY]);
+    const plan = buildInstructions(`/${"w".repeat(WORKSPACE_RESERVE - 1)}`);
+    expect(plan.text.length).toBeLessThanOrEqual(UPFRONT_TEXT_LIMIT);
+    const mentioned = [...plan.text.matchAll(/(?:blender|library)_[a-z_]+/g)].map((match) => match[0]);
+    expect(mentioned.filter((name) => !tools.has(name) && name !== CALL_TOOL)).toEqual([]);
+    for (const line of FAMILY_LINES) expect(families.has(line.family), line.family).toBe(true);
+  });
+
+  it("quotes in docs/DESIGN.md the figures npm run bench:tools prints", async () => {
+    const client = await server.connect("routing-test-docs", { toolsets: { kind: "core", families: [] } });
+    const core = (await client.listing()).tools;
+    await client.close();
+    const stale = staleFigures(readFileSync(DESIGN_FILE, "utf8"), docsFigures({ all, core, intents }));
+    expect(stale, `${stale.join("; ")}. Run ${DOCS_COMMAND}`).toEqual([]);
   });
 
   it("writes an example call for every tool that its schema accepts", () => {

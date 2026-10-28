@@ -1,11 +1,11 @@
 import { join } from "node:path";
 import { ToolListChangedNotificationSchema } from "@modelcontextprotocol/sdk/types.js";
 import { afterEach, describe, expect, it } from "vitest";
-import { serverInstructions, UPFRONT_TEXT_LIMIT } from "../src/mcp/instructions.js";
+import { buildInstructions, serverInstructions, UPFRONT_TEXT_LIMIT } from "../src/mcp/instructions.js";
 import { parseOptions } from "../src/mcp/options.js";
 import { ALWAYS_LOAD_META, parseToolsets, resolveToolsets } from "../src/mcp/routing/disclosure.js";
 import { toolNameOf } from "../src/mcp/routing/names.js";
-import { WORKFLOWS } from "../src/mcp/routing/workflows.js";
+import { headlineGoals, WORKFLOWS } from "../src/mcp/routing/workflows.js";
 import { call, type Harness, headlessHarness, scratchDir, texts } from "./mcp-helpers.js";
 
 let harness: Harness | undefined;
@@ -41,7 +41,7 @@ describe("--toolsets", () => {
 
   it("lists the core set, the search tool and the call tool by default, and every tool with all", async () => {
     harness = await headlessHarness();
-    expect(await names(harness)).toEqual(["blender_add_primitive", "blender_call", "blender_export", "blender_find_tools", "blender_render_preview", "blender_scene_info"]);
+    expect(await names(harness)).toEqual(["blender_add_primitive", "blender_call", "blender_export", "blender_find_tools", "blender_render_preview", "blender_scene_info", "library_apply"]);
     await harness.close();
     harness = await headlessHarness({}, { toolsets: { kind: "all" } });
     const all = await harness.client.listTools();
@@ -136,10 +136,12 @@ describe("run_python in search results", () => {
 });
 
 describe("workflow goals", () => {
-  it("are named in the server instructions and served whole by blender_find_tools, from one list", async () => {
+  it("are served whole by blender_find_tools, listed with goal list, and only the headline goals are in the instructions", async () => {
     harness = await headlessHarness();
     const instructions = harness.client.getInstructions() ?? "";
-    for (const workflow of WORKFLOWS) expect(instructions).toContain(workflow.goal.toLowerCase());
+    for (const goal of headlineGoals()) expect(instructions).toContain(goal);
+    const listed = texts(await call(harness.client, "blender_find_tools", { goal: "list" }));
+    for (const workflow of WORKFLOWS) expect(listed, workflow.id).toContain(`- ${workflow.goal}: `);
     for (const workflow of WORKFLOWS) {
       const served = texts(await call(harness.client, "blender_find_tools", { goal: workflow.goal }));
       expect(served, workflow.id).toContain(`Workflow "${workflow.goal}": ${workflow.steps.join(" > ")}.\n${workflow.note}`);
@@ -164,5 +166,7 @@ describe("server instructions", () => {
     expect(lines[1]).toContain(harness.started.workspace.root);
     expect(lines[2]).toContain("metres");
     expect(lines[3]).toContain("blender_find_tools");
+    expect(lines.at(-1)).toContain("blender_find_tools");
+    expect(buildInstructions(harness.started.workspace.root).dropped).toEqual(buildInstructions("/w").dropped);
   });
 });

@@ -1,10 +1,12 @@
-import { rankCore } from "../../src/mcp/routing/core.js";
+import { coreScores, type RankingSource } from "../../src/mcp/routing/core.js";
 import { toolNameOf } from "../../src/mcp/routing/names.js";
-import { WORKFLOWS } from "../../src/mcp/routing/workflows.js";
+import { type Workflow, WORKFLOWS } from "../../src/mcp/routing/workflows.js";
 import { type Intent, loadIntents } from "./intents.js";
 import { loadUsage } from "./usage.js";
 
-export const CORE_CANDIDATES = 24;
+export const CORE_DENOMINATORS = { buildScripts: 100, benchmarkTune: 160, workflows: 100 } as const;
+
+export type CoreSourceName = keyof typeof CORE_DENOMINATORS;
 
 function tally(names: string[]): Record<string, number> {
   const counts: Record<string, number> = {};
@@ -12,15 +14,22 @@ function tally(names: string[]): Record<string, number> {
   return counts;
 }
 
-export function coreSources(intents: Intent[] = loadIntents()): Record<string, Record<string, number>> {
+export interface CoreData {
+  intents?: Intent[];
+  workflows?: Workflow[];
+}
+
+export function coreSources(data: CoreData = {}): Record<CoreSourceName, RankingSource> {
   const usage = loadUsage();
+  const intents = data.intents ?? loadIntents();
+  const workflows = data.workflows ?? WORKFLOWS;
   return {
-    buildScripts: Object.fromEntries(Object.entries(usage.counts).map(([name, count]) => [toolNameOf(name), count])),
-    benchmarkTune: tally(intents.filter((intent) => intent.split === "tune").flatMap((intent) => intent.expect)),
-    workflows: tally(WORKFLOWS.flatMap((workflow) => workflow.steps)),
+    buildScripts: { counts: Object.fromEntries(Object.entries(usage.counts).map(([name, count]) => [toolNameOf(name), count])), denominator: CORE_DENOMINATORS.buildScripts },
+    benchmarkTune: { counts: tally(intents.filter((intent) => intent.split === "tune").flatMap((intent) => intent.expect)), denominator: CORE_DENOMINATORS.benchmarkTune },
+    workflows: { counts: tally(workflows.flatMap((workflow) => workflow.steps)), denominator: CORE_DENOMINATORS.workflows },
   };
 }
 
-export function derivedCoreRanking(): string[] {
-  return rankCore(Object.values(coreSources())).slice(0, CORE_CANDIDATES);
+export function derivedCoreScores(data: CoreData = {}): Map<string, number> {
+  return coreScores(Object.values(coreSources(data)));
 }

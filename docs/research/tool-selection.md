@@ -81,7 +81,7 @@ The Blendworks MCP server offers 83 tools (79 bridge commands with `--allow-pyth
    - No tool was renamed, so no compatibility aliases were needed.
 6. **"Instead:" notes instead of longer descriptions.** Every tool description now ends with its nearest alternatives and when to use them, taken from the bridge's `nearest` metadata. This is the "when not to use it" that Anthropic asks for, in about 15 tokens a tool.
 7. **Example calls in search results, not in the listing.** Each search result carries a one-line example made from its schema, and a test checks that every example validates. Like Anthropic's `input_examples` on deferred tools, it costs nothing until the tool is found.
-8. **Workflows as data.** A `goal` returns a tool sequence and its notes from `src/mcp/routing/workflows.ts`. The server instructions only name the goals, from the same list, so the two cannot drift.
+8. **Workflows as data.** A `goal` returns a tool sequence and its notes from `src/mcp/routing/workflows.ts`. The server instructions name the headline goals from the same list, and `goal: "list"` serves all of them, so the two cannot drift.
 9. **Instructions and descriptions within Claude Code's cut.** Claude Code cuts server instructions and upfront tool descriptions at 4 096 characters, so the critical rules come first: the workspace path, units, `blender_find_tools`, previews and the texture order.
    - The instructions are 2 921 characters with a 200-character workspace path, down from about 5 100 characters before this job.
    - The longest tool description is 355 characters, and every one starts with its search words.

@@ -24,6 +24,7 @@
     "equivalence": "tsx scripts/judge-equivalence.mjs",
     "install-claude": "npm run build && node dist/mcp/install-claude.js",
     "bench:tools": "tsx bench/tool-selection/run.ts",
+    "bench:core": "tsx bench/tool-selection/core.ts",
     "calibrate:natural": "tsx scripts/calibrate-natural.ts"
   },
   "dependencies": {

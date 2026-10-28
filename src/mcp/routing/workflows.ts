@@ -4,11 +4,13 @@ export interface Workflow {
   examples: string[];
   steps: string[];
   note: string;
+  headline?: boolean;
 }
 
 export const WORKFLOWS: Workflow[] = [
   {
     id: "texturing",
+    headline: true,
     goal: "Texture an asset",
     examples: ["texture a prop", "game-ready textures", "materials and bake", "textured crate"],
     steps: ["blender_uv_smart_project", "blender_uv_pack", "blender_material_procedural", "blender_material_layer", "blender_bake", "blender_image_save", "blender_export"],
@@ -19,7 +21,7 @@ export const WORKFLOWS: Workflow[] = [
     goal: "Realistic materials",
     examples: ["wood, brass, worn metal, stone or marble look", "aged metal with patina", "rust and dirt", "bark, moss, soil, sand or leaf", "moss on up-facing slopes"],
     steps: ["blender_material_procedural", "blender_material_layer", "blender_assign_material"],
-    note: "blender_material_procedural has wood, brass, worn metal, stone, marble and more; blender_material_layer adds wear and dirt through a mask. Scratches run around an axis (around_z, or around with scratch_axis) as on turned parts, along UV u or v (v follows sweep rings, u follows lathes), or along an axis for flat stock. Marble finish polished stays optically flat; honed and rough add relief. Edge and cavity masks follow bevels and creases. Natural looks: bark, moss, leaf, soil, sand and grass_ground presets, and layer masks slope (angle_min, angle_max), height (z_min, z_max), up_facing (moss or snow on top) and attribute (slope, height or curvature from heightfield), combined with with_masks; stone patches are soft unless hard_cells is set.",
+    note: "blender_material_procedural has wood, brass, worn metal, stone, marble and more; blender_material_layer adds wear and dirt through a mask. Scratches run around an axis (around_z, or around with scratch_axis) as on turned parts, along UV u or v (v follows sweep rings, u follows lathes), or along an axis for flat stock. The brass age new, handled, aged or dull darkens the recesses. Marble vein_softness and branching shape the veins; finish polished stays optically flat, honed and rough add relief. Edge and cavity masks follow bevels and creases. Natural looks: bark, moss, leaf, soil, sand and grass_ground presets, and layer masks slope (angle_min, angle_max), height (z_min, z_max), up_facing (moss or snow on top) and attribute (slope, height or curvature from heightfield), combined with with_masks; stone patches are soft unless hard_cells is set.",
   },
   {
     id: "node-material",
@@ -37,13 +39,15 @@ export const WORKFLOWS: Workflow[] = [
   },
   {
     id: "engraved-dial",
+    headline: true,
     goal: "Engraved brass dial",
     examples: ["engraved brass ring", "clock face with numbers", "dial with a scale", "astrolabe or armillary ring"],
     steps: ["blender_lathe", "blender_engrave", "blender_clean_mesh", "blender_material_procedural", "blender_material_layer", "blender_uv_smart_project", "blender_bake", "blender_export"],
-    note: "Text, numbers and zodiac or planet symbols ({aries}, {sun}) go into a surface with blender_engrave: a plane, a face region, a cylinder band or a curve. repeat makes a scale, for example a number every 10 degrees. Brass ageing comes from blender_material_procedural brass and a cavity layer.",
+    note: "Text, numbers and zodiac or planet symbols ({aries}, {sun}) go into a surface with blender_engrave: a plane, a face region, a cylinder band or a curve. repeat makes a scale, for example a number every 10 degrees, and blender_engrave_scale cuts all the tick marks of a dial in one cut on a flat ring or a cylinder band. Engraving keeps meshes closed and UV-mapped. Brass ageing comes from blender_material_procedural brass and a cavity layer.",
   },
   {
     id: "terrain-tiles",
+    headline: true,
     goal: "Terrain tiles",
     examples: ["landscape", "mountains", "heightmap ground", "terrain with ridges", "tiles that join"],
     steps: ["blender_heightfield", "blender_erode", "blender_material_nodes", "blender_material_procedural"],
@@ -65,6 +69,7 @@ export const WORKFLOWS: Workflow[] = [
   },
   {
     id: "rock-set",
+    headline: true,
     goal: "Rock set",
     examples: ["boulders", "stones", "scatter rocks", "cliff pieces", "fractured or chipped rocks", "worn pebbles"],
     steps: ["blender_add_primitive", "blender_fracture", "blender_chip", "blender_abrade", "blender_noise_displace", "blender_shade_smooth", "blender_material_procedural", "blender_instances", "blender_uv_smart_project", "blender_bake", "blender_generate_lods", "blender_export"],
@@ -75,7 +80,7 @@ export const WORKFLOWS: Workflow[] = [
     goal: "Pipes, rails, cables and springs",
     examples: ["pipe along a path", "cable", "railing", "coil spring", "ring or frame"],
     steps: ["blender_sweep", "blender_material_procedural"],
-    note: "blender_sweep a circle or rectangle preset along waypoints, with fillet_radius for smooth bends. Rings, arcs and springs: the circle, arc and helix paths, exact and without a seam.",
+    note: "blender_sweep a circle or rectangle preset along waypoints, with fillet_radius for smooth bends. Rings, arcs and springs: the circle, arc and helix paths, exact and without a seam; closed true closes an arc into a ring.",
   },
   {
     id: "turned-parts",
@@ -89,7 +94,7 @@ export const WORKFLOWS: Workflow[] = [
     goal: "Plates, brackets and signs with holes",
     examples: ["bracket", "sign", "plate with bolt holes", "cut many holes"],
     steps: ["blender_extrude_outline", "blender_boolean", "blender_clean_mesh", "blender_bevel"],
-    note: "blender_extrude_outline takes holes directly. Cut many holes at once with blender_boolean cutters and manifold true; it cleans the result, and blender_clean_mesh does the same to any mesh.",
+    note: "blender_extrude_outline takes holes directly. Cut many holes at once with blender_boolean cutters and manifold true (solver auto picks the solver and reports why); it cleans the result, and blender_clean_mesh does the same to any mesh.",
   },
   {
     id: "gear-train",
@@ -121,6 +126,7 @@ export const WORKFLOWS: Workflow[] = [
   },
   {
     id: "tree",
+    headline: true,
     goal: "Tree with leaves",
     examples: ["oak with roots and leaves", "spruce with needles", "game tree with a triangle budget", "weeping willow or wind-bent coastal tree"],
     steps: ["blender_grow_tree", "blender_tree_mesh", "blender_tree_leaves", "blender_material_procedural"],
@@ -128,6 +134,7 @@ export const WORKFLOWS: Workflow[] = [
   },
   {
     id: "character",
+    headline: true,
     goal: "Characters",
     examples: ["walking humanoid for a game", "four-legged animal that trots", "chest whose lid opens", "skinned mesh with clips"],
     steps: ["blender_rig_template", "blender_skin_bind", "blender_animation_preset", "blender_clip_pose", "blender_render_preview", "blender_export"],
@@ -173,9 +180,15 @@ export const WORKFLOWS: Workflow[] = [
     goal: "Check and deliver",
     examples: ["look at the model", "verify counts", "export the asset"],
     steps: ["blender_render_preview", "blender_scene_info", "blender_uv_info", "blender_export"],
-    note: "Export the final asset with blender_export, for example to asset.glb; its defaults pass the glTF validator.",
+    note: "Look often: blender_render_preview focus gives close-ups, shading clay, wireframe, normals, uv_checker or material_id shows form, seams and slots, views include bottom, and format jpeg is smaller. blender_scene_info checks counts and sizes 100 objects per page (offset, limit), with a names glob (\"Bolt*\") or detail summary, and lists parents, collections and checkpoints. Export the final asset with blender_export, for example to asset.glb; its defaults pass the glTF validator.",
   },
 ];
+
+export const GOAL_LIST = "list";
+
+export function headlineGoals(): string[] {
+  return WORKFLOWS.filter((workflow) => workflow.headline === true).map((workflow) => workflow.goal.toLowerCase());
+}
 
 export function workflowTools(): string[] {
   return [...new Set(WORKFLOWS.flatMap((workflow) => workflow.steps))];

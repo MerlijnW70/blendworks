@@ -126,7 +126,9 @@ describe("custom node graphs, hierarchy and brass through MCP tools only", workB
     expect(types["enum"]).toEqual(expect.arrayContaining(["principled_bsdf", "noise_texture", "voronoi_texture", "wave_texture", "color_ramp", "mix", "math", "vector_math", "mapping", "texture_coordinate", "bump", "normal_map", "geometry", "ambient_occlusion"]));
     expect(JSON.stringify(types["enum"])).not.toMatch(/script|group/i);
     const instructions = client.getInstructions() ?? "";
-    for (const word of ["blender_material_nodes", "blender_material_info", "blender_add_empty", "blender_collection_link", "brass", "around_z"]) expect(instructions).toContain(word);
+    for (const word of ["blender_material_nodes", "blender_material_info", "blender_add_empty", "blender_collection_link", "brass"]) expect(instructions).toContain(word);
+    const materials = texts((await client.callTool({ name: "blender_find_tools", arguments: { goal: "realistic materials" } })) as CallToolResult);
+    expect(materials).toContain("around_z");
   });
 
   it("refuses a script node and a cycle, and leaves the scene as it was", async () => {

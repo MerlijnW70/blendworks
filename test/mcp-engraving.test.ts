@@ -69,13 +69,16 @@ describe.skipIf(!existsSync(SESSION))("engraving, scales, solvers and aged mater
     expect(Object.keys(field(tool("material_procedural"), "marble")?.properties ?? {})).toEqual(expect.arrayContaining(["vein_softness", "branching"]));
   });
 
-  it("names only tools that exist in its instructions, and covers the new ones", () => {
+  it("names only tools that exist in its instructions, and covers the new ones there or in the workflow notes", async () => {
     const instructions = client.getInstructions() ?? "";
     const names = new Set(tools.map((entry) => entry.name));
     const mentioned = [...instructions.matchAll(/blender_[a-z_]+/g)].map((match) => match[0]);
     const unlisted = new Set(["blender_call", "blender_run_python"]);
     expect(mentioned.filter((name) => !names.has(name) && !unlisted.has(name))).toEqual([]);
-    for (const word of ["blender_engrave_scale", "ring", "solver auto", "brass age", "vein_softness", "closed true"]) expect(instructions).toContain(word);
+    for (const word of ["blender_engrave_scale", "ring"]) expect(instructions).toContain(word);
+    const goals = ["engraved brass dial", "plates with holes", "realistic materials", "pipes and rings"];
+    const notes = (await Promise.all(goals.map(async (goal) => texts((await client.callTool({ name: "blender_find_tools", arguments: { goal } })) as CallToolResult)))).join("\n");
+    for (const word of ["blender_engrave_scale", "solver auto", "brass age", "vein_softness", "closed true"]) expect(notes).toContain(word);
   });
 
   it("engraves a dial with majors and numbers it, through the tools", async () => {

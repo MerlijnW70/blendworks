@@ -1,6 +1,6 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import { LIBRARY_TOOLS } from "../../src/mcp/library/tools.js";
-import { libraryTool, routesFor } from "../../src/mcp/routing/catalog.js";
+import { libraryTool, type Route, routesFor } from "../../src/mcp/routing/catalog.js";
 import { SEARCH_TOOL } from "../../src/mcp/routing/names.js";
 import { ToolSearch } from "../../src/mcp/routing/search.js";
 import type { BridgeCommand } from "../../src/mcp/schema.js";
@@ -14,8 +14,12 @@ export interface Mode {
   ranker?: (commands: BridgeCommand[]) => Ranker;
 }
 
+export function productRoutes(commands: BridgeCommand[]): Route[] {
+  return routesFor(buildTools(commands), LIBRARY_TOOLS.map(libraryTool));
+}
+
 export function productSearch(commands: BridgeCommand[]): ToolSearch {
-  return new ToolSearch(routesFor(buildTools(commands), LIBRARY_TOOLS.map(libraryTool)));
+  return new ToolSearch(productRoutes(commands));
 }
 
 export function productRanker(commands: BridgeCommand[]): Ranker {

@@ -1,6 +1,7 @@
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
 import type { Route } from "./catalog.js";
-import { chooseCore, CORE_RANKING } from "./core.js";
+import { chooseCore, CORE_PINNED } from "./core.js";
+import { CORE_FILL } from "./core.generated.js";
 import { CALL_TOOL, SEARCH_TOOL } from "./names.js";
 
 export type Toolsets = { kind: "auto" } | { kind: "all" } | { kind: "core"; families: string[] };
@@ -41,9 +42,12 @@ function toolBytes(tool: Tool): number {
   return Buffer.byteLength(JSON.stringify(tool), "utf8");
 }
 
+export function toolSizes(routes: Route[]): Map<string, number> {
+  return new Map(routes.map((route) => [route.name, toolBytes(route.tool)]));
+}
+
 export function coreNames(routes: Route[]): string[] {
-  const sizes = new Map(routes.map((route) => [route.name, toolBytes(route.tool)]));
-  return chooseCore(CORE_RANKING, sizes);
+  return chooseCore(CORE_PINNED, CORE_FILL, toolSizes(routes));
 }
 
 export class Disclosure {
