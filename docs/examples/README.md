@@ -320,3 +320,16 @@ It runs these steps in order, and stops at the first failing command:
 6. **After.** The same two renders, the instanced glb and the `.blend`.
 
 `BLENDWORKS_TERRAIN_RESOLUTION`, `BLENDWORKS_SHOT_SIZE`, `BLENDWORKS_SHOT_SAMPLES`, `BLENDWORKS_TREE_DETAIL` and `BLENDWORKS_COVER_BUDGET` make a smaller, faster run. `test/meadow-cover-example.test.ts` runs it small, checks the budget and the renders, and validates the glb with the Khronos glTF validator.
+
+## Weather scene
+
+`weather_scene.py` builds an outdoor scene with Blendworks commands only and renders it under several weathers and times of day. It is the acceptance scene of the `sky-weather` job.
+
+```
+blender --background --factory-startup --python docs/examples/weather_scene.py -- out [presets] [times]
+```
+
+- The scene: a 100 m meadow `heightfield` on a 6 km plain to the horizon, a dry-stone wall of chipped and abraded stones placed with `instances`, an oak (`grow_tree` preset `oak`, `tree_mesh`, `tree_leaves`), `ground_cover` with the `meadow` preset and an eye-level camera. It is saved as `weather-scene.blend` and reused by later runs.
+- `presets` (default `clear,fair_cumulus,overcast,heavy_rain,thunderstorm`) and `times` (default `noon,golden_hour`) are comma-separated; each pair is one `weather` call and one `render_final` into `<preset>-<time>.png`.
+- `summary.json` holds each shot's storm value, sun, lamp, cover, rain, lightning, exposure, cloud form and sampling time.
+- `BLENDWORKS_SHOT_WIDTH`, `BLENDWORKS_SHOT_HEIGHT`, `BLENDWORKS_SHOT_SAMPLES`, `BLENDWORKS_SHOT_SECONDS`, `BLENDWORKS_TREE_DETAIL`, `BLENDWORKS_COVER_BUDGET` and `BLENDWORKS_CLOUD_FORM` make a smaller, faster or cheaper run; `BLENDWORKS_DEVICE` picks the device.

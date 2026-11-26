@@ -1,6 +1,6 @@
 import bpy
 
-from .. import limits
+from .. import limits, world_background
 from ..inspect_scene import DETAILS, scene_report
 from ..registry import command
 from ..schema import integer, names, string
@@ -62,15 +62,16 @@ def scene_info(ctx, args):
 
 @command(
     "new_scene",
-    "Clear the scene: remove every object, collection and unused data, metric units in metres.",
+    "Clear the scene: remove every object, collection and unused data; a default grey world, exposure 0, metric units in metres.",
     destructive=True,
     family="scene",
     intents=("clear the whole scene and start fresh", "empty scene in metres"),
     nearest=(("delete", "to remove only some objects"),),
 )
 def new_scene(ctx, args):
+    replaced = world_background.describe(ctx.scene.world)
     removed = reset_scene(ctx.scene)
-    return {"removed_objects": removed}
+    return {"removed_objects": removed, "world": ctx.scene.world.name, "replaced": {"background": replaced["kind"], "world": replaced["world"]}}
 
 
 def reset_scene(scene):
@@ -79,7 +80,9 @@ def reset_scene(scene):
     bpy.data.batch_remove(objects)
     for collection in list(scene.collection.children_recursive):
         bpy.data.collections.remove(collection)
+    world_background.reset_default(scene)
     purge_unused()
+    scene.view_settings.exposure = 0.0
     scene.camera = None
     scene.cursor.location = (0.0, 0.0, 0.0)
     scene.unit_settings.system = "METRIC"
@@ -89,7 +92,7 @@ def reset_scene(scene):
 
 
 def purge_unused():
-    for name in ("meshes", "curves", "materials", "lights", "cameras", "images", "textures", "node_groups", "collections"):
+    for name in ("meshes", "curves", "materials", "lights", "cameras", "images", "textures", "node_groups", "collections", "worlds"):
         collection = getattr(bpy.data, name)
         unused = [block for block in collection if block.users - int(block.use_fake_user) == 0]
         if unused:

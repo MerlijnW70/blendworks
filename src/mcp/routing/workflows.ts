@@ -183,6 +183,13 @@ export const WORKFLOWS: Workflow[] = [
     note: "Light with an HDRI, place a camera, then blender_camera_setup: focal_length, fstop with focus_object on the subject for depth of field, physical exposure (shutter, iso; exposure = reference_ev - EV100) or exposure in stops, and an AgX look such as base_contrast or punchy. blender_atmosphere adds haze by visibility in metres (contrast falls to 2 % there), height_falloff and ground_fog; previews show it as cheap depth haze. Check with blender_render_preview, then blender_render_final writes up to 4096 px with adaptive sampling, denoising and a time_limit, plus depth, normal, albedo and object_id passes, and motion_blur for animation.",
   },
   {
+    id: "sky-weather",
+    goal: "Sky and weather for an outdoor scene",
+    examples: ["sunny day with cumulus", "overcast or rainy day", "thunderstorm with lightning", "golden hour or dusk sky"],
+    steps: ["blender_weather", "blender_sky", "blender_clouds", "blender_render_preview", "blender_render_final"],
+    note: "blender_weather does it in one call: preset clear, hazy, fair_cumulus, scattered, broken, overcast, light_rain, heavy_rain or thunderstorm (golden_hour, clear_golden_hour, dusk, scattered_dusk, stormy_golden_hour), or storm 0-1, with time_of_day or sun, seed and overrides for dust, visibility, rain, wet, lightning. It builds the procedural sky (blender_sky: sun by elevation and azimuth or date, time, latitude and longitude, a matching sun lamp and exposure), the clouds (blender_clouds: genus, coverage, base, thickness, density, wind, seed), rain veils and streaks, wet ground, a lightning bolt and haze. Clouds form auto shows a cheap sheet in previews and EEVEE and volumes in blender_render_final.",
+  },
+  {
     id: "review",
     goal: "Check and deliver",
     examples: ["look at the model", "verify counts", "export the asset"],

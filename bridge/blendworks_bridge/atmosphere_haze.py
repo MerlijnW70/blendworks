@@ -13,6 +13,8 @@ ADD_NODE = "Atmosphere Add"
 MATERIAL_NAME = "Atmosphere"
 VOLUME_NODE = "Atmosphere Scatter"
 SKY_ROWS = 32
+SKY_PROPERTY = "blendworks_sky"
+CLOUDS_PROPERTY = "blendworks_clouds"
 FLAT_RISE = 1e-6
 
 
@@ -141,7 +143,21 @@ def sky_radiance(image):
     return total / weights
 
 
+def sky_airlight(world):
+    """Mean radiance of the procedural sky, greyed by its cloud cover, as the sky and clouds commands store it."""
+    settings = json.loads(world[SKY_PROPERTY])
+    colour = np.asarray(settings["sky_mean"], dtype=np.float64)
+    clouds = world.get(CLOUDS_PROPERTY)
+    if isinstance(clouds, str):
+        cover = float(json.loads(clouds).get("cover", 0.0))
+        grey = float(np.dot(colour, (0.2126, 0.7152, 0.0722))) * 1.6
+        colour = colour * (1.0 - cover) + grey * cover
+    return [round(float(value), 6) for value in colour]
+
+
 def estimated_airlight(world):
+    if world is not None and isinstance(world.get(SKY_PROPERTY), str):
+        return sky_airlight(world)
     background = world_background(world)
     if background is None:
         colour = list(world.color) if world is not None else [0.05, 0.05, 0.05]

@@ -4,7 +4,7 @@ import tempfile
 
 import bpy
 
-from .. import atmosphere_haze, camera_exposure, device, exr_read, render_outputs
+from .. import atmosphere_haze, camera_exposure, cloud_forms, device, exr_read, render_outputs
 from ..errors import bad_args
 from ..registry import command
 from ..rig import stamp_fields
@@ -110,7 +110,8 @@ def render_final(ctx, args):
             with atmosphere_haze.VolumeHidden(scene, haze), render_outputs.SurfacePasses(scene, args["samples"]):
                 return main, render_outputs.render_layers(scene, ctx.view_layer, folder, passes, "surface.exr")
 
-        (layers_path, passes_path), choice = render_outputs.on_device(scene, choice, args.get("device"), work)
+        with cloud_forms.FinalForm(scene) as cloud_form:
+            (layers_path, passes_path), choice = render_outputs.on_device(scene, choice, args.get("device"), work)
         result = write_outputs(ctx, scene, camera, args, outputs, passes, haze, (layers_path, passes_path), folder, counter.most)
         result["overwritten"] = [ctx.workspace.relative(name) for name in taken]
         result["device"] = choice.report()
@@ -125,6 +126,9 @@ def render_final(ctx, args):
     result["camera"] = camera_report(camera)
     result["view"] = camera_exposure.view_report(scene.view_settings)
     result["atmosphere"] = None if haze is None else {"method": haze["method"], "visibility": haze["visibility"]}
+    result["clouds"] = cloud_forms.cloud_report(scene)
+    if result["clouds"] is not None and cloud_form.active:
+        result["clouds"]["rendered_as"] = cloud_form.report()
     return result
 
 

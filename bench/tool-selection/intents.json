@@ -293,5 +293,11 @@
   {"id":"ground_cover-3","text":"Put fallen leaves, twigs and pebbles under the trees as a forest floor, none inside the trunks","kind":"single","split":"tune","expect":["blender_ground_cover"]},
   {"id":"ground_element-1","text":"Make a single grass tuft with 30 blades and dry tips as alpha cards within 12 triangles","kind":"near-miss","split":"tune","expect":["blender_ground_element"],"confusable":"blender_ground_cover"},
   {"id":"ground_element-2","text":"Build one small flower with petals in the golden angle so I can place it myself","kind":"single","split":"tune","expect":["blender_ground_element"],"alternatives":["blender_instances"]},
-  {"id":"ground_cover_export-1","text":"Export the grass and ground cover to a glb with GPU instancing for the game engine","kind":"near-miss","split":"tune","expect":["blender_ground_cover_export"],"confusable":"blender_export"}
+  {"id":"ground_cover_export-1","text":"Export the grass and ground cover to a glb with GPU instancing for the game engine","kind":"near-miss","split":"tune","expect":["blender_ground_cover_export"],"confusable":"blender_export"},
+  {"id":"sky-1","text":"Give the scene a physically based daylight sky with the sun 30 degrees up in the west","kind":"near-miss","split":"tune","expect":["blender_sky"],"confusable":"blender_set_world_hdri"},
+  {"id":"sky-2","text":"Put the sun where it stands over Amsterdam on 21 June at eight in the morning","kind":"single","split":"tune","expect":["blender_sky"]},
+  {"id":"clouds-1","text":"Add a layer of scattered cumulus at 1200 m whose shadows fall on the terrain","kind":"near-miss","split":"tune","expect":["blender_clouds"],"confusable":"blender_weather"},
+  {"id":"clouds-2","text":"Thin wispy cirrus high in the sky, drifting east","kind":"single","split":"tune","expect":["blender_clouds"]},
+  {"id":"weather-1","text":"Turn the meadow into a grey rainy day with wet ground and rain streaks","kind":"near-miss","split":"tune","expect":["blender_weather"],"confusable":"blender_clouds"},
+  {"id":"weather-2","text":"Make it a dark thunderstorm with a lightning bolt over the hills","kind":"single","split":"tune","expect":["blender_weather"]}
 ]

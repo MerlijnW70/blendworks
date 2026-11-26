@@ -4,6 +4,7 @@ import os
 import bpy
 from mathutils import Matrix, Vector
 
+from .. import world_background
 from ..errors import bad_args, failed
 from ..registry import command
 from ..schema import boolean, color, length, number, string, vector3
@@ -132,55 +133,43 @@ def look_at(ctx, args):
 
 @command(
     "set_world",
-    "Set the world background: a uniform colour and strength that also lights the scene.",
+    "Set the world background: a uniform colour and strength that also lights the scene; it replaces any image, sky or clouds.",
     {
         "color": color("Background colour, linear RGB from 0 to 1.", allow_alpha=False),
         "strength": number("Background strength.", 0.0, 100.0),
     },
     family="lighting",
     intents=("uniform background colour that lights the scene", "black or grey world"),
-    nearest=(("set_world_hdri", "for an HDRI image"),),
+    nearest=(("set_world_hdri", "for an HDRI image"), ("sky", "for a procedural sky")),
 )
 def set_world(ctx, args):
     if "color" not in args and "strength" not in args:
         raise bad_args("give color, strength or both")
-    world = ctx.scene.world
-    if world is None:
-        world = bpy.data.worlds.new("World")
-        ctx.scene.world = world
-    elif world.users > 1:
-        world = world.copy()
-        ctx.scene.world = world
-    background = world_background(world)
-    if "color" in args:
-        background.inputs["Color"].default_value = list(args["color"]) + [1.0]
-        world.color = args["color"]
-    if "strength" in args:
-        background.inputs["Strength"].default_value = args["strength"]
+    previous_color, previous_strength = uniform_values(ctx.scene.world)
+    world, output, replaced = world_background.replace(ctx.scene)
+    colour = args.get("color", previous_color)
+    background = world_background.uniform(world, output, colour, args.get("strength", previous_strength))
     return {
         "world": world.name,
         "color": vec(background.inputs["Color"].default_value[:3]),
         "strength": rounded_strength(background),
+        "replaced": replaced,
     }
+
+
+def uniform_values(world):
+    if world is None:
+        return list(world_background.DEFAULT_COLOR), 1.0
+    colour = list(world.color)
+    if world_background.surface_kind(world) == "colour":
+        background = next((node for node in world.node_tree.nodes if node.type == "BACKGROUND"), None)
+        if background is not None:
+            return list(background.inputs["Color"].default_value[:3]), float(background.inputs["Strength"].default_value)
+    return colour, 1.0
 
 
 def rounded_strength(background):
     return round(float(background.inputs["Strength"].default_value), 6)
-
-
-def world_background(world):
-    tree = world.node_tree
-    if tree is None:
-        raise bad_args(f"world {world.name} has no node tree")
-    for node in tree.nodes:
-        if node.type == "BACKGROUND":
-            return node
-    background = tree.nodes.new("ShaderNodeBackground")
-    output = next((node for node in tree.nodes if node.type == "OUTPUT_WORLD"), None)
-    if output is None:
-        output = tree.nodes.new("ShaderNodeOutputWorld")
-    tree.links.new(background.outputs["Background"], output.inputs["Surface"])
-    return background
 
 
 HDRI_EXTENSIONS = (".hdr", ".exr")
@@ -207,16 +196,13 @@ def set_world_hdri(ctx, args):
     width, height = image.size[0], image.size[1]
     if width == 0 or height == 0:
         raise failed(f"{args['path']} is not a readable {os.path.splitext(path)[1]} image")
-    world = bpy.data.worlds.new("World HDRI")
+    world, output_node, replaced = world_background.replace(ctx.scene)
     tree = world.node_tree
-    if tree is None:
-        raise failed("Blender created a world without a node tree")
-    tree.nodes.clear()
     coordinates = tree.nodes.new("ShaderNodeTexCoord")
     mapping = tree.nodes.new("ShaderNodeMapping")
     environment = tree.nodes.new("ShaderNodeTexEnvironment")
     background = tree.nodes.new("ShaderNodeBackground")
-    output = tree.nodes.new("ShaderNodeOutputWorld")
+    output = output_node
     environment.image = image
     environment.projection = "EQUIRECTANGULAR"
     mapping.inputs["Rotation"].default_value = (0.0, 0.0, math.radians(args["rotation"]))
@@ -227,7 +213,6 @@ def set_world_hdri(ctx, args):
     tree.links.new(background.outputs["Background"], output.inputs["Surface"])
     for node, x in ((coordinates, -900), (mapping, -700), (environment, -450), (background, -150), (output, 100)):
         node.location = (x, 0)
-    ctx.scene.world = world
     return {
         "world": world.name,
         "image": image.name,
@@ -236,4 +221,5 @@ def set_world_hdri(ctx, args):
         "height": height,
         "strength": rounded_strength(background),
         "rotation": args["rotation"],
+        "replaced": replaced,
     }

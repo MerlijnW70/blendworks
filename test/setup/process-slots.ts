@@ -1,11 +1,17 @@
 import { vi } from "vitest";
 import type { Slot } from "../../scripts/lib/slots.js";
+import { withThreadArguments } from "./cpu-quota.js";
 import { isBlenderCommand, takeSlot, untilProcessExits, whileProcessRuns, whileProcessRunsSync } from "./slot.js";
 
 vi.mock("node:child_process", async (importOriginal) => {
   const original = await importOriginal<typeof import("node:child_process")>();
   const slotted = <Run extends (command: string, ...rest: never[]) => unknown>(run: Run): Run =>
-    ((command: string, ...rest: never[]) => (isBlenderCommand(command) ? whileProcessRunsSync(() => run(command, ...rest)) : run(command, ...rest))) as Run;
+    ((command: string, ...rest: never[]) => {
+      if (!isBlenderCommand(command)) return run(command, ...rest);
+      const [args, ...others] = rest as unknown[];
+      const threaded = (Array.isArray(args) ? [withThreadArguments(args as string[]), ...others] : [withThreadArguments([]), ...rest]) as never[];
+      return whileProcessRunsSync(() => run(command, ...threaded));
+    }) as Run;
   return { ...original, execFileSync: slotted(original.execFileSync), spawnSync: slotted(original.spawnSync) };
 });
 
