@@ -33,6 +33,25 @@ def offset_along(tree, stem, node):
     return tree.arc_length(path)
 
 
+def test_a_whorl_grows_its_children_at_one_height_evenly_around_the_stem(bridge):
+    bridge.ok("grow_tree", name="Tree", **{**LEVELS, "branches": [12, 6], "whorl": [4, 1], "rotate": [30.0, 137.5]})
+    tree = tree_of("Tree")
+    trunk = tree.stem_from(0)
+    laterals = tree.laterals(trunk)
+    heights = [round(float(tree.positions[tree.parents[child]][2]), 6) for child in laterals]
+    assert len(laterals) == 12 and len(set(heights)) == 3, heights
+    axis = numpy.array([0.0, 0.0, 1.0])
+    for ring in range(3):
+        group = laterals[4 * ring : 4 * ring + 4]
+        assert len({heights[4 * ring + index] for index in range(4)}) == 1
+        directions = [flat(tree.positions[child] - tree.positions[tree.parents[child]], axis) for child in group]
+        for first, second in zip(directions, directions[1:]):
+            assert abs(wrapped(signed_turn(first, second, axis) - 90.0)) < 1e-6
+    first_ring = flat(tree.positions[laterals[0]] - tree.positions[tree.parents[laterals[0]]], axis)
+    second_ring = flat(tree.positions[laterals[4]] - tree.positions[tree.parents[laterals[4]]], axis)
+    assert abs(wrapped(signed_turn(first_ring, second_ring, axis) - 30.0)) < 1e-6
+
+
 def test_consecutive_children_turn_by_rotate_at_every_level(bridge):
     bridge.ok("grow_tree", name="Tree", **LEVELS)
     tree = tree_of("Tree")
@@ -48,6 +67,37 @@ def test_consecutive_children_turn_by_rotate_at_every_level(bridge):
             assert abs(wrapped(turn + 100.0)) < ANGLE_SLACK, turn
             checked += 1
     assert checked > 30
+
+
+def angle_to(direction, axis):
+    return float(numpy.degrees(numpy.arccos(numpy.clip(unit(direction) @ unit(axis), -1.0, 1.0))))
+
+
+def test_down_angle_top_turns_the_children_from_down_angle_at_the_bottom_to_it_at_the_tip(bridge):
+    bridge.ok("grow_tree", name="Tree", **{**LEVELS, "levels": 2, "branches": [9], "down_angle": [100.0], "down_angle_top": [40.0], "segments": [20, 6]})
+    tree = tree_of("Tree")
+    trunk = tree.stem_from(0)
+    laterals = tree.laterals(trunk)
+    angles = [angle_to(tree.positions[child] - tree.positions[tree.parents[child]], [0.0, 0.0, 1.0]) for child in laterals]
+    positions = [(float(tree.positions[tree.parents[child]][2]) - 2.0) / 8.0 for child in laterals]
+    for angle, position in zip(angles, positions):
+        assert abs(angle - (100.0 + (40.0 - 100.0) * position)) < 1e-6, (angle, position)
+    assert angles[0] > 90.0 > 50.0 > angles[-1], angles
+
+
+def test_rotate_offset_turns_the_first_child_so_alternate_children_lie_left_and_right(bridge):
+    settings = {**LEVELS, "branches": [4, 6], "rotate": [90.0, 180.0], "down_angle": [90.0, 60.0], "curve": [0.0, 0.0, 0.0], "levels": 3}
+    for offset, sideways in ((0.0, False), (90.0, True)):
+        bridge.ok("new_scene")
+        bridge.ok("grow_tree", name="Tree", **settings, rotate_offset=[0.0, offset])
+        tree = tree_of("Tree")
+        checked = 0
+        for first in tree.laterals(tree.stem_from(0)):
+            for child in tree.laterals(tree.stem_from(first)):
+                rise = abs(float(unit(tree.positions[child] - tree.positions[tree.parents[child]])[2]))
+                assert (rise < 1e-6) if sideways else (rise > 0.8), (offset, rise)
+                checked += 1
+        assert checked >= 16
 
 
 def test_child_lengths_follow_length_ratio(bridge):

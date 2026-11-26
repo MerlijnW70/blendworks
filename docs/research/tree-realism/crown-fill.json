@@ -1,0 +1,511 @@
+{
+ "summary": {
+  "fill": {
+   "trees": 12,
+   "mean": 0.5679,
+   "min": 0.3736,
+   "max": 0.6705,
+   "std": 0.0801
+  },
+  "foliage_fill": {
+   "trees": 12,
+   "mean": 0.4856,
+   "min": 0.314,
+   "max": 0.6472,
+   "std": 0.0845
+  }
+ },
+ "trees": [
+  {
+   "asset": "fir_tree_01",
+   "name": "Fir Tree 01",
+   "authors": {
+    "Rob Tuytel": "photography",
+    "Rico Cilliers": "modeling"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/fir_tree_01",
+   "objects": [
+    "fir_tree_01_a_LOD0"
+   ],
+   "fill": 0.6705,
+   "foliage_fill": 0.6472,
+   "views": {
+    "front": {
+     "fill": 0.6613,
+     "cells": 941,
+     "holes": 12,
+     "foliage_fill": 0.6386
+    },
+    "back": {
+     "fill": 0.6582,
+     "cells": 946,
+     "holes": 17,
+     "foliage_fill": 0.6356
+    },
+    "left": {
+     "fill": 0.6793,
+     "cells": 931,
+     "holes": 15,
+     "foliage_fill": 0.6559
+    },
+    "right": {
+     "fill": 0.6833,
+     "cells": 925,
+     "holes": 20,
+     "foliage_fill": 0.6587
+    }
+   }
+  },
+  {
+   "asset": "fir_tree_01",
+   "name": "Fir Tree 01",
+   "authors": {
+    "Rob Tuytel": "photography",
+    "Rico Cilliers": "modeling"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/fir_tree_01",
+   "objects": [
+    "fir_tree_01_b_LOD0"
+   ],
+   "fill": 0.6174,
+   "foliage_fill": 0.5884,
+   "views": {
+    "front": {
+     "fill": 0.5891,
+     "cells": 1029,
+     "holes": 70,
+     "foliage_fill": 0.5579
+    },
+    "back": {
+     "fill": 0.599,
+     "cells": 986,
+     "holes": 61,
+     "foliage_fill": 0.5734
+    },
+    "left": {
+     "fill": 0.6415,
+     "cells": 961,
+     "holes": 35,
+     "foliage_fill": 0.6119
+    },
+    "right": {
+     "fill": 0.64,
+     "cells": 969,
+     "holes": 38,
+     "foliage_fill": 0.6103
+    }
+   }
+  },
+  {
+   "asset": "fir_tree_01",
+   "name": "Fir Tree 01",
+   "authors": {
+    "Rob Tuytel": "photography",
+    "Rico Cilliers": "modeling"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/fir_tree_01",
+   "objects": [
+    "fir_tree_01_c_LOD0"
+   ],
+   "fill": 0.3736,
+   "foliage_fill": 0.314,
+   "views": {
+    "front": {
+     "fill": 0.3672,
+     "cells": 658,
+     "holes": 83,
+     "foliage_fill": 0.3047
+    },
+    "back": {
+     "fill": 0.3695,
+     "cells": 657,
+     "holes": 80,
+     "foliage_fill": 0.3067
+    },
+    "left": {
+     "fill": 0.3797,
+     "cells": 663,
+     "holes": 42,
+     "foliage_fill": 0.3229
+    },
+    "right": {
+     "fill": 0.378,
+     "cells": 654,
+     "holes": 49,
+     "foliage_fill": 0.3219
+    }
+   }
+  },
+  {
+   "asset": "island_tree_01",
+   "name": "Island Tree 01",
+   "authors": {
+    "Rob Tuytel": "scanning, processing",
+    "Rico Cilliers": "cleanup, processing"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/island_tree_01",
+   "objects": [
+    "island_tree_01_LOD0"
+   ],
+   "fill": 0.6241,
+   "foliage_fill": 0.5216,
+   "views": {
+    "front": {
+     "fill": 0.6145,
+     "cells": 560,
+     "holes": 16,
+     "foliage_fill": 0.5193
+    },
+    "back": {
+     "fill": 0.6159,
+     "cells": 558,
+     "holes": 16,
+     "foliage_fill": 0.5212
+    },
+    "left": {
+     "fill": 0.6304,
+     "cells": 547,
+     "holes": 14,
+     "foliage_fill": 0.5179
+    },
+    "right": {
+     "fill": 0.6355,
+     "cells": 533,
+     "holes": 16,
+     "foliage_fill": 0.5281
+    }
+   }
+  },
+  {
+   "asset": "island_tree_02",
+   "name": "Island Tree 02",
+   "authors": {
+    "Rob Tuytel": "scanning, processing",
+    "Rico Cilliers": "cleanup, processing"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/island_tree_02",
+   "objects": [
+    "island_tree_02_LOD0"
+   ],
+   "fill": 0.636,
+   "foliage_fill": 0.5312,
+   "views": {
+    "front": {
+     "fill": 0.632,
+     "cells": 431,
+     "holes": 5,
+     "foliage_fill": 0.5223
+    },
+    "back": {
+     "fill": 0.6337,
+     "cells": 436,
+     "holes": 6,
+     "foliage_fill": 0.5147
+    },
+    "left": {
+     "fill": 0.6397,
+     "cells": 415,
+     "holes": 1,
+     "foliage_fill": 0.5446
+    },
+    "right": {
+     "fill": 0.6384,
+     "cells": 416,
+     "holes": 0,
+     "foliage_fill": 0.5433
+    }
+   }
+  },
+  {
+   "asset": "island_tree_03",
+   "name": "Island Tree 03",
+   "authors": {
+    "Rob Tuytel": "scanning, processing",
+    "Rico Cilliers": "cleanup, processing"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/island_tree_03",
+   "objects": [
+    "island_tree_03_LOD0"
+   ],
+   "fill": 0.6169,
+   "foliage_fill": 0.4642,
+   "views": {
+    "front": {
+     "fill": 0.6579,
+     "cells": 421,
+     "holes": 3,
+     "foliage_fill": 0.4935
+    },
+    "back": {
+     "fill": 0.6507,
+     "cells": 428,
+     "holes": 7,
+     "foliage_fill": 0.4885
+    },
+    "left": {
+     "fill": 0.583,
+     "cells": 519,
+     "holes": 16,
+     "foliage_fill": 0.4398
+    },
+    "right": {
+     "fill": 0.5761,
+     "cells": 529,
+     "holes": 20,
+     "foliage_fill": 0.4349
+    }
+   }
+  },
+  {
+   "asset": "jacaranda_tree",
+   "name": "Jacaranda Tree",
+   "authors": {
+    "Rob Tuytel": "guidance",
+    "Rico Cilliers": "All"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/jacaranda_tree",
+   "objects": [
+    "jacaranda_tree_LOD0"
+   ],
+   "fill": 0.5932,
+   "foliage_fill": 0.5063,
+   "views": {
+    "front": {
+     "fill": 0.5843,
+     "cells": 486,
+     "holes": 2,
+     "foliage_fill": 0.4912
+    },
+    "back": {
+     "fill": 0.5873,
+     "cells": 483,
+     "holes": 2,
+     "foliage_fill": 0.4938
+    },
+    "left": {
+     "fill": 0.6011,
+     "cells": 577,
+     "holes": 8,
+     "foliage_fill": 0.5202
+    },
+    "right": {
+     "fill": 0.6001,
+     "cells": 576,
+     "holes": 9,
+     "foliage_fill": 0.5199
+    }
+   }
+  },
+  {
+   "asset": "pine_tree_01",
+   "name": "Pine Tree 01",
+   "authors": {
+    "Rob Tuytel": "photography",
+    "Rico Cilliers": "modeling"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/pine_tree_01",
+   "objects": [
+    "pine_tree_01_a_LOD0"
+   ],
+   "fill": 0.5034,
+   "foliage_fill": 0.4442,
+   "views": {
+    "front": {
+     "fill": 0.5076,
+     "cells": 1000,
+     "holes": 46,
+     "foliage_fill": 0.4507
+    },
+    "back": {
+     "fill": 0.5074,
+     "cells": 997,
+     "holes": 45,
+     "foliage_fill": 0.4503
+    },
+    "left": {
+     "fill": 0.499,
+     "cells": 1023,
+     "holes": 73,
+     "foliage_fill": 0.4378
+    },
+    "right": {
+     "fill": 0.4994,
+     "cells": 1022,
+     "holes": 68,
+     "foliage_fill": 0.4381
+    }
+   }
+  },
+  {
+   "asset": "pine_tree_01",
+   "name": "Pine Tree 01",
+   "authors": {
+    "Rob Tuytel": "photography",
+    "Rico Cilliers": "modeling"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/pine_tree_01",
+   "objects": [
+    "pine_tree_01_b_LOD0"
+   ],
+   "fill": 0.4876,
+   "foliage_fill": 0.425,
+   "views": {
+    "front": {
+     "fill": 0.4786,
+     "cells": 722,
+     "holes": 52,
+     "foliage_fill": 0.4147
+    },
+    "back": {
+     "fill": 0.4809,
+     "cells": 720,
+     "holes": 49,
+     "foliage_fill": 0.4165
+    },
+    "left": {
+     "fill": 0.5004,
+     "cells": 307,
+     "holes": 17,
+     "foliage_fill": 0.4335
+    },
+    "right": {
+     "fill": 0.4906,
+     "cells": 669,
+     "holes": 47,
+     "foliage_fill": 0.4355
+    }
+   }
+  },
+  {
+   "asset": "pine_tree_01",
+   "name": "Pine Tree 01",
+   "authors": {
+    "Rob Tuytel": "photography",
+    "Rico Cilliers": "modeling"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/pine_tree_01",
+   "objects": [
+    "pine_tree_01_c_LOD0"
+   ],
+   "fill": 0.511,
+   "foliage_fill": 0.4535,
+   "views": {
+    "front": {
+     "fill": 0.5247,
+     "cells": 1016,
+     "holes": 51,
+     "foliage_fill": 0.4698
+    },
+    "back": {
+     "fill": 0.5171,
+     "cells": 1118,
+     "holes": 50,
+     "foliage_fill": 0.4552
+    },
+    "left": {
+     "fill": 0.4929,
+     "cells": 1176,
+     "holes": 87,
+     "foliage_fill": 0.4327
+    },
+    "right": {
+     "fill": 0.5091,
+     "cells": 1035,
+     "holes": 77,
+     "foliage_fill": 0.4562
+    }
+   }
+  },
+  {
+   "asset": "searsia_lucida",
+   "name": "Searsia Lucida",
+   "authors": {
+    "James Ray Cock": "modeling",
+    "Jenelle van Heerden": "Photography"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/searsia_lucida",
+   "objects": [
+    "searsia_lucida_a_LOD0"
+   ],
+   "fill": 0.575,
+   "foliage_fill": 0.4025,
+   "views": {
+    "front": {
+     "fill": 0.5845,
+     "cells": 659,
+     "holes": 17,
+     "foliage_fill": 0.4159
+    },
+    "back": {
+     "fill": 0.5821,
+     "cells": 663,
+     "holes": 17,
+     "foliage_fill": 0.4132
+    },
+    "left": {
+     "fill": 0.5699,
+     "cells": 710,
+     "holes": 17,
+     "foliage_fill": 0.3926
+    },
+    "right": {
+     "fill": 0.5636,
+     "cells": 722,
+     "holes": 23,
+     "foliage_fill": 0.3882
+    }
+   }
+  },
+  {
+   "asset": "tree_small_02",
+   "name": "Tree Small 02",
+   "authors": {
+    "Rico Cilliers": "All"
+   },
+   "license": "CC0",
+   "url": "https://polyhaven.com/a/tree_small_02",
+   "objects": [
+    "tree_small_02_LOD0"
+   ],
+   "fill": 0.6058,
+   "foliage_fill": 0.5293,
+   "views": {
+    "front": {
+     "fill": 0.6712,
+     "cells": 574,
+     "holes": 6,
+     "foliage_fill": 0.5989
+    },
+    "back": {
+     "fill": 0.6719,
+     "cells": 573,
+     "holes": 9,
+     "foliage_fill": 0.5999
+    },
+    "left": {
+     "fill": 0.5367,
+     "cells": 495,
+     "holes": 16,
+     "foliage_fill": 0.4553
+    },
+    "right": {
+     "fill": 0.5434,
+     "cells": 486,
+     "holes": 16,
+     "foliage_fill": 0.4632
+    }
+   }
+  }
+ ]
+}

@@ -35,6 +35,15 @@ class LevelPlan:
         self.curve_back = args["curve_back"]
         self.curve_variation = args["curve_variation"]
         self.rng = numpy.random.default_rng([args["seed"], 2])
+        self.vary = numpy.random.default_rng([args["seed"], 5])
+        self.length_variation = args.get("length_variation", [0.0])
+        self.down_angle_variation = args.get("down_angle_variation", [0.0])
+        self.rotate_variation = args.get("rotate_variation", [0.0])
+        self.spacing_variation = args.get("spacing_variation", [0.0])
+        self.child_probability = args.get("child_probability", [1.0])
+        self.whorl = args.get("whorl", [1])
+        self.down_angle_top = args.get("down_angle_top")
+        self.rotate_offset = args.get("rotate_offset", [0.0])
         self.segments = args["segments"]
         self.length = args["height"]
         self.trunk_height = args["trunk_height"]
@@ -75,6 +84,27 @@ class LevelPlan:
         if child_level == 1:
             return parent_length * ratio * float(shape_ratio(self.shape, (parent_length - offset) / (parent_length - self.trunk_height)))
         return ratio * (parent_length - MIDDLE_SHARE * offset)
+
+    def varied(self, child_level):
+        length, down, turn, present = self.vary.uniform(-1.0, 1.0, 4)
+        return (
+            max(0.05, 1.0 + self.child_setting(self.length_variation, child_level) * length),
+            math.radians(self.child_setting(self.down_angle_variation, child_level) * down),
+            math.radians(self.child_setting(self.rotate_variation, child_level) * turn),
+            0.5 * (present + 1.0) < self.child_setting(self.child_probability, child_level),
+        )
+
+    def slot_jitter(self, level, count):
+        share = self.child_setting(self.spacing_variation, level + 1) if level + 1 < self.levels else 0.0
+        return self.vary.uniform(-share, share, count) if share > 0.0 else numpy.zeros(count)
+
+    def child_down_angle(self, child_level, position):
+        """Down angle of a child at `position`, 0 at the parent's lowest child slot and 1 at its tip."""
+        bottom = self.child_setting(self.down_angle, child_level)
+        if self.down_angle_top is None:
+            return bottom
+        top = self.child_setting(self.down_angle_top, child_level)
+        return bottom + (top - bottom) * min(1.0, max(0.0, position))
 
     def child_count(self, child_level, length, parent_length):
         if child_level >= self.levels - 1:
@@ -129,11 +159,18 @@ class LevelGrowth:
         self.build(0, self.plan.length, 0, tangent, normal, self.plan.most_children(0))
         return self
 
+    def whorl(self, stem):
+        return max(1, int(self.plan.child_setting(self.plan.whorl, stem.level + 1))) if stem.level + 1 < self.plan.levels else 1
+
     def offsets(self, stem):
         if stem.count <= 0:
             return []
         start = self.plan.trunk_height if stem.level == 0 else 0.0
-        return [start + (stem.length - start) * (index + 0.5) / stem.count for index in range(stem.count)]
+        group = self.whorl(stem)
+        rings = -(-stem.count // group)
+        jitter = self.plan.slot_jitter(stem.level, rings)
+        heights = [start + (stem.length - start) * (ring + 0.5 + float(jitter[ring])) / rings for ring in range(rings)]
+        return [heights[index // group] for index in range(stem.count)]
 
     def build(self, level, length, base, tangent, normal, count):
         stem = Stem(level, length, base, count)
@@ -172,12 +209,17 @@ class LevelGrowth:
 
     def attach(self, stem, index, offset, node, tangent, normal):
         child_level = stem.level + 1
-        length = self.plan.child_length(child_level, stem.length, offset)
-        if length <= 0.0:
+        stretch, tilt, turn, present = self.plan.varied(child_level)
+        length = self.plan.child_length(child_level, stem.length, offset) * stretch
+        if length <= 0.0 or not present:
             return
         binormal = numpy.cross(tangent, normal)
-        azimuth = math.radians(self.plan.child_setting(self.plan.rotate, child_level)) * index
-        down = math.radians(self.plan.child_setting(self.plan.down_angle, child_level))
+        group = self.whorl(stem)
+        twist = math.radians(self.plan.child_setting(self.plan.rotate, child_level))
+        azimuth = (twist * (index // group) + 2.0 * math.pi * (index % group) / group if group > 1 else twist * index) + turn + math.radians(self.plan.child_setting(self.plan.rotate_offset, child_level))
+        start = self.plan.trunk_height if stem.level == 0 else 0.0
+        position = (offset - start) / max(stem.length - start, 1e-9)
+        down = math.radians(self.plan.child_down_angle(child_level, position)) + tilt
         side = math.cos(azimuth) * normal + math.sin(azimuth) * binormal
         direction = normalised(math.cos(down) * tangent + math.sin(down) * side)
         towards = tangent - numpy.dot(tangent, direction) * direction

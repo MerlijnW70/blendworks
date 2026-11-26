@@ -1,4 +1,5 @@
 from .procedural import AXES, Preset, preset_vector, stretched
+from . import tree_leaf_shader as leaf_shader
 from .schema import boolean, color, integer, number, string
 
 AXIS_CHOICE = list(AXES)
@@ -45,14 +46,36 @@ def bark(graph, p):
     plates = tone(graph, along, spacing * 2.5, 0.3, 0.7)
     lichen = tone(graph, vector, spacing * 9.0, 0.4, 0.66, detail=4.0)
     plate_color = graph.mix(plates, scaled(p["color"], 0.7), scaled(p["color"], 1.45))
-    surface = graph.mix(graph.math("MULTIPLY", lichen, 0.35), plate_color, p["lichen_color"])
+    fissure_color = p["fissure_color"]
+    lichen_share = graph.math("MULTIPLY", lichen, 0.35)
     depth = 0.35 + 0.65 * p["fissure_depth"]
+    if p["upper_end"] > 0.0:
+        upper = upper_share(graph, p, vector)
+        flakes = tone(graph, along, spacing * 0.6, 0.25, 0.75, detail=4.0)
+        plate_color = graph.mix(upper, plate_color, graph.mix(flakes, scaled(p["upper_color"], 0.55), scaled(p["upper_color"], 1.35)))
+        fissure_color = graph.mix(upper, fissure_color, scaled(p["upper_color"], 0.35))
+        shut = graph.math("MULTIPLY", shut, graph.math("SUBTRACT", 1.0, graph.math("MULTIPLY", upper, 1.0 - p["upper_fissures"])))
+        lichen_share = graph.math("MULTIPLY", lichen_share, graph.math("SUBTRACT", 1.0, upper))
+    surface = graph.mix(lichen_share, plate_color, p["lichen_color"])
+    if p["lenticels"] > 0.0:
+        rows = stretched(graph, vector, p["grain"], 4.0 / spacing, 0.6 / spacing)
+        dashes = graph.noise(rows, 1.0, detail=1.0, roughness=0.5, distortion=0.15).outputs["Factor"]
+        marks = graph.math("MULTIPLY", graph.map_range(dashes, 0.6, 0.62), p["lenticels"])
+        shut = graph.math("MAXIMUM", graph.math("MULTIPLY", shut, 1.0 - 0.85 * p["lenticels"]), marks)
     return {
-        "base_color": graph.mix(graph.math("MULTIPLY", shut, 0.92), surface, p["fissure_color"]),
+        "base_color": graph.mix(graph.math("MULTIPLY", shut, 0.92), surface, fissure_color),
         "roughness": graph.map_range(plates, 0.0, 1.0, max(0.0, p["roughness"] - 0.1), min(1.0, p["roughness"] + 0.06)),
         "metallic": 0.0,
         "height": graph.math("MULTIPLY_ADD", plates, 0.2, graph.math("SUBTRACT", 1.0, graph.math("MULTIPLY", shut, depth))),
     }
+
+
+def upper_share(graph, p, vector):
+    """0 below upper_start and 1 above upper_end, by height in the object's own space, with a ragged seeded edge between."""
+    height = graph.node("ShaderNodeSeparateXYZ", {"Vector": graph.node("ShaderNodeTexCoord").outputs["Object"]}).outputs["Z"]
+    start, end = p["upper_start"], max(p["upper_end"], p["upper_start"] + 1e-3)
+    ragged = graph.math("MULTIPLY", graph.math("SUBTRACT", graph.noise(vector, 1.5 / max(p["fissure_spacing"], 1e-3) / 8.0, detail=3.0).outputs["Factor"], 0.5), 0.6 * (end - start))
+    return graph.map_range(graph.math("ADD", height, ragged), start, end)
 
 
 def moss(graph, p):
@@ -87,6 +110,19 @@ def leaf_layout(graph, p):
     return graph.vector_math("MULTIPLY", source, (p["scale"],) * 3)
 
 
+def blade_veins(graph, vector, p, across, blade):
+    wobble = graph.math("MULTIPLY", graph.noise(vector, 7.0, detail=3.0).outputs["Factor"], 0.25)
+    count = p["vein_pairs"]
+    slant = graph.math("SUBTRACT", graph.math("MULTIPLY", blade, count), graph.math("MULTIPLY", across, count * 1.7))
+    lateral_position = graph.math("ABSOLUTE", graph.math("SUBTRACT", graph.math("FRACT", graph.math("ADD", slant, wobble)), 0.5))
+    fade = graph.map_range(across, 0.0, 0.42, 1.0, 0.25)
+    laterals = graph.math("MULTIPLY", graph.map_range(lateral_position, 0.5 - 0.06, 0.5), fade)
+    midrib = graph.map_range(across, 0.011, 0.02, 1.0, 0.0)
+    net = graph.voronoi(vector, 38.0, feature="DISTANCE_TO_EDGE").outputs["Distance"]
+    fine = graph.math("MULTIPLY", graph.map_range(net, 0.0, 0.05, 1.0, 0.0), 0.35)
+    return graph.math("MAXIMUM", graph.math("MAXIMUM", midrib, graph.math("MULTIPLY", laterals, 0.8)), fine)
+
+
 def leaf_veins(graph, vector, p):
     split = graph.node("ShaderNodeSeparateXYZ", {"Vector": leaf_layout(graph, p)})
     centre = 0.5 if p["coordinates"] == "uv" else 0.0
@@ -105,22 +141,37 @@ def leaf_veins(graph, vector, p):
 
 
 def leaf(graph, p):
-    vector = preset_vector(graph, p)
-    veins, across, along = leaf_veins(graph, vector, p)
+    values = leaf_shader.leaf_values(graph)
+    vector = leaf_shader.seeded_vector(graph, preset_vector(graph, p), values["leaf_seed"])
+    layout = leaf_layout(graph, p)
+    if p["coordinates"] == "uv":
+        across, along, blade = leaf_shader.blade_coordinates(graph, layout, p["petiole"])
+    else:
+        split = graph.node("ShaderNodeSeparateXYZ", {"Vector": layout})
+        across, along = graph.math("ABSOLUTE", split.outputs["X"]), split.outputs["Y"]
+        blade = along
+    veins = blade_veins(graph, vector, p, across, blade)
     blotches = tone(graph, vector, 0.15, 0.32, 0.68, detail=5.0)
     speckle = tone(graph, vector, 0.012, 0.4, 0.6, detail=3.0)
-    blade = graph.mix(graph.math("MULTIPLY_ADD", blotches, 0.8, graph.math("MULTIPLY", speckle, 0.2)), p["dark_color"], p["color"])
+    blade_colour = graph.mix(graph.math("MULTIPLY_ADD", blotches, 0.8, graph.math("MULTIPLY", speckle, 0.2)), p["dark_color"], p["color"])
+    colour = graph.mix(graph.math("MULTIPLY", veins, p["vein_contrast"]), blade_colour, p["vein_color"])
+    side = graph.math("GREATER_THAN", graph.node("ShaderNodeSeparateXYZ", {"Vector": layout}).outputs["X"], 0.5 if p["coordinates"] == "uv" else 0.0)
+    opacity, edge = leaf_shader.leaf_opacity(graph, p["shape"], p["petiole"], across, along, blade, values["leaf_shape"], p["needles"], side)
+    holes, browned = leaf_shader.damage_masks(graph, vector, values, edge)
+    colour = leaf_shader.aged(graph, colour, values, p)
+    colour = graph.mix(browned, colour, leaf_shader.DAMAGE_COLOR)
+    colour = leaf_shader.two_sided(graph, leaf_shader.toned(graph, colour, values), p)
+    leaf_shader.thin_translucency(graph, p)
     channels = {
-        "base_color": graph.mix(graph.math("MULTIPLY", veins, p["vein_contrast"]), blade, p["vein_color"]),
+        "base_color": colour,
         "roughness": graph.map_range(veins, 0.0, 1.0, p["roughness"], max(0.0, p["roughness"] - 0.12)),
         "metallic": 0.0,
         "height": graph.math("MULTIPLY_ADD", veins, 0.7, graph.math("MULTIPLY", speckle, 0.3)),
-        "translucency": p["translucency"],
     }
-    opacity = leaf_shape(graph, across, along) if p["cutout"] else None
+    cutout = graph.math("MULTIPLY", opacity, graph.math("SUBTRACT", 1.0, holes)) if p["cutout"] else None
     if p["alpha"] < 1.0:
-        opacity = graph.math("MULTIPLY", opacity, p["alpha"]) if opacity is not None else p["alpha"]
-    channels["alpha"] = opacity
+        cutout = graph.math("MULTIPLY", cutout, p["alpha"]) if cutout is not None else p["alpha"]
+    channels["alpha"] = cutout
     return channels
 
 
@@ -197,6 +248,11 @@ def natural_presets():
             "grain": string("Axis the fissures run along (z for an upright trunk).", AXIS_CHOICE, "z"),
             "fissure_depth": amount("How wide and deep the fissures are; 0 gives shallow cracks, 1 deep furrows.", 0.6),
             "fissure_spacing": number("Distance between fissures in metres.", 0.005, 1.0, 0.04),
+            "lenticels": amount("Dark dashes across the grain, as on birch and cherry bark; 0 none.", 0.0),
+            "upper_color": color("Plate colour of the thin, flaking bark high on the tree, as the orange-red upper trunk and limbs of a Scots pine, linear RGB; used above upper_start.", [0.45, 0.17, 0.07], False),
+            "upper_start": number("Height in metres, in the object's own space, where the bark starts to turn into the upper bark.", 0.0, 1000.0, 0.0),
+            "upper_end": number("Height in metres above which the bark is all upper bark, with a ragged edge between; 0 gives no upper bark.", 0.0, 1000.0, 0.0),
+            "upper_fissures": amount("How deep the upper bark's fissures are compared with the lower bark's: thin papery plates have shallow ones.", 0.25),
             "roughness": amount("Average roughness.", 0.9),
         }, bark),
         Preset("moss", "Moss: clumps of fine green tufts in patches over bare ground.", 4.0, {
@@ -214,8 +270,14 @@ def natural_presets():
             "vein_contrast": amount("How much the veins stand out from the blade.", 0.7),
             "vein_pairs": integer("Lateral veins on each side of the midrib along the leaf (one UV unit or one metre long).", 2, 40, 7),
             "alpha": amount("Opacity of the leaf; below 1 the material blends.", 1.0),
-            "cutout": boolean("Cut the pointed leaf outline out of the card with alpha: the blade is 0.8 wide in the middle of a unit square; needs a UV map.", False),
-            "translucency": amount("Light passing through the blade: transmission weight.", 0.35),
+            "cutout": boolean("Cut the leaf outline (shape) out of the card with alpha; needs a UV map.", False),
+            "shape": string("Leaf outline cut out of the unit UV square: pointed, ovate, deltoid (birch), lanceolate (willow, olive), lobed (oak), palmate (maple), needle, tuft (a fan of needles) or brush (a shoot with needles on both sides, for cards along a conifer's twigs); the face attribute leaf_shape varies it per leaf.", list(leaf_shader.LEAF_SHAPES), "pointed"),
+            "needles": integer("tuft shape: needles in a fan, the three leaf shapes using 0.75, 1 and 1.4 times as many; brush shape: needles on each side along the card, 0.8, 1 and 1.25 times as many.", 3, 64, leaf_shader.TUFT_NEEDLES),
+            "petiole": amount("Share of the card along v taken by the leaf stalk, drawn as a thin stalk; tree_leaves clusters use the same share.", 0.0),
+            "translucency": amount("Light passing through the thin blade: the thin-walled subsurface weight, lit from behind.", 0.35),
+            "subsurface_tint": color("Tint of the light passing through the blade.", [1.0, 0.9, 0.35], False),
+            "underside_color": color("Colour of the paler underside, seen on back faces, linear RGB.", [0.09, 0.15, 0.05], False),
+            "young_color": color("Colour of young leaves (attribute leaf_age below 0), linear RGB.", list(leaf_shader.YOUNG_COLOR), False),
             "roughness": amount("Average roughness.", 0.5),
             "coordinates": string("uv: the UV square holds one leaf, midrib at u 0.5, tip at v 1; object: one metre of local space, midrib at x 0; use scale to size it.", ["object", "uv"], "uv"),
         }, leaf),

@@ -3,9 +3,10 @@ import math
 import numpy
 
 from .tree_colonize import SHOOT
+from .tree_strands import Sway
 from .tree_vectors import IDENTITY, add, axis_angle, cross, mat_mul, mat_vec, norm, perpendicular, scaled, towards
 
-FORM_FIELDS = ("gravitropism", "phototropism", "stiffness", "gnarl", "twist", "kink_probability", "kink_angle", "wind")
+FORM_FIELDS = ("gravitropism", "phototropism", "stiffness", "gnarl", "twist", "kink_probability", "kink_angle", "wind", "sway", "hem")
 DOWN = (0.0, 0.0, -1.0)
 RESPONSE_DEFAULTS = {"strength": 0.0, "by_order": [1.0], "thinness": 1.0}
 GNARL_DEFAULTS = {"amplitude": 0.0, "wavelength": 2.0, "radius_power": 1.0, "by_order": [1.0]}
@@ -103,6 +104,7 @@ class Form:
         self.kink_probability = float(settings.get("kink_probability", 0.0))
         self.kink_angle = math.radians(float(settings.get("kink_angle", DEFAULT_KINK_ANGLE)))
         self.gnarl = Gnarl(settings.get("gnarl"), seed)
+        self.sway = Sway(settings.get("sway"), seed)
         self.seed = seed
 
     def kinks(self, parents, kinds):
@@ -145,7 +147,7 @@ class Form:
                 rotation = axis_angle(perpendicular(heading, azimuths[node]), self.kink_angle)
                 heading = mat_vec(rotation, heading)
                 turn = rotation
-            for target, rate in self.pulls(orders[node], radii[node], new[parent][2]):
+            for target, rate in self.pulls(orders[node], radii[node], new[parent][2]) + self.sway.pull(node):
                 angle = rate * length * norm(cross(heading, target))
                 rotation = towards(heading, target, angle)
                 heading = mat_vec(rotation, heading)
@@ -183,6 +185,7 @@ class Form:
 
     def apply(self, positions, parents, kinds, orders, radii):
         kinked, azimuths = self.kinks(parents, kinds)
+        self.sway.prepare(parents, orders, kinds)
         shaped = self.rebuild(positions, parents, kinds, orders, radii, kinked, azimuths)
         sag = None
         if self.stiffness is not None:

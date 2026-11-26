@@ -224,7 +224,7 @@ It runs these steps in order, and stops at the first failing command:
 1. **Skeletons.** The three `grow_tree` calls of `grow_trees.py`.
 2. **Materials.** `bark` (the preset in UV coordinates with the grain along `v`, so it follows every branch in metres), a darker `roots`, `fresh_wood` for cut ends, `leaf` with its cut-out and translucency, `needles` and `soil`.
 3. **Bark.** `tree_mesh` on each skeleton with the default `skin` junction, a stronger trunk flare gathered towards the roots and swollen root bases; the conifer drops its twigs under 4 mm, which end in fresh wood.
-4. **Leaves.** `tree_leaves` puts 0.2 m leaf cards on the oak and 0.18 m cards turned towards a low sun on the windswept tree, and a needle cluster (nine needles in the golden angle, built with `mesh_from_data`) along the two outer orders of the conifer.
+4. **Leaves.** `tree_leaves` puts clusters of 9 cm leaves on the oak and of 8 cm leaves turned towards a low sun on the windswept tree, and (layout `single`) a needle cluster (nine needles in the golden angle, built with `mesh_from_data`) along the two outer orders of the conifer.
 5. **Files and renders.** The `.blend` and `.glb`, then a ground plane and the renders.
 
 `BLENDWORKS_TREE_DETAIL` (a factor on the point and branch counts), `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
@@ -246,10 +246,31 @@ It runs these steps in order, and stops at the first failing command:
 1. **Skeletons.** `grow_tree` with `preset` `weeping_willow` (levels; the outer orders hang by gravitropism), `gnarled_oak` (colonisation with gnarl, kinks, a twisting trunk, upward phototropism and sag under the limbs' own weight) and `windswept_coastal` (colonisation bent by a wind along +X), each with roots.
 2. **Materials.** `bark`, `roots` and `fresh_wood` as in `tree_meshes.py`, `leaf` and a yellower `willow_leaf`, both cut out, and `soil`.
 3. **Bark.** `tree_mesh` on each skeleton with the `skin` junction and flared bases; the willow's twigs under 4 mm become bark cards.
-4. **Leaves.** `tree_leaves`: narrow 0.16 m cards hanging along the willow's two outer orders, 0.26 m leaves on the oak and 0.15 m leaves turned towards a low sun on the coastal tree.
+4. **Leaves.** `tree_leaves` in leaf clusters: the willow and the oak take the foliage and leaf material of their species (the presets map to `willow` and `oak`); the coastal tree gets 7 cm leaves in clusters turned towards a low sun.
 5. **Files and renders.** The `.blend` and `.glb`, then a ground plane and the renders.
 
-`BLENDWORKS_TREE_DETAIL` (a factor on the attraction point counts), `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+`BLENDWORKS_TREE_DETAIL` (a factor on the attraction point counts; below 1 the leaves are built at `detail` `low`), `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
+
+## Tree species
+
+`tree_species.py` grows, meshes and leafs the six species presets (oak, birch, pine, willow, maple and olive) in a row, by commands only, measures each crown and renders each tree at mid and close range. It is the acceptance build of the `tree-realism` job.
+
+```
+blender --background --factory-startup --python docs/examples/tree_species.py -- out
+```
+
+The script writes into `out`:
+- `tree-species.blend`;
+- twelve PNGs, `<species>_mid` (the whole tree) and `<species>_close` (a part of the crown at about a quarter of the tree's height across);
+- `summary.json`: every command with its time; for `grow_tree` the node counts and the strand statistics, for `tree_mesh` the closed-shell report, for `tree_leaves` the clusters, leaves, per-leaf `variation`, `foliage` (leaf area, density and index) and `crown` (the measured fill and its band).
+
+It runs these steps in order, and stops at the first failing command:
+1. **Skeletons.** `grow_tree` with each species preset, 26 m apart.
+2. **Bark.** `tree_mesh` with the species' flare and bark material, or a scanned bark (below).
+3. **Leaves.** `tree_leaves` with the species' clusters, leaves and leaf material and `measure`.
+4. **Renders.** An HDRI if given, a soil ground and the renders.
+
+`BLENDWORKS_HDRI` names an HDRI inside `out` for the world. `BLENDWORKS_SCANNED_BARK` names scanned bark folders inside `out` (Poly Haven layout: `<folder>/<asset>_diff_2k.jpg`, `_rough_`, `_nor_gl_`, `_disp_`), either one for every tree or `species=folder` entries separated by `;`. `BLENDWORKS_TREE_DETAIL` (a factor on attraction points or first-level branches), `BLENDWORKS_MEASURE_CROWNS=0`, `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run; below a detail of 1 the leaves are built at `detail` `low`.
 
 ## Characters
 

@@ -8,6 +8,9 @@ from ..tree_plan import BASE_DEFAULTS, COLONIZATION_DEFAULTS, LEVELS_DEFAULTS, g
 from ..tree_presets import preset_names
 from ..tree_shapes import SHAPES
 from ..tree_skeleton import FORMAT, PROPERTY, VERSION, from_property, preview_curve
+from ..tree_species import PRESET_SPECIES, SPECIES_NAMES, SPECIES_PROPERTY
+from ..tree_habit import habit_statistics
+from ..tree_strands import HEM_DEFAULTS, strand_statistics
 from ..util import get_object, link_object, require_free_name
 
 METHODS = ("colonization", "levels")
@@ -63,6 +66,29 @@ WIND = described(
 )
 
 
+SWAY = described(
+    obj(
+        {
+            "strength": number("Largest bend rate towards the axis's own sideways direction, in radians per metre; each axis draws its direction and a share of the rate from the seed.", 0.0, 4.0),
+            "by_order": by_order("Weight of the sway per order."),
+        },
+        ["strength"],
+    ),
+    "Seeded sideways lean per axis, applied like a tropism, so hanging strands do not all fall plumb. Both methods.",
+)
+
+HEM = described(
+    obj(
+        {
+            "height": length(f"Height above the base where hanging strands at the crown rim end, in metres. Default {HEM_DEFAULTS['height']}.", maximum=100.0),
+            "rise": number("How much higher the hem sits at the trunk than at the rim, in metres, rising as (1 - reach / spread)^2. Default 0.", 0.0, 100.0),
+            "variation": number("Seeded change of each strand's end height, up to this share either way. Default 0.", 0.0, 1.0),
+            "order": integer(f"Lowest branch order that is cut at the hem. Default {HEM_DEFAULTS['order']}.", 1, 8),
+        }
+    ),
+    "Cut hanging strands where they fall below a hem that follows the crown: low at the rim, higher towards the trunk, varied per strand.",
+)
+
 ROOTS = described(
     obj(
         {
@@ -82,7 +108,7 @@ ROOTS = described(
 
 FIELDS = {
     "name": string("Name of the preview curve object that carries the skeleton.", default="Tree"),
-    "preset": string("A tree form documented in docs/DESIGN.md (default, weeping_willow, gnarled_oak, windswept_coastal); any field you give replaces the preset's, and objects merge by field.", preset_names()),
+    "preset": string("A tree form documented in docs/DESIGN.md: the species oak, birch, pine, willow, maple and olive (tree_mesh and tree_leaves then pick the species' bark, leaves and twigs), or the forms default, weeping_willow, gnarled_oak, windswept_coastal; any field you give replaces the preset's, and objects merge by field.", preset_names()),
     "method": string("colonization grows towards attraction points in a crown envelope (Runions et al. 2007); levels builds recursive stems (Weber and Penn 1995). Default colonization, or the preset's.", METHODS),
     "location": vector3("Where the trunk base stands, in world metres.", [0.0, 0.0, 0.0]),
     "seed": integer("Seed of the attraction points; the same seed and settings give the same skeleton whatever the face or point order.", 0, 2**31 - 1, 0),
@@ -103,6 +129,14 @@ FIELDS = {
     "curve": array({"type": "number", "minimum": -720.0, "maximum": 720.0}, f"levels: total bend of each stem towards its parent's direction, in degrees, per stem level from the trunk. Default {LEVELS_DEFAULTS['curve']}.", 1, MAX_LEVELS),
     "curve_back": array({"type": "number", "minimum": -720.0, "maximum": 720.0}, "levels: Weber-Penn CurveBack per stem level; when not 0 the first half of a stem bends by curve and the second half by curve_back, an S-bend when their signs differ. Default [0].", 1, MAX_LEVELS),
     "curve_variation": array({"type": "number", "minimum": 0.0, "maximum": 720.0}, "levels: Weber-Penn CurveV per stem level; each segment adds a seeded uniform bend within +-curve_variation * segment length / stem length degrees. Default [0].", 1, MAX_LEVELS),
+    "length_variation": per_level({"type": "number", "minimum": 0.0, "maximum": 0.95}, "levels: Weber-Penn LengthV; each child's length is scaled by 1 + u * variation with u seeded in [-1, 1].", "[0]"),
+    "down_angle_variation": per_level({"type": "number", "minimum": 0.0, "maximum": 90.0}, "levels: Weber-Penn DownAngleV; each child's down angle changes by up to this many degrees.", "[0]"),
+    "rotate_variation": per_level({"type": "number", "minimum": 0.0, "maximum": 180.0}, "levels: Weber-Penn RotateV; each child's azimuth changes by up to this many degrees.", "[0]"),
+    "spacing_variation": per_level({"type": "number", "minimum": 0.0, "maximum": 0.49}, "levels: each child moves along its parent by up to this share of the even spacing, so children are not evenly spaced.", "[0]"),
+    "down_angle_top": per_level({"type": "number", "minimum": 0.0, "maximum": 180.0}, "levels: down angle of the children at the tip of their parent (on the trunk, at its top), in degrees; it changes linearly from down_angle at the lowest child, so a pine's lower branches can stand level or droop while the upper ones rise.", "down_angle"),
+    "rotate_offset": per_level({"type": "number", "minimum": -360.0, "maximum": 360.0}, "levels: azimuth of the first child, in degrees from the side of the parent that faces the parent's own parent; with rotate 180, an offset of 90 sets alternate children left and right, the flat sprays of a pine or fir branch.", "[0]"),
+    "whorl": per_level({"type": "integer", "minimum": 1, "maximum": 12}, "levels: children grown at the same height around the parent, as in the whorls of a pine or fir; the rotate angle then turns each whorl against the one below it.", "[1]"),
+    "child_probability": per_level({"type": "number", "minimum": 0.0, "maximum": 1.0}, "levels: chance that each child is grown, so branching is occasional.", "[1]"),
     "segments": array({"type": "integer", "minimum": 1, "maximum": 200}, f"levels: nodes along a stem besides those at children, per stem level from the trunk. Default {LEVELS_DEFAULTS['segments']}.", 1, MAX_LEVELS),
     "taper": number(f"levels: between branchings the radius falls along a stem as 1 - taper * (position along the stem). Default {LEVELS_DEFAULTS['taper']}.", 0.0, 0.95),
     "ratio_power": number(f"levels: a stem's tip radius is tip_radius * (stem length / trunk length) ^ ratio_power. Default {LEVELS_DEFAULTS['ratio_power']}.", 0.0, 3.0),
@@ -114,6 +148,8 @@ FIELDS = {
     "kink_probability": number("Chance that a shoot node, other than the first above the base, turns its stem abruptly by kink_angle about a seeded axis. Default 0.", 0.0, 1.0),
     "kink_angle": number(f"Angle of a kink in degrees. Default {DEFAULT_KINK_ANGLE}.", 0.0, 90.0),
     "wind": WIND,
+    "sway": SWAY,
+    "hem": HEM,
     "roots": ROOTS,
     "tip_radius": length(f"Radius at every tip (levels: at the trunk tip), in metres; the pipe model sums towards the base. Default {BASE_DEFAULTS['tip_radius']}, or the preset's.", maximum=1.0),
     "exponent": number("Pipe model exponent n in r^n = sum of the children's r^n; 2 is Leonardo's rule.", 1.8, 3.0, 2.0),
@@ -156,8 +192,12 @@ def grow_tree(ctx, args):
     preview = link_object(ctx, args["name"], curve)
     preview.location = location
     preview[PROPERTY] = skeleton.to_property()
+    preset = args.get("preset", "default")
+    species = preset if preset in SPECIES_NAMES else PRESET_SPECIES.get(preset)
+    if species:
+        preview[SPECIES_PROPERTY] = species
     ctx.view_layer.update()
-    return {"name": preview.name, "method": skeleton.method, "preset": args.get("preset", "default"), "property": PROPERTY, "format": FORMAT, "version": VERSION, **skeleton.summary(), "growth": growth_report(grown), "page": skeleton.page(args["offset"], args["limit"])}
+    return {"name": preview.name, "method": skeleton.method, "preset": preset, "species": species, "property": PROPERTY, "format": FORMAT, "version": VERSION, **skeleton.summary(), "growth": {**growth_report(grown), "strands": strand_statistics(skeleton), "habit": habit_statistics(skeleton)}, "page": skeleton.page(args["offset"], args["limit"])}
 
 
 @command(

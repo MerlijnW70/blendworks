@@ -33,9 +33,9 @@ MESH = {
     "coastal": {**BARK, "flare": {"amount": 0.6, "lobes": 0.8}, "root_flare": {"amount": 1.8}},
 }
 LEAVES = {
-    "willow": {"material": "willow_leaf", "size": 0.16, "density": 9.0, "tip_leaves": 1, "orders": 2, "angle": 30.0, "card": {"width": 0.18, "fold": 10.0}, "align": {"factor": 0.2}, "seed": 7},
-    "oak": {"material": "leaf", "size": 0.26, "density": 12.0, "tip_leaves": 5, "orders": 2, "seed": 3},
-    "coastal": {"material": "leaf", "size": 0.15, "density": 16.0, "tip_leaves": 4, "orders": 2, "align": {"sun": [0.4, 0.0, 1.0], "factor": 0.6}, "seed": 11},
+    "willow": {"seed": 7},
+    "oak": {"seed": 3},
+    "coastal": {"material": "leaf", "size": 0.07, "clusters": {"leaves": [4, 8], "spacing": 0.09}, "align": {"sun": [0.4, 0.0, 1.0], "factor": 0.8}, "seed": 11},
 }
 GROW_KEYS = ("name", "method", "preset", "nodes", "tips", "branchings", "max_order", "base_radius", "height", "spread", "pipe_error", "growth")
 MESH_KEYS = ("name", "triangles", "manifold", "volume", "shells", "self_intersections", "materials", "leaves", "count")
@@ -84,7 +84,7 @@ def dress():
     for tree in TREES:
         cmd("tree_mesh", name=tree, **MESH[tree])
     for tree in TREES:
-        cmd("tree_leaves", name=f"{tree}_bark", leaves_name=f"{tree}_leaves", **LEAVES[tree])
+        cmd("tree_leaves", name=f"{tree}_bark", leaves_name=f"{tree}_leaves", **LEAVES[tree], **({"detail": "low"} if DETAIL < 1.0 else {}))
 
 
 def ground():

@@ -66,7 +66,7 @@ def nearest_chain(tree, chains, point):
 def test_leaves_sit_at_twig_tips_and_along_the_last_orders_only(bridge):
     for levels, orders in ((False, 1), (False, 2), (True, 2)):
         grow(bridge, levels=levels)
-        reply = bridge.ok("tree_leaves", name="Grown", orders=orders, realize=False, density=12.0)
+        reply = bridge.ok("tree_leaves", name="Grown", layout="single", orders=orders, realize=False, density=12.0)
         tree = Skeleton(bpy.data.objects["Grown"])
         chains, heights = chains_with_heights(tree)
         origins, _ = leaf_frames(reply["name"])
@@ -138,7 +138,7 @@ def anchor_of(origin, axis, table):
 def test_consecutive_leaves_along_a_twig_differ_by_the_divergence(bridge):
     for divergence in (137.5, 90.0):
         grow(bridge)
-        reply = bridge.ok("tree_leaves", name="Grown", realize=False, divergence=divergence, density=10.0, tip_leaves=2, angle=90.0)
+        reply = bridge.ok("tree_leaves", name="Grown", layout="single", realize=False, divergence=divergence, density=10.0, tip_leaves=2, angle=90.0)
         tree = Skeleton(bpy.data.objects["Grown"])
         chains, _ = chains_with_heights(tree)
         origins, axes = leaf_frames(reply["name"])
@@ -169,17 +169,17 @@ def test_the_same_seed_gives_the_same_leaves(bridge):
     grow(bridge)
     first = bridge.ok("tree_leaves", name="Grown", leaves_name="First", seed=9)
     second = bridge.ok("tree_leaves", name="Grown", leaves_name="Second", seed=9)
-    other = bridge.ok("tree_leaves", name="Grown", leaves_name="Other", seed=10)
+    bridge.ok("tree_leaves", name="Grown", leaves_name="Other", seed=10)
     points = {name: numpy.array([list(vertex.co) for vertex in bpy.data.objects[name].data.vertices]) for name in ("First", "Second", "Other")}
-    assert first["leaves"] == second["leaves"] == other["leaves"]
+    assert first["leaves"] == second["leaves"]
     assert numpy.array_equal(points["First"], points["Second"])
-    assert not numpy.allclose(points["First"], points["Other"])
+    assert points["First"].shape != points["Other"].shape or not numpy.allclose(points["First"], points["Other"])
 
 
 def test_cards_carry_the_leaf_preset_and_a_given_leaf_can_replace_them(bridge):
     grow(bridge)
     bridge.ok("material_procedural", name="Leaf", leaf={"cutout": True, "translucency": 0.4})
-    reply = bridge.ok("tree_leaves", name="Grown", material="Leaf")
+    reply = bridge.ok("tree_leaves", name="Grown", layout="single", material="Leaf")
     leaves = bpy.data.objects[reply["name"]]
     assert [material.name for material in leaves.data.materials] == ["Leaf"]
     uvs = numpy.array([list(item.vector) for item in leaves.data.uv_layers.active.uv]).reshape(-1, 4, 2)
@@ -190,15 +190,15 @@ def test_cards_carry_the_leaf_preset_and_a_given_leaf_can_replace_them(bridge):
     assert numpy.allclose(per_card.min(axis=1), 0.0) and numpy.allclose(per_card.max(axis=1), 1.0)
     principled = next(node for node in bpy.data.materials["Leaf"].node_tree.nodes if node.type == "BSDF_PRINCIPLED")
     assert principled.inputs["Alpha"].is_linked
-    assert principled.inputs["Transmission Weight"].default_value > 0.0 or principled.inputs["Transmission Weight"].is_linked
+    assert principled.inputs["Thin Wall"].default_value and abs(principled.inputs["Subsurface Weight"].default_value - 0.4) < 1e-6
     bridge.ok("mesh_from_data", name="Needles", vertices=[[0, 0, 0], [0.1, -0.003, 0], [0.1, 0.003, 0], [0.09, 0.03, 0.01], [0.09, -0.03, 0.01]], faces=[[0, 1, 2], [0, 2, 3], [0, 4, 1]])
-    needles = bridge.ok("tree_leaves", name="Grown", leaves_name="Needled", source="Needles", tip_leaves=0)
+    needles = bridge.ok("tree_leaves", name="Grown", leaves_name="Needled", layout="single", source="Needles", tip_leaves=0)
     assert len(bpy.data.objects["Needled"].data.vertices) == 5 * needles["leaves"]
 
 
 def test_the_leaf_count_stays_within_the_instance_limit(bridge):
     grow(bridge)
-    message = bridge.refuse("tree_leaves", "bad_args", name="Grown", density=500.0, orders=6)
+    message = bridge.refuse("tree_leaves", "bad_args", name="Grown", layout="single", density=500.0, orders=6)
     assert str(MAX_INSTANCES) in message
     bridge.refuse("tree_leaves", "bad_args", name="Grown", material="Missing")
 

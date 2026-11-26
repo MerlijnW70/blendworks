@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { PassThrough } from "node:stream";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { afterEach, describe, expect, it } from "vitest";
 import { startHeadlessSession } from "../src/mcp/headless.js";
@@ -11,7 +12,7 @@ import { BridgeError, readLine } from "../src/mcp/protocol.js";
 import { killLiveSessions, type Session, SessionError, startSession } from "../src/session.js";
 import { call, scratchDir, texts, unusedPort } from "./mcp-helpers.js";
 import { beginBlendworks } from "../src/mcp/start.js";
-import { useBlenderSlot } from "./setup/slot.js";
+import { useBlenderSlot, WAIT_FOR_SLOT_MS } from "./setup/slot.js";
 
 useBlenderSlot();
 
@@ -37,6 +38,10 @@ const NEVER_ANSWERS = script("process.stderr.write(`pid ${process.pid}\n`);");
 const EXITS_AT_ONCE = ["-e", 'process.stderr.write("Blender could not load libGL\\n"); process.exit(3);'];
 const GARBLES = script('if (request.cmd === "describe") reply(request.id, {}); else process.stdout.write(\'{"id":\' + request.id + \',"ok":tr\\n\');');
 const NOISY = script('process.stdout.write("Blender 5.2 banner\\n"); process.stdout.write(JSON.stringify({ id: 999, ok: true, result: {} }) + "\\n"); reply(request.id, {});');
+
+async function callWaitingForSlot(client: Client, name: string, args: Record<string, unknown> = {}): Promise<CallToolResult> {
+  return (await client.callTool({ name, arguments: args }, undefined, { timeout: WAIT_FOR_SLOT_MS })) as CallToolResult;
+}
 
 async function clientOf(server: ReturnType<typeof beginBlendworks>["server"]): Promise<Client> {
   const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
@@ -150,14 +155,14 @@ describe("early exits through the server", () => {
       },
     });
     const client = await clientOf(begun.server);
-    const first = await call(client, "blender_scene_info");
+    const first = await callWaitingForSlot(client, "blender_scene_info");
     expect(first.isError).toBe(true);
     expect(texts(first)).toMatch(/Blender exited \(code 3.*libGL.*Check that BLENDER points to a working Blender.*Set BLENDER/s);
     const second = await call(client, "blender_scene_info");
     expect(texts(second)).toMatch(/tries to start Blender again in 1 s/);
     expect(spawns).toBe(1);
     clock += 1500;
-    const third = await call(client, "blender_find_tools", { query: "scene" });
+    const third = await callWaitingForSlot(client, "blender_find_tools", { query: "scene" });
     expect(spawns).toBe(2);
     expect(texts(third)).not.toMatch(/Blender exited/);
     await client.close();

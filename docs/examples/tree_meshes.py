@@ -29,9 +29,9 @@ MESH = {
     "windswept": {**BARK, "flare": {"amount": 0.6, "lobes": 0.8}, "root_flare": {"amount": 1.8}},
 }
 LEAVES = {
-    "oak": {"material": "leaf", "size": 0.2, "density": 14.0, "tip_leaves": 4, "orders": 2, "seed": 3},
-    "conifer": {"material": "needles", "source": "needle_cluster", "size": 2.2, "density": 10.0, "tip_leaves": 2, "orders": 2, "angle": 40.0, "align": {"factor": 0.2}, "seed": 5},
-    "windswept": {"material": "leaf", "size": 0.18, "density": 15.0, "tip_leaves": 4, "orders": 2, "align": {"sun": [0.3, 0.0, 1.0], "factor": 0.7}, "seed": 11},
+    "oak": {"material": "leaf", "size": 0.09, "seed": 3},
+    "conifer": {"material": "needles", "layout": "single", "source": "needle_cluster", "size": 2.2, "density": 10.0, "tip_leaves": 2, "orders": 2, "angle": 40.0, "align": {"factor": 0.2}, "seed": 5},
+    "windswept": {"material": "leaf", "size": 0.08, "align": {"sun": [0.3, 0.0, 1.0], "factor": 0.8}, "seed": 11},
 }
 SUMMARY_KEYS = ("name", "junction", "triangles", "manifold", "volume", "shells", "materials", "axes", "cut_ends", "self_intersections", "flare", "root_flare", "bark_noise", "skeleton", "leaves", "tip_leaves", "twigs", "count", "mesh")
 

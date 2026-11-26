@@ -128,9 +128,9 @@ export const WORKFLOWS: Workflow[] = [
     id: "tree",
     headline: true,
     goal: "Tree with leaves",
-    examples: ["oak with roots and leaves", "spruce with needles", "game tree with a triangle budget", "weeping willow or wind-bent coastal tree"],
+    examples: ["oak with roots and leaves", "spruce with needles", "game tree with a triangle budget", "weeping willow or wind-bent coastal tree", "photoreal birch, pine, maple or olive"],
     steps: ["blender_grow_tree", "blender_tree_mesh", "blender_tree_leaves", "blender_material_procedural"],
-    note: "blender_grow_tree grows the skeleton; preset weeping_willow, gnarled_oak or windswept_coastal gives a form, and gravitropism and phototropism (by order and thinness), stiffness (sag), wind, gnarl, twist, kink_probability and, for levels, curve_back and curve_variation shape any tree. blender_tree_mesh turns it into one closed bark mesh (junction skin or voxel, flare, root_flare, bark_noise, lod for a triangle budget, min_radius drops twigs) with UVs in metres and the slots bark, fresh_wood and roots; blender_tree_leaves puts leaf cards (or a needle cluster as source) on the twig tips and outer orders. Then material_procedural bark with coordinates uv and grain y, leaf with cutout, and export: the skeleton rides along in the glTF extras.",
+    note: "blender_grow_tree grows the skeleton; a species preset (oak, birch, pine, willow, maple, olive) also sets the bark, leaves and twigs of the next two steps, and weeping_willow, gnarled_oak or windswept_coastal give a form; and gravitropism and phototropism (by order and thinness), stiffness (sag), wind, gnarl, twist, kink_probability and, for levels, curve_back and curve_variation shape any tree. blender_tree_mesh turns it into one closed bark mesh (junction skin or voxel, flare, root_flare, bark_noise, lod for a triangle budget, min_radius drops twigs) with UVs in metres and the slots bark, fresh_wood and roots; blender_tree_leaves puts leaf clusters on fine twigs beyond the tips with per-leaf size, colour, age, damage, curl and shape (measure reports the crown fill). Then material_procedural bark with coordinates uv and grain y, leaf with cutout, and export: the skeleton rides along in the glTF extras.",
   },
   {
     id: "character",

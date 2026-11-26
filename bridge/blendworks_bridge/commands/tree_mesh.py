@@ -9,12 +9,14 @@ from ..topology import mesh_report
 from ..tree_bark import build_bark, triangle_count
 from ..tree_rings import BARK, ROOTS, WOOD
 from ..tree_skeleton import FORMAT, PROPERTY, VERSION, from_property, plain
+from ..tree_species import MESH as SPECIES_MESH, SPECIES_PROPERTY, species_material, species_of
 from ..tree_surface import bark_noise, drop_helpers, face_materials, mark_sharp, self_overlaps, separate_touching, shell_count
 from ..tree_twigs import twig_cards
 from ..util import get_object, link_object, mesh_counts, require_free_name
 from .procedural import ensure_material
 
 MAX_BUDGET = 2_000_000
+DEFAULT_MIN_RADIUS = 0.004
 
 RING_SEGMENTS = described(
     obj(
@@ -70,12 +72,12 @@ FIELDS = {
     "root_flare": ROOT_FLARE,
     "collar": number("Branch collar: a branch swells by up to this share where it leaves a thicker parent, less the closer their radii.", 0.0, 2.0, 0.5),
     "bark_noise": BARK_NOISE,
-    "min_radius": number("Twigs thinner than this, in metres, are dropped (or made into cards); a branch cut short ends in fresh wood.", 0.0, 10.0, 0.004),
+    "min_radius": number(f"Twigs thinner than this, in metres, are dropped (or made into cards); a branch cut short ends in fresh wood. Default {DEFAULT_MIN_RADIUS}, or the species' (birch, pine and willow keep their fine twigs).", 0.0, 10.0),
     "twigs": string("drop leaves out the twigs under min_radius; cards adds them as crossed bark cards in a separate object name_twigs.", ["drop", "cards"], "drop"),
     "lod": integer("Target triangle budget; ring density (and if needed min_radius, or the voxel size) is chosen to meet it within 10 %.", 100, MAX_BUDGET),
     "keep_skeleton": boolean("Keep the skeleton object (hidden) after building the mesh; false deletes it. The mesh carries the skeleton either way.", True),
     "view": vector3("Direction from the tree towards the viewer; UV seams go on the far side.", [0.0, -1.0, 0.0]),
-    "bark_material": string("Material for the bark; created when missing.", default="bark"),
+    "bark_material": string("Material for the bark; created when missing. Default bark, or species_bark (the species bark preset) for a tree grown from a species preset."),
     "wood_material": string("Material for cut ends; created when missing.", default="fresh_wood"),
     "root_material": string("Material for the roots; created when missing.", default="roots"),
 }
@@ -99,10 +101,11 @@ def material_for(name, colour):
 NESTED = ("ring_segments", "flare", "root_flare", "bark_noise")
 
 
-def check_args(args):
+def check_args(args, species=None):
     for key in NESTED:
         if key not in args:
-            args[key] = validate(FIELDS[key], {})
+            args[key] = validate(FIELDS[key], SPECIES_MESH.get(species, {}).get(key, {}))
+    args.setdefault("min_radius", SPECIES_MESH.get(species, {}).get("min_radius", DEFAULT_MIN_RADIUS))
     if not any(args["view"]):
         raise bad_args("view must not be zero")
     rings = args["ring_segments"]
@@ -164,8 +167,13 @@ def face_materials_used(mesh):
     nearest=(("grow_tree", "to grow the skeleton first"), ("sweep", "for one tube along a path"), ("tree_leaves", "to add the foliage")),
 )
 def tree_mesh(ctx, args):
-    check_args(args)
     source = get_object(args["name"])
+    species = species_of(source)
+    check_args(args, species)
+    if "bark_material" not in args:
+        args["bark_material"] = f"{species}_bark" if species else "bark"
+        if species:
+            species_material(ctx, "bark", species, args["bark_material"])
     skeleton = from_property(source)
     name = args.get("mesh_name") or f"{source.name}_bark"
     require_free_name(name)
@@ -181,6 +189,8 @@ def tree_mesh(ctx, args):
     bark = link_object(ctx, name, mesh)
     bark.matrix_world = source.matrix_world.copy()
     bark[PROPERTY] = plain(source[PROPERTY])
+    if species:
+        bark[SPECIES_PROPERTY] = species
     twigs = None
     if args["twigs"] == "cards" and built.twigs:
         twigs = twig_object(ctx, f"{name}_twigs", skeleton, built.twigs, material_for(names[BARK], PLACEHOLDERS[BARK]), source.matrix_world.copy())

@@ -83,11 +83,12 @@ def test_leaf_alpha_cutout_and_translucency_reach_the_shader(bridge):
     bridge.ok("material_procedural", name="Plain", leaf={})
     shader = principled(bpy.data.materials["Plain"])
     assert not shader.inputs["Alpha"].is_linked and shader.inputs["Alpha"].default_value == 1.0
-    assert abs(shader.inputs["Transmission Weight"].default_value - 0.35) < 1e-6
+    assert shader.inputs["Thin Wall"].default_value and abs(shader.inputs["Subsurface Weight"].default_value - 0.35) < 1e-6
+    assert shader.inputs["Transmission Weight"].default_value == 0.0
     bridge.ok("material_procedural", name="Cut", leaf={"cutout": True, "alpha": 0.8, "translucency": 0.6})
     material = bpy.data.materials["Cut"]
     shader = principled(material)
-    assert shader.inputs["Alpha"].is_linked and abs(shader.inputs["Transmission Weight"].default_value - 0.6) < 1e-6
+    assert shader.inputs["Alpha"].is_linked and abs(shader.inputs["Subsurface Weight"].default_value - 0.6) < 1e-6
     bridge.ok("material_procedural", name="Faint", leaf={"alpha": 0.5})
     assert abs(principled(bpy.data.materials["Faint"]).inputs["Alpha"].default_value - 0.5) < 1e-6
 

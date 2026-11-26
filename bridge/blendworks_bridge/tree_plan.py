@@ -12,6 +12,7 @@ from .tree_presets import PRESETS
 from .tree_radii import Taper, branch_orders, pipe_radii
 from .tree_shapes import SHAPES, MeshEnvelope, RevolutionEnvelope
 from .tree_skeleton import Skeleton
+from .tree_strands import hem_keep
 from .util import get_mesh_object
 
 COLONIZATION_DEFAULTS = {"crown_radius": 3.0, "points": 3000, "influence": 1.2, "kill": 0.3, "step": 0.15, "tropism": [0.0, 0.0, 0.0]}
@@ -27,9 +28,17 @@ LEVELS_DEFAULTS = {
     "segments": [24, 8, 5, 3],
     "taper": 0.6,
     "ratio_power": 1.0,
+    "length_variation": [0.0],
+    "down_angle_variation": [0.0],
+    "rotate_variation": [0.0],
+    "spacing_variation": [0.0],
+    "child_probability": [1.0],
+    "whorl": [1],
+    "rotate_offset": [0.0],
+    "down_angle_top": None,
 }
 BASE_DEFAULTS = {"method": "colonization", "height": 8.0, "trunk_height": 2.0, "envelope": "spherical", "tip_radius": 0.01}
-MERGED_FIELDS = ("gravitropism", "phototropism", "gnarl", "wind", "roots")
+MERGED_FIELDS = ("gravitropism", "phototropism", "gnarl", "wind", "roots", "sway", "hem")
 ROOT_TOP_SHARE = 0.02
 UP = numpy.array([0.0, 0.0, 1.0])
 
@@ -163,6 +172,10 @@ def shape(settings, grown, positions, parents, kinds, tips, radii, orders):
     positions, report = form.apply(positions, parents, kinds, orders, radii)
     keep = above_ground(positions, parents, kinds)
     report["pruned"] = int((~keep).sum())
+    if "hem" in settings:
+        hemmed = keep & hem_keep(positions, parents, orders, kinds, settings["hem"], settings["seed"])
+        report["hem_pruned"] = int((keep & ~hemmed).sum())
+        keep = hemmed
     grown.report["form"] = report
     if keep.all():
         return positions, parents, kinds, radii, orders
