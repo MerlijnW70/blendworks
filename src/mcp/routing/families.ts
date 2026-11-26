@@ -30,4 +30,5 @@ export const FAMILY_LINES: FamilyLine[] = [
   { family: "textures", priority: 70, text: "Images: blender_image_load, blender_image_new, blender_image_save." },
   { family: "faces", priority: 80, text: "Faces: blender_mesh_query finds faces, blender_transform_selection moves them." },
   { family: "files", priority: 80, text: "Files: blender_save_blend, blender_load_blend, blender_import." },
+  { family: "ground_cover", priority: 40, text: "Ground cover: blender_ground_cover grows meadows, lawns and forest floors." },
 ];

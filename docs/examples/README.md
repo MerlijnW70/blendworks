@@ -276,3 +276,26 @@ It runs these steps for each asset, in a new scene, and stops at the first faili
 5. **Export, frames and spec.** `export` writes the glb with its armature, `clip_pose` and `render_preview` take the frames, and the spec goes next to the glb.
 
 `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make smaller, faster renders, `BLENDWORKS_CHARACTER_SHOTS=0` skips them, and `BLENDWORKS_CHARACTERS` (for example `hero,chest`) builds only some assets. `test/characters-example.test.ts` runs the script and judges the three assets.
+
+## Meadow cover
+
+`meadow_cover.py` dresses a meadow with grass, flowers and litter with commands only, and renders it before and after. It is the acceptance build of the `ground-cover` job.
+
+```
+blender --background --factory-startup --python docs/examples/meadow_cover.py -- out
+```
+
+The script writes into `out`:
+- `meadow-cover.blend` and `meadow-cover.glb` (the cover as `EXT_mesh_gpu_instancing` instances with the wind colours);
+- four PNGs: `eye-before` and `eye-after` (an eye-level close-up at 0.9 m), `wide-before` and `wide-after` (a raised wide shot of the tree, the rocks and the hill);
+- `summary.json`: every command with its time and, for `ground_cover`, the instance count, the budget, the near distance, the count per population and the mean of the contact attribute, and for each render the mean, spread and greenness of the lower half of the image.
+
+It runs these steps in order, and stops at the first failing command:
+1. **Terrain.** A 40 m `heightfield` tile with the `grass_ground` material: the textured plane of the "before" renders.
+2. **Tree.** A `gnarled_oak` from `grow_tree`, `tree_mesh` and `tree_leaves`.
+3. **Rocks.** Three noise-displaced rocks scattered with a power-law size distribution, as in the scatter example.
+4. **Before.** The two cameras, a sun and a sky, and two renders.
+5. **Cover.** One `ground_cover` call with the `meadow` preset, the eye camera as the falloff centre (full density to 10 m), the trunk and the rocks as obstacles, the trunk as the tree for the litter, and the wind colours.
+6. **After.** The same two renders, the instanced glb and the `.blend`.
+
+`BLENDWORKS_TERRAIN_RESOLUTION`, `BLENDWORKS_SHOT_SIZE`, `BLENDWORKS_SHOT_SAMPLES`, `BLENDWORKS_TREE_DETAIL` and `BLENDWORKS_COVER_BUDGET` make a smaller, faster run. `test/meadow-cover-example.test.ts` runs it small, checks the budget and the renders, and validates the glb with the Khronos glTF validator.

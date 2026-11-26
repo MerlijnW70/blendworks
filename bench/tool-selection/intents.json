@@ -287,5 +287,11 @@
   {"id":"camera_setup-1","text":"Blur the background behind the rock with an f/2 aperture focused on it","kind":"single","split":"tune","expect":["blender_camera_setup"]},
   {"id":"camera_setup-2","text":"Expose the shot like a real camera at 1/500 s and ISO 200","kind":"single","split":"tune","expect":["blender_camera_setup"]},
   {"id":"atmosphere-1","text":"Make the far trees fade into a soft blue haze","kind":"single","split":"tune","expect":["blender_atmosphere"]},
-  {"id":"atmosphere-2","text":"Add morning mist lying low over the meadow","kind":"single","split":"tune","expect":["blender_atmosphere"]}
+  {"id":"atmosphere-2","text":"Add morning mist lying low over the meadow","kind":"single","split":"tune","expect":["blender_atmosphere"]},
+  {"id":"ground_cover-1","text":"Cover the hillside with a wildflower meadow: short grass everywhere, tall grass in clumps and some daisies","kind":"single","split":"tune","expect":["blender_ground_cover"]},
+  {"id":"ground_cover-2","text":"The terrain looks like a bare textured plane; grow millions of grass blades on it but keep the far field cheap with a camera falloff","kind":"near-miss","split":"tune","expect":["blender_ground_cover"],"confusable":"blender_scatter"},
+  {"id":"ground_cover-3","text":"Put fallen leaves, twigs and pebbles under the trees as a forest floor, none inside the trunks","kind":"single","split":"tune","expect":["blender_ground_cover"]},
+  {"id":"ground_element-1","text":"Make a single grass tuft with 30 blades and dry tips as alpha cards within 12 triangles","kind":"near-miss","split":"tune","expect":["blender_ground_element"],"confusable":"blender_ground_cover"},
+  {"id":"ground_element-2","text":"Build one small flower with petals in the golden angle so I can place it myself","kind":"single","split":"tune","expect":["blender_ground_element"],"alternatives":["blender_instances"]},
+  {"id":"ground_cover_export-1","text":"Export the grass and ground cover to a glb with GPU instancing for the game engine","kind":"near-miss","split":"tune","expect":["blender_ground_cover_export"],"confusable":"blender_export"}
 ]

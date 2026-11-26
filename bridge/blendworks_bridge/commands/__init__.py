@@ -13,6 +13,8 @@ MODULES = (
     "solids",
     "placement",
     "scatter",
+    "ground_cover",
+    "ground_export",
     "roller_chain",
     "mesh_query",
     "wear",

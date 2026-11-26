@@ -189,6 +189,13 @@ export const WORKFLOWS: Workflow[] = [
     steps: ["blender_render_preview", "blender_scene_info", "blender_uv_info", "blender_export"],
     note: "Look often: blender_render_preview focus gives close-ups, shading clay, wireframe, normals, uv_checker or material_id shows form, seams and slots, views include bottom, and format jpeg is smaller. blender_scene_info checks counts and sizes 100 objects per page (offset, limit), with a names glob (\"Bolt*\") or detail summary, and lists parents, collections and checkpoints. Export the final asset with blender_export, for example to asset.glb; its defaults pass the glTF validator.",
   },
+  {
+    id: "ground-cover",
+    goal: "Grass, flowers and litter on terrain",
+    examples: ["meadow", "lawn", "forest floor", "dry steppe", "grass on the ground"],
+    steps: ["blender_heightfield", "blender_add_camera", "blender_ground_cover", "blender_render_preview", "blender_ground_cover_export"],
+    note: "Make the terrain and the camera first, then one blender_ground_cover call with a preset (meadow, forest_floor, dry_steppe, lawn) or populations: density is elements per square metre, clumping gathers them, slope, height_range, attribute (erosion, deposition), noise and distance masks thin them, avoid keeps them clear of the obstacles (trunks, rocks) with a soft avoid_falloff, hug gathers tufts at their base, and under puts litter beneath the trees. camera (or cameras, one per shot) with near keeps full density up to near metres and (near / distance)^2 beyond, view_only drops what the camera cannot see, and budget caps the instances: the near distance shrinks until they fit. form auto uses real blades near and alpha cards beyond card_distance. The ground gets a cover_density attribute and its materials darken by at most a third under dense cover. blender_ground_element builds one element for blender_scatter or blender_instances. Export with blender_ground_cover_export: instances (EXT_mesh_gpu_instancing) or realized LODs; wind true writes the wind colours as COLOR_0.",
+  },
 ];
 
 export const GOAL_LIST = "list";
