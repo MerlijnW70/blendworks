@@ -4,7 +4,7 @@ import tempfile
 
 import bpy
 
-from .. import atmosphere_haze, camera_exposure, cloud_forms, device, exr_read, render_outputs
+from .. import atmosphere_haze, camera_exposure, cloud_forms, device, exr_read, liquid_render, render_outputs
 from ..errors import bad_args
 from ..registry import command
 from ..rig import stamp_fields
@@ -97,6 +97,7 @@ def render_final(ctx, args):
     folder = tempfile.mkdtemp(prefix="blendworks-final-")
     try:
         configure(scope, scene, ctx.view_layer, camera, args)
+        liquids = liquid_render.configure(scope, scene)
         needed = [] if surface_passes else passes + (["depth"] if depth_haze and "depth" not in passes else [])
         taken = [name for name in outputs.values() if os.path.exists(name)]
 
@@ -127,6 +128,7 @@ def render_final(ctx, args):
     result["view"] = camera_exposure.view_report(scene.view_settings)
     result["atmosphere"] = None if haze is None else {"method": haze["method"], "visibility": haze["visibility"]}
     result["clouds"] = cloud_forms.cloud_report(scene)
+    result["liquids"] = liquids
     if result["clouds"] is not None and cloud_form.active:
         result["clouds"]["rendered_as"] = cloud_form.report()
     return result

@@ -5,6 +5,7 @@ import numpy
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
+from . import liquid_masks
 from .errors import bad_args
 from .noise_stack import stack_bounds, stack_field
 from .scatter_masks import ramp, slope_degrees
@@ -134,6 +135,8 @@ def population_masks(surface, population, candidates, context):
     if "height_range" in population:
         band = population["height_range"]
         values *= soft_band(points[:, 2], band[0], band[1], population["height_edge"])
+    if context.get("liquid") is not None and population["liquid"] != "ignore":
+        values *= liquid_masks.mask(context["liquid"], surface, candidates.triangle, candidates.weights, population["liquid"], population["shore"])
     if "attribute" in population:
         spec = population["attribute"]
         attribute = context["attributes"][spec["name"]]

@@ -1,6 +1,7 @@
 import numpy
 from mathutils import Matrix
 
+from .. import liquid_masks, liquid_world
 from ..copies import linked_copies, realized_copy
 from ..errors import bad_args
 from ..kit_limits import MAX_INSTANCES
@@ -14,6 +15,8 @@ from ..scatter_surface import read_surface
 from ..schema import array, boolean, described, integer, length, number, obj, string
 from ..util import get_mesh_object, link_object, mesh_counts, require_free_name
 from .placement import place_copies
+
+SHORE_WET = 0.5
 
 SOURCE = described(
     obj(
@@ -100,13 +103,16 @@ def place_sources(ctx, args, sources, plan):
         "sources": array(SOURCE, "Several meshes with weights; each instance picks one with probability proportional to its weight.", 1, 64),
         "min_distance": length("Smallest distance in metres between two instances, measured in 3D, so spacing holds on steep slopes. With power it is the distance between the smallest instances; larger ones keep the sum of their radii, min_distance times (a + b) / (2 smallest scale) for scales a and b."),
         "density": length("A cap in candidate points per square metre: no more than density times the surface area instances are placed. Leave out to fill the surface."),
-        "density_mask": array(string("A mask.", list(MASKS)), "Masks that multiply the density, each in 0..1: slope (needs slope_range), height (height_range), vertex_group, noise, attribute (attribute and attribute_range).", 1, len(MASKS)),
+        "density_mask": array(string("A mask.", list(MASKS)), "Masks that multiply the density, each in 0..1: slope (needs slope_range), height (height_range), vertex_group, noise, attribute (attribute and attribute_range), liquid (keeps out of water), shore (shore_width).", 1, len(MASKS)),
         "slope_range": range_pair("slope mask: keep faces whose normal is between these angles from vertical, in degrees.", 0.0, 180.0),
         "height_range": range_pair("height mask: keep points between these world heights in metres.", -1_000_000.0, 1_000_000.0),
         "vertex_group": string("vertex_group mask: the weight of this vertex group is the density."),
         "noise": NOISE,
         "attribute": string("attribute mask: a float attribute of the target, such as the slope or height that heightfield writes (point, face or corner domain)."),
         "attribute_range": range_pair("attribute mask: density rises from 0 at the first value to 1 at the second; equal values make a hard threshold.", -1_000_000.0, 1_000_000.0),
+        "shore_width": length("shore mask: keep points within this many metres above the water line of liquid_body or liquid_fill water.", None, 1000.0),
+        "shore_depth": number("shore mask: also keep points down to this many metres under the water line, for rocks standing in the shallows (default 0).", 0.0, 1000.0),
+        "shore_wet": number("shore mask with realize: darken and gloss the placed objects up to this many metres above the water line, as liquid_body wets its shores (default 0.5; 0 leaves them dry).", 0.0, 100.0),
         "scale_range": array({"type": "number", "exclusiveMinimum": 0, "maximum": 1000.0}, "Smallest and largest scale of an instance.", 2, 2, [1.0, 1.0]),
         "scale_distribution": string("How scales are drawn: uniform, lognormal (the range spans four standard deviations of the log) or power (count proportional to scale to the exponent, many small and few large).", list(DISTRIBUTIONS), "uniform"),
         "scale_exponent": number("power: the exponent of the size distribution; -2 is the size structure of tree communities (Enquist and Niklas 2001).", -8.0, 0.0, -2.0),
@@ -134,10 +140,24 @@ def scatter(ctx, args):
     if any(source is target for source, _ in sources):
         raise bad_args("the target cannot also be a source")
     surface = read_surface(target, ctx.depsgraph(), args.get("attribute") if "attribute" in masks else None, args.get("vertex_group") if "vertex_group" in masks else None)
+    if "liquid" in masks or "shore" in masks:
+        surface.liquid = liquid_masks.corner_depth(target, surface, ctx.depsgraph(), args.get("shore_width", 0.0) if "shore" in masks else 0.0)
+        if surface.liquid is None:
+            raise bad_args("the liquid and shore masks need water from liquid_body or liquid_fill in the scene")
     weights = numpy.array([weight for _, weight in sources])
     plan = plan_scatter(surface, args, masks, weights, numpy.array([source_height(source.data) for source, _ in sources]))
     if plan.report["count"] == 0:
         raise bad_args("no instance fits: the masks removed every candidate or the surface is smaller than min_distance")
     result = place_sources(ctx, args, sources, plan)
     result.update(plan.report)
+    if "shore" in masks and args.get("shore_wet", SHORE_WET) > 0.0:
+        result["wet"] = wet_copies(ctx, result, args.get("shore_wet", SHORE_WET))
     return result
+
+
+def wet_copies(ctx, result, width):
+    """Rocks set at the water line take the shore's wet darkening; linked copies share one mesh, so only realized ones can."""
+    if not result.get("realized"):
+        return {"objects": [], "skipped": "linked copies share one mesh; give realize true to wet them"}
+    names = result.get("objects") or [result["name"]]
+    return liquid_world.wet_shores(ctx, width, names)

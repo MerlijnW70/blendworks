@@ -1,16 +1,20 @@
 import numpy
 
+from . import liquid_masks
 from .errors import bad_args
 from .noise_stack import stack_bounds, stack_field
 
-MASKS = ("slope", "height", "vertex_group", "noise", "attribute")
+MASKS = ("slope", "height", "vertex_group", "noise", "attribute", "liquid", "shore")
 MASK_PARAMETERS = {
     "slope": ("slope_range",),
     "height": ("height_range",),
     "vertex_group": ("vertex_group",),
     "noise": ("noise",),
     "attribute": ("attribute", "attribute_range"),
+    "liquid": (),
+    "shore": ("shore_width",),
 }
+MASK_OPTIONS = {"shore": ("shore_depth", "shore_wet")}
 
 
 def chosen_masks(args):
@@ -21,6 +25,10 @@ def chosen_masks(args):
                 raise bad_args(f"density_mask {mask} needs {parameter}")
             if mask not in masks and parameter in args:
                 raise bad_args(f"{parameter} has no effect unless density_mask lists {mask}")
+    for mask, options in MASK_OPTIONS.items():
+        for option in options:
+            if mask not in masks and option in args:
+                raise bad_args(f"{option} has no effect unless density_mask lists {mask}")
     return masks
 
 
@@ -49,6 +57,10 @@ def mask_values(surface, args, masks, triangle, weights, points):
     if "attribute" in masks:
         low, high = args["attribute_range"]
         density *= ramp(surface.interpolate(surface.attribute, triangle, weights), low, high)
+    if "liquid" in masks:
+        density *= liquid_masks.mask(surface.liquid, surface, triangle, weights, "avoid", 0.0)
+    if "shore" in masks:
+        density *= liquid_masks.mask(surface.liquid, surface, triangle, weights, "shore", args["shore_width"], depth=args.get("shore_depth", 0.0))
     if "noise" in masks:
         noise = args["noise"]
         lowest, highest = stack_bounds(noise)

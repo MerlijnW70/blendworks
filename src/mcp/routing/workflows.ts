@@ -190,6 +190,13 @@ export const WORKFLOWS: Workflow[] = [
     note: "blender_weather does it in one call: preset clear, hazy, fair_cumulus, scattered, broken, overcast, light_rain, heavy_rain or thunderstorm (golden_hour, clear_golden_hour, dusk, scattered_dusk, stormy_golden_hour), or storm 0-1, with time_of_day or sun, seed and overrides for dust, visibility, rain, wet, lightning. It builds the procedural sky (blender_sky: sun by elevation and azimuth or date, time, latitude and longitude, a matching sun lamp and exposure), the clouds (blender_clouds: genus, coverage, base, thickness, density, wind, seed), rain veils and streaks, wet ground, a lightning bolt and haze. Clouds form auto shows a cheap sheet in previews and EEVEE and volumes in blender_render_final.",
   },
   {
+    id: "liquids",
+    goal: "Water and other liquids",
+    examples: ["a lake with a river flowing into it", "ocean waves on a beach", "a glass of red wine", "spilled coffee on a table"],
+    steps: ["blender_weather", "blender_liquid_body", "blender_liquid_fill", "blender_material_liquid", "blender_ground_cover", "blender_render_final"],
+    note: "Set blender_weather first: water takes its wind (ripples and waves follow it) and sky. blender_liquid_body kind lake or pond fills the hollow at point to just below its spill level (or level, depth), river follows path or runs from point down the terrain's lowest line (width, depth, carve, Manning roughness; it joins a lake it reaches), ocean takes wind and fetch (JONSWAP and Pierson-Moskowitz wave heights, whitecaps, beach), puddle fills a hollow of a surface; the ground and rocks at the shore get liquid_depth and liquid_wet and darken as wet ground. blender_liquid_fill fills any container (lathe a glass, extrude a tank) by level, volume in litres or fill share, with meniscus, tilt, a 0.1 mm gap to the wall, glass true for the container, foam and bubbles for beer, drips, a pour stream and a spill of a given area. Presets: water_fresh, water_sea, water_muddy, wine, wine_white, beer, oil, milk, juice, juice_grapefruit, coffee, paint, honey, syrup, mud, lava, molten_metal. blender_ground_cover and blender_scatter keep out of the water (liquid avoid by default, shore for reeds); blender_render_final turns caustics off for clean glass and water.",
+  },
+  {
     id: "review",
     goal: "Check and deliver",
     examples: ["look at the model", "verify counts", "export the asset"],

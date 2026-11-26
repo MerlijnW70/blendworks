@@ -2,6 +2,7 @@ from .commands.scatter import NOISE
 from .cover_kinds import BLADE_KINDS, ELEMENT, KINDS, LITTER_KINDS, element_params
 from .cover_presets import PRESET_POPULATIONS
 from .errors import bad_args
+from .liquid_masks import MODES as LIQUID_MODES
 from .schema import array, boolean, described, integer, names, number, obj, string, validate
 
 FORM_CHOICES = ("auto", "geometry", "cards")
@@ -48,6 +49,8 @@ POPULATION = described(
             "hug": number("Keep within this many metres of the obstacles of the call (not inside them), for tufts or litter at the base of rocks and trunks; skipped when no obstacles are given.", 0.0, 100.0),
             "under": number("Keep within this many metres of the trees of the call; skipped when no trees are given.", 0.0, 1000.0),
             "noise": NOISE,
+            "liquid": string("Water from liquid_body or liquid_fill: avoid keeps the population out of it (the default), shore keeps it within shore metres of the water line, ignore grows it anyway.", list(LIQUID_MODES)),
+            "shore": number("shore: width in metres of the band above the water line the population keeps to.", 0.01, 1000.0),
             "scale_range": pair("Smallest and largest uniform scale of an instance.", 0.01, 100.0),
             "color_variation": number("Colour change from instance to instance, 0 to 1, through the gc_tint instance attribute.", 0.0, 1.0),
             "align": number("0 keeps elements upright, 1 tilts them with the slope.", 0.0, 1.0),
@@ -62,9 +65,9 @@ POPULATION = described(
 )
 
 KIND_POPULATION = {
-    "blade": {"form": "auto", "card_distance": 8.0, "scale_range": [0.8, 1.2], "color_variation": 0.5, "align": 0.35, "tilt": 8.0, "embed": 0.01, "widen": True, "variants": 4},
-    "flower": {"form": "auto", "card_distance": 8.0, "scale_range": [0.8, 1.15], "color_variation": 0.35, "align": 0.15, "tilt": 6.0, "embed": 0.01, "widen": False, "variants": 4},
-    "litter": {"form": "geometry", "card_distance": 8.0, "scale_range": [0.7, 1.3], "color_variation": 0.6, "align": 1.0, "tilt": 0.0, "embed": 0.001, "widen": False, "variants": 4},
+    "blade": {"liquid": "avoid", "shore": 1.0, "form": "auto", "card_distance": 8.0, "scale_range": [0.8, 1.2], "color_variation": 0.5, "align": 0.35, "tilt": 8.0, "embed": 0.01, "widen": True, "variants": 4},
+    "flower": {"liquid": "avoid", "shore": 1.0, "form": "auto", "card_distance": 8.0, "scale_range": [0.8, 1.15], "color_variation": 0.35, "align": 0.15, "tilt": 6.0, "embed": 0.01, "widen": False, "variants": 4},
+    "litter": {"liquid": "avoid", "shore": 1.0, "form": "geometry", "card_distance": 8.0, "scale_range": [0.7, 1.3], "color_variation": 0.6, "align": 1.0, "tilt": 0.0, "embed": 0.001, "widen": False, "variants": 4},
 }
 
 

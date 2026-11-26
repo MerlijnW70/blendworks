@@ -333,3 +333,16 @@ blender --background --factory-startup --python docs/examples/weather_scene.py -
 - `presets` (default `clear,fair_cumulus,overcast,heavy_rain,thunderstorm`) and `times` (default `noon,golden_hour`) are comma-separated; each pair is one `weather` call and one `render_final` into `<preset>-<time>.png`.
 - `summary.json` holds each shot's storm value, sun, lamp, cover, rain, lightning, exposure, cloud form and sampling time.
 - `BLENDWORKS_SHOT_WIDTH`, `BLENDWORKS_SHOT_HEIGHT`, `BLENDWORKS_SHOT_SAMPLES`, `BLENDWORKS_SHOT_SECONDS`, `BLENDWORKS_TREE_DETAIL`, `BLENDWORKS_COVER_BUDGET` and `BLENDWORKS_CLOUD_FORM` make a smaller, faster or cheaper run; `BLENDWORKS_DEVICE` picks the device.
+
+## Liquid scenes
+
+`liquid_lake.py` and `liquid_still_life.py` build the two acceptance scenes of the `liquids` job with Blendworks commands only and render them with `render_final`.
+
+```
+blender --background --factory-startup --python docs/examples/liquid_lake.py -- out
+blender --background --factory-startup --python docs/examples/liquid_still_life.py -- out
+```
+
+- `liquid_lake.py`: rolling land (a 300 m `heightfield` at 1 m, inside three rings of coarser tiles out to 4 km that sample the same noise, all raised by one `noise_displace` layer of hills 2.5 km across, so the land runs on to hills at the horizon), `weather` `fair_cumulus` in the afternoon, a lake at the spill level of the lowest hollow (`liquid_body` kind `lake`), a river from the source with the gentlest flow among those whose lowest line drains into the lake (`liquid_body` kind `river`, tried without carving, then built with its channel carved), boulders (ico spheres chipped, abraded and displaced, stone with lichen on top) scattered along the water line of the lake and the river with the `shore` mask (2.5 m above to 0.3 m under the water line, grouped by a noise mask, wet where the water reaches), trees near the river mouth (`grow_tree` species presets, `tree_mesh`, `tree_leaves`), `ground_cover` with the `meadow` preset and a `shore` population of reeds over everything the two shots see, haze, a main shot across the lake to the river mouth from a rise of the land and a close shot of the rocks at the water line. It writes `lake.png`, `rocks.png`, `liquid-lake.blend` and `summary.json` (the lake's level, area, volume, wind, waves and wet shore, the river's length, speed and junction, the rocks' count and how far they reach above and under the water line, and the render's liquid settings).
+- `liquid_still_life.py`: lathed glasses of water, red wine (a stemmed glass), milk and olive oil and a jar of honey, filled with `liquid_fill` (`glass` true), and a coffee spill on an oak table (a film at the receding contact angle of 35°, 1.5 mm thick, with a darker ring at its edge) in front of a dark wall, lit by a window light from behind and soft fills. It writes `still-life.png`, `liquid-still-life.blend` and `summary.json`.
+- `BLENDWORKS_SHOT_WIDTH`, `BLENDWORKS_SHOT_HEIGHT`, `BLENDWORKS_SHOT_SAMPLES`, `BLENDWORKS_SHOT_SECONDS`, `BLENDWORKS_DEVICE` set the render; the lake also takes `BLENDWORKS_TREE_DETAIL`, `BLENDWORKS_TREES`, `BLENDWORKS_COVER_BUDGET`, `BLENDWORKS_CLOUD_FORM` and `BLENDWORKS_TERRAIN_SEED`, and the still life `BLENDWORKS_LATHE_SEGMENTS`.

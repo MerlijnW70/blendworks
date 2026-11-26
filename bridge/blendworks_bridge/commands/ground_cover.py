@@ -1,6 +1,7 @@
 import bpy
 import numpy
 
+from .. import liquid_masks
 from ..cover_contact import contact_shading, write_contact
 from ..cover_kinds import ELEMENT, FORMS, KINDS, element_budget, element_params, make_element, require_free_materials
 from ..cover_masks import camera_object
@@ -173,7 +174,13 @@ def ground_cover(ctx, args):
     surface = read_surface(target, depsgraph)
     if surface.area <= 0.0:
         raise bad_args("the target has no surface area to cover")
-    context = {"depsgraph": depsgraph, "obstacles": {}, "attributes": attributes_needed(target, depsgraph, populations), "cameras": cameras, "view_only": args["view_only"], "view_margin": args["view_margin"], "scene": ctx.scene}
+    liquid = liquid_masks.corner_depth(target, surface, depsgraph, max([population["shore"] for population in populations if population["liquid"] == "shore"], default=0.0))
+    if liquid is None:
+        skipped += [population["name"] for population in populations if population["liquid"] == "shore"]
+        populations = [population for population in populations if population["liquid"] != "shore"]
+        if not populations:
+            raise bad_args("every population was skipped: shore populations need water from liquid_body or liquid_fill")
+    context = {"liquid": liquid, "depsgraph": depsgraph, "obstacles": {}, "attributes": attributes_needed(target, depsgraph, populations), "cameras": cameras, "view_only": args["view_only"], "view_margin": args["view_margin"], "scene": ctx.scene}
     holder = element_holder(ctx, args["name"])
     cache, elements = {}, {}
     for population in populations:

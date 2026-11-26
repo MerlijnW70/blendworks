@@ -32,6 +32,7 @@ DESIGN_COMMANDS = {
     "camera_setup", "atmosphere", "render_final",
     "ground_element", "ground_cover", "ground_cover_export",
     "sky", "clouds", "weather",
+    "material_liquid", "liquid_body", "liquid_fill",
 }
 ASSET_LIBRARY_COMMANDS = {"set_world_hdri"}
 SLOW = {"slow": True, "timeout": 300, "max_timeout": 1800}
@@ -40,7 +41,7 @@ DECLARED_METADATA = {
     "boolean": dict(SLOW, destructive=True, destructive_when="cutter_action is delete"),
     "image_save": {"writes_files": True, "destructive": True, "destructive_when": "the file already exists", "slow": False},
     **{name: SLOW for name in ("decimate", "import", "uv_pack", "set_world_hdri", "apply_modifier", "sweep", "loft", "instances",
-                               "rivet_line", "roller_chain", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell", "grow_tree", "tree_mesh", "tree_leaves", "lsystem", "fracture", "chip", "abrade", "remesh", "blob", "mesh_from_data", "generate_lods", "clean_mesh", "engrave", "skin_bind", "ground_element", "ground_cover", "clouds", "weather")},
+                               "rivet_line", "roller_chain", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell", "grow_tree", "tree_mesh", "tree_leaves", "lsystem", "fracture", "chip", "abrade", "remesh", "blob", "mesh_from_data", "generate_lods", "clean_mesh", "engrave", "skin_bind", "ground_element", "ground_cover", "clouds", "weather", "liquid_body", "liquid_fill")},
     "ground_cover_export": dict(SLOW, writes_files=True, destructive=True, destructive_when="the file already exists"),
 }
 SCHEMA_KEYS = {"type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",

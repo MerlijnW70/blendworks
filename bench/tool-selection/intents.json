@@ -299,5 +299,12 @@
   {"id":"clouds-1","text":"Add a layer of scattered cumulus at 1200 m whose shadows fall on the terrain","kind":"near-miss","split":"tune","expect":["blender_clouds"],"confusable":"blender_weather"},
   {"id":"clouds-2","text":"Thin wispy cirrus high in the sky, drifting east","kind":"single","split":"tune","expect":["blender_clouds"]},
   {"id":"weather-1","text":"Turn the meadow into a grey rainy day with wet ground and rain streaks","kind":"near-miss","split":"tune","expect":["blender_weather"],"confusable":"blender_clouds"},
-  {"id":"weather-2","text":"Make it a dark thunderstorm with a lightning bolt over the hills","kind":"single","split":"tune","expect":["blender_weather"]}
+  {"id":"weather-2","text":"Make it a dark thunderstorm with a lightning bolt over the hills","kind":"single","split":"tune","expect":["blender_weather"]},
+  {"id":"material_liquid-1","text":"Give the bottle's contents a red wine material that is dark in the middle and red at the thin edges","kind":"near-miss","split":"tune","expect":["blender_material_liquid"],"confusable":"blender_add_material"},
+  {"id":"material_liquid-2","text":"Make the flow glow like molten lava with a cooling black crust","kind":"single","split":"tune","expect":["blender_material_liquid"]},
+  {"id":"liquid_body-1","text":"Fill the valley hollow with a lake whose ripples follow the wind","kind":"near-miss","split":"tune","expect":["blender_liquid_body"],"confusable":"blender_liquid_fill"},
+  {"id":"liquid_body-2","text":"Add a river that runs down the terrain's lowest line into the lake","kind":"single","split":"tune","expect":["blender_liquid_body"]},
+  {"id":"liquid_body-3","text":"An ocean with waves for a 12 m/s wind and foam on the crests up to a sandy beach","kind":"single","split":"tune","expect":["blender_liquid_body"]},
+  {"id":"liquid_fill-1","text":"Pour a quarter litre of milk into the glass so the surface meets the wall with a meniscus","kind":"near-miss","split":"tune","expect":["blender_liquid_fill"],"confusable":"blender_material_liquid"},
+  {"id":"liquid_fill-2","text":"A pint of beer with a foam head, and a puddle of spilled coffee on the table","kind":"single","split":"tune","expect":["blender_liquid_fill"]}
 ]
