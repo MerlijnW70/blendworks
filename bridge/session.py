@@ -19,15 +19,46 @@ def parse_arguments(argv):
     return parser.parse_args(own)
 
 
+def read_in_background(reader):
+    import queue
+    import threading
+
+    from blendworks_bridge.transport import read_request
+
+    lines = queue.Queue()
+
+    def pump():
+        while True:
+            line = read_request(reader)
+            lines.put(line)
+            if line is None:
+                return
+
+    threading.Thread(target=pump, name="blendworks-requests", daemon=True).start()
+    return lines
+
+
+def next_request(handler, lines):
+    import queue
+
+    while True:
+        wait = handler.idle_wait()
+        try:
+            return lines.get(timeout=wait) if wait is not None else lines.get()
+        except queue.Empty:
+            handler.idle()
+
+
 def serve(handler, protocol, reader):
-    from blendworks_bridge.transport import TOO_LONG, quit_reply, read_request, too_long_reply
+    from blendworks_bridge.transport import TOO_LONG, quit_reply, too_long_reply
 
     def send(text):
         protocol.write(text + "\n")
         protocol.flush()
 
+    lines = read_in_background(reader)
     while True:
-        line = read_request(reader)
+        line = next_request(handler, lines)
         if line is None:
             return
         if line is TOO_LONG:

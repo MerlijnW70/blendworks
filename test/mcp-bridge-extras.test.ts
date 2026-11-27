@@ -132,7 +132,11 @@ describe("custom node graphs, hierarchy and brass through MCP tools only", workB
   });
 
   it("refuses a script node and a cycle, and leaves the scene as it was", async () => {
-    const before = await tool("scene_info", { detail: "summary" });
+    const sceneOnly = async (): Promise<Json> => {
+      const { autosave: _autosave, ...scene } = await tool("scene_info", { detail: "summary" });
+      return scene;
+    };
+    const before = await sceneOnly();
     const script = await raw("material_nodes", { name: "Bad", nodes: [{ name: "Code", type: "script" }, { name: "Output", type: "material_output" }] });
     expect(script.isError).toBe(true);
     const cycle = await raw("material_nodes", {
@@ -142,7 +146,7 @@ describe("custom node graphs, hierarchy and brass through MCP tools only", workB
     });
     expect(cycle.isError).toBe(true);
     expect(texts(cycle)).toContain("cycle");
-    expect(await tool("scene_info", { detail: "summary" })).toEqual(before);
+    expect(await sceneOnly()).toEqual(before);
   });
 
   it("builds an aged brass band and a custom node-graph material, and renders both", async () => {

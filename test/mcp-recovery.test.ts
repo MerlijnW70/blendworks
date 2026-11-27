@@ -73,7 +73,7 @@ describe("a real headless session through the MCP server", () => {
     const crashed = await killDuringRunPython(live, pid);
     expect(crashed.isError).toBe(true);
     expect(texts(crashed)).toMatch(
-      /^crashed: Blender stopped while running run_python \(.+\)\. Restarted it\. Reloaded \.blendworks\/autosave\.blend saved at \S+Z \(before run_python\); the scene has 2 objects\./,
+      /^crashed: Blender stopped while running run_python \(.+\)\. Restarted it\. Reloaded the snapshot \.blendworks\/autosave-\d+\.blend saved at \S+Z \(after run_python\) and replayed 0 journaled requests after it; the scene has 2 objects\./,
     );
     expect(await objectNames(live.client)).toEqual(["Body", "Knob"]);
 
@@ -100,7 +100,7 @@ describe("a real headless session through the MCP server", () => {
     live = await open();
     await buildPart(live.client);
     const late = await call(live.client, "blender_run_python", { code: SLEEP, timeout_seconds: 3 });
-    expect(texts(late)).toMatch(/^timeout: run_python got no reply within 3 s\. Stopped the session\. Restarted it\. Reloaded \.blendworks\/autosave\.blend .*\(before run_python\); the scene has 2 objects\./);
+    expect(texts(late)).toMatch(/^timeout: run_python got no reply within 3 s\. Stopped the session\. Restarted it\. Reloaded the snapshot \.blendworks\/autosave-\d+\.blend .*\(after run_python\) and replayed 0 journaled requests after it; the scene has 2 objects\./);
     expect(await objectNames(live.client)).toEqual(["Body", "Knob"]);
 
     const controller = new AbortController();

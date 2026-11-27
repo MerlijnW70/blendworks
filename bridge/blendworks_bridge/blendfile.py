@@ -27,14 +27,7 @@ def write_copy(path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     partial = partial_path(path)
     remove_quietly(partial)
-    try:
-        bpy.ops.wm.save_as_mainfile(filepath=partial, copy=True, check_existing=False, compress=False)
-    except RuntimeError as error:
-        remove_quietly(partial)
-        raise failed(f"Blender could not save {os.path.basename(path)}: {error}") from error
-    if not looks_like_blend(partial):
-        remove_quietly(partial)
-        raise failed(f"saving {os.path.basename(path)} wrote no .blend file")
+    write_blend(partial, compress=False)
     return partial
 
 
@@ -44,6 +37,69 @@ def save_atomically(path, previous=None):
         os.replace(path, previous)
     os.replace(partial, path)
     return os.path.getsize(path)
+
+
+UI_DATA = ("window_managers", "screens", "workspaces")
+NOT_PIXELS = ("RENDER_RESULT", "COMPOSITING")
+
+
+def id_collections():
+    names = []
+    for prop in bpy.data.bl_rna.properties:
+        if prop.type != "COLLECTION" or prop.identifier in UI_DATA:
+            continue
+        kind = getattr(bpy.types, prop.fixed_type.identifier, None)
+        if isinstance(kind, type) and issubclass(kind, bpy.types.ID):
+            names.append(prop.identifier)
+    return names
+
+
+def unused_blocks():
+    found = []
+    for name in id_collections():
+        for block in getattr(bpy.data, name):
+            if block.users == 0 and not block.use_fake_user and block.library is None and not block.is_runtime_data:
+                found.append((name, block))
+    return found
+
+
+def unsaved_images():
+    return sorted(
+        image.name for image in bpy.data.images
+        if image.type not in NOT_PIXELS and image.is_dirty and image.has_data and image.packed_file is None
+    )
+
+
+def write_snapshot(path):
+    unused = unused_blocks()
+    for _, block in unused:
+        block.use_fake_user = True
+    try:
+        write_blend(path, compress=True)
+    finally:
+        for _, block in unused:
+            block.use_fake_user = False
+    return [[name, block.name] for name, block in unused], unsaved_images()
+
+
+def write_blend(path, compress):
+    try:
+        bpy.ops.wm.save_as_mainfile(filepath=path, copy=True, check_existing=False, compress=compress)
+    except RuntimeError as error:
+        remove_quietly(path)
+        raise failed(f"Blender could not save {os.path.basename(path)}: {error}") from error
+    if not looks_like_blend(path):
+        remove_quietly(path)
+        raise failed(f"saving {os.path.basename(path)} wrote no .blend file")
+
+
+def open_snapshot(path, unused):
+    open_blend(path)
+    for name, block_name in unused:
+        collection = getattr(bpy.data, name, None)
+        block = collection.get(block_name) if collection is not None else None
+        if block is not None and block.use_fake_user:
+            block.use_fake_user = False
 
 
 def write_json_atomically(path, value):

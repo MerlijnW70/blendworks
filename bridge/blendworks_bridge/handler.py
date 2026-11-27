@@ -1,14 +1,17 @@
 import json
+import os
+import time
 
 import bpy
 
 from . import commands
-from .autosave import Autosave, interval_from_environment
-from .errors import BridgeError, bad_args, forbidden
 from . import floating_origin
+from .autosave import FOLDER, Autosave, interval_from_environment, journaled
+from .errors import BridgeError, bad_args, failed, forbidden
+from .journal import ReadRecorder, RecordingWorkspace
 from .operators import operator_context
 from .plan import without_timeout
-from .policy import REPLACES_FILE, UNDO
+from .policy import UNDO
 from .registry import COMMANDS, Registry
 from .schema import validate
 from .transaction import NoSnapshot, Transaction
@@ -19,10 +22,10 @@ FROM_ENVIRONMENT = "environment"
 
 
 class Context:
-    def __init__(self, handler, txn):
+    def __init__(self, handler, txn, workspace=None):
         self.handler = handler
         self.registry = handler.registry
-        self.workspace = handler.workspace
+        self.workspace = workspace or handler.workspace
         self.desktop = handler.desktop
         self.allow_python = handler.allow_python
         self.txn = txn
@@ -47,7 +50,7 @@ class Handler:
             autosave_seconds = None
         elif autosave_seconds == FROM_ENVIRONMENT:
             autosave_seconds = interval_from_environment()
-        self.autosave = Autosave(self.workspace, autosave_seconds)
+        self.autosave = Autosave(self.workspace, autosave_seconds, self.replay)
         self.snapshots = 0
 
     def handle_line(self, line):
@@ -63,6 +66,7 @@ class Handler:
         return encode(self.handle(request))
 
     def handle(self, request):
+        self.autosave.touch()
         request_id = request.get("id") if isinstance(request, dict) else None
         if not valid_id(request_id):
             request_id = None
@@ -78,16 +82,26 @@ class Handler:
             if name == PYTHON_COMMAND:
                 raise forbidden("run_python is off; start the bridge with --allow-python to enable it")
             raise bad_args(f"unknown command {name}; call describe for the list")
-        cleaned = validate(command.schema, without_timeout(command, args))
-        broken = command.rules(cleaned) if command.rules is not None else []
-        if broken:
-            raise bad_args("; ".join(problem["message"] for problem in broken))
+        cleaned = self.cleaned(command, args)
         if command.mutates and self.desktop:
             ensure_object_mode()
         self.autosave.before(command)
+        recorder = ReadRecorder(self.workspace.root, os.path.join(self.workspace.root, FOLDER))
+        watched = self.autosave.enabled and journaled(command)
+        started = time.perf_counter()
+        if watched:
+            with recorder:
+                result = self.execute(command, cleaned, RecordingWorkspace(self.workspace, recorder))
+        else:
+            result = self.execute(command, cleaned)
+        seconds = time.perf_counter() - started
+        self.autosave.after(command, args, recorder.paths, seconds)
+        return result
+
+    def execute(self, command, cleaned, workspace=None):
         txn = self.transaction(command)
         try:
-            context = Context(self, txn)
+            context = Context(self, txn, workspace)
             floating_origin.begin()
             result = command.run(context, cleaned)
             if command.policy.renders and isinstance(result, dict) and floating_origin.report():
@@ -98,13 +112,28 @@ class Handler:
             raise
         except Exception as error:
             txn.rollback()
-            raise BridgeError("failed", f"{name} failed: {type(error).__name__}: {error}") from error
+            raise BridgeError("failed", f"{command.name} failed: {type(error).__name__}: {error}") from error
         txn.commit()
-        if command.snapshot == UNDO:
-            self.autosave.after(command)
-        elif command.snapshot == REPLACES_FILE:
-            self.autosave.replaced(command)
         return result
+
+    def cleaned(self, command, args):
+        cleaned = validate(command.schema, without_timeout(command, args))
+        broken = command.rules(cleaned) if command.rules is not None else []
+        if broken:
+            raise bad_args("; ".join(problem["message"] for problem in broken))
+        return cleaned
+
+    def replay(self, name, args):
+        command = self.registry.get(name)
+        if command is None:
+            raise failed(f"{name} is not a command of this session")
+        return self.execute(command, self.cleaned(command, args))
+
+    def idle_wait(self):
+        return self.autosave.idle_wait()
+
+    def idle(self):
+        return self.autosave.idle()
 
     def transaction(self, command):
         if command.snapshot != UNDO:

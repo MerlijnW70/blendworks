@@ -39,7 +39,8 @@ def test_restoring_a_checkpoint_updates_the_autosave(bridge):
     session.ok("add_primitive", type="cube", name="Extra")
     session.ok("restore_checkpoint", name="one")
     bpy.data.objects.remove(bpy.data.objects["Base"])
-    assert session.ok("recover")["reason"] == "after restore_checkpoint"
+    result = session.ok("recover")
+    assert result["snapshot"]["reason"] == "after restore_checkpoint" and result["replayed"]["requests"] == 0
     assert names() == ["Base"]
 
 

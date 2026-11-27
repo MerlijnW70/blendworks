@@ -71,6 +71,11 @@ DEFAULT_BAKE_SECONDS = 100.0
 MAX_BAKE_MARGIN = limit("bake_margin", 64, "px", PHYSICAL, "Island margins wider than 64 px only waste the atlas.")
 
 DEFAULT_AUTOSAVE_SECONDS = 30.0
+AUTOSAVE_IDLE_SECONDS = 10.0
+REPLAY_BUDGET_RATIO = 100.0
+REPLAY_BUDGET_FLOOR_SECONDS = 10.0
+MAX_REPLAY_SECONDS = 120.0
+MAX_JOURNAL_BYTES = 64 * 1024 * 1024
 MAX_CHECKPOINTS = limit("checkpoints", 64, "checkpoints", MEMORY, "Saved checkpoints kept on disk per session.")
 DEFAULT_SCENE_INFO_LIMIT = 100
 MAX_SCENE_INFO_LIMIT = limit("scene_info_page", 1_000, "objects", PROTOCOL, "Objects one scene_info page lists.")
