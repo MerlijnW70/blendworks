@@ -4,7 +4,7 @@ import tempfile
 
 import bpy
 
-from .. import atmosphere_haze, camera_exposure, cloud_forms, device, exr_read, liquid_render, render_outputs
+from .. import atmosphere_haze, camera_exposure, cloud_forms, device, exr_read, liquid_render, render_outputs, render_view, view_materials
 from ..errors import bad_args
 from ..registry import command
 from ..rig import stamp_fields
@@ -66,6 +66,16 @@ MOTION["description"] = "Motion blur for animated scenes: objects, cameras and d
         "depth": integer("Bits per channel of the .png: 8 or 16.", 8, 16, 8),
         "transparent": boolean("Transparent background (alpha) instead of the world.", False),
         "preview": boolean("Return a small JPEG of the result to look at.", True),
+        "shading": string(
+            "shaded: the scene's materials; clay: one matte grey material on every surface, lit by the scene's own light and sky; "
+            "wireframe: clay with the mesh's real edges drawn as lines of constant pixel width; normals: world-space normals as colours. "
+            "Only surface materials change, keeping their transparency: the camera, lights, world, sky, clouds, haze, depth of field, "
+            "motion blur, passes and outputs stay. Wireframe and normals are not denoised.",
+            list(render_view.VIEWS),
+            "shaded",
+        ),
+        "wire_width": number("shading wireframe: line width in pixels, the same at every distance.", 0.25, 32.0, view_materials.DEFAULT_WIRE_WIDTH),
+        "wire_triangles": boolean("shading wireframe: also draw the diagonals the renderer cuts each quad and n-gon into.", False),
     },
     ["path"],
     mutates=False,
@@ -80,6 +90,9 @@ MOTION["description"] = "Motion blur for animated scenes: objects, cameras and d
         "hero shot or beauty render into a file",
         "render depth, normal, albedo and object id passes",
         "render with motion blur",
+        "clay render of a landscape or model without textures",
+        "wireframe render, show the topology of a mesh of any size",
+        "normals render, world-space normals as colours",
     ),
     nearest=(("render_preview", "for a quick look while working"), ("camera_setup", "for depth of field and exposure")),
 )
@@ -87,6 +100,9 @@ def render_final(ctx, args):
     scene = ctx.scene
     camera = chosen_camera(scene, args)
     check_arguments(args)
+    shading = args["shading"]
+    if shading in render_view.UNDENOISED_VIEWS:
+        args = dict(args, denoise=False)
     passes = list(dict.fromkeys(args.get("passes", [])))
     outputs = output_paths(ctx.workspace, args, passes)
     haze = atmosphere_haze.stored(scene)
@@ -111,9 +127,12 @@ def render_final(ctx, args):
             with atmosphere_haze.VolumeHidden(scene, haze), render_outputs.SurfacePasses(scene, args["samples"]):
                 return main, render_outputs.render_layers(scene, ctx.view_layer, folder, passes, "surface.exr")
 
-        with cloud_forms.FinalForm(scene) as cloud_form:
-            (layers_path, passes_path), choice = render_outputs.on_device(scene, choice, args.get("device"), work)
-        result = write_outputs(ctx, scene, camera, args, outputs, passes, haze, (layers_path, passes_path), folder, counter.most)
+        with render_view.RenderView(scene, ctx.view_layer, shading, camera, args["wire_width"], args["wire_triangles"]) as view:
+            with cloud_forms.FinalForm(scene) as cloud_form:
+                (layers_path, passes_path), choice = render_outputs.on_device(scene, choice, args.get("device"), work)
+            result = write_outputs(ctx, scene, camera, args, outputs, passes, haze, (layers_path, passes_path), folder, counter.most)
+        result["shading"] = shading
+        result.update(view.report)
         result["overwritten"] = [ctx.workspace.relative(name) for name in taken]
         result["device"] = choice.report()
         result["device_label"] = choice.label()

@@ -4,17 +4,14 @@ import math
 import bpy
 from mathutils import Matrix, Vector
 
-from .errors import bad_args
-from .limits import MAX_LISTED_NAMES, MAX_WIRE_EDGES
+from . import render_view, view_materials
+from .limits import MAX_LISTED_NAMES
 from .rig import LENS, SENSOR, TEMPORARY_PREFIX, VIEW_DIRECTIONS
 
 SHADINGS = ("shaded", "clay", "wireframe", "normals", "uv_checker", "material_id")
 DIRECTIONS = dict(VIEW_DIRECTIONS, bottom=Vector((0.0, 0.0, -1.0)))
-WIRE_PROPERTY = "blendworks_wire"
-CLAY = (0.62, 0.62, 0.6, 1.0)
-LINE = (0.02, 0.02, 0.025, 1.0)
 GOLDEN = 0.618033988749895
-FLAT_SHADINGS = ("normals", "uv_checker", "material_id")
+FLAT_SHADINGS = ("uv_checker", "material_id")
 
 
 def half_angle():
@@ -44,60 +41,16 @@ def pixel_size(distance, resolution):
     return 2.0 * distance * math.tan(half_angle()) / resolution
 
 
-def temporary_material(name):
-    material = bpy.data.materials.new(TEMPORARY_PREFIX + name)
-    if not material.node_tree:
-        material.use_nodes = True
-    nodes = material.node_tree.nodes
-    nodes.clear()
-    output = nodes.new("ShaderNodeOutputMaterial")
-    return material, nodes, material.node_tree.links, output
-
-
 def emission_material(name, color):
-    material, nodes, links, output = temporary_material(name)
+    material, nodes, links, output = view_materials.temporary_material(name)
     emission = nodes.new("ShaderNodeEmission")
     emission.inputs["Color"].default_value = color
     links.new(emission.outputs["Emission"], output.inputs["Surface"])
     return material
 
 
-def clay_material(with_lines):
-    material, nodes, links, output = temporary_material("clay")
-    shader = nodes.new("ShaderNodeBsdfPrincipled")
-    shader.inputs["Roughness"].default_value = 0.65
-    if with_lines:
-        attribute = nodes.new("ShaderNodeAttribute")
-        attribute.attribute_type = "OBJECT"
-        attribute.attribute_name = WIRE_PROPERTY
-        mix = nodes.new("ShaderNodeMix")
-        mix.data_type = "RGBA"
-        mix.inputs["A"].default_value = CLAY
-        mix.inputs["B"].default_value = LINE
-        links.new(attribute.outputs["Fac"], mix.inputs["Factor"])
-        links.new(mix.outputs["Result"], shader.inputs["Base Color"])
-    else:
-        shader.inputs["Base Color"].default_value = CLAY
-    links.new(shader.outputs["BSDF"], output.inputs["Surface"])
-    return material
-
-
-def normals_material():
-    material, nodes, links, output = temporary_material("normals")
-    geometry = nodes.new("ShaderNodeNewGeometry")
-    scale = nodes.new("ShaderNodeVectorMath")
-    scale.operation = "MULTIPLY_ADD"
-    scale.inputs[1].default_value = (0.5, 0.5, 0.5)
-    scale.inputs[2].default_value = (0.5, 0.5, 0.5)
-    emission = nodes.new("ShaderNodeEmission")
-    links.new(geometry.outputs["Normal"], scale.inputs[0])
-    links.new(scale.outputs["Vector"], emission.inputs["Color"])
-    links.new(emission.outputs["Emission"], output.inputs["Surface"])
-    return material
-
-
 def checker_material(image):
-    material, nodes, links, output = temporary_material("uv_checker")
+    material, nodes, links, output = view_materials.temporary_material("uv_checker")
     coordinates = nodes.new("ShaderNodeTexCoord")
     texture = nodes.new("ShaderNodeTexImage")
     texture.image = image
@@ -119,32 +72,8 @@ def hex_color(color):
     return "#" + "".join(f"{round(channel * 255):02x}" for channel in color[:3])
 
 
-def wire_tree():
-    tree = bpy.data.node_groups.new(TEMPORARY_PREFIX + "wire", "GeometryNodeTree")
-    tree.interface.new_socket("Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry")
-    source = tree.interface.new_socket("Source", in_out="INPUT", socket_type="NodeSocketObject")
-    radius = tree.interface.new_socket("Radius", in_out="INPUT", socket_type="NodeSocketFloat")
-    nodes = tree.nodes
-    group_in = nodes.new("NodeGroupInput")
-    group_out = nodes.new("NodeGroupOutput")
-    info = nodes.new("GeometryNodeObjectInfo")
-    info.transform_space = "RELATIVE"
-    to_curve = nodes.new("GeometryNodeMeshToCurve")
-    profile = nodes.new("GeometryNodeCurvePrimitiveCircle")
-    profile.inputs["Resolution"].default_value = 4
-    to_mesh = nodes.new("GeometryNodeCurveToMesh")
-    links = tree.links
-    links.new(group_in.outputs["Source"], info.inputs["Object"])
-    links.new(group_in.outputs["Radius"], profile.inputs["Radius"])
-    links.new(info.outputs["Geometry"], to_curve.inputs["Mesh"])
-    links.new(to_curve.outputs["Curve"], to_mesh.inputs["Curve"])
-    links.new(profile.outputs["Curve"], to_mesh.inputs["Profile Curve"])
-    links.new(to_mesh.outputs["Mesh"], group_out.inputs["Geometry"])
-    return tree, source.identifier, radius.identifier
-
-
 class Shading:
-    def __init__(self, scene, view_layer, mode):
+    def __init__(self, scene, view_layer, mode, wire_width=view_materials.DEFAULT_WIRE_WIDTH, wire_triangles=False):
         self.scene = scene
         self.view_layer = view_layer
         self.mode = mode
@@ -154,6 +83,7 @@ class Shading:
         self.blocks = []
         self.remapped = []
         self.report = {}
+        self.surface = render_view.RenderView(scene, view_layer, mode, None, wire_width, wire_triangles) if mode in render_view.VIEWS else None
 
     def __enter__(self):
         return self
@@ -166,22 +96,20 @@ class Shading:
         self.blocks.append((collection, block))
         return block
 
-    def apply(self, objects, wire_radius):
+    def apply(self, objects, camera):
         mode = self.mode
+        if mode in render_view.SURFACE_VIEWS:
+            self.surface.camera = camera
+            self.surface.apply(counted=objects)
+            self.report.update(self.surface.report)
+            return
         if mode in FLAT_SHADINGS:
             view = self.scene.view_settings
             view.view_transform = "Standard"
             view.look = "None"
             view.exposure = 0.0
             view.gamma = 1.0
-        if mode in ("clay", "wireframe"):
-            material = self.keep(bpy.data.materials, clay_material(mode == "wireframe"))
-            self.view_layer.material_override = material
-        if mode == "wireframe":
-            self.add_wires(objects, wire_radius)
-        elif mode == "normals":
-            self.view_layer.material_override = self.keep(bpy.data.materials, normals_material())
-        elif mode == "uv_checker":
+        if mode == "uv_checker":
             self.apply_checker(objects)
         elif mode == "material_id":
             self.apply_material_ids(objects)
@@ -204,32 +132,17 @@ class Shading:
             legend[material.name] = hex_color(color)
         self.report["material_colors"] = legend
 
-    def add_wires(self, objects, radius):
-        meshes = [obj for obj in objects if obj.type in ("MESH", "CURVE", "FONT", "SURFACE", "META")]
-        edges = sum(len(obj.data.edges) for obj in meshes if obj.type == "MESH")
-        if edges > MAX_WIRE_EDGES:
-            raise bad_args(f"wireframe draws at most {MAX_WIRE_EDGES} edges and the scene has {edges}; use clay, or focus on fewer objects")
-        tree, source, size = wire_tree()
-        self.keep(bpy.data.node_groups, tree)
-        for obj in meshes:
-            holder = self.keep(bpy.data.meshes, bpy.data.meshes.new(TEMPORARY_PREFIX + "wire"))
-            wire = self.keep(bpy.data.objects, bpy.data.objects.new(TEMPORARY_PREFIX + "wire", holder))
-            self.scene.collection.objects.link(wire)
-            wire[WIRE_PROPERTY] = 1.0
-            modifier = wire.modifiers.new("wire", "NODES")
-            modifier.node_group = tree
-            inputs = modifier.properties.inputs
-            getattr(inputs, source).value = obj
-            getattr(inputs, size).value = radius
-        self.report["wire_edges"] = edges
-
     def restore(self):
-        for flat, material in reversed(self.remapped):
-            flat.user_remap(material)
+        """Puts the scene back; every step runs even when an earlier one fails."""
+        steps = [self.surface.restore] if self.surface is not None else []
+        steps += [lambda flat=flat, material=material: flat.user_remap(material) for flat, material in reversed(self.remapped)]
+        steps += [self.restore_settings]
+        steps += [lambda collection=collection, block=block: collection.remove(block, do_unlink=True) for collection, block in reversed(self.blocks)]
         self.remapped = []
+        self.blocks = []
+        render_view.run_all(steps)
+
+    def restore_settings(self):
         self.view_layer.material_override = self.override
         view = self.scene.view_settings
         view.view_transform, view.look, view.exposure, view.gamma = self.view
-        for collection, block in reversed(self.blocks):
-            collection.remove(block, do_unlink=True)
-        self.blocks = []

@@ -9,7 +9,8 @@ from mathutils import Vector
 
 from .. import atmosphere_haze, device, limits, render_outputs
 from ..errors import bad_args, failed
-from ..preview import DIRECTIONS, SHADINGS, Shading, aim, frame_width, pixel_size
+from ..render_view import UNDENOISED_VIEWS
+from ..preview import DIRECTIONS, SHADINGS, Shading, aim, frame_width
 from ..registry import command
 from ..rig import TEMPORARY_PREFIX, PreviewRig, RenderSettings, sphere_of, stamp_fields
 from ..schema import array, integer, length, obj, string, vector3
@@ -60,8 +61,8 @@ FOCUS["description"] = "Close-up: frame an object or a point at a chosen width i
     mutates=False,
     slow=True,
     family="output",
-    intents=("look at the model, render preview images", "close-up of a detail", "clay, wireframe, normals, UV checker or material id view"),
-    nearest=(("bake", "to make textures"),),
+    intents=("look at the model, render preview images", "close-up of a detail", "clay, wireframe, normals, UV checker or material id view", "see the topology of a mesh of any size as a wireframe"),
+    nearest=(("bake", "to make textures"), ("render_final", "for a clay, wireframe or normals image at full resolution")),
 )
 def render_preview(ctx, args):
     check_arguments(args)
@@ -84,7 +85,7 @@ def render_preview(ctx, args):
                 rig.add_grey_world()
             configure(scene, engine, args)
             shots, distance = plan_shots(ctx, rig, camera, args, subjects, report)
-            shading.apply([obj for obj in subjects if obj.visible_get(view_layer=ctx.view_layer)], pixel_size(distance, args["resolution"]) * 0.8)
+            shading.apply([obj for obj in subjects if obj.visible_get(view_layer=ctx.view_layer)], shots[0][0])
             images, choice = render_all(scene, shots, folder, args, choice, rig, preview_haze.depth_settings(ctx.view_layer))
             report.update(shading.report)
     finally:
@@ -228,7 +229,7 @@ def configure(scene, engine, args):
         cycles.seed = SEED
         cycles.use_animated_seed = False
         cycles.use_adaptive_sampling = False
-        cycles.use_denoising = True
+        cycles.use_denoising = args["shading"] not in UNDENOISED_VIEWS
     else:
         scene.eevee.taa_render_samples = args["samples"]
 
