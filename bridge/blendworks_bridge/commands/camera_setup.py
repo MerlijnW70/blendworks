@@ -4,22 +4,26 @@ from mathutils import Vector
 
 from .. import camera_exposure
 from ..errors import bad_args
+from ..limits import (HALF_TURN, LEAST_APERTURE_RATIO, LEAST_CAMERA_MILLIMETRES, LEAST_DISPLAY_GAMMA,
+                      LEAST_EXPOSURE_VALUE, LEAST_F_NUMBER, LEAST_ISO, LEAST_SHUTTER, MAX_APERTURE_BLADES,
+                      MAX_APERTURE_RATIO, MAX_CAMERA_SHIFT, MAX_DISPLAY_GAMMA, MAX_EXPOSURE_STOPS, MAX_EXPOSURE_VALUE,
+                      MAX_F_NUMBER, MAX_FOCAL_LENGTH, MAX_ISO, MAX_SENSOR_SIZE, MAX_SHUTTER)
 from ..registry import command
-from ..schema import boolean, integer, length, number, obj, string
+from ..schema import EXISTS, boolean, integer, length, number, obj, ref, string
 from ..util import get_object, rounded
 
 SENSOR_FITS = {"auto": "AUTO", "horizontal": "HORIZONTAL", "vertical": "VERTICAL"}
 CIRCLE_OF_CONFUSION_DIVISOR = 1500.0
 PHYSICAL = obj(
     {
-        "shutter": number("Shutter time in seconds, for example 0.004 for 1/250 s.", 1e-6, 60.0),
-        "iso": number("Sensor sensitivity (ISO).", 1.0, 409_600.0, 100.0),
-        "aperture": number("f-number for the exposure. Default: the camera's fstop, also when depth of field is off.", 0.5, 128.0),
+        "shutter": number("Shutter time in seconds, for example 0.004 for 1/250 s.", LEAST_SHUTTER, MAX_SHUTTER),
+        "iso": number("Sensor sensitivity (ISO).", LEAST_ISO, MAX_ISO, 100.0),
+        "aperture": number("f-number for the exposure. Default: the camera's fstop, also when depth of field is off.", LEAST_F_NUMBER, MAX_F_NUMBER),
         "reference_ev": number(
             "EV100 that Blender's exposure 0 stands for. Default 15: a scene that looks right at exposure 0 counts as "
             "sunlit daylight (sunny 16 at ISO 100).",
-            -10.0,
-            30.0,
+            LEAST_EXPOSURE_VALUE,
+            MAX_EXPOSURE_VALUE,
             camera_exposure.REFERENCE_EV,
         ),
     },
@@ -32,23 +36,23 @@ PHYSICAL["description"] = "Exposure from a real camera: EV100 = log2(N^2 / t) - 
     "camera_setup",
     "Set a camera's lens, sensor, depth of field (f-stop, focus distance or object), shift and the scene exposure and AgX look.",
     {
-        "name": string("Camera object to set up."),
-        "focal_length": number("Focal length in millimetres.", 1.0, 5000.0),
-        "sensor_width": number("Sensor width in millimetres (36 is full frame).", 1.0, 200.0),
-        "sensor_height": number("Sensor height in millimetres (24 is full frame). Only the side the sensor fit uses matters.", 1.0, 200.0),
+        "name": ref(string("Camera object to set up."), "object", EXISTS),
+        "focal_length": number("Focal length in millimetres.", LEAST_CAMERA_MILLIMETRES, MAX_FOCAL_LENGTH),
+        "sensor_width": number("Sensor width in millimetres (36 is full frame).", LEAST_CAMERA_MILLIMETRES, MAX_SENSOR_SIZE),
+        "sensor_height": number("Sensor height in millimetres (24 is full frame). Only the side the sensor fit uses matters.", LEAST_CAMERA_MILLIMETRES, MAX_SENSOR_SIZE),
         "sensor_fit": string("Which side the sensor width spans; auto: the larger side.", list(SENSOR_FITS)),
-        "fstop": number("Aperture f-number; turns depth of field on. Smaller is blurrier.", 0.5, 128.0),
+        "fstop": number("Aperture f-number; turns depth of field on. Smaller is blurrier.", LEAST_F_NUMBER, MAX_F_NUMBER),
         "depth_of_field": boolean("Turn depth of field on or off. Default: on when fstop or a focus is given."),
         "focus_distance": length("Focus distance in metres, along the view axis."),
-        "focus_object": string("Object whose origin stays in focus, also when it moves."),
-        "aperture_blades": integer("Aperture blades for polygonal bokeh; 0 is round.", 0, 16),
-        "aperture_rotation": number("Rotation of the blades in degrees.", -180.0, 180.0),
-        "aperture_ratio": number("Anamorphic bokeh: width over height of the aperture.", 0.01, 10.0),
-        "shift_x": number("Horizontal lens shift, in frame widths.", -2.0, 2.0),
-        "shift_y": number("Vertical lens shift, in frame widths.", -2.0, 2.0),
+        "focus_object": ref(string("Object whose origin stays in focus, also when it moves."), "object", EXISTS),
+        "aperture_blades": integer("Aperture blades for polygonal bokeh; 0 is round.", 0, MAX_APERTURE_BLADES),
+        "aperture_rotation": number("Rotation of the blades in degrees.", -HALF_TURN, HALF_TURN),
+        "aperture_ratio": number("Anamorphic bokeh: width over height of the aperture.", LEAST_APERTURE_RATIO, MAX_APERTURE_RATIO),
+        "shift_x": number("Horizontal lens shift, in frame widths.", -MAX_CAMERA_SHIFT, MAX_CAMERA_SHIFT),
+        "shift_y": number("Vertical lens shift, in frame widths.", -MAX_CAMERA_SHIFT, MAX_CAMERA_SHIFT),
         "clip_start": length("Near clipping distance in metres."),
         "clip_end": length("Far clipping distance in metres."),
-        "exposure": number("Scene exposure in stops (Blender's exposure); each stop doubles the brightness.", -32.0, 32.0),
+        "exposure": number("Scene exposure in stops (Blender's exposure); each stop doubles the brightness.", -MAX_EXPOSURE_STOPS, MAX_EXPOSURE_STOPS),
         "physical": PHYSICAL,
         "view_transform": string(
             f"Scene view transform. Blender's default and ours: {camera_exposure.DEFAULT_VIEW_TRANSFORM}.",
@@ -58,7 +62,7 @@ PHYSICAL["description"] = "Exposure from a real camera: EV100 = log2(N^2 / t) - 
             "Look of the view transform (AgX looks such as punchy or high_contrast). Default: none.",
             camera_exposure.LOOKS,
         ),
-        "gamma": number("Display gamma; 1 is neutral.", 0.01, 5.0),
+        "gamma": number("Display gamma; 1 is neutral.", LEAST_DISPLAY_GAMMA, MAX_DISPLAY_GAMMA),
     },
     ["name"],
     family="photography",

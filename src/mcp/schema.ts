@@ -76,7 +76,7 @@ function convertObject(schema: Record<string, unknown>): JsonSchema & { type: "o
   const properties: Record<string, JsonSchema> = {};
   const fields = isRecord(schema["properties"]) ? schema["properties"] : {};
   for (const [name, field] of Object.entries(fields)) properties[name] = convertSchema(field);
-  const out: JsonSchema & { type: "object" } = { type: "object", properties, additionalProperties: false };
+  const out: JsonSchema & { type: "object" } = { type: "object", properties, additionalProperties: schema["additionalProperties"] === true };
   const description = text(schema["description"]);
   if (description !== undefined) out["description"] = description;
   const required = Array.isArray(schema["required"]) ? schema["required"].filter((name): name is string => typeof name === "string" && name in properties) : [];

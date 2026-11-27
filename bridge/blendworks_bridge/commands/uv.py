@@ -7,7 +7,8 @@ from .. import limits
 from ..errors import bad_args, not_found
 from ..operators import edit_mode
 from ..registry import command
-from ..schema import boolean, integer, number, string
+from ..limits import FRACTION, HALF_TURN, QUARTER_TURN, SMALLEST_SPLIT_ANGLE, UV_MARGIN
+from ..schema import boolean, integer, number, ref, string
 from ..texel import density, pack, scale_to_density
 from ..uv_coverage import merge_islands
 from ..uv_project import project_by_angle
@@ -57,13 +58,13 @@ def apply_texel_density(ctx, obj, args, margin):
     "uv_smart_project",
     "UV-unwrap a mesh automatically by splitting it into islands at sharp angles.",
     {
-        "name": string("Mesh object."),
-        "angle_limit": number("Split islands where faces meet at more than this many degrees.", 1.0, 89.0, 66.0),
-        "island_margin": number("Space between islands, as a share of the UV square.", 0.0, 1.0, 0.02),
+        "name": ref(string("Mesh object."), "object"),
+        "angle_limit": number("Split islands where faces meet at more than this many degrees.", SMALLEST_SPLIT_ANGLE, QUARTER_TURN, 66.0),
+        "island_margin": number("Space between islands, as a share of the UV square.", 0.0, UV_MARGIN, 0.02),
         "min_island_area": number(
             "Merge islands smaller than this share of the surface area into a neighbour where the seams allow, then pack; stops slivers on notched parts. 0 keeps every island.",
             0.0,
-            1.0,
+            FRACTION,
             0.0,
         ),
         **TEXEL_PROPERTIES,
@@ -107,10 +108,10 @@ def uv_smart_project(ctx, args):
     "uv_unwrap",
     "UV-unwrap a mesh along its seams; seam_angle first marks edges sharper than it as seams.",
     {
-        "name": string("Mesh object."),
+        "name": ref(string("Mesh object."), "object"),
         "method": string("Unwrap method.", ["angle_based", "conformal", "minimum_stretch"], "angle_based"),
-        "margin": number("Space between islands, as a share of the UV square.", 0.0, 1.0, 0.02),
-        "seam_angle": number("Mark edges whose faces meet at more than this many degrees as seams first.", 0.0, 180.0),
+        "margin": number("Space between islands, as a share of the UV square.", 0.0, UV_MARGIN, 0.02),
+        "seam_angle": number("Mark edges whose faces meet at more than this many degrees as seams first.", 0.0, HALF_TURN),
         "clear_seams": boolean("Clear existing seams before marking new ones.", False),
         **TEXEL_PROPERTIES,
     },
@@ -142,7 +143,7 @@ def uv_unwrap(ctx, args):
     "uv_info",
     "Measure a mesh's UVs: coverage of the 0-1 square, overlap, and texel density in pixels per metre.",
     {
-        "name": string("Mesh object."),
+        "name": ref(string("Mesh object."), "object"),
         "layer": string("UV layer. Default: the active one."),
         "texture_size": TEXEL_PROPERTIES["texture_size"],
     },

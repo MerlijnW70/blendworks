@@ -5,8 +5,11 @@ import numpy
 
 from .. import liquid_bodies, liquid_grid, liquid_mesh, liquid_ocean, liquid_presets, liquid_ripples, liquid_river, liquid_shader, liquid_spectrum, liquid_world
 from ..errors import bad_args
+from ..kit_limits import MAX_PATH_POINTS
+from ..limits import (BASE_NAME_LENGTH, FRACTION, LEAST_MANNING_N, LEAST_WAVE_CELLS, MAX_COORDINATE, MAX_FETCH,
+                      MAX_LENGTH, MAX_MANNING_N, MAX_RELIEF, MAX_SEED, MAX_WAVE_CELLS, MAX_WIND_SPEED, PAIR, TURN)
 from ..registry import COMMANDS, command
-from ..schema import array, boolean, described, integer, length, names, number, obj, point3, string, validate, vector3
+from ..schema import CREATES, EXISTS, array, boolean, described, integer, length, names, number, obj, point3, ref, string, validate, vector3
 from ..util import get_mesh_object, link_object, require_free_name, vec
 
 RIVER_STRETCH = 0.35
@@ -14,9 +17,21 @@ KINDS = ("ocean", "lake", "pond", "river", "puddle")
 DEFAULT_PRESET = {"ocean": "water_sea", "lake": "water_fresh", "pond": "water_fresh", "river": "water_fresh", "puddle": "water_fresh"}
 SHORE_WIDTH = {"ocean": 3.0, "lake": 0.8, "pond": 0.5, "river": 0.5, "puddle": 0.03}
 WIND = described(obj({
-    "speed": number("Wind speed at 10 m in m/s.", 0.0, 40.0),
-    "direction": number("Compass direction the wind blows towards, degrees clockwise from north (+Y).", 0.0, 360.0),
+    "speed": number("Wind speed at 10 m in m/s.", 0.0, MAX_WIND_SPEED),
+    "direction": number("Compass direction the wind blows towards, degrees clockwise from north (+Y).", 0.0, TURN),
 }), "Wind at the water. Default: the weather's (the drift of its lowest clouds and a speed for its storm value), else 2 m/s towards the east.")
+
+
+def plan_liquid_body(args, state):
+    """Plan hook: the body and its material share the name (default the kind), the ripple image is name_ripples,
+    and an ocean beach without ground is the object and material name_beach."""
+    name = args.get("name", args["kind"].capitalize())
+    state.add("object", name)
+    state.add("material", name)
+    state.add("image", f"{name}_ripples")
+    if args["kind"] == "ocean" and args["beach"] and "ground" not in args:
+        state.add("object", f"{name}_beach")
+        state.add("material", f"{name}_beach")
 
 
 @command(
@@ -24,34 +39,35 @@ WIND = described(obj({
     "Open water at world scale: ocean with wind waves and foam, lakes and ponds, rivers along a path or a terrain's lowest line, puddles in hollows.",
     {
         "kind": string("ocean, lake, pond, river or puddle.", list(KINDS)),
-        "name": string("Object name; its material gets the same name.", max_length=60),
+        "name": ref(string("Object name; its material gets the same name.", max_length=BASE_NAME_LENGTH), "object", CREATES),
         "preset": string("material_liquid preset. Default: water_sea for the ocean, water_fresh otherwise.", list(liquid_presets.PRESETS)),
-        "ground": names("Terrain or surface objects the water rests on (needed for lakes, ponds, rivers and puddles).", 1, 64),
-        "level": number("Water level, world z in metres.", -100_000.0, 100_000.0),
-        "depth": length("Lake, pond, puddle: depth above the lowest ground of the hollow; river: depth of the channel.", None, 1000.0),
+        "ground": ref(names("Terrain or surface objects the water rests on (needed for lakes, ponds, rivers and puddles)."), "object", EXISTS),
+        "level": number("Water level, world z in metres.", -MAX_COORDINATE, MAX_COORDINATE),
+        "depth": length("Lake, pond, puddle: depth above the lowest ground of the hollow; river: depth of the channel.", None, MAX_LENGTH),
         "point": point3("Lake, pond, puddle: a spot in the hollow to fill; river: the source when no path is given."),
-        "radius": length("Puddle: half the side of the area searched for the puddle (default 2 m).", None, 100.0),
-        "resolution": length("Grid cell in metres. Default: a 400-node grid over the ground, 1 cm for puddles.", None, 100.0),
-        "overlap": number("How far the surface reaches under the ground at the shore, in metres, so the shoreline has no gap.", 0.0, 10.0),
+        "radius": length("Puddle: half the side of the area searched for the puddle (default 2 m)."),
+        "resolution": length("Grid cell in metres. Default: a 400-node grid over the ground, 1 cm for puddles."),
+        "overlap": number("How far the surface reaches under the ground at the shore, in metres, so the shoreline has no gap.", 0.0, MAX_RELIEF),
         "wind": WIND,
-        "fetch": length("Ocean: open water upwind in metres (default 100 km). Lakes use their own length along the wind.", None, 10_000_000.0),
-        "size": length("Ocean: side of the wave mesh in metres (default 400); flat rings carry it to the horizon.", None, 100_000.0),
+        "fetch": length("Ocean: open water upwind in metres (default 100 km). Lakes use their own length along the wind.", None, MAX_FETCH),
+        "size": length("Ocean: side of the wave mesh in metres (default 400); flat rings carry it to the horizon."),
         "centre": array({"type": "number"}, "Ocean: centre of the wave mesh [x, y] (default the active camera's position).", 2, 2),
-        "cells": integer("Ocean: cells along a side of the wave mesh (at most 512).", 16, 512),
-        "choppiness": number("Ocean: horizontal crest sharpening of the waves, 0 to 1.", 0.0, 1.0, 0.8),
+        "cells": integer(f"Ocean: cells along a side of the wave mesh (at most {MAX_WAVE_CELLS}).", LEAST_WAVE_CELLS, MAX_WAVE_CELLS),
+        "choppiness": number("Ocean: horizontal crest sharpening of the waves, 0 to 1.", 0.0, FRACTION, 0.8),
         "horizon": boolean("Ocean: extend the surface with flat rings to the horizon.", True),
         "beach": boolean("Ocean without ground: add a sandy beach sloping 1:33 out of the water downwind.", False),
-        "path": array(vector3("A point."), "River: centreline waypoints; z is ignored.", 2, 4096),
-        "width": length("River: channel width in metres.", 4.0, 10_000.0),
+        "path": array(vector3("A point."), "River: centreline waypoints; z is ignored.", PAIR, MAX_PATH_POINTS),
+        "width": length("River: channel width in metres.", 4.0),
         "carve": boolean("River: lower the ground into a channel and banks under the river.", True),
-        "roughness": number("River: Manning's roughness n of the bed (0.035 for a natural stream).", 0.01, 0.2, liquid_river.MANNING_NATURAL),
+        "roughness": number("River: Manning's roughness n of the bed (0.035 for a natural stream).", LEAST_MANNING_N, MAX_MANNING_N, liquid_river.MANNING_NATURAL),
         "wet_shore": boolean("Darken and gloss the ground and rocks at the water line with the weather's wet-ground shading.", True),
-        "shore_width": length("Width of the wet band above the water line in metres. Default by kind.", None, 100.0),
-        "shore_objects": names("Objects to wet at the shore. Default: every mesh near the water.", 1, 256),
-        "seed": integer("Seed of the waves and ripples.", 0, 2**31 - 1, 0),
+        "shore_width": length("Width of the wet band above the water line in metres. Default by kind."),
+        "shore_objects": ref(names("Objects to wet at the shore. Default: every mesh near the water."), "object", EXISTS),
+        "seed": integer("Seed of the waves and ripples.", 0, MAX_SEED, 0),
     },
     ["kind"],
     slow=True,
+    plan=plan_liquid_body,
     family="liquids",
     intents=("an ocean with waves and a beach", "a lake or pond in a terrain hollow", "a river flowing down a valley into a lake", "puddles after rain"),
     nearest=(("liquid_fill", "for liquid in a glass, bottle or other container"), ("material_liquid", "for only the material")),

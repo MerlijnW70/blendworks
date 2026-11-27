@@ -8,7 +8,7 @@ from ..errors import bad_args, failed
 from ..images import require_free_image_name
 from ..pbr import DEFAULT_OPTIONS, build_pbr
 from ..registry import command
-from ..schema import array, boolean, integer, names, number, obj, string
+from ..schema import ENSURES, EXISTS, array, boolean, integer, names, number, obj, ref, string
 from ..util import get_mesh_object, get_objects, rounded
 
 BAKING_SUFFIX = ".baking"
@@ -26,40 +26,53 @@ def samples_schema():
     return schema
 
 
+def plan_bake(args, state):
+    """Plan hook: the images prefix_channel (prefix_material_channel per material) and, with rewire, the material."""
+    prefix = args.get("prefix", args["names"][0])
+    if per_material(args.get("atlas_sizes", [])):
+        state.unknown(("image", "material") if args["rewire"] else ("image",))
+        return
+    for channel in args["channels"]:
+        state.add("image", f"{prefix}_{channel}")
+    if args["rewire"]:
+        state.add("material", args.get("material", f"{prefix}_baked"))
+
+
 @command(
     "bake",
     "Bake material channels of objects (or of high-poly sources onto one low-poly object) into images.",
     {
-        "names": names("Objects to bake into the images; they share them, so their UVs must not overlap."),
+        "names": ref(names("Objects to bake into the images; they share them, so their UVs must not overlap."), "object", EXISTS),
         "channels": array(
             {"type": "string", "enum": list(baking.CHANNELS)},
             "Channels to bake: base_color, roughness, metallic and emission by emission; normal (tangent space) and ao.",
             1,
-            len(baking.CHANNELS),
+            limits.MAX_BAKE_CHANNELS,
             ["base_color", "roughness", "metallic", "normal"],
         ),
-        "size": integer("Image width and height in pixels; the default for every image that atlas_sizes does not cover.", 16, limits.MAX_BAKE_SIZE, limits.DEFAULT_BAKE_SIZE),
+        "size": integer("Image width and height in pixels; the default for every image that atlas_sizes does not cover.", limits.LEAST_BAKE_SIZE, limits.MAX_BAKE_SIZE, limits.DEFAULT_BAKE_SIZE),
         "atlas_sizes": size_rules_schema(),
         "prefix": string("Image name prefix; images are named prefix_channel. Default: the first object's name."),
         "overwrite": boolean("Replace existing images of the same names after a successful bake.", False),
         "samples": samples_schema(),
         "margin": integer("Pixels to extend each island's border by.", 0, limits.MAX_BAKE_MARGIN, 16),
         "uv_map": string("UV map to bake into. Default: each mesh's active UV map."),
-        "source": names("High-poly objects to bake from onto the single object in names (selected to active)."),
-        "cage_extrusion": number("Selected to active: how far in metres rays start outside the low-poly surface.", 0.0, 10.0, 0.05),
-        "max_ray_distance": number("Selected to active: longest ray in metres; 0 means no limit.", 0.0, 100.0, 0.0),
-        "ao_distance": number("Reach in metres of the ao rays.", 0.001, 100.0, 1.0),
+        "source": ref(names("High-poly objects to bake from onto the single object in names (selected to active)."), "object", EXISTS),
+        "cage_extrusion": number("Selected to active: how far in metres rays start outside the low-poly surface.", 0.0, limits.MAX_LENGTH, 0.05),
+        "max_ray_distance": number("Selected to active: longest ray in metres; 0 means no limit.", 0.0, limits.MAX_LENGTH, 0.0),
+        "ao_distance": number("Reach in metres of the ao rays.", limits.SHORTEST_RAY_REACH, limits.MAX_LENGTH, 1.0),
         "float_buffer": boolean("Bake data channels (roughness, metallic, normal, ao) into 32-bit float images.", False),
         "rewire": boolean("Give the objects one new material built from the baked images with material_pbr.", False),
-        "material": string("Name of the rewired material. Default: prefix_baked. Not with atlas_sizes that name materials: each gets material_baked."),
+        "material": ref(string("Name of the rewired material. Default: prefix_baked. Not with atlas_sizes that name materials: each gets material_baked."), "material", ENSURES),
         "pack": boolean("Pack the baked images into the scene so .blend files keep them.", True),
         "device": string("auto: GPU when usable, else CPU; gpu: fail without a GPU; cpu. Default: BLENDWORKS_DEVICE or auto.", list(device.MODES)),
-        "time_limit": number("Seconds; the bake fails and is undone once it runs longer.", 1.0, limits.MAX_BAKE_SECONDS, limits.DEFAULT_BAKE_SECONDS),
+        "time_limit": number("Seconds; the bake fails and is undone once it runs longer.", limits.LEAST_BAKE_SECONDS, limits.BAKE_SECONDS, limits.DEFAULT_BAKE_SECONDS),
     },
     ["names"],
     slow=True,
     timeout=660,
     max_timeout=1200,
+    plan=plan_bake,
     family="baking",
     intents=("bake materials to image textures", "bake normals or ambient occlusion from high poly to low poly"),
     nearest=(("render_preview", "to look at the model"),),

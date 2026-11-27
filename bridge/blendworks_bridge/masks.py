@@ -1,4 +1,5 @@
 from .errors import bad_args
+from .limits import FRACTION, HALF_TURN, MAX_RELIEF, QUARTER_TURN
 from .schema import array, number, string
 
 GEOMETRIC = ("slope", "height", "up_facing", "attribute")
@@ -22,13 +23,13 @@ def geometric_schema():
     return {
         "with_masks": array(string("Mask kind.", list(MASK_PARAMS)), "More masks to combine with mask, each read with the settings given here.", 1, len(MASK_PARAMS) - 1),
         "combine": string("all multiplies the masks (moss on up-facing slopes in noise patches); any takes the largest.", ["all", "any"], "all"),
-        "angle_min": number("slope: surfaces steeper than this many degrees from horizontal (0 flat, 90 vertical, up to 180 facing down) are covered, in world space.", 0.0, 180.0),
-        "angle_max": number("slope: surfaces flatter than this many degrees are covered; give angle_min, angle_max or both.", 0.0, 180.0),
-        "angle_edge": number(f"slope: width in degrees of the soft edge inside the limits (default {DEFAULT_ANGLE_EDGE}).", 0.0, 90.0),
+        "angle_min": number("slope: surfaces steeper than this many degrees from horizontal (0 flat, 90 vertical, up to 180 facing down) are covered, in world space.", 0.0, HALF_TURN),
+        "angle_max": number("slope: surfaces flatter than this many degrees are covered; give angle_min, angle_max or both.", 0.0, HALF_TURN),
+        "angle_edge": number(f"slope: width in degrees of the soft edge inside the limits (default {DEFAULT_ANGLE_EDGE}).", 0.0, QUARTER_TURN),
         "z_min": number("height: world z in metres above which the mask is 1, beyond the soft edge; below it 0."),
         "z_max": number("height: world z in metres below which the mask is 1, beyond the soft edge; give z_min, z_max or both."),
-        "z_edge": number(f"height: width in metres of the soft edge inside the limits (default {DEFAULT_Z_EDGE}).", 0.0, 10_000.0),
-        "strength": number("up_facing: how far down the slopes the mask creeps, 0 only on faces looking straight up, 1 down to vertical walls (default 0.5).", 0.0, 1.0),
+        "z_edge": number(f"height: width in metres of the soft edge inside the limits (default {DEFAULT_Z_EDGE}).", 0.0, MAX_RELIEF),
+        "strength": number("up_facing: how far down the slopes the mask creeps, 0 only on faces looking straight up, 1 down to vertical walls (default 0.5).", 0.0, FRACTION),
         "attribute": string("attribute: name of a float point attribute, for example slope, height or curvature from heightfield or noise_displace."),
         "value_min": number("attribute: value that maps to a mask of 0 (default 0)."),
         "value_max": number("attribute: value that maps to a mask of 1 (default 1)."),

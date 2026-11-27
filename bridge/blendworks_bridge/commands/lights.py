@@ -6,8 +6,10 @@ from mathutils import Matrix, Vector
 
 from .. import world_background
 from ..errors import bad_args, failed
+from ..limits import (HALF_TURN, LEAST_CAMERA_MILLIMETRES, LEAST_SPOT_ANGLE, MAX_FOCAL_LENGTH, MAX_LIGHT_POWER,
+                      MAX_WORLD_STRENGTH, PATH_LENGTH, TURN)
 from ..registry import command
-from ..schema import boolean, color, length, number, string, vector3
+from ..schema import CREATES, EXISTS, boolean, color, length, number, ref, string, vector3
 from ..util import degrees, get_object, link_object, place, require_free_name, vec
 
 LIGHT_NAMES = {"point": "Point", "sun": "Sun", "spot": "Spot", "area": "Area"}
@@ -18,15 +20,16 @@ LIGHT_NAMES = {"point": "Point", "sun": "Sun", "spot": "Spot", "area": "Area"}
     "Add a light; energy is watts (sun: strength in W/m²), rotation in degrees aims its -Z axis.",
     {
         "type": string("Light type.", list(LIGHT_NAMES)),
-        "name": string("Object name; must be unused."),
+        "name": ref(string("Object name; must be unused."), "object", CREATES),
         "location": vector3("Location in metres.", [4.0, -4.0, 6.0]),
         "rotation": vector3("Euler XYZ rotation in degrees.", [0.0, 0.0, 0.0]),
-        "energy": number("Power in watts, or strength for a sun (default 1000, sun 3).", 0.0, 1_000_000.0),
+        "energy": number("Power in watts, or strength for a sun (default 1000, sun 3).", 0.0, MAX_LIGHT_POWER),
         "color": color("Light colour, RGB from 0 to 1.", [1.0, 1.0, 1.0], allow_alpha=False),
-        "size": length("Soft-shadow size in metres (area: edge length; spot and point: radius).", 0.25, 1000.0),
-        "spot_angle": number("Spot cone angle in degrees (default 45).", 1.0, 180.0),
+        "size": length("Soft-shadow size in metres (area: edge length; spot and point: radius).", 0.25),
+        "spot_angle": number("Spot cone angle in degrees (default 45).", LEAST_SPOT_ANGLE, HALF_TURN),
     },
     ["type"],
+    plan=lambda args, state: state.add("object", args.get("name", LIGHT_NAMES[args["type"]])),
     family="lighting",
     intents=("add a sun, point, spot or area light", "lamp with power in watts"),
     nearest=(("set_world", "for background light"),),
@@ -57,14 +60,15 @@ def add_light(ctx, args):
     "add_camera",
     "Add a camera, optionally aimed at a point, and make it the scene's active camera.",
     {
-        "name": string("Object name; must be unused."),
+        "name": ref(string("Object name; must be unused."), "object", CREATES),
         "location": vector3("Location in metres.", [6.0, -6.0, 4.0]),
         "rotation": vector3("Euler XYZ rotation in degrees (ignored with target)."),
         "target": vector3("Aim the camera at this point in metres."),
-        "lens": number("Focal length in millimetres (36 mm sensor).", 1.0, 5000.0, 50.0),
+        "lens": number("Focal length in millimetres (36 mm sensor).", LEAST_CAMERA_MILLIMETRES, MAX_FOCAL_LENGTH, 50.0),
         "orthographic_scale": length("Use an orthographic camera this many metres wide."),
         "active": boolean("Make it the scene's active camera.", True),
     },
+    plan=lambda args, state: state.add("object", args.get("name", "Camera")),
     family="lighting",
     intents=("add a camera and make it active", "orthographic or perspective camera"),
     nearest=(("render_preview", "for preview views without a camera"),),
@@ -107,8 +111,8 @@ def aim(ctx, obj, target, up_axis="Y"):
     "look_at",
     "Turn an object (usually a camera or light) so its -Z axis points at another object or a point.",
     {
-        "name": string("Object to turn."),
-        "target": string("Object to look at (its origin)."),
+        "name": ref(string("Object to turn."), "object", EXISTS),
+        "target": ref(string("Object to look at (its origin)."), "object", EXISTS),
         "point": vector3("Point in metres to look at."),
     },
     ["name"],
@@ -136,7 +140,7 @@ def look_at(ctx, args):
     "Set the world background: a uniform colour and strength that also lights the scene; it replaces any image, sky or clouds.",
     {
         "color": color("Background colour, linear RGB from 0 to 1.", allow_alpha=False),
-        "strength": number("Background strength.", 0.0, 100.0),
+        "strength": number("Background strength.", 0.0, MAX_WORLD_STRENGTH),
     },
     family="lighting",
     intents=("uniform background colour that lights the scene", "black or grey world"),
@@ -179,12 +183,13 @@ HDRI_EXTENSIONS = (".hdr", ".exr")
     "set_world_hdri",
     "Light the scene with an equirectangular .hdr or .exr image from the workspace as the world environment.",
     {
-        "path": string("Image path inside the workspace, relative to it.", max_length=1024),
-        "strength": number("Environment strength.", 0.0, 100.0, 1.0),
-        "rotation": number("Turn the environment about the Z axis, in degrees.", -360.0, 360.0, 0.0),
+        "path": string("Image path inside the workspace, relative to it.", max_length=PATH_LENGTH),
+        "strength": number("Environment strength.", 0.0, MAX_WORLD_STRENGTH, 1.0),
+        "rotation": number("Turn the environment about the Z axis, in degrees.", -TURN, TURN, 0.0),
     },
     ["path"],
     slow=True,
+    plan=lambda args, state: state.add("image", os.path.basename(args["path"].replace("\\", "/"))),
     family="lighting",
     intents=("environment light from an .hdr or .exr file in the workspace",),
     nearest=(("library_apply", "for a Poly Haven HDRI"), ("set_world", "for a plain colour")),

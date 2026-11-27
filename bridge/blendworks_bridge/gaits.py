@@ -3,6 +3,7 @@ import math
 from mathutils import Matrix, Vector
 
 from .errors import bad_args
+from .limits import LEAST_CYCLE_FRAMES, MAX_CYCLE_FRAMES
 from .posing import FORWARD, UP, bend_direction, leg_reach_height, rotation, two_bone
 
 GRAVITY = 9.81
@@ -15,8 +16,8 @@ QUADRUPED_PHASES = {
 }
 REACH_SLACK = 0.995
 HEEL_OFF = 0.65
-MIN_FRAMES = 8
-MAX_FRAMES = 2_400
+MIN_FRAMES = LEAST_CYCLE_FRAMES
+MAX_FRAMES = MAX_CYCLE_FRAMES
 
 
 class Plan:

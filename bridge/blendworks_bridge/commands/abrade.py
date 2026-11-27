@@ -7,7 +7,8 @@ from ..abrasion import EDGE_DIVISOR, MAX_VOLUME_LOSS, abrade_points, convexity_o
 from ..errors import bad_args
 from ..meshdata import MeshData
 from ..registry import command
-from ..schema import integer, length, number, string
+from ..limits import FRACTION, LEAST_CONVEXITY, MAX_SEED
+from ..schema import EXISTS, integer, length, number, ref, string
 from ..topology import describe_problems, manifold_report
 from ..util import get_mesh_object, mesh_counts, rounded
 
@@ -38,11 +39,11 @@ def write_back(mesh, local, triangles, uvs, materials, smooth):
     "abrade",
     f"Round edges as abrasion does: curvature-weighted smoothing moves the sharpest vertices first so edges round while large faces stay; the mesh stays closed and loses at most {int(MAX_VOLUME_LOSS * 100)} % of its volume.",
     {
-        "name": string("Closed mesh object; it is triangulated and refined to edge_length first, which drops vertex groups and attributes."),
-        "amount": number("Wear from 0 to 1 as the share of the largest allowed volume loss to use; give amount or target_convexity.", 0.0, 1.0),
-        "target_convexity": number("Stop once the volume over the volume of the convex hull reaches this value (1 is convex); a convex input meets it at once, so use amount.", 0.5, 1.0),
+        "name": ref(string("Closed mesh object; it is triangulated and refined to edge_length first, which drops vertex groups and attributes."), "object", EXISTS),
+        "amount": number("Wear from 0 to 1 as the share of the largest allowed volume loss to use; give amount or target_convexity.", 0.0, FRACTION),
+        "target_convexity": number("Stop once the volume over the volume of the convex hull reaches this value (1 is convex); a convex input meets it at once, so use amount.", LEAST_CONVEXITY, FRACTION),
         "iterations": integer("Largest number of curvature-weighted passes.", 1, kit_limits.MAX_ABRADE_ITERATIONS, 100),
-        "seed": integer("Random seed of the smooth field that makes some edges wear faster than others.", 0, 2**31 - 1, 0),
+        "seed": integer("Random seed of the smooth field that makes some edges wear faster than others.", 0, MAX_SEED, 0),
         "edge_length": length("Edges longer than this in metres are split first so edges have vertices to round; omit for a thirty-second of the longest side."),
     },
     ["name"],

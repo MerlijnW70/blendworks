@@ -9,10 +9,10 @@ import numpy
 from ..cover_gltf import add_instancing
 from ..cover_nodes import CARD, CARDS_PROPERTY, KEY, MODIFIER_NAME, PICK, TINT, TRANSFORM, get_input, realized_vertices, set_input
 from ..errors import bad_args, failed
-from ..limits import MAX_MESH_VERTICES
+from ..limits import MAX_LOD_LEVELS, MAX_MESH_VERTICES, PATH_LENGTH
 from ..operators import only_selected, operator_context
 from ..registry import command
-from ..schema import boolean, integer, names, string
+from ..schema import EXISTS, boolean, integer, names, ref, string
 from ..util import get_object
 
 MODES = ("instances", "realized")
@@ -153,11 +153,11 @@ def export_arguments(path, yup, wind):
     "ground_cover_export",
     "Write a ground cover of grass, flowers and litter to a .glb as GPU instances (one instanced node per element mesh), or as real meshes that halve the elements per level.",
     {
-        "path": string("File path inside the workspace, relative to it, ending in .glb.", max_length=1024),
-        "name": string("The ground_cover name (its empty) or one population object."),
+        "path": string("File path inside the workspace, relative to it, ending in .glb.", max_length=PATH_LENGTH),
+        "name": ref(string("The ground_cover name (its empty) or one population object."), "object", EXISTS),
         "mode": string("instances: EXT_mesh_gpu_instancing; realized: real meshes population_LOD0, population_LOD1 and so on.", list(MODES), "instances"),
-        "levels": integer("realized: how many meshes per population; level n keeps 1 / 2^n of the elements, as cards from level 1 where the population has cards.", 1, 4, 2),
-        "with_objects": names("Other objects to export along, such as the ground."),
+        "levels": integer("realized: how many meshes per population; level n keeps 1 / 2^n of the elements, as cards from level 1 where the population has cards.", 1, MAX_LOD_LEVELS, 2),
+        "with_objects": ref(names("Other objects to export along, such as the ground."), "object", EXISTS),
         "wind": boolean("Write the active colour attribute (the wind colours) as COLOR_0.", True),
         "yup": boolean("Convert to glTF's Y-up axes.", True),
     },

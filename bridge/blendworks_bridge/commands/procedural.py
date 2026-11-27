@@ -2,13 +2,14 @@ import bpy
 
 from ..errors import bad_args, not_found
 from ..nodes import Graph
+from ..limits import FEWEST_MASK_PATCHES, FRACTION, MAX_LENGTH, MAX_SEED, SHORTEST_RAY_REACH, TEXTURE_FREQUENCY
 from ..masks import GEOMETRIC, MASK_HELP, MASK_PARAMS, check_geometric_args, combined, geometric_mask, geometric_schema, mask_kinds
 from ..occlusion import occlusion_mask
 from ..pbr import users_of
 from ..presets import PRESETS
 from ..procedural import chosen_preset, displacement_of, preset_vector, surface_principled, wire_channels
 from ..registry import command
-from ..schema import boolean, integer, number, string
+from ..schema import REPLACES, boolean, integer, number, ref, string
 
 BLENDED_INPUTS = (("Base Color", "base_color", "RGBA"), ("Roughness", "roughness", "FLOAT"), ("Metallic", "metallic", "FLOAT"))
 MASKS = tuple(MASK_PARAMS)
@@ -34,7 +35,7 @@ PRESET_NAMES = ", ".join(PRESETS)
 @command(
     "material_procedural",
     f"Create or rebuild a bakeable procedural material from one preset: {PRESET_NAMES}.",
-    dict({"name": string("Material name; created, or rebuilt when it exists.")}, **preset_properties()),
+    dict({"name": ref(string("Material name; created, or rebuilt when it exists."), "material", REPLACES)}, **preset_properties()),
     ["name"],
     family="materials",
     intents=("realistic wood, worn metal, brass, rust, stone, marble, concrete, fabric or dirt", "aged or scratched preset material"),
@@ -68,17 +69,17 @@ def viewport_color(params):
     "Blend a procedural preset over a material through a mask: noise, edges, cavity, a vertex colour, slope, height, up-facing or a named attribute; masks combine.",
     dict(
         {
-            "material": string("Material to layer onto; it needs a Principled BSDF feeding its output."),
+            "material": ref(string("Material to layer onto; it needs a Principled BSDF feeding its output."), "material"),
             "mask": string(MASK_HELP, list(MASKS), "noise"),
-            "amount": number("Share of the surface the overlay covers, 0 to 1, for the noise, edges, cavity and vertex_color masks (slope, height, up_facing and attribute set their own edges).", 0.0, 1.0, 0.5),
-            "softness": number("Softness of the mask's border, 0 to 1.", 0.0, 1.0, 0.3),
-            "mask_scale": number("Patches per metre of the noise mask and of the breakup noise.", 0.01, 1000.0, 8.0),
+            "amount": number("Share of the surface the overlay covers, 0 to 1, for the noise, edges, cavity and vertex_color masks (slope, height, up_facing and attribute set their own edges).", 0.0, FRACTION, 0.5),
+            "softness": number("Softness of the mask's border, 0 to 1.", 0.0, FRACTION, 0.3),
+            "mask_scale": number("Patches per metre of the noise mask and of the breakup noise.", FEWEST_MASK_PATCHES, TEXTURE_FREQUENCY, 8.0),
             "edge_source": string("Edge detection: ao (ambient occlusion from inside, works on low poly) or pointiness (vertex curvature).", ["ao", "pointiness"], "ao"),
-            "distance": number("Reach in metres of the edge and cavity occlusion rays.", 0.001, 10.0, 0.03),
+            "distance": number("Reach in metres of the edge and cavity occlusion rays.", SHORTEST_RAY_REACH, MAX_LENGTH, 0.03),
             "layer": string("Colour attribute for the vertex_color mask; its brightness is the mask."),
             "invert": boolean("Invert the mask.", False),
-            "breakup": number("Break the edges, cavity or vertex colour mask up with noise, 0 to 1.", 0.0, 1.0, 0.5),
-            "seed": integer("Seed of the mask noise.", 0, 1_000_000, 0),
+            "breakup": number("Break the edges, cavity or vertex colour mask up with noise, 0 to 1.", 0.0, FRACTION, 0.5),
+            "seed": integer("Seed of the mask noise.", 0, MAX_SEED, 0),
             **geometric_schema(),
         },
         **preset_properties(),

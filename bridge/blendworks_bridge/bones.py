@@ -6,11 +6,12 @@ import bpy
 from mathutils import Vector
 
 from .errors import bad_args, not_found
+from .limits import ELEMENT_NAME_LENGTH, MAX_ARMATURE_BONES, TURN
 from .operators import edit_mode
 from .schema import boolean, number, obj as object_schema, point3, string
 from .util import get_object, rounded, vec
 
-MAX_BONES = 512
+MAX_BONES = MAX_ARMATURE_BONES
 MIN_BONE_LENGTH = 1e-4
 RIG_PROPERTY = "blendworks_rig"
 NAME_PATTERN = re.compile(r"^[^\x00-\x1f]{1,63}$")
@@ -19,11 +20,11 @@ SIDE_PREFIXES = (("Left", "Right"), ("left", "right"), ("LEFT", "RIGHT"), ("L_",
 SIDE_SUFFIXES = ((".L", ".R"), (".l", ".r"), ("_L", "_R"), ("_l", "_r"), ("-L", "-R"), ("-l", "-r"), (" L", " R"), ("Left", "Right"), ("_left", "_right"))
 
 BONE_FIELDS = {
-    "name": string("Bone name, at most 63 characters.", max_length=63),
+    "name": string(f"Bone name, at most {ELEMENT_NAME_LENGTH} characters.", max_length=ELEMENT_NAME_LENGTH),
     "head": point3("Head of the bone [x, y, z] in metres, world space."),
     "tail": point3("Tail of the bone [x, y, z] in metres, world space."),
-    "roll": number("Roll about the bone's own axis in degrees.", -360.0, 360.0, 0.0),
-    "parent": string("Parent bone.", max_length=63),
+    "roll": number("Roll about the bone's own axis in degrees.", -TURN, TURN, 0.0),
+    "parent": string("Parent bone.", max_length=ELEMENT_NAME_LENGTH),
     "connect": boolean("Join the head to the parent's tail, so the bone cannot move away from it.", False),
     "deform": boolean("The bone deforms skinned meshes; false for control bones such as IK targets.", True),
 }

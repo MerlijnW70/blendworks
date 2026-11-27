@@ -8,7 +8,7 @@ import tempfile
 import bpy
 import numpy as np
 
-from . import atmosphere_haze, device, exr_read
+from . import atmosphere_haze, device, exr_read, floating_origin
 from .commands.images import write_image
 from .errors import failed
 from .preview import hex_color, id_color
@@ -84,7 +84,7 @@ def render_layers(scene, view_layer, folder, passes, name=LAYERS_FILE, counting=
         scene.render.use_compositing = False
         path = os.path.join(folder, name)
         scene.render.filepath = path
-        bpy.ops.render.render(write_still=True, layer=view_layer.name)
+        floating_origin.render(scene, view_layer, write_still=True, layer=view_layer.name)
     finally:
         scope.restore()
     if not os.path.isfile(path):

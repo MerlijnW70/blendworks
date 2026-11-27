@@ -12,12 +12,13 @@ from ..clips import unmuted_tracks
 from ..constraint_bake import baked_constraints
 from ..exporting import check_options, dropped_shape_keys, forced_png, option_fields, resolved_tangents, run_exporter, shown, triangulated
 from ..operators import only_selected, operator_context
+from ..limits import PATH_LENGTH
 from ..policy import REPLACES_FILE
 from ..registry import command
-from ..schema import boolean, names, string
+from ..schema import EXISTS, boolean, names, ref, string
 from ..util import GEOMETRY_TYPES, get_objects
 from ..workspace import IMPORT_EXTENSIONS
-from .checkpoints import DISCARD, ensure_may_replace, opened
+from .checkpoints import DISCARD, ensure_may_replace, opened, plan_replaced_scene
 from .hierarchy import get_collection
 
 EXPORT_FORMATS = {"glb": ".glb", "fbx": ".fbx", "obj": ".obj"}
@@ -28,10 +29,10 @@ EXPORTABLE_TYPES = GEOMETRY_TYPES + ("EMPTY", "ARMATURE")
     "export",
     "Export the scene, a collection or named objects to a .glb, .fbx or .obj file; rigs, skins and clips go along; options for modifiers, up axis, tangents, textures and Draco.",
     {
-        "path": string("File path inside the workspace, relative to it.", max_length=1024),
+        "path": string("File path inside the workspace, relative to it.", max_length=PATH_LENGTH),
         "format": string("File format. Default: from the path's extension.", list(EXPORT_FORMATS)),
-        "names": names("Objects to export. Default: every visible mesh, curve and text object."),
-        "collection": string("Export the objects of this collection and its nested collections instead of the whole scene."),
+        "names": ref(names("Objects to export. Default: every visible mesh, curve and text object."), "object", EXISTS),
+        "collection": ref(string("Export the objects of this collection and its nested collections instead of the whole scene."), "collection", EXISTS),
         "ancestors": boolean("Also export the empties these objects are parented under, so the hierarchy survives.", True),
         **option_fields(),
     },
@@ -138,7 +139,7 @@ def with_ancestor_empties(objects, scene):
 @command(
     "save_blend",
     "Save a copy of the whole scene as a .blend file in the workspace.",
-    {"path": string("File path inside the workspace, relative to it.", max_length=1024)},
+    {"path": string("File path inside the workspace, relative to it.", max_length=PATH_LENGTH)},
     ["path"],
     mutates=False,
     slow=True,
@@ -156,11 +157,12 @@ def save_blend(ctx, args):
 @command(
     "load_blend",
     "Open a .blend file from the workspace in place of the scene; its scripts and drivers never run.",
-    {"path": string("File path inside the workspace, relative to it.", max_length=1024), "discard_unsaved": DISCARD},
+    {"path": string("File path inside the workspace, relative to it.", max_length=PATH_LENGTH), "discard_unsaved": DISCARD},
     ["path"],
     slow=True,
     destructive=True,
     snapshot=REPLACES_FILE,
+    plan=plan_replaced_scene,
     family="files",
     intents=("open a .blend file in place of the scene",),
     nearest=(("import", "to add a .glb, .fbx or .obj model"),),
@@ -172,15 +174,21 @@ def load_blend(ctx, args):
     return opened(ctx, path)
 
 
+def plan_imported(args, state):
+    """Plan hook: the file adds objects, materials, images and collections whose names a plan cannot know."""
+    state.unknown()
+
+
 @command(
     "import",
     "Import a .glb, .gltf, .fbx or .obj file from the workspace into the scene.",
     {
-        "path": string("File path inside the workspace, relative to it.", max_length=1024),
+        "path": string("File path inside the workspace, relative to it.", max_length=PATH_LENGTH),
         "select": boolean("Leave only the imported objects selected.", True),
     },
     ["path"],
     slow=True,
+    plan=plan_imported,
     family="files",
     intents=("import a .glb, .gltf, .fbx or .obj model into the scene",),
     nearest=(("load_blend", "to open a .blend file"),),

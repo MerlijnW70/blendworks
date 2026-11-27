@@ -11,6 +11,7 @@ import bpy
 import numpy
 
 from blendworks_bridge import Handler
+from blendworks_bridge.limits import MAX_COVER_INSTANCES
 
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 OUT = os.path.abspath(ARGS[0] if ARGS else os.path.join(os.getcwd(), "liquid-lake"))
@@ -20,7 +21,7 @@ HEIGHT = int(os.environ.get("BLENDWORKS_SHOT_HEIGHT", "900"))
 SAMPLES = int(os.environ.get("BLENDWORKS_SHOT_SAMPLES", "256"))
 SECONDS = float(os.environ.get("BLENDWORKS_SHOT_SECONDS", "300"))
 DETAIL = float(os.environ.get("BLENDWORKS_TREE_DETAIL", "1.0"))
-BUDGET = int(os.environ.get("BLENDWORKS_COVER_BUDGET", "5000000"))
+BUDGET = int(os.environ.get("BLENDWORKS_COVER_BUDGET", str(min(5_000_000, MAX_COVER_INSTANCES))))
 COVER_NEAR = 120.0
 TREES = int(os.environ.get("BLENDWORKS_TREES", "6"))
 FORM = os.environ.get("BLENDWORKS_CLOUD_FORM", "auto")

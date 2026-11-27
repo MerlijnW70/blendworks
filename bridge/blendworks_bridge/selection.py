@@ -4,7 +4,8 @@ import bpy
 from mathutils import Vector
 
 from .errors import bad_args, not_found
-from .schema import array, described, integer, number, obj as object_schema, point3, string, vector3
+from .limits import HALF_TURN, MAX_INDICES, QUARTER_TURN
+from .schema import array, described, integer, number, obj as object_schema, point3, ref, string, vector3
 
 DIRECTIONS = {
     "up": Vector((0, 0, 1)),
@@ -20,13 +21,13 @@ FACE_PROPERTIES = {
         {"type": "integer", "minimum": 0},
         "Face indices to work on; combined with facing when both are given. Default: all faces.",
         1,
-        200_000,
+        MAX_INDICES,
     ),
     "facing": string(
         "Only faces whose world normal points this way (front is -Y, right is +X, up is +Z).",
         enum=list(DIRECTIONS),
     ),
-    "facing_angle": number("Largest angle in degrees between a face normal and facing.", 0.0, 90.0, 30.0),
+    "facing_angle": number("Largest angle in degrees between a face normal and facing.", 0.0, QUARTER_TURN, 30.0),
 }
 
 
@@ -35,9 +36,9 @@ SELECTORS = {
         object_schema({"min": point3("Lowest corner [x, y, z] in metres."), "max": point3("Highest corner [x, y, z] in metres.")}, ["min", "max"]),
         "Only faces whose world-space centre lies inside this box.",
     ),
-    "with_material": string("Only faces whose material slot holds this material."),
+    "with_material": ref(string("Only faces whose material slot holds this material."), "material"),
     "normal": vector3("Only faces whose world normal is within normal_angle of this direction."),
-    "normal_angle": number("Largest angle in degrees between a face normal and normal.", 0.0, 180.0, 30.0),
+    "normal_angle": number("Largest angle in degrees between a face normal and normal.", 0.0, HALF_TURN, 30.0),
     "island": integer("Only faces of this connected island; islands are numbered from 0 by their lowest face index.", 0),
     "area_min": number("Only faces with at least this world area in square metres.", 0.0),
     "area_max": number("Only faces with at most this world area in square metres.", 0.0),

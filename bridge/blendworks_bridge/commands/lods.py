@@ -2,12 +2,13 @@ import os
 import sys
 
 from ..errors import bad_args
+from ..limits import MAX_LOD_LEVELS, MAX_LOD_RATIO
 from ..registry import command
-from ..schema import array, boolean, integer, names, number
+from ..schema import EXISTS, array, boolean, integer, names, number, ref
 from ..util import GEOMETRY_TYPES, get_mesh_object
 
 PACKAGE_FOLDER = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "package")
-MAX_LEVELS = 8
+MAX_LEVELS = MAX_LOD_LEVELS
 
 
 def core():
@@ -42,19 +43,32 @@ def rounded_level(level):
     return entry
 
 
+def plan_generate_lods(args, state):
+    """Plan hook: <name>_LOD1..<name>_LOD<count> for every source, and the source renamed to <name>_LOD0."""
+    if "names" not in args:
+        state.unknown(("object",))
+        return
+    for name in args["names"]:
+        for level in range(1, args["count"] + 1):
+            state.add("object", f"{name}_LOD{level}")
+        if args["rename_source"]:
+            state.rename("object", name, f"{name}_LOD0")
+
+
 @command(
     "generate_lods",
     "Make LOD1..LODn copies named <name>_LOD<n> by decimation that keeps borders, materials and UV seams, and report each one's error.",
     {
-        "names": names("Mesh objects to make levels for. Default: every visible mesh."),
+        "names": ref(names("Mesh objects to make levels for. Default: every visible mesh."), "object", EXISTS),
         "count": integer("Number of levels besides LOD0.", 1, MAX_LEVELS),
-        "ratios": array({"type": "number", "exclusiveMinimum": 0, "maximum": 0.99}, "Triangle share of each level against LOD0, falling.", 1, MAX_LEVELS),
+        "ratios": array({"type": "number", "exclusiveMinimum": 0, "maximum": MAX_LOD_RATIO}, "Triangle share of each level against LOD0, falling.", 1, MAX_LEVELS),
         "max_screen_error": number("Instead of ratios: the largest error in pixels on a 1080-pixel display with a 60 degree field of view.", None, None, None, 0.0),
         "distances": array({"type": "number", "exclusiveMinimum": 0}, "With max_screen_error: the distance in metres where each level is used, rising.", 1, MAX_LEVELS),
         "rename_source": boolean("Rename each source object to <name>_LOD0.", True),
     },
     ["count"],
     slow=True,
+    plan=plan_generate_lods,
     family="lods",
     intents=("levels of detail for a game engine", "LOD copies with screen error"),
     nearest=(("decimate", "for one reduction in place"),),

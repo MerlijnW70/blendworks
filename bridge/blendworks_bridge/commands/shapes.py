@@ -4,13 +4,14 @@ from ..analytic_paths import ANALYTIC_PATHS, path_fields
 from ..builder import SHAPE_FIELDS, finish_shape
 from ..errors import bad_args
 from ..kit_limits import MAX_PATH_POINTS, MAX_PROFILE_POINTS, MAX_SECTIONS, MAX_SEGMENTS
+from ..limits import CORNER_SEGMENTS, FEWEST_SIDES, MAX_LENGTH, MAX_SCALE_FACTOR, PAIR, TURN, WINDING
 from ..lofting import loft_rings
 from ..meshdata import MeshData
 from ..paths import clean_path, drop_coinciding, fillet_path, object_curve
 from ..profiles import profile_fields, resolve_profile
 from ..registry import command
 from ..revolve import lathe_data
-from ..schema import array, boolean, integer, length, number, obj, point3, points2, points3, string, vector3
+from ..schema import CREATES, array, boolean, integer, length, number, obj, point3, points2, points3, ref, string, vector3
 from ..shading import hard_corners
 from ..skin import cap, skin
 from ..sweeping import check_closed_arguments, sweep_rings
@@ -19,7 +20,7 @@ from ..util import require_free_name
 
 def with_shape_fields(properties, name):
     merged = dict(SHAPE_FIELDS)
-    merged["name"] = string("Object name; must be unused.", default=name)
+    merged["name"] = ref(string("Object name; must be unused.", default=name), "object", CREATES)
     merged.update(properties)
     return merged
 
@@ -31,12 +32,12 @@ def with_shape_fields(properties, name):
         {
             "profile": points2(
                 "Profile [x, z] points in metres in the XZ plane with x >= 0; the first and last point may lie on the axis (x = 0).",
-                2,
+                PAIR,
                 MAX_PROFILE_POINTS,
             ),
             "axis": string("Axis to revolve around: z (profile z is the height) or x (profile x is the height, profile z the distance).", ["z", "x"], "z"),
-            "segments": integer("Steps around the axis.", 3, MAX_SEGMENTS, 32),
-            "angle": number("Sweep angle in degrees, above 0 and at most 360.", None, 360.0, 360.0, exclusive_minimum=0.0),
+            "segments": integer("Steps around the axis.", FEWEST_SIDES, MAX_SEGMENTS, 32),
+            "angle": number("Sweep angle in degrees, above 0 and at most 360.", None, TURN, 360.0, exclusive_minimum=0.0),
             "caps": boolean("Close the open ends: flat discs at a full turn, flat wedge faces at a partial one.", True),
             "seam_merge": boolean("Share the vertices at the seam of a full turn; false leaves a duplicated, open seam.", True),
             "closed": boolean("Join the last profile point to the first (a ring such as a torus); the profile must not touch the axis.", False),
@@ -94,16 +95,16 @@ def analytic_closed(route, natural, asked):
     with_shape_fields(
         {
             **profile_fields(),
-            "waypoints": points3("Path points [x, y, z] in metres; the profile origin follows them.", 2, MAX_PATH_POINTS),
-            "curve": string("Name of an existing curve object (one spline) to follow instead of waypoints, in world space."),
+            "waypoints": points3("Path points [x, y, z] in metres; the profile origin follows them.", PAIR, MAX_PATH_POINTS),
+            "curve": ref(string("Name of an existing curve object (one spline) to follow instead of waypoints, in world space."), "object"),
             **path_fields(),
             "closed": boolean("Join the end of the path to its start into a ring without a seam gap. Default: the curve's own setting; a circle is closed, and an arc closes with a straight chord."),
             "up": vector3("Direction the profile's v axis points at the start of the path. Default +Z, or the axis of a circle, arc or helix."),
-            "scale_start": length("Profile scale at the start of the path.", 1.0, 1000.0),
-            "scale_end": length("Profile scale at the end of the path; the scale changes linearly with distance.", 1.0, 1000.0),
-            "twist": number("Total twist in degrees along the path; on a closed path a multiple of 360.", -36000.0, 36000.0, 0.0),
-            "fillet_radius": number("Round every path corner with a circular arc of this radius in metres; 0 keeps mitred corners.", 0.0, 1000.0, 0.0),
-            "fillet_segments": integer("Segments per rounded corner.", 1, 64, 8),
+            "scale_start": length("Profile scale at the start of the path.", 1.0, MAX_SCALE_FACTOR),
+            "scale_end": length("Profile scale at the end of the path; the scale changes linearly with distance.", 1.0, MAX_SCALE_FACTOR),
+            "twist": number("Total twist in degrees along the path; on a closed path a multiple of 360.", -WINDING, WINDING, 0.0),
+            "fillet_radius": number("Round every path corner with a circular arc of this radius in metres; 0 keeps mitred corners.", 0.0, MAX_LENGTH, 0.0),
+            "fillet_segments": integer("Segments per rounded corner.", 1, CORNER_SEGMENTS, 8),
             "caps": boolean("Close the ends of an open path with flat faces.", True),
         },
         "Sweep",
@@ -151,7 +152,7 @@ SECTION = obj(
         **profile_fields(),
         "position": point3("Section centre [x, y, z] in metres."),
         "rotation": vector3("Euler XYZ rotation in degrees; the section plane is XY and its normal +Z before rotating.", [0.0, 0.0, 0.0]),
-        "scale": length("Section scale.", 1.0, 1000.0),
+        "scale": length("Section scale.", 1.0, MAX_SCALE_FACTOR),
     },
     ["position"],
 )
@@ -162,10 +163,10 @@ SECTION = obj(
     "Skin a surface through cross-sections with their own shape, position and orientation; short sections get points by splitting their longest edges, and starts are aligned to avoid twist.",
     with_shape_fields(
         {
-            "sections": array(SECTION, "Sections in order, from two.", 2, MAX_SECTIONS),
+            "sections": array(SECTION, "Sections in order, from two.", PAIR, MAX_SECTIONS),
             "closed": boolean("Join the last section back to the first (a ring of at least three).", False),
             "caps": boolean("Close the first and last section with flat faces on an open loft.", True),
-            "samples": integer("Points per section; default the largest section's count, and never fewer.", 3, MAX_PROFILE_POINTS),
+            "samples": integer("Points per section; default the largest section's count, and never fewer.", FEWEST_SIDES, MAX_PROFILE_POINTS),
             "align": boolean("Rotate each section's start point to the position that twists the skin least.", True),
         },
         "Loft",

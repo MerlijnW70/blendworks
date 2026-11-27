@@ -9,6 +9,8 @@ import bpy
 from harness import close, run
 from kit_helpers import is_closed_manifold, settled_snapshot, vertices
 
+from blendworks_bridge import chain
+
 PITCH = 0.0127
 FRAME = [[0.0, 0.0, 0.0], [0.2, 0.0, 0.0], [0.2, 0.1, 0.0], [0.0, 0.1, 0.0]]
 
@@ -69,6 +71,25 @@ def test_chain_refuses_bad_arguments(bridge):
     bridge.refuse("roller_chain", "bad_args", name="A", pitch=0.0005, waypoints=[[0, 0, 0], [3, 0, 0]])
     bridge.refuse("roller_chain", "not_found", name="A", pitch=PITCH, curve="Ghost")
     bridge.refuse("roller_chain", "bad_args", name="A", pitch=PITCH, waypoints=FRAME, plane_normal=[0, 0, 0])
+
+
+def test_chain_counts_its_links_before_placing_any_pin(bridge):
+    placed = []
+    original = chain.point_along
+
+    def refuse_to_place(points, closed, distance):
+        placed.append(distance)
+        raise AssertionError("a pin was placed before the link count was checked")
+
+    wheels = [{"centre": [0.0, 0.0, 0.0], "radius": 100_000.0}, {"centre": [200_000.0, 0.0, 0.0], "radius": 100_000.0}]
+    chain.point_along = refuse_to_place
+    try:
+        message = bridge.refuse("roller_chain", "bad_args", name="A", pitch=PITCH, wheels=wheels)
+    finally:
+        chain.point_along = original
+    assert placed == []
+    assert "pitch 0.0127" in message and "chain_links limit is 2000" in message and "Raise pitch" in message, message
+    assert "A" not in bpy.data.objects
 
 
 def test_failed_chain_leaves_the_scene_unchanged(bridge):

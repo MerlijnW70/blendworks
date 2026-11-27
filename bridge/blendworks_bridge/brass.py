@@ -1,6 +1,7 @@
 from .occlusion import occlusion_mask
 from .procedural import preset_vector
 from .scratches import DIRECTIONS, SCRATCH_DIRECTION_HELP, scratch_axis_schema, scratch_lines
+from .limits import FRACTION, LEAST_SCRATCH_DENSITY, MAX_SCRATCH_DENSITY
 from .schema import color, number, string
 
 DEFAULT_SCRATCH_DIRECTION = "around_z"
@@ -35,9 +36,9 @@ def brass_schema():
     return {
         "color": color("Polished brass colour, linear RGB.", DEFAULT_BRASS, False),
         "patina_color": color("Colour of the patina in the recesses, linear RGB.", DEFAULT_PATINA, False),
-        "patina": number("Patina amount, 0 to 1: how far the dark tarnish spreads out of the recesses.", 0.0, 1.0, 0.35),
-        "polish": number("Polish, 0 to 1: 1 is a smooth mirror finish, 0 a dull, scratched one.", 0.0, 1.0, 0.6),
-        "scratch_scale": number("Scratch density multiplier.", 0.1, 20.0, 1.0),
+        "patina": number("Patina amount, 0 to 1: how far the dark tarnish spreads out of the recesses.", 0.0, FRACTION, 0.35),
+        "polish": number("Polish, 0 to 1: 1 is a smooth mirror finish, 0 a dull, scratched one.", 0.0, FRACTION, 0.6),
+        "scratch_scale": number("Scratch density multiplier.", LEAST_SCRATCH_DENSITY, MAX_SCRATCH_DENSITY, 1.0),
         "scratch_direction": string(SCRATCH_DIRECTION_HELP + " The default around_z fits rings, discs and lathe parts, which Blender builds about Z; use x, y or z for flat stock.", DIRECTIONS, DEFAULT_SCRATCH_DIRECTION),
         "scratch_axis": scratch_axis_schema(),
         "age": string("Ageing, driven by ambient occlusion: new (bright, no patina), handled (rubbed edges, light tarnish), aged (brown tarnish, dark grime in engraved recesses), dull (oxidised, matte).", list(AGES)),

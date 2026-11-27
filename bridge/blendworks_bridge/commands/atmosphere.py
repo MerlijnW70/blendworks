@@ -3,6 +3,7 @@ from mathutils import Vector
 
 from .. import atmosphere_haze as haze
 from ..errors import bad_args
+from ..limits import MAX_ANISOTROPY, MAX_RELIEF
 from ..registry import command
 from ..schema import boolean, color, length, number, obj, string, vector3
 from ..util import GEOMETRY_TYPES, object_bounds, rounded, vec
@@ -23,15 +24,24 @@ BOUNDS = obj({"min": vector3("Lowest corner in metres."), "max": vector3("Highes
 BOUNDS["description"] = "Box domain corners. Default: the scene and its cameras, with a margin."
 
 
+def plan_atmosphere(args, state):
+    """Plan hook: the call removes the previous box domain and, for a box, makes the domain object and its material."""
+    state.remove("object", haze.DOMAIN_NAME)
+    state.remove("material", haze.MATERIAL_NAME)
+    if not args["remove"] and args["domain"] == "box":
+        state.add("object", haze.DOMAIN_NAME)
+        state.add("material", haze.MATERIAL_NAME)
+
+
 @command(
     "atmosphere",
     "Add aerial perspective and haze as a volume: visibility in metres, density falling with height, sun-scatter tint, ground fog.",
     {
         "visibility": length("Meteorological visibility at base_height in metres: where contrast falls to 2 %."),
         "height_falloff": length("Height in metres over which the density falls to 1/e. Default: uniform."),
-        "base_height": number("Height in metres where the density equals the visibility.", -10_000.0, 10_000.0, 0.0),
+        "base_height": number("Height in metres where the density equals the visibility.", -MAX_RELIEF, MAX_RELIEF, 0.0),
         "tint": color("Scatter colour: tints the sunlit haze; extinction per channel follows it.", [0.9, 0.95, 1.0], allow_alpha=False),
-        "anisotropy": number("Forward scattering (0 even, 0.9 a tight glow around the sun).", -0.95, 0.95, 0.5),
+        "anisotropy": number("Forward scattering (0 even, 0.9 a tight glow around the sun).", -MAX_ANISOTROPY, MAX_ANISOTROPY, 0.5),
         "ground_fog": FOG,
         "domain": string("box: a bounded volume with height falloff; world: a uniform world volume.", DOMAINS, "box"),
         "bounds": BOUNDS,
@@ -40,6 +50,7 @@ BOUNDS["description"] = "Box domain corners. Default: the scene and its cameras,
         "airlight": color("Linear colour of the haze for the depth method. Default: the world's mean sky radiance.", allow_alpha=False),
         "remove": boolean("Remove the atmosphere instead.", False),
     },
+    plan=plan_atmosphere,
     family="photography",
     intents=("light haze and aerial perspective", "fog in the valley", "distant hills fade into the sky", "volumetric mist"),
     nearest=(("set_world_hdri", "for the sky itself"), ("render_final", "to render the haze")),

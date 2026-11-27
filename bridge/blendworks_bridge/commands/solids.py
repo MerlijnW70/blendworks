@@ -5,22 +5,24 @@ from ..errors import bad_args
 from ..extrusion import extrusion_data
 from ..gears import gear_outline, sprocket_outline
 from ..kit_limits import MAX_HOLES, MAX_OUTLINE_POINTS, MAX_TEETH
+from ..limits import (BEVEL_SEGMENTS, FEWEST_SIDES, FEWEST_TEETH, FLANK_SAMPLES, MAX_LENGTH, PAIR, PRESSURE_ANGLE,
+                      SMALLEST_PRESSURE_ANGLE, TURN)
 from ..outlines import circle_points
 from ..registry import command
-from ..schema import array, boolean, integer, length, number, points2, string
+from ..schema import CREATES, array, boolean, integer, length, number, points2, ref, string
 from ..util import require_free_name
 
-THICKNESS = length("Extrusion height along Z in metres.", maximum=1000.0)
+THICKNESS = length("Extrusion height along Z in metres.")
 EXTRUSION_FIELDS = {
-    "chamfer": number("Width in metres of a bevel on the rims of both faces; 0 for none.", 0.0, 1000.0, 0.0),
-    "bevel_segments": integer("Segments of the rim bevel: 1 is a flat chamfer, more round it.", 1, 16, 1),
+    "chamfer": number("Width in metres of a bevel on the rims of both faces; 0 for none.", 0.0, MAX_LENGTH, 0.0),
+    "bevel_segments": integer("Segments of the rim bevel: 1 is a flat chamfer, more round it.", 1, BEVEL_SEGMENTS, 1),
     "centered": boolean("Centre the thickness on z = 0 instead of extruding from z = 0 up.", False),
 }
 
 
 def shape_fields(name, extra):
     fields = dict(SHAPE_FIELDS)
-    fields["name"] = string("Object name; must be unused.", default=name)
+    fields["name"] = ref(string("Object name; must be unused.", default=name), "object", CREATES)
     fields.update(extra)
     return fields
 
@@ -47,8 +49,8 @@ def rotate_points(points, degrees):
     shape_fields(
         "Plate",
         {
-            "outline": points2("Outline [x, y] points in metres, any winding, in the XY plane.", 3, MAX_OUTLINE_POINTS),
-            "holes": array(points2("One hole outline.", 3, MAX_OUTLINE_POINTS), "Hole outlines inside the outline, not touching it or each other.", 0, MAX_HOLES, []),
+            "outline": points2("Outline [x, y] points in metres, any winding, in the XY plane.", FEWEST_SIDES, MAX_OUTLINE_POINTS),
+            "holes": array(points2("One hole outline.", FEWEST_SIDES, MAX_OUTLINE_POINTS), "Hole outlines inside the outline, not touching it or each other.", 0, MAX_HOLES, []),
             "depth": THICKNESS,
             "caps": boolean("Close the top and bottom with flat faces; false leaves an open wall.", True),
             **EXTRUSION_FIELDS,
@@ -73,14 +75,14 @@ def extrude_outline(ctx, args):
     shape_fields(
         "Gear",
         {
-            "teeth": integer("Number of teeth, at least 6.", 6, MAX_TEETH),
-            "module": length("Module in metres: pitch diameter divided by teeth.", maximum=10.0),
-            "pitch": length("Circular pitch in metres (module times pi) instead of module.", maximum=30.0),
-            "pressure_angle": number("Pressure angle in degrees.", 5.0, 35.0, 20.0),
+            "teeth": integer("Number of teeth, at least 6.", FEWEST_TEETH, MAX_TEETH),
+            "module": length("Module in metres: pitch diameter divided by teeth."),
+            "pitch": length("Circular pitch in metres (module times pi) instead of module."),
+            "pressure_angle": number("Pressure angle in degrees.", SMALLEST_PRESSURE_ANGLE, PRESSURE_ANGLE, 20.0),
             "tooth_profile": string("involute is the standard curved flank; simple has straight flanks.", ["involute", "simple"], "involute"),
-            "tooth_samples": integer("Points along each involute flank.", 1, 24, 6),
-            "bore": number("Diameter in metres of the central hole; 0 for none.", 0.0, 1000.0, 0.0),
-            "phase": number("Rotate the teeth around Z by this many degrees.", -360.0, 360.0, 0.0),
+            "tooth_samples": integer("Points along each involute flank.", 1, FLANK_SAMPLES, 6),
+            "bore": number("Diameter in metres of the central hole; 0 for none.", 0.0, MAX_LENGTH, 0.0),
+            "phase": number("Rotate the teeth around Z by this many degrees.", -TURN, TURN, 0.0),
             "thickness": THICKNESS,
             **EXTRUSION_FIELDS,
         },
@@ -117,12 +119,12 @@ def gear(ctx, args):
     shape_fields(
         "Sprocket",
         {
-            "teeth": integer("Number of teeth, at least 6.", 6, MAX_TEETH),
-            "chain_pitch": length("Distance between chain pins in metres.", maximum=10.0),
-            "roller_diameter": length("Roller diameter in metres; default 0.625 times the chain pitch.", maximum=10.0),
-            "seat_samples": integer("Points along each roller seat.", 2, 24, 8),
-            "bore": number("Diameter in metres of the central hole; 0 for none.", 0.0, 1000.0, 0.0),
-            "phase": number("Rotate the teeth around Z by this many degrees.", -360.0, 360.0, 0.0),
+            "teeth": integer("Number of teeth, at least 6.", FEWEST_TEETH, MAX_TEETH),
+            "chain_pitch": length("Distance between chain pins in metres."),
+            "roller_diameter": length("Roller diameter in metres; default 0.625 times the chain pitch."),
+            "seat_samples": integer("Points along each roller seat.", PAIR, FLANK_SAMPLES, 8),
+            "bore": number("Diameter in metres of the central hole; 0 for none.", 0.0, MAX_LENGTH, 0.0),
+            "phase": number("Rotate the teeth around Z by this many degrees.", -TURN, TURN, 0.0),
             "thickness": THICKNESS,
             **EXTRUSION_FIELDS,
         },

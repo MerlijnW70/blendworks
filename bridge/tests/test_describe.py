@@ -9,7 +9,7 @@ from harness import Bridge, run
 from blendworks_bridge.registry import COMMANDS
 
 DESIGN_COMMANDS = {
-    "describe", "scene_info", "new_scene", "select", "delete",
+    "describe", "validate", "scene_info", "new_scene", "select", "delete",
     "add_primitive", "transform", "apply_transform", "set_origin", "duplicate", "join", "rename", "parent",
     "extrude", "inset", "bevel", "subdivide", "decimate", "boolean", "mirror", "array", "solidify",
     "shade_smooth", "shade_flat", "recalc_normals", "merge_by_distance", "apply_modifier",
@@ -44,7 +44,7 @@ DECLARED_METADATA = {
                                "rivet_line", "roller_chain", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell", "grow_tree", "tree_mesh", "tree_leaves", "lsystem", "fracture", "chip", "abrade", "remesh", "blob", "mesh_from_data", "generate_lods", "clean_mesh", "engrave", "skin_bind", "ground_element", "ground_cover", "clouds", "weather", "liquid_body", "liquid_fill")},
     "ground_cover_export": dict(SLOW, writes_files=True, destructive=True, destructive_when="the file already exists"),
 }
-SCHEMA_KEYS = {"type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",
+SCHEMA_KEYS = {"x-limits", "x-ref", "type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",
                "maximum", "exclusiveMinimum", "minItems", "maxItems", "minLength", "maxLength", "default"}
 
 

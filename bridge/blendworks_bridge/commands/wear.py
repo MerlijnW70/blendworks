@@ -1,7 +1,8 @@
 from ..errors import bad_args, not_found
 from ..kit_limits import MAX_DENTS
 from ..registry import command
-from ..schema import integer, length, string
+from ..limits import MAX_RELIEF, MAX_SEED
+from ..schema import integer, length, ref, string
 from ..selection import EXTENDED_FACE_PROPERTIES, has_selector, select_faces
 from ..util import EditMesh, get_mesh_object, mesh_counts, rounded
 from ..wear import dent_displacements, jitter_displacements
@@ -31,13 +32,13 @@ def allowed_vertices(bm, obj, args):
     "displace_noise",
     "Add seeded, bounded wear to a mesh: jitter (random vertex noise) or dents (hammer facets), masked by a face selection or vertex group; no vertex moves more than amplitude.",
     {
-        "name": string("Mesh object."),
+        "name": ref(string("Mesh object."), "object"),
         "mode": string("jitter nudges every vertex; dents presses flat-bottomed hammer facets into the surface.", ["jitter", "dents"], "jitter"),
-        "amplitude": length("Largest displacement of any vertex in metres.", maximum=100.0),
-        "seed": integer("Random seed; the same seed gives the same result.", 0, 2**31 - 1, 0),
+        "amplitude": length("Largest displacement of any vertex in metres.", maximum=MAX_RELIEF),
+        "seed": integer("Random seed; the same seed gives the same result.", 0, MAX_SEED, 0),
         "direction": string("jitter: along each vertex normal or in any direction.", ["normal", "any"], "normal"),
         "count": integer("dents: number of facets.", 1, MAX_DENTS, 20),
-        "radius": length("dents: facet radius in metres.", maximum=100.0),
+        "radius": length("dents: facet radius in metres."),
         "vertex_group": string("Only move vertices in this vertex group, scaled by their weight."),
         **EXTENDED_FACE_PROPERTIES,
     },

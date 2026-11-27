@@ -5,7 +5,9 @@ import bpy
 from . import commands
 from .autosave import Autosave, interval_from_environment
 from .errors import BridgeError, bad_args, forbidden
+from . import floating_origin
 from .operators import operator_context
+from .plan import without_timeout
 from .policy import REPLACES_FILE, UNDO
 from .registry import COMMANDS, Registry
 from .schema import validate
@@ -76,13 +78,20 @@ class Handler:
             if name == PYTHON_COMMAND:
                 raise forbidden("run_python is off; start the bridge with --allow-python to enable it")
             raise bad_args(f"unknown command {name}; call describe for the list")
-        cleaned = validate(command.schema, args)
+        cleaned = validate(command.schema, without_timeout(command, args))
+        broken = command.rules(cleaned) if command.rules is not None else []
+        if broken:
+            raise bad_args("; ".join(problem["message"] for problem in broken))
         if command.mutates and self.desktop:
             ensure_object_mode()
         self.autosave.before(command)
         txn = self.transaction(command)
         try:
-            result = command.run(Context(self, txn), cleaned)
+            context = Context(self, txn)
+            floating_origin.begin()
+            result = command.run(context, cleaned)
+            if command.policy.renders and isinstance(result, dict) and floating_origin.report():
+                result["camera_relative"] = floating_origin.report()
             json.dumps(result, allow_nan=False)
         except BridgeError:
             txn.rollback()

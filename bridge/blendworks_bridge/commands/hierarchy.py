@@ -1,8 +1,9 @@
 import bpy
 
 from ..errors import bad_args, not_found
+from ..limits import MAX_SCALE_FACTOR
 from ..registry import command
-from ..schema import boolean, length, names, string, vector3
+from ..schema import CREATES, EXISTS, boolean, length, names, ref, string, vector3
 from ..util import get_object, get_objects, link_object, place, require_free_name, vec
 
 DISPLAYS = ("plain_axes", "arrows", "single_arrow", "circle", "cube", "sphere", "cone")
@@ -32,14 +33,14 @@ def move_to(obj, collection):
     "add_empty",
     "Add an empty to group and place objects: a display type, a display size in metres and a transform, optionally under a parent or in a collection.",
     {
-        "name": string("Object name; must be unused."),
+        "name": ref(string("Object name; must be unused."), "object", CREATES),
         "display": string("How the empty is drawn in Blender.", list(DISPLAYS), "plain_axes"),
         "size": length("Display size in metres.", 1.0),
         "location": vector3("Position in metres, relative to the parent when there is one.", [0.0, 0.0, 0.0]),
         "rotation": vector3("Euler XYZ rotation in degrees.", [0.0, 0.0, 0.0]),
-        "scale": vector3("Scale per axis.", [1.0, 1.0, 1.0]),
-        "parent": string("Object to parent the empty to."),
-        "collection": string("Collection to put the empty in. Default: the scene collection."),
+        "scale": vector3("Scale per axis.", [1.0, 1.0, 1.0], -MAX_SCALE_FACTOR, MAX_SCALE_FACTOR),
+        "parent": ref(string("Object to parent the empty to."), "object", EXISTS),
+        "collection": ref(string("Collection to put the empty in. Default: the scene collection."), "collection", EXISTS),
     },
     ["name"],
     family="hierarchy",
@@ -73,9 +74,9 @@ def add_empty(ctx, args):
     "collection_create",
     "Create a collection under the scene collection or another collection, optionally putting objects in it.",
     {
-        "name": string("Collection name; must be unused."),
-        "parent": string("Collection to nest it in. Default: the scene collection."),
-        "objects": names("Objects to link into the new collection.", min_items=0),
+        "name": ref(string("Collection name; must be unused."), "collection", CREATES),
+        "parent": ref(string("Collection to nest it in. Default: the scene collection."), "collection", EXISTS),
+        "objects": ref(names("Objects to link into the new collection.", min_items=0), "object", EXISTS),
     },
     ["name"],
     family="hierarchy",
@@ -100,8 +101,8 @@ def collection_create(ctx, args):
     "collection_link",
     "Link objects into a collection; with move they leave every other collection, so the collection holds them alone.",
     {
-        "collection": string("Collection to link the objects into."),
-        "names": names("Objects to link."),
+        "collection": ref(string("Collection to link the objects into."), "collection", EXISTS),
+        "names": ref(names("Objects to link."), "object", EXISTS),
         "move": boolean("Unlink the objects from all their other collections.", False),
     },
     ["collection", "names"],
@@ -126,7 +127,7 @@ def collection_link(ctx, args):
 @command(
     "collection_unlink",
     "Unlink objects from a collection; an object must stay in at least one collection, so unlinking its last one is refused.",
-    {"collection": string("Collection to unlink the objects from."), "names": names("Objects to unlink.")},
+    {"collection": ref(string("Collection to unlink the objects from."), "collection", EXISTS), "names": ref(names("Objects to unlink."), "object", EXISTS)},
     ["collection", "names"],
     family="hierarchy",
     intents=("take objects out of a collection", "remove an object from one collection and keep it in the others",),

@@ -4,9 +4,10 @@ import numpy
 from mathutils import Vector
 
 from . import liquid_bodies, liquid_spectrum
+from .limits import MAX_WAVE_CELLS
 from .liquid_grid import DOWN
 
-MAX_CELLS = 512
+MAX_CELLS = MAX_WAVE_CELLS
 SKIRT_RINGS = 24
 HORIZON = 30_000.0
 BEACH_SLOPE = 0.03

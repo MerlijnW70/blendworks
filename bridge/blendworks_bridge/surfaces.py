@@ -43,7 +43,7 @@ class PlaneSurface:
         return self.origin + self.across * x + self.up * y, self.normal
 
     def folds(self, low, high, tolerance, reach):
-        return []
+        return ListFolds([])
 
 
 class FaceRegion(PlaneSurface):
@@ -171,11 +171,8 @@ class PathSurface:
 
     def folds(self, low, high, tolerance, reach):
         if self.closed:
-            laps = range(math.floor(low / self.total), math.floor(high / self.total) + 1)
-            starts = [start + self.total * lap for lap in laps for start in self.starts[:-1]]
-        else:
-            starts = self.starts[1:-1]
-        return sorted(start for start in starts if low < start < high)
+            return LapFolds(self.starts[:-1], self.total, low, high)
+        return ListFolds([start for start in self.starts[1:-1] if low < start < high])
 
     def point(self, x, y):
         if self.closed:
@@ -191,8 +188,64 @@ class PathSurface:
         return start.lerp(end, share), normal
 
 
+class ListFolds:
+    """Fold lines given as a short sorted list."""
+
+    def __init__(self, values):
+        self.list = sorted(values)
+
+    def count(self, low=-math.inf, high=math.inf):
+        return max(0, bisect.bisect_right(self.list, high) - bisect.bisect_left(self.list, low))
+
+    def values(self):
+        return self.list
+
+
+class EvenFolds:
+    """Fold lines at every multiple of step strictly between low and high, counted without listing them."""
+
+    def __init__(self, low, high, step):
+        self.step = step
+        self.first, self.end = math.floor(low / step) + 1, math.ceil(high / step)
+
+    def count(self, low=-math.inf, high=math.inf):
+        first = self.first if low == -math.inf else max(self.first, math.floor(low / self.step))
+        last = self.end - 1 if high == math.inf else min(self.end - 1, math.ceil(high / self.step))
+        return max(0, last - first + 1)
+
+    def values(self):
+        return [index * self.step for index in range(self.first, self.end)]
+
+
+class LapFolds:
+    """Fold lines at the corners of a closed path, lap after lap, strictly between low and high."""
+
+    def __init__(self, starts, total, low, high):
+        self.starts, self.total, self.low, self.high = starts, total, low, high
+        self.laps = range(math.floor(low / total), math.floor(high / total) + 1)
+
+    def kept(self, lap):
+        return sum(1 for start in self.starts if self.low < start + self.total * lap < self.high)
+
+    def count(self, low=-math.inf, high=math.inf):
+        if low == -math.inf and high == math.inf:
+            first, last = self.laps[0], self.laps[-1]
+            edge = {lap for lap in (first, first + 1, last - 1, last) if first <= lap <= last}
+            return sum(self.kept(lap) for lap in edge) + len(self.starts) * (len(self.laps) - len(edge))
+        low, high = max(low, self.low), min(high, self.high)
+        if low > high:
+            return 0
+        margin = 1e-9 * (abs(low) + abs(high) + self.total)
+        first, last = math.floor(low / self.total), math.floor(high / self.total)
+        inside = [bisect.bisect_right(self.starts, high - self.total * lap + margin) - bisect.bisect_left(self.starts, low - self.total * lap - margin) for lap in {first, last}]
+        return sum(inside) + len(self.starts) * max(0, last - first - 1)
+
+    def values(self):
+        return sorted(start + self.total * lap for lap in self.laps for start in self.starts if self.low < start + self.total * lap < self.high)
+
+
 def even_folds(low, high, step):
-    return [index * step for index in range(math.floor(low / step) + 1, math.ceil(high / step))]
+    return EvenFolds(low, high, step)
 
 
 def curve_surface(spec):

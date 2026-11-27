@@ -4,6 +4,7 @@ import bpy
 import numpy
 
 from .errors import bad_args
+from .limits import MAX_DRACO_LEVEL, MAX_JPEG_QUALITY
 from .schema import boolean, integer, string
 
 IMAGE_FORMATS = ("auto", "png", "jpeg")
@@ -21,9 +22,9 @@ def option_fields():
         "yup": boolean("Write Y up, as glTF, FBX and OBJ readers expect; false keeps Blender's Z up.", True),
         "tangents": boolean("glb only: write tangent vectors. Default: on when an exported mesh uses a normal map."),
         "image_format": string("glb only: auto keeps JPEG sources and writes the rest as PNG; png and jpeg convert every texture. Default auto.", IMAGE_FORMATS),
-        "jpeg_quality": integer(f"glb only, with image_format jpeg: quality from 1 to 100. Default {DEFAULT_JPEG_QUALITY}.", 1, 100),
+        "jpeg_quality": integer(f"glb only, with image_format jpeg: quality from 1 to {MAX_JPEG_QUALITY}. Default {DEFAULT_JPEG_QUALITY}.", 1, MAX_JPEG_QUALITY),
         "draco": boolean("glb only: compress mesh geometry with Draco (KHR_draco_mesh_compression). Default false."),
-        "draco_level": integer(f"glb only, with draco true: level from 0 (fast) to 10 (small). Default {DEFAULT_DRACO_LEVEL}.", 0, 10),
+        "draco_level": integer(f"glb only, with draco true: level from 0 (fast) to {MAX_DRACO_LEVEL} (small). Default {DEFAULT_DRACO_LEVEL}.", 0, MAX_DRACO_LEVEL),
         "animation": string("glb only: clips writes every clip (NLA track) as its own named animation, actions every action, none no animation. Default clips.", ANIMATION_MODES),
         "bake_constraints": boolean("glb only, with clips: bake IK and other bone constraints into the keys of every clip, so engines play the constrained pose. Default true."),
     }

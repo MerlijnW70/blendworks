@@ -3,7 +3,7 @@ import bpy
 from .. import limits, world_background
 from ..inspect_scene import DETAILS, scene_report
 from ..registry import command
-from ..schema import integer, names, string
+from ..schema import integer, names, ref, string
 from ..util import get_object, get_objects
 from .checkpoints import list_checkpoints
 
@@ -38,6 +38,7 @@ def describe(ctx, args):
             "scene_info_limit": limits.MAX_SCENE_INFO_LIMIT,
             "checkpoints": limits.MAX_CHECKPOINTS,
         },
+        "limits_table": limits.table(),
         "commands": ctx.registry.describe(),
     }
 
@@ -67,6 +68,7 @@ def scene_info(ctx, args):
     family="scene",
     intents=("clear the whole scene and start fresh", "empty scene in metres"),
     nearest=(("delete", "to remove only some objects"),),
+    plan=lambda args, state: state.clear(),
 )
 def new_scene(ctx, args):
     replaced = world_background.describe(ctx.scene.world)
@@ -103,9 +105,9 @@ def purge_unused():
     "select",
     "Select objects by name, replacing, adding to or removing from the selection; optionally set the active object.",
     {
-        "names": names("Object names.", min_items=0),
+        "names": ref(names("Object names.", min_items=0), "object"),
         "mode": string("set replaces the selection, add and remove change it.", ["set", "add", "remove"], "set"),
-        "active": string("Object to make active."),
+        "active": ref(string("Object to make active."), "object"),
     },
     ["names"],
     family="scene",
@@ -129,12 +131,18 @@ def select(ctx, args):
     }
 
 
+def plan_delete(args, state):
+    for name in args["names"]:
+        state.remove("object", name)
+
+
 @command(
     "delete",
     "Delete objects by name; their children keep their place in the world.",
-    {"names": names("Objects to delete.")},
+    {"names": ref(names("Objects to delete."), "object")},
     ["names"],
     destructive=True,
+    plan=plan_delete,
     family="scene",
     intents=("remove objects by name", "delete a helper or cutter object", "delete cameras, lights or meshes"),
     nearest=(("new_scene", "to clear everything"),),

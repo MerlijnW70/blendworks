@@ -11,6 +11,7 @@ from harness import run
 import bpy
 import numpy
 
+from blendworks_bridge import limits
 from blendworks_bridge.commands.ground_export import level_vertices
 from blendworks_bridge.cover_kinds import element_materials, element_params
 from cover_helpers import attribute_of, glb_document, instanced_translations, make_plane, points_of, workspace_file
@@ -267,8 +268,9 @@ def test_export_carries_the_instance_tint_and_applies_the_modifiers_of_other_obj
 def test_the_budget_has_a_documented_maximum(bridge):
     make_plane(bridge, size=4.0)
     populations = [{"name": "grass", "element": "grass", "density": 1.0, "form": "cards", "variants": 1}]
-    assert "at most 5000000" in bridge.refuse("ground_cover", "bad_args", target="Ground", populations=populations, budget=5_000_001)
-    assert bridge.ok("ground_cover", target="Ground", populations=populations, budget=5_000_000)["budget"] == 5_000_000
+    most = limits.MAX_COVER_INSTANCES
+    assert f"at most {most}" in bridge.refuse("ground_cover", "bad_args", target="Ground", populations=populations, budget=most + 1)
+    assert bridge.ok("ground_cover", target="Ground", populations=populations, budget=most)["budget"] == most
 
 
 run(globals())

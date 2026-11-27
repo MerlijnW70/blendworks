@@ -16,6 +16,7 @@ from .outlines import (
     triangulate,
 )
 from .skin import skin
+from .util import check_vertex_cap
 
 
 def level_table(depth, chamfer, segments):
@@ -72,9 +73,15 @@ def cap_faces(data, loops, rings, z, top):
         data.face([indices[i] for i in corner], uvs, island, 0, False)
 
 
+def check_extrusion(loops, levels):
+    """Exact: skin makes one vertex per loop point on every level, inset loops keep their point count, caps add none."""
+    check_vertex_cap(sum(len(loop) for loop in loops) * len(levels))
+
+
 def extrusion_data(outline, holes, depth, chamfer, segments, centered, caps=True):
     loops = prepare_loops(outline, holes)
     levels = level_table(depth, chamfer, segments)
+    check_extrusion(loops, levels)
     offset = -depth / 2.0 if centered else 0.0
     cache = {}
     for inset, _ in levels:

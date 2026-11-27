@@ -112,6 +112,8 @@ def test_engrave_scale_refuses_what_it_cannot_build(bridge):
     bridge.refuse("engrave_scale", "bad_args", name="Ring", **surface, step=1, depth=0.0004, classes=[{"every": 10, "height": 0.001}])
     bridge.refuse("engrave_scale", "bad_args", name="Ring", **surface, step=1, depth=0.0004, classes=[{"every": 10}, {"every": 10}])
     bridge.refuse("engrave_scale", "bad_args", name="Ring", step=1, depth=0.0004)
+    message = bridge.refuse("engrave_scale", "bad_args", name="Ring", **surface, start=-36000, end=36000, step=1e-9, depth=0.0004)
+    assert "Raise step" in message, message
 
 
 run(globals())

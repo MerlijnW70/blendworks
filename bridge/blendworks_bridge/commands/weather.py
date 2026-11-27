@@ -1,27 +1,38 @@
 from .. import cloud_layers, weather_build, weather_continuum
 from ..errors import bad_args
+from ..limits import ATMOSPHERE_DENSITY, FRACTION, MAX_LENGTH, MAX_NAMES, MAX_SEED, RAIN_RATE
 from ..registry import command
-from ..schema import boolean, integer, length, names, number, string
+from ..schema import boolean, integer, length, names, number, ref, string
 from .sky import SUN
 
 WEATHER_FIELDS = {
     "preset": string("Named weather: a point of the storm continuum with optional overrides.", list(weather_continuum.PRESETS)),
-    "storm": number("0 clear, 0.18 fair cumulus, 0.32 scattered, 0.46 broken, 0.6 overcast, 0.72 light rain, 0.86 heavy rain, 1 thunderstorm.", 0.0, 1.0),
+    "storm": number("0 clear, 0.18 fair cumulus, 0.32 scattered, 0.46 broken, 0.6 overcast, 0.72 light rain, 0.86 heavy rain, 1 thunderstorm.", 0.0, FRACTION),
     "time_of_day": string("Sun for a time of day; sun overrides it.", list(weather_continuum.TIMES)),
     "sun": SUN,
-    "seed": integer("Seed of the clouds, rain and lightning.", 0, 2_147_483_647, 0),
+    "seed": integer("Seed of the clouds, rain and lightning.", 0, MAX_SEED, 0),
     "form": string("Cloud form: auto (sheet in previews, volumes in render_final), volume or sheet.", list(cloud_layers.FORMS), "auto"),
-    "dust": number("Override the continuum's dust (aerosol density).", 0.0, 10.0),
-    "visibility": length("Override the continuum's visibility in metres.", None, 200_000.0),
-    "rain": number("Override the rain rate in mm/h (0 none, 2 light, 15 heavy, 40 cloudburst).", 0.0, 100.0),
+    "dust": number("Override the continuum's dust (aerosol density).", 0.0, ATMOSPHERE_DENSITY),
+    "visibility": length("Override the continuum's visibility in metres.", None, MAX_LENGTH),
+    "rain": number("Override the rain rate in mm/h (0 none, 2 light, 15 heavy, 40 cloudburst).", 0.0, RAIN_RATE),
     "rain_foreground": boolean("Falling streaks in front of the active camera. Default: on in heavy rain and thunderstorms."),
-    "wet": number("Override how wet the ground is, 0 to 1: darker base colour, glossier, puddles on flat ground.", 0.0, 1.0),
-    "wet_materials": names("Materials to wet. Default: every material with a Principled BSDF on the scene's objects.", 1, 256),
+    "wet": number("Override how wet the ground is, 0 to 1: darker base colour, glossier, puddles on flat ground.", 0.0, FRACTION),
+    "wet_materials": ref(names("Materials to wet. Default: every material with a Principled BSDF on the scene's objects.", 1, MAX_NAMES), "material"),
     "lightning": boolean("Override lightning: a bolt and a flash light."),
     "haze": boolean("Add the weather's haze with atmosphere (a box around the scene).", True),
     "exposure": string("auto sets the scene exposure for the weather's light; keep leaves it.", ("auto", "keep"), "auto"),
     "remove": boolean("Remove the weather: clouds, rain, lightning, wet ground and haze; the clear sky stays.", False),
 }
+
+
+def plan_weather(args, state):
+    """The weather's clouds, rain, lightning and lamp are objects named by the builder in the Weather collection;
+    remove takes them away again."""
+    if args["remove"]:
+        state.remove("collection", "Weather")
+    else:
+        state.add("collection", "Weather")
+    state.unknown(("object",))
 
 
 @command(
@@ -38,6 +49,7 @@ WEATHER_FIELDS = {
         "change the weather of an outdoor scene",
     ),
     nearest=(("sky", "for a clear sky only"), ("clouds", "for your own cloud layers")),
+    plan=plan_weather,
 )
 def weather(ctx, args):
     scene = ctx.scene

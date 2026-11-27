@@ -22,25 +22,26 @@ from ..bones import (
     to_world,
 )
 from ..errors import bad_args, failed, not_found
+from ..limits import ELEMENT_NAME_LENGTH, MAX_RIG_ROLES, TURN
 from ..operators import edit_mode, operator_context
 from ..registry import command
 from ..rig_layouts import TEMPLATES, Frame, check_landmarks, ground_height, humanoid, prop, quadruped
-from ..schema import array, boolean, described, names, number, obj as object_schema, point3, string, vector3
+from ..schema import CREATES, array, boolean, described, names, number, obj as object_schema, point3, ref, string, vector3
 from ..util import get_mesh_object, merge_bounds, object_bounds, require_free_name, vec
 
 EDIT_FIELDS = {
     "name": BONE_FIELDS["name"],
-    "rename": string("New name for the bone; vertex groups and constraints follow it.", max_length=63),
+    "rename": string("New name for the bone; vertex groups and constraints follow it.", max_length=ELEMENT_NAME_LENGTH),
     "head": BONE_FIELDS["head"],
     "tail": BONE_FIELDS["tail"],
-    "roll": number("Roll about the bone's own axis in degrees.", -360.0, 360.0),
+    "roll": number("Roll about the bone's own axis in degrees.", -TURN, TURN),
     "parent": BONE_FIELDS["parent"],
     "clear_parent": boolean("Make the bone a root bone."),
     "connect": boolean("Join the head to the parent's tail."),
     "deform": boolean("The bone deforms skinned meshes."),
 }
 EDIT_SCHEMA = object_schema(EDIT_FIELDS, ["name"])
-LANDMARK = object_schema({"name": string("Landmark name, such as left_knee or hinge.", max_length=64), "point": point3()}, ["name", "point"])
+LANDMARK = object_schema({"name": string("Landmark name, such as left_knee or hinge.", max_length=ELEMENT_NAME_LENGTH), "point": point3()}, ["name", "point"])
 DEFAULT_AXES = {"hinge": [1.0, 0.0, 0.0], "piston": [0.0, 0.0, 1.0], "wheel": [1.0, 0.0, 0.0]}
 
 
@@ -52,7 +53,7 @@ def bone_list(description, minimum=1):
     "armature_create",
     "Create an armature object, optionally with bones: head, tail and roll in metres and degrees, parent, connect and deform flags.",
     {
-        "name": string("Armature object name; must be unused."),
+        "name": ref(string("Armature object name; must be unused."), "object", CREATES),
         "location": vector3("Armature origin in metres. Bone points are world space either way.", [0.0, 0.0, 0.0]),
         "bones": bone_list("Bones to add, parents before or after their children.", 0),
     },
@@ -72,7 +73,7 @@ def armature_create(ctx, args):
 @command(
     "bone_add",
     "Add bones to an armature: head, tail, roll, parent, connect and deform per bone, in world-space metres.",
-    {"armature": string("Armature object."), "bones": bone_list("Bones to add.")},
+    {"armature": ref(string("Armature object."), "object"), "bones": bone_list("Bones to add.")},
     ["armature", "bones"],
     family="rigging",
     intents=("add a tail bone to the rig", "extra bones on an armature"),
@@ -87,7 +88,7 @@ def bone_add(ctx, args):
 @command(
     "bone_edit",
     "Edit bones: rename, move head or tail, set roll in degrees, reparent or clear the parent, connect, and the deform flag.",
-    {"armature": string("Armature object."), "bones": array(EDIT_SCHEMA, "Bones to change, each by its current name.", 1, MAX_BONES)},
+    {"armature": ref(string("Armature object."), "object"), "bones": array(EDIT_SCHEMA, "Bones to change, each by its current name.", 1, MAX_BONES)},
     ["armature", "bones"],
     family="rigging",
     intents=("rename a bone and change its parent", "orient a bone with roll", "turn off deform on a control bone"),
@@ -133,7 +134,7 @@ def bone_edit(ctx, args):
     "bone_mirror",
     "Mirror bones across the armature's X = 0 plane by name (Left/Right, .L/.R, _L/_R): makes or updates the other side.",
     {
-        "armature": string("Armature object."),
+        "armature": ref(string("Armature object."), "object"),
         "bones": names("Bones to mirror. Default: every bone on the from side."),
         "from_side": string("The side to copy; left is +X.", ["left", "right"], "left"),
     },
@@ -214,10 +215,10 @@ def limb_spread(meshes, frame, fraction):
     "Build a humanoid, quadruped or prop rig (hinge, piston, wheel) fitted to a mesh's bounds or to named landmarks; returns the bone map.",
     {
         "template": string("Rig kind.", list(TEMPLATES)),
-        "name": string("Armature object name; must be unused."),
-        "fit": names("Meshes whose world bounds the rig is fitted to."),
+        "name": ref(string("Armature object name; must be unused."), "object", CREATES),
+        "fit": ref(names("Meshes whose world bounds the rig is fitted to."), "object"),
         "bounds": described(object_schema({"min": point3("Lowest corner."), "max": point3("Highest corner.")}, ["min", "max"]), "World box to fit the rig to, instead of fit."),
-        "landmarks": array(LANDMARK, "Named points that override the fitted ones, such as left_knee, hips or hinge; right_ points default to the mirror of left_ ones.", 1, 64),
+        "landmarks": array(LANDMARK, "Named points that override the fitted ones, such as left_knee, hips or hinge; right_ points default to the mirror of left_ ones.", 1, MAX_RIG_ROLES),
         "pose": string("Humanoid arm pose of the mesh: a (arms down at 25 to 70 degrees, fitted to the width) or t (arms level).", ["a", "t"], "a"),
         "axis": vector3("Prop axis: the hinge or wheel axle, or the piston stroke. Default x for hinge and wheel, z for piston."),
     },
@@ -267,7 +268,7 @@ def rig_template(ctx, args):
 @command(
     "rig_info",
     "Read an armature: its bones with head, tail, roll, parent and deform flag, the template bone map, constraints and skinned meshes.",
-    {"armature": string("Armature object.")},
+    {"armature": ref(string("Armature object."), "object")},
     ["armature"],
     mutates=False,
     family="rigging",

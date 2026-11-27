@@ -3,14 +3,14 @@ import math
 import bmesh
 
 from ..errors import bad_args, failed
-from ..limits import MAX_MESH_VERTICES
+from ..limits import BEVEL_SEGMENTS, EDGE_CUTS, FRACTION, HALF_TURN, MAX_INDICES, MAX_LENGTH, MAX_MESH_VERTICES
 from ..registry import command
 from ..normals import hardened_loop_normals
-from ..schema import boolean, indices, integer, length, number, string
+from ..schema import boolean, indices, integer, length, number, ref, string
 from ..selection import EXTENDED_FACE_PROPERTIES, has_selector, select_faces
-from ..util import EditMesh, get_mesh_object, mesh_counts
+from ..util import EditMesh, check_vertex_cap, get_mesh_object, mesh_counts
 
-OBJECT = string("Mesh object.")
+OBJECT = ref(string("Mesh object."), "object")
 
 
 def with_faces(properties):
@@ -52,7 +52,7 @@ def edit_result(obj, extra=None):
     "Extrude faces along their normals by a distance in metres (negative goes inward).",
     with_faces(
         {
-            "distance": number("Distance in metres; not zero.", -1000.0, 1000.0),
+            "distance": number("Distance in metres; not zero.", -MAX_LENGTH, MAX_LENGTH),
             "individual": boolean("Extrude each face on its own instead of as one region.", False),
         }
     ),
@@ -89,8 +89,8 @@ def extrude(ctx, args):
     "Inset faces by a thickness in metres, optionally pushed in or out by depth.",
     with_faces(
         {
-            "thickness": length("Inset width in metres.", maximum=1000.0),
-            "depth": number("Move the inner faces along their normals by this many metres.", -1000.0, 1000.0, 0.0),
+            "thickness": length("Inset width in metres."),
+            "depth": number("Move the inner faces along their normals by this many metres.", -MAX_LENGTH, MAX_LENGTH, 0.0),
             "individual": boolean("Inset each face on its own instead of as one region.", False),
         }
     ),
@@ -118,15 +118,15 @@ def inset(ctx, args):
     {
         **with_faces(
             {
-                "width": length("Bevel width in metres.", maximum=1000.0),
-                "segments": integer("Number of bevel segments.", 1, 16, 1),
-                "profile": number("Profile shape; 0.5 is round.", 0.0, 1.0, 0.5),
-                "angle": number("Only edges whose faces meet at least this many degrees off flat (not used with edges).", 0.0, 180.0, 30.0),
+                "width": length("Bevel width in metres."),
+                "segments": integer("Number of bevel segments.", 1, BEVEL_SEGMENTS, 1),
+                "profile": number("Profile shape; 0.5 is round.", 0.0, FRACTION, 0.5),
+                "angle": number("Only edges whose faces meet at least this many degrees off flat (not used with edges).", 0.0, HALF_TURN, 30.0),
                 "clamp": boolean("Keep bevels from overlapping.", True),
                 "harden_normals": boolean("Set custom normals so flat faces keep their normals and the bevel blends into them.", False),
             }
         ),
-        "edges": indices("Edge indices to bevel instead of choosing by angle; each must border two faces.", 1, 100_000),
+        "edges": indices("Edge indices to bevel instead of choosing by angle; each must border two faces.", 1, MAX_INDICES),
     },
     ["name", "width"],
     family="mesh_edit",
@@ -140,6 +140,7 @@ def bevel(ctx, args):
     with EditMesh(obj) as bm:
         edges = bevel_edges(bm, obj, args)
         verts = list({vert for edge in edges for vert in edge.verts})
+        check_vertex_cap(least_bevel_vertices(len(bm.verts), len(verts), args["segments"]))
         created = bmesh.ops.bevel(
             bm,
             geom=edges + verts,
@@ -157,6 +158,12 @@ def bevel(ctx, args):
     if normals is not None:
         obj.data.normals_split_custom_set(normals)
     return edit_result(obj, {"bevelled_edges": len(edges)})
+
+
+def least_bevel_vertices(vertices, bevelled, segments):
+    """Lower bound: every bevelled vertex gives way to at least one profile of segments + 1 vertices; EditMesh checks
+    the exact count after the bevel."""
+    return vertices + segments * bevelled
 
 
 def bevel_edges(bm, obj, args):
@@ -191,8 +198,8 @@ def sharp_enough(edge, threshold):
     "Subdivide every edge (or those of the selected faces) into cuts + 1 parts, optionally smoothed.",
     with_faces(
         {
-            "cuts": integer("Cuts per edge.", 1, 10, 1),
-            "smooth": number("Smoothing of the new vertices, 0 to 1.", 0.0, 1.0, 0.0),
+            "cuts": integer("Cuts per edge; the mesh_vertices limit caps the result.", 1, EDGE_CUTS, 1),
+            "smooth": number("Smoothing of the new vertices, 0 to 1.", 0.0, FRACTION, 0.0),
         }
     ),
     ["name"],
@@ -215,7 +222,7 @@ def subdivide(ctx, args):
 @command(
     "shade_smooth",
     "Shade faces smooth; with angle, edges sharper than angle degrees stay sharp.",
-    with_faces({"angle": number("Keep edges sharper than this many degrees sharp.", 0.0, 180.0)}),
+    with_faces({"angle": number("Keep edges sharper than this many degrees sharp.", 0.0, HALF_TURN)}),
     ["name"],
     family="mesh_edit",
     intents=("smooth shading", "auto smooth by angle"),
@@ -272,7 +279,7 @@ def recalc_normals(ctx, args):
 @command(
     "merge_by_distance",
     "Merge vertices closer together than a distance in metres.",
-    {"name": OBJECT, "distance": length("Merge distance in metres.", 0.0001, 10.0)},
+    {"name": OBJECT, "distance": length("Merge distance in metres.", 0.0001)},
     ["name"],
     family="mesh_edit",
     intents=("remove doubles", "weld overlapping vertices"),

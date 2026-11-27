@@ -1,9 +1,9 @@
 from . import baking, limits
 from .errors import bad_args
-from .schema import array, integer, names, obj
+from .schema import EXISTS, array, integer, names, obj, ref
 
 BYTES_PER_TEXEL = 4
-MAX_RULES = 64
+MAX_RULES = limits.MAX_ATLAS_RULES
 
 
 def gpu_bytes(width, height):
@@ -18,9 +18,9 @@ def gpu_bytes(width, height):
 def size_rules_schema():
     rule = obj(
         {
-            "size": integer("Image width and height in pixels for the matching images.", 16, limits.MAX_BAKE_SIZE),
-            "materials": names("Materials the rule covers. Naming materials gives each material its own images, called prefix_material_channel.", 1, 256),
-            "channels": array({"type": "string", "enum": list(baking.CHANNELS)}, "Channels the rule covers.", 1, len(baking.CHANNELS)),
+            "size": integer("Image width and height in pixels for the matching images.", limits.LEAST_BAKE_SIZE, limits.MAX_BAKE_SIZE),
+            "materials": ref(names("Materials the rule covers. Naming materials gives each material its own images, called prefix_material_channel."), "material", EXISTS),
+            "channels": array({"type": "string", "enum": list(baking.CHANNELS)}, "Channels the rule covers.", 1, limits.MAX_BAKE_CHANNELS),
         },
         ["size"],
     )

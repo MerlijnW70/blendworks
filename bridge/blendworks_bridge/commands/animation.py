@@ -28,36 +28,39 @@ from ..clips import (
 )
 from ..errors import bad_args, not_found
 from ..motion_presets import PRESETS, gait, idle, moving_bones, prop_motion, write_rows
+from ..gaits import MAX_FRAMES, MIN_FRAMES
+from ..limits import (ELEMENT_NAME_LENGTH, LEAST_CADENCE, MAX_CADENCE, MAX_CLIP_KEYS, MAX_CLIP_ROTATION, MAX_KEY_VALUE,
+                      MAX_LENGTH, MAX_RELIEF, MAX_RIG_ROLES, MAX_SPEED, MAX_SPIN_TURNS, NAME_LENGTH, QUARTER_TURN)
 from ..registry import command
-from ..schema import array, boolean, integer, length, number, obj as object_schema, string, vector3
+from ..schema import EXISTS, array, boolean, integer, length, number, obj as object_schema, ref, string, vector3
 from ..util import get_object
 
 CHANNELS = {"location": 3, "rotation": 3, "scale": 3, "value": 1}
 KEY = object_schema(
     {
         "frame": number("Frame of the key.", -MAX_FRAME, MAX_FRAME),
-        "value": array({"type": "number", "minimum": -1e6, "maximum": 1e6}, "Location [x, y, z] in metres, rotation [x, y, z] in degrees (Euler XYZ), scale [x, y, z], or a shape key [value].", 1, 3),
+        "value": array({"type": "number", "minimum": -MAX_KEY_VALUE, "maximum": MAX_KEY_VALUE}, "Location [x, y, z] in metres, rotation [x, y, z] in degrees (Euler XYZ), scale [x, y, z], or a shape key [value].", 1, 3),
     },
     ["frame", "value"],
 )
-ROLE = object_schema({"role": string("Role, such as hips or leftUpperLeg.", max_length=64), "bone": string("Bone that plays it.", max_length=63)}, ["role", "bone"])
+ROLE = object_schema({"role": string("Role, such as hips or leftUpperLeg.", max_length=NAME_LENGTH), "bone": string("Bone that plays it.", max_length=ELEMENT_NAME_LENGTH)}, ["role", "bone"])
 GAIT_FIELDS = {
-    "stride": length("Walk and trot: distance covered in one cycle, in metres. Default: from the leg length.", maximum=100.0),
-    "speed": length("Walk and trot: metres per second; sets the cycle length from the stride.", maximum=100.0),
-    "cadence": number("Walk and trot: steps per minute (two steps per cycle); sets the cycle length.", 10.0, 600.0),
+    "stride": length("Walk and trot: distance covered in one cycle, in metres. Default: from the leg length."),
+    "speed": length("Walk and trot: metres per second; sets the cycle length from the stride.", maximum=MAX_SPEED),
+    "cadence": number("Walk and trot: steps per minute (two steps per cycle); sets the cycle length.", LEAST_CADENCE, MAX_CADENCE),
     "root_motion": boolean("Walk and trot: the Root bone travels forward (-Y) by the stride each cycle; false keeps the clip in place.", False),
-    "lift": length("Walk and trot: how high a foot rises in swing, in metres.", maximum=10.0),
-    "bob": number("Walk and trot: how far the hips dip twice per cycle, in metres. Default: what keeps the legs straightest, at most 8 % of the leg.", 0.0, 10.0),
-    "sway": number("Humanoid walk: sideways hip sway in metres.", 0.0, 10.0),
-    "arm_swing": number("Humanoid walk: arm swing in degrees either way.", 0.0, 80.0),
-    "heel_angle": number("Humanoid walk: how far the heel lifts before toe-off, in degrees.", 0.0, 60.0),
+    "lift": length("Walk and trot: how high a foot rises in swing, in metres.", maximum=MAX_RELIEF),
+    "bob": number("Walk and trot: how far the hips dip twice per cycle, in metres. Default: what keeps the legs straightest, at most 8 % of the leg.", 0.0, MAX_RELIEF),
+    "sway": number("Humanoid walk: sideways hip sway in metres.", 0.0, MAX_LENGTH),
+    "arm_swing": number("Humanoid walk: arm swing in degrees either way.", 0.0, QUARTER_TURN),
+    "heel_angle": number("Humanoid walk: how far the heel lifts before toe-off, in degrees.", 0.0, QUARTER_TURN),
 }
 PROP_FIELDS = {
-    "bone": string("Prop presets: the bone to move. Default: the template's lid, wheel or rod.", max_length=63),
+    "bone": string("Prop presets: the bone to move. Default: the template's lid, wheel or rod.", max_length=ELEMENT_NAME_LENGTH),
     "axis": vector3("Prop presets: the hinge, axle or stroke axis. Default: the template's axis."),
-    "angle": number("open and turn: degrees to open or turn (default 100 for open, 90 for turn).", -720.0, 720.0),
-    "turns": number("spin: full turns per clip (default 1).", -100.0, 100.0),
-    "distance": number("pump: stroke in metres along the axis (default 0.1).", -100.0, 100.0),
+    "angle": number("open and turn: degrees to open or turn (default 100 for open, 90 for turn).", -MAX_CLIP_ROTATION, MAX_CLIP_ROTATION),
+    "turns": number("spin: full turns per clip (default 1).", -MAX_SPIN_TURNS, MAX_SPIN_TURNS),
+    "distance": number("pump: stroke in metres along the axis (default 0.1).", -MAX_LENGTH, MAX_LENGTH),
     "loop": boolean("Prop presets: return to the start pose so the clip loops (spin always loops).", True),
 }
 
@@ -84,13 +87,13 @@ def check_timing(args):
     "animation_preset",
     "Animate a rig with a preset clip: walk (humanoid, quadruped), trot, idle, or a prop's open, spin, turn or pump; loops seamlessly, keys every frame.",
     {
-        "armature": string("Armature object, ideally made by rig_template."),
+        "armature": ref(string("Armature object, ideally made by rig_template."), "object", EXISTS),
         "preset": string("Preset clip.", list(PRESETS)),
-        "clip": string("Clip name. Default: the preset name.", max_length=63),
+        "clip": string("Clip name. Default: the preset name.", max_length=ELEMENT_NAME_LENGTH),
         "start": integer("First frame of the clip.", -MAX_FRAME, MAX_FRAME, 1),
-        "frames": integer("Frames in one cycle. Default: from the leg length (walk, trot), 3 s (idle), 2 s (props).", 8, 2400),
+        "frames": integer("Frames in one cycle. Default: from the leg length (walk, trot), 3 s (idle), 2 s (props).", MIN_FRAMES, MAX_FRAMES),
         "rig": string("Rig kind when the armature was not made by rig_template.", ["humanoid", "quadruped"]),
-        "bone_map": array(ROLE, "Roles to bones when the armature was not made by rig_template, or to override some.", 1, 128),
+        "bone_map": array(ROLE, "Roles to bones when the armature was not made by rig_template, or to override some.", 1, MAX_RIG_ROLES),
         **GAIT_FIELDS,
         **PROP_FIELDS,
     },
@@ -178,12 +181,12 @@ def key_values(args, ordered):
     "clip_keys",
     "Key a clip: location, rotation (degrees) or scale of an object or bone, or a shape key's value, at frames, with constant, linear or bezier interpolation.",
     {
-        "clip": string("Clip (action) name; made when new.", max_length=63),
-        "object": string("Object to animate: a mesh, an empty, or an armature with bone."),
-        "bone": string("Bone of the armature to key.", max_length=63),
-        "shape_key": string("Shape key of the mesh to key; channel value.", max_length=63),
+        "clip": string("Clip (action) name; made when new.", max_length=ELEMENT_NAME_LENGTH),
+        "object": ref(string("Object to animate: a mesh, an empty, or an armature with bone."), "object", EXISTS),
+        "bone": string("Bone of the armature to key.", max_length=ELEMENT_NAME_LENGTH),
+        "shape_key": string("Shape key of the mesh to key; channel value.", max_length=ELEMENT_NAME_LENGTH),
         "channel": string("What to key.", list(CHANNELS)),
-        "keys": array(KEY, "Keys in any order; a key on an existing frame replaces it.", 1, 4096),
+        "keys": array(KEY, "Keys in any order; a key on an existing frame replaces it.", 1, MAX_CLIP_KEYS),
         "interpolation": string("Interpolation from each key to the next.", list(INTERPOLATIONS), "bezier"),
     },
     ["clip", "object", "channel", "keys"],
@@ -228,8 +231,8 @@ def close_loop(action):
     "clip_edit",
     "Change a clip: rename it, set its frame range, cyclic playback or interpolation, close it into a seamless loop, or delete it.",
     {
-        "clip": string("Clip name.", max_length=63),
-        "rename": string("New clip name; also the glTF animation name.", max_length=63),
+        "clip": string("Clip name.", max_length=ELEMENT_NAME_LENGTH),
+        "rename": string("New clip name; also the glTF animation name.", max_length=ELEMENT_NAME_LENGTH),
         "frame_start": number("First frame of the clip.", -MAX_FRAME, MAX_FRAME),
         "frame_end": number("Last frame of the clip.", -MAX_FRAME, MAX_FRAME),
         "cyclic": boolean("Play the clip as a cycle in Blender (Cycles modifiers on its curves)."),
@@ -281,7 +284,7 @@ def clip_edit(ctx, args):
 @command(
     "clip_info",
     "List the animation clips: frame range, duration, cyclic flag, animated objects and bones, channels, keys and NLA tracks.",
-    {"clip": string("Only this clip.", max_length=63)},
+    {"clip": string("Only this clip.", max_length=ELEMENT_NAME_LENGTH)},
     mutates=False,
     family="animation",
     intents=("which animations does the scene have", "how long is the walk clip"),
@@ -318,7 +321,7 @@ def rest_all(scene):
     "clip_pose",
     "Show one frame of a clip in the scene, for previews and checks, or put every rig back in its rest pose; exported clips stay as they are.",
     {
-        "clip": string("Clip to play.", max_length=63),
+        "clip": string("Clip to play.", max_length=ELEMENT_NAME_LENGTH),
         "frame": number("Frame to show. Default: the clip's first frame.", -MAX_FRAME, MAX_FRAME),
         "rest": boolean("Stop every clip and return every rig to its rest pose.", False),
     },

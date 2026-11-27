@@ -1,10 +1,14 @@
+import os
+
 import bpy
 
 from ..errors import bad_args
 from ..images import IMAGE_EXTENSIONS, NOT_IMAGES, flipped_green, get_image, load_image, loaded_from
 from ..pbr import DEFAULT_OPTIONS, MAP_KEYS, ORM_ORDERS, assign_colorspaces, build_pbr, check_uv_map, warnings_for
+from ..limits import (EMISSION_STRENGTH, MAP_STRENGTH, MAX_RELIEF, MAX_SCALE_FACTOR, MAX_UV_COORDINATE, PATH_LENGTH,
+                      SMALLEST_TEXTURE_REPEAT, TURN)
 from ..registry import command
-from ..schema import array, number, string
+from ..schema import REPLACES, array, number, ref, string
 
 MAP_LABELS = {
     "base_color": "base colour (sRGB)",
@@ -22,25 +26,36 @@ MAP_LABELS = {
 def map_properties():
     properties = {}
     for key in MAP_KEYS:
-        properties[key] = string(f"Name of a loaded image for the {MAP_LABELS[key]}.")
-        properties[f"{key}_path"] = string(f"Workspace path of an image file for the {MAP_LABELS[key]}.", max_length=1024)
+        properties[key] = ref(string(f"Name of a loaded image for the {MAP_LABELS[key]}."), "image")
+        properties[f"{key}_path"] = string(f"Workspace path of an image file for the {MAP_LABELS[key]}.", max_length=PATH_LENGTH)
     return properties
 
 
 PROPERTIES = dict(
-    {"name": string("Material name; created, or rebuilt when it exists.")},
+    {"name": ref(string("Material name; created, or rebuilt when it exists."), "material", REPLACES)},
     **map_properties(),
     orm_order=string("Channel order of the orm map, red first: o occlusion, r roughness, m metallic.", list(ORM_ORDERS), "orm"),
     normal_convention=string("opengl (+Y, Blender and glTF) or directx (-Y, flipped on load).", ["opengl", "directx"], "opengl"),
-    normal_strength=number("Normal map strength.", 0.0, 10.0, 1.0),
-    height_strength=number("Bump strength of the height map.", 0.0, 10.0, 1.0),
-    height_distance=number("Height in metres of the full 0 to 1 height range.", 0.0, 10.0, 0.01),
-    emission_strength=number("Emission strength.", 0.0, 1000.0, 1.0),
+    normal_strength=number("Normal map strength.", 0.0, MAP_STRENGTH, 1.0),
+    height_strength=number("Bump strength of the height map.", 0.0, MAP_STRENGTH, 1.0),
+    height_distance=number("Height in metres of the full 0 to 1 height range.", 0.0, MAX_RELIEF, 0.01),
+    emission_strength=number("Emission strength.", 0.0, EMISSION_STRENGTH, 1.0),
     uv_map=string("UV map to sample. Default: the mesh's active render UV map."),
-    scale=array({"type": "number", "minimum": 0.001, "maximum": 1000.0}, "Texture repeats along U and V.", 2, 2, [1.0, 1.0]),
-    offset=array({"type": "number", "minimum": -1000.0, "maximum": 1000.0}, "Texture offset along U and V.", 2, 2, [0.0, 0.0]),
-    rotation=number("Texture rotation in degrees.", -360.0, 360.0, 0.0),
+    scale=array({"type": "number", "minimum": SMALLEST_TEXTURE_REPEAT, "maximum": MAX_SCALE_FACTOR}, "Texture repeats along U and V.", 2, 2, [1.0, 1.0]),
+    offset=array({"type": "number", "minimum": -MAX_UV_COORDINATE, "maximum": MAX_UV_COORDINATE}, "Texture offset along U and V.", 2, 2, [0.0, 0.0]),
+    rotation=number("Texture rotation in degrees.", -TURN, TURN, 0.0),
 )
+
+
+def plan_material_pbr(args, state):
+    """Maps given as files load as images named after the file; a DirectX normal map gets a flipped copy name_opengl."""
+    for key in MAP_KEYS:
+        if f"{key}_path" in args:
+            state.add("image", os.path.basename(args[f"{key}_path"]))
+    if args["normal_convention"] == "directx":
+        normal = args.get("normal") or (os.path.basename(args["normal_path"]) if "normal_path" in args else None)
+        if normal is not None:
+            state.add("image", f"{normal}_opengl")
 
 
 @command(
@@ -51,6 +66,7 @@ PROPERTIES = dict(
     family="materials",
     intents=("PBR material from my image maps", "albedo, normal, roughness and ORM textures from files"),
     nearest=(("library_apply", "for Poly Haven textures"),),
+    plan=plan_material_pbr,
 )
 def material_pbr(ctx, args):
     maps = collect_maps(ctx, args)

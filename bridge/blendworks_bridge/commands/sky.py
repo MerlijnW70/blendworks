@@ -2,33 +2,35 @@ import math
 
 from .. import camera_exposure, cloud_forms, sky_sun, sky_world, world_background
 from . import clouds
+from ..limits import (ATMOSPHERE_DENSITY, DATE_LENGTH, HALF_TURN, MAX_WORLD_STRENGTH, QUARTER_TURN, SKY_ALTITUDE,
+                      SMALLEST_SUN_SIZE, SUN_INTENSITY, SUN_SIZE, TIME_LENGTH, TURN, TWILIGHT_DEPTH, UTC_OFFSET)
 from ..registry import command
-from ..schema import number, obj, string
+from ..schema import ENSURES, number, obj, ref, string
 
 EXPOSURE_MODES = ("auto", "keep")
 SUN = obj(
     {
-        "elevation": number("Sun height above the horizon in degrees; below 0 is twilight.", -20.0, 90.0),
-        "azimuth": number("Compass direction of the sun in degrees, clockwise from north (+Y): 90 is east (+X).", 0.0, 360.0),
-        "date": string("Date YYYY-MM-DD for a sun from the calendar.", max_length=10),
-        "time": string("Local clock time HH:MM or HH:MM:SS.", max_length=12),
-        "latitude": number("Latitude in degrees, north positive.", -90.0, 90.0),
-        "longitude": number("Longitude in degrees, east positive.", -180.0, 180.0),
-        "utc_offset": number("Hours the local clock is ahead of UTC. Default: longitude / 15, rounded.", -14.0, 14.0),
+        "elevation": number("Sun height above the horizon in degrees; below 0 is twilight.", -TWILIGHT_DEPTH, QUARTER_TURN),
+        "azimuth": number("Compass direction of the sun in degrees, clockwise from north (+Y): 90 is east (+X).", 0.0, TURN),
+        "date": string("Date YYYY-MM-DD for a sun from the calendar.", max_length=DATE_LENGTH),
+        "time": string("Local clock time HH:MM or HH:MM:SS.", max_length=TIME_LENGTH),
+        "latitude": number("Latitude in degrees, north positive.", -QUARTER_TURN, QUARTER_TURN),
+        "longitude": number("Longitude in degrees, east positive.", -HALF_TURN, HALF_TURN),
+        "utc_offset": number("Hours the local clock is ahead of UTC. Default: longitude / 15, rounded.", -UTC_OFFSET, UTC_OFFSET),
     }
 )
 SUN["description"] = "Where the sun stands: elevation and azimuth, or date, time, latitude and longitude. Default: 45 degrees high in the south."
 SKY_FIELDS = {
     "model": string("Blender's sky model: multiple_scattering (current) or single_scattering (Nishita).", list(sky_world.MODELS), "multiple_scattering"),
     "sun": SUN,
-    "altitude": number("Observer altitude in metres.", 0.0, 60_000.0, 0.0),
-    "air": number("Air (Rayleigh) density; 1 is the standard atmosphere.", 0.0, 10.0, 1.0),
-    "dust": number("Dust and haze (aerosol) density; 1 is a clear day, 3 to 6 hazy.", 0.0, 10.0, 1.0),
-    "ozone": number("Ozone density; 1 is standard.", 0.0, 10.0, 1.0),
-    "sun_size": number("Angular diameter of the sun in degrees.", 0.05, 10.0, 0.545),
-    "sun_intensity": number("Brightness of the sun disc; the lamp follows it.", 0.0, 10.0, 1.0),
-    "strength": number(f"Sky brightness; 1 lights a clear noon at exposure 0 (the sky's own units times {sky_world.SKY_SCALE:g}).", 0.0, 1000.0, 1.0),
-    "lamp": string("Sun lamp to create or update.", default=sky_world.LAMP_DEFAULT),
+    "altitude": number("Observer altitude in metres.", 0.0, SKY_ALTITUDE, 0.0),
+    "air": number("Air (Rayleigh) density; 1 is the standard atmosphere.", 0.0, ATMOSPHERE_DENSITY, 1.0),
+    "dust": number("Dust and haze (aerosol) density; 1 is a clear day, 3 to 6 hazy.", 0.0, ATMOSPHERE_DENSITY, 1.0),
+    "ozone": number("Ozone density; 1 is standard.", 0.0, ATMOSPHERE_DENSITY, 1.0),
+    "sun_size": number("Angular diameter of the sun in degrees.", SMALLEST_SUN_SIZE, SUN_SIZE, 0.545),
+    "sun_intensity": number("Brightness of the sun disc; the lamp follows it.", 0.0, SUN_INTENSITY, 1.0),
+    "strength": number(f"Sky brightness; 1 lights a clear noon at exposure 0 (the sky's own units times {sky_world.SKY_SCALE:g}).", 0.0, MAX_WORLD_STRENGTH, 1.0),
+    "lamp": ref(string("Sun lamp to create or update.", default=sky_world.LAMP_DEFAULT), "object", ENSURES),
     "exposure": string("auto sets the scene exposure for this light; keep leaves it.", EXPOSURE_MODES, "auto"),
 }
 

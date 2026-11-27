@@ -109,21 +109,34 @@ def wheel_path(wheels, normal):
     return [first * u + second * v + normal * heights[0] for u, v in outline]
 
 
-def pin_positions(points, closed, pitch):
-    points = clean_path(points, closed)
-    total = path_length(points, closed)
-    if closed:
-        links = max(4, 2 * round(total / pitch / 2.0))
-        step = total / links
-        count = links
-    else:
-        links = int(total / pitch + 1e-9)
-        if links < 1:
-            raise bad_args("the path is shorter than one chain pitch")
-        step = pitch
-        count = links + 1
-    pins = [point_along(points, closed, step * index)[0] for index in range(count)]
-    return pins, links, step, total
+class ChainRoute:
+    """The links a path holds at a pitch, counted from its length alone, before any pin is placed."""
+
+    def __init__(self, points, closed, pitch):
+        self.points = clean_path(points, closed)
+        self.closed = closed
+        self.pitch = pitch
+        self.total = path_length(self.points, closed)
+        if closed:
+            self.links = max(4, 2 * round(self.total / pitch / 2.0))
+            self.step = self.total / self.links
+            self.count = self.links
+        else:
+            self.links = int(self.total / pitch + 1e-9)
+            if self.links < 1:
+                raise bad_args("the path is shorter than one chain pitch")
+            self.step = pitch
+            self.count = self.links + 1
+
+    def check_links(self, cap):
+        """Exact: links is the count the pins are placed from, taken from the path length alone."""
+        if self.links > cap:
+            raise bad_args(f"pitch {self.pitch:g} m along this {self.total:g} m path makes {self.links} links; the "
+                           f"{cap.key} limit is {cap.plain()} ({cap.reason}) Raise pitch to at least "
+                           f"{self.total / cap.plain():.6g} m or shorten the path.")
+
+    def pins(self):
+        return [point_along(self.points, self.closed, self.step * index)[0] for index in range(self.count)]
 
 
 def element_matrix(a, b, normal):

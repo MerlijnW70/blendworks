@@ -2,6 +2,7 @@ import math
 
 from .errors import bad_args
 from .kit_limits import MAX_PROFILE_POINTS
+from .limits import FEWEST_SIDES, MAX_LENGTH, PROFILE_SEGMENTS
 from .outlines import circle_points, counter_clockwise, drop_repeats, signed_area
 from .schema import integer, length, number, points2, string
 
@@ -12,15 +13,15 @@ def profile_fields():
     return {
         "profile": points2(
             "Closed cross-section as [u, v] points in metres in the section plane; any winding, the last point joins the first.",
-            3,
+            FEWEST_SIDES,
             MAX_PROFILE_POINTS,
         ),
         "preset": string("A named cross-section instead of profile.", PRESETS),
-        "radius": length("preset circle: radius in metres.", maximum=1000.0),
-        "width": length("preset rectangle, rounded_rectangle: size along u in metres.", maximum=1000.0),
-        "height": length("preset rectangle, rounded_rectangle: size along v in metres.", maximum=1000.0),
-        "corner_radius": number("preset rounded_rectangle: corner radius in metres; 0 gives a plain rectangle.", 0.0, 1000.0),
-        "segments": integer("preset circle: points around (default 16); rounded_rectangle: segments per corner (default 4).", 1, 256),
+        "radius": length("preset circle: radius in metres."),
+        "width": length("preset rectangle, rounded_rectangle: size along u in metres."),
+        "height": length("preset rectangle, rounded_rectangle: size along v in metres."),
+        "corner_radius": number("preset rounded_rectangle: corner radius in metres; 0 gives a plain rectangle.", 0.0, MAX_LENGTH),
+        "segments": integer("preset circle: points around (default 16); rounded_rectangle: segments per corner (default 4).", 1, PROFILE_SEGMENTS),
     }
 
 

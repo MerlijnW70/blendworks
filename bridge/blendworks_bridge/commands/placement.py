@@ -1,7 +1,7 @@
 import bpy
 from mathutils import Vector
 
-from ..copies import linked_copies, realized_copy
+from ..copies import child_name, linked_copies, realized_copy
 from ..errors import bad_args
 from ..instancing import (
     circle_placements,
@@ -11,11 +11,13 @@ from ..instancing import (
     point_placements,
 )
 from ..kit_limits import MAX_INSTANCES, MAX_PATH_POINTS
+from ..limits import (FRACTION, HALF_TURN, JITTER_SCALE, MAX_LENGTH, MAX_SCALE_FACTOR, MAX_SEED, ORGAN_INDEX, PAIR,
+                      SMALLEST_ARC, SMALLEST_SCALE_FACTOR, TURN)
 from ..paths import object_curve
 from ..phyllotaxis import CURVES, MODES, Layout, phyllotaxis_layout
 from ..registry import command
 from ..revolve import lathe_data
-from ..schema import array, boolean, described, integer, length, number, obj, point3, points3, string, vector3
+from ..schema import CREATES, array, boolean, described, integer, length, number, obj, point3, points3, ref, string, vector3
 from ..util import get_mesh_object, mesh_counts, require_free_name, vec
 
 PLACEMENT_MODES = ("points", "waypoints", "curve", "edges", "circle", "phyllotaxis")
@@ -24,11 +26,11 @@ CIRCLE = described(
     obj(
         {
             "centre": point3("Circle centre [x, y, z] in metres."),
-            "radius": length("Circle radius in metres.", maximum=10_000.0),
+            "radius": length("Circle radius in metres."),
             "count": integer("Number of instances.", 1, MAX_INSTANCES),
             "normal": vector3("Axis of the circle; instances are placed counter-clockwise around it.", [0.0, 0.0, 1.0]),
-            "start_angle": number("Angle of the first instance in degrees.", -360.0, 360.0, 0.0),
-            "sweep": number("Angle covered in degrees; 360 spaces the instances evenly all the way round, less puts the last one at the end.", 1.0, 360.0, 360.0),
+            "start_angle": number("Angle of the first instance in degrees.", -TURN, TURN, 0.0),
+            "sweep": number("Angle covered in degrees; 360 spaces the instances evenly all the way round, less puts the last one at the end.", SMALLEST_ARC, TURN, 360.0),
         },
         ["centre", "radius", "count"],
     ),
@@ -58,23 +60,23 @@ PHYLLOTAXIS = described(
                 MODES,
                 "disc",
             ),
-            "c": length("disc: scale in metres, organ n at radius c*sqrt(n). cone: the same along the slope from the apex, default fills the slope down to the base edge.", maximum=10_000.0),
-            "divergence": number("Angle in degrees between successive organs; default 137.5.", 0.0, 360.0),
+            "c": length("disc: scale in metres, organ n at radius c*sqrt(n). cone: the same along the slope from the apex, default fills the slope down to the base edge."),
+            "divergence": number("Angle in degrees between successive organs; default 137.5.", 0.0, TURN),
             "golden": boolean("Use the exact golden angle 360 * (1 - 1/phi) = 137.50776 degrees instead of divergence.", False),
-            "radius": length("cylinder, cone, sphere: radius in metres.", maximum=10_000.0),
-            "height": length("cylinder: height reached by the last organ. cone: height of the cone.", maximum=10_000.0),
-            "polar_extent": number("sphere: angle from the top pole to the last organ's band edge, in degrees (default 180 covers the whole sphere, 120 makes a rosette cap).", 1.0, 180.0),
-            "target": string("surface: mesh object of revolution about its own Z axis, scaled uniformly; organs sit on the outer profile."),
-            "start": integer("Index of the first organ; organs are numbered start, start+1, ... Disc radii and every angle follow the index.", 0, 1_000_000, 0),
-            "scale_by_age": age_curve("Scale of each organ from its place in the sequence (first organ to last), multiplying scale.", 0.0001, 1000.0, "Scale"),
-            "tilt_by_age": age_curve("Opening of each organ from its place in the sequence: its X axis lifts towards the surface normal by this many degrees, as petals and scales open. Needs align frame or radial.", -180.0, 180.0, "Angle in degrees"),
+            "radius": length("cylinder, cone, sphere: radius in metres."),
+            "height": length("cylinder: height reached by the last organ. cone: height of the cone."),
+            "polar_extent": number("sphere: angle from the top pole to the last organ's band edge, in degrees (default 180 covers the whole sphere, 120 makes a rosette cap).", SMALLEST_ARC, HALF_TURN),
+            "target": ref(string("surface: mesh object of revolution about its own Z axis, scaled uniformly; organs sit on the outer profile."), "object"),
+            "start": integer("Index of the first organ; organs are numbered start, start+1, ... Disc radii and every angle follow the index.", 0, ORGAN_INDEX, 0),
+            "scale_by_age": age_curve("Scale of each organ from its place in the sequence (first organ to last), multiplying scale.", SMALLEST_SCALE_FACTOR, MAX_SCALE_FACTOR, "Scale"),
+            "tilt_by_age": age_curve("Opening of each organ from its place in the sequence: its X axis lifts towards the surface normal by this many degrees, as petals and scales open. Needs align frame or radial.", -HALF_TURN, HALF_TURN, "Angle in degrees"),
             "jitter": described(
                 obj(
                     {
-                        "amount": number("Position shift as a share of the spacing between organs.", 0.0, 1.0, 0.0),
-                        "rotation": number("Turn about the organ's Z axis, up to this many degrees either way.", 0.0, 180.0, 0.0),
-                        "scale": number("Scale change, up to this share either way.", 0.0, 0.99, 0.0),
-                        "seed": integer("Seed; the same seed gives the same result.", 0, 2**31 - 1, 0),
+                        "amount": number("Position shift as a share of the spacing between organs.", 0.0, FRACTION, 0.0),
+                        "rotation": number("Turn about the organ's Z axis, up to this many degrees either way.", 0.0, HALF_TURN, 0.0),
+                        "scale": number("Scale change, up to this share either way.", 0.0, JITTER_SCALE, 0.0),
+                        "seed": integer("Seed; the same seed gives the same result.", 0, MAX_SEED, 0),
                     },
                     ["seed"],
                 ),
@@ -87,10 +89,10 @@ PHYLLOTAXIS = described(
 )
 
 COMMON = {
-    "name": string("Name of the group (linked copies) or of the realised mesh; copies are named name_000, name_001 and so on.", default="Instances"),
-    "spacing": length("Distance in metres between instances along waypoints, a curve or edges.", maximum=10_000.0),
+    "name": ref(string("Name of the group (linked copies) or of the realised mesh; copies are named name_000, name_001 and so on.", default="Instances"), "object", CREATES),
+    "spacing": length("Distance in metres between instances along waypoints, a curve or edges."),
     "count": integer("Number of instances along waypoints, a curve or edges, spread over its whole length.", 1, MAX_INSTANCES),
-    "offset": number("Distance in metres from the start of the path to the first instance (with spacing).", 0.0, 10_000.0),
+    "offset": number("Distance in metres from the start of the path to the first instance (with spacing).", 0.0, MAX_LENGTH),
     "up": vector3("Direction instances' Z axis leans toward along a path, at the start.", [0.0, 0.0, 1.0]),
     "align": string(
         "none keeps the world axes; frame turns X along the path (or the circle tangent) and Z to the up or normal direction; radial (circle and phyllotaxis) turns X away from the centre.",
@@ -98,9 +100,9 @@ COMMON = {
         "frame",
     ),
     "rotation": vector3("Extra Euler XYZ rotation in degrees applied to every instance in its own axes.", [0.0, 0.0, 0.0]),
-    "scale": length("Scale of every instance.", 1.0, 1000.0),
+    "scale": length("Scale of every instance.", 1.0, MAX_SCALE_FACTOR),
     "rotations": array(vector3("Euler XYZ degrees."), "One extra rotation per instance, replacing rotation.", 1, MAX_INSTANCES),
-    "scales": array({"type": "number", "exclusiveMinimum": 0, "maximum": 1000.0}, "One scale per instance, replacing scale.", 1, MAX_INSTANCES),
+    "scales": array({"type": "number", "exclusiveMinimum": 0, "maximum": MAX_SCALE_FACTOR}, "One scale per instance, replacing scale.", 1, MAX_INSTANCES),
     "realize": boolean("Merge the copies into one real mesh (for export) instead of linked objects.", False),
     "group": boolean("Parent linked copies to an empty named name so they move together.", True),
 }
@@ -164,17 +166,42 @@ def place_copies(ctx, args, mesh, matrices):
     }
 
 
+def planned_count(args):
+    """How many copies the placement makes, or None when it follows from a path length (spacing)."""
+    if "points" in args:
+        return len(args["points"])
+    if "circle" in args:
+        return args["circle"]["count"]
+    if "phyllotaxis" in args:
+        return args["phyllotaxis"]["count"]
+    return args.get("count")
+
+
+def plan_copies(args, state):
+    """Linked copies are objects name_000, name_001, ...; the group empty is name; realize makes only name."""
+    if args["realize"]:
+        return
+    if not args["group"]:
+        state.remove("object", args["name"])
+    count = planned_count(args)
+    if count is None:
+        state.unknown(("object",))
+        return
+    for index in range(count):
+        state.add("object", child_name(args["name"], index))
+
+
 @command(
     "instances",
     "Place linked copies of an object at points, along waypoints, a curve or edge loop, on a circle, or in a golden-angle phyllotaxis; realize merges them.",
     {
         **COMMON,
-        "source": string("Mesh object whose mesh is copied; its own transform is not used."),
+        "source": ref(string("Mesh object whose mesh is copied; its own transform is not used."), "object"),
         "points": points3("Places as [x, y, z] points in metres.", 1, MAX_INSTANCES),
         "normals": points3("One surface normal per point; with align frame the instance's Z axis follows it.", 1, MAX_INSTANCES),
-        "waypoints": points3("Places along a polyline through these points.", 2, MAX_PATH_POINTS),
-        "curve": string("Places along this curve object (one spline), in world space."),
-        "edges": string("Places along the edge loop or edge chain of this mesh object, in world space."),
+        "waypoints": points3("Places along a polyline through these points.", PAIR, MAX_PATH_POINTS),
+        "curve": ref(string("Places along this curve object (one spline), in world space."), "object"),
+        "edges": ref(string("Places along the edge loop or edge chain of this mesh object, in world space."), "object"),
         "closed": boolean("Treat waypoints or a curve as a closed loop."),
         "circle": CIRCLE,
         "phyllotaxis": PHYLLOTAXIS,
@@ -184,6 +211,7 @@ def place_copies(ctx, args, mesh, matrices):
     family="placement",
     intents=("linked copies along a curve, edge loop or waypoints", "copies on a circle or at points", "scatter copies", "sunflower seeds, pine cone scales or a rosette in the golden angle"),
     nearest=(("duplicate", "for one copy"), ("rivet_line", "for rivets between two points")),
+    plan=plan_copies,
 )
 def instances(ctx, args):
     source = get_mesh_object(args["source"])
@@ -211,20 +239,21 @@ def rivet_mesh(name, radius, height):
     "rivet_line",
     "Place a row of rivets or bolts between two points at a spacing or count; uses the given source mesh or a built-in domed rivet head. Convenience over instances.",
     {
-        "name": string("Name of the group (linked copies) or of the realised mesh; copies are named name_000, name_001 and so on.", default="Rivets"),
+        "name": ref(string("Name of the group (linked copies) or of the realised mesh; copies are named name_000, name_001 and so on.", default="Rivets"), "object", CREATES),
         **{key: COMMON[key] for key in ("spacing", "count", "offset", "rotation", "scale", "rotations", "scales", "realize", "group")},
         "start": point3("First rivet position [x, y, z] in metres."),
         "end": point3("Last possible rivet position [x, y, z] in metres."),
-        "source": string("Mesh object to copy as the rivet; default a domed head built from head_radius and head_height."),
+        "source": ref(string("Mesh object to copy as the rivet; default a domed head built from head_radius and head_height."), "object"),
         "normal": vector3("Direction the rivets point (their Z axis); default leaves them upright."),
-        "head_radius": length("Built-in rivet head radius in metres.", 0.008, 1.0),
-        "head_height": length("Built-in rivet head height in metres.", 0.006, 1.0),
+        "head_radius": length("Built-in rivet head radius in metres.", 0.008),
+        "head_height": length("Built-in rivet head height in metres.", 0.006),
     },
     ["start", "end"],
     slow=True,
     family="placement",
     intents=("row of rivets or bolts between two points", "rivets along a seam"),
     nearest=(("instances", "for other patterns"),),
+    plan=plan_copies,
 )
 def rivet_line(ctx, args):
     start, end = Vector(args["start"]), Vector(args["end"])

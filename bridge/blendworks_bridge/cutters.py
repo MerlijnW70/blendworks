@@ -4,7 +4,8 @@ import math
 from mathutils import Vector
 from mathutils.geometry import delaunay_2d_cdt
 
-from .errors import failed
+from .errors import bad_args, failed
+from .limits import MAX_MESH_VERTICES
 from .outlines import inside, orientation, signed_area
 
 CDT_INSIDE_CONSTRAINTS = 1
@@ -89,6 +90,18 @@ def triangulate(loops, extra_edges=()):
     return flat, triangles
 
 
+def check_folds(lines, outline, snap, width):
+    """Lower bound: each fold strictly inside the outline crosses both of its paths from leftmost to rightmost point,
+    except where it lies within snap of a corner, and add_solid makes two vertices of every outline point."""
+    absorbed = sum(lines.count(x - snap, x + snap) for x, _ in outline)
+    least = 4 * (lines.count() - absorbed)
+    if least > MAX_MESH_VERTICES:
+        raise bad_args(f"a {width:g} m wide outline folds {lines.count()} times over the surface, so its cutter needs at "
+                       f"least {least} vertices; the {MAX_MESH_VERTICES.key} limit is {MAX_MESH_VERTICES.plain()} "
+                       f"({MAX_MESH_VERTICES.reason}) Raise the tolerance, make the text or marks smaller, or use a "
+                       "larger radius or a longer path.")
+
+
 def boundary_edges(triangles):
     directed = {(tri[index], tri[(index + 1) % 3]) for tri in triangles for index in range(3)}
     return [(a, b) for a, b in directed if (b, a) not in directed]
@@ -98,7 +111,9 @@ def folded_shape(outline, holes, shift, surface, snap, tolerance):
     loops = [[(x + shift[0], y + shift[1]) for x, y in loop] for loop in [outline] + holes]
     low = min(x for x, _ in loops[0])
     high = max(x for x, _ in loops[0])
-    folds = surface.folds(low, high, tolerance, max(abs(y) for _, y in loops[0]))
+    lines = surface.folds(low, high, tolerance, max(abs(y) for _, y in loops[0]))
+    check_folds(lines, loops[0], snap, high - low)
+    folds = lines.values()
     loops = [folded_loop(loop, folds, snap) for loop in loops]
     return triangulate(loops, fold_segments(loops, folds, snap))
 

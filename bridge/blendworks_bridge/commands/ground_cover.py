@@ -3,22 +3,23 @@ import numpy
 
 from .. import liquid_masks
 from ..cover_contact import contact_shading, write_contact
-from ..cover_kinds import ELEMENT, FORMS, KINDS, element_budget, element_params, make_element, require_free_materials
+from ..cover_kinds import ELEMENT, FORMS, KINDS, MAX_ELEMENT_TRIANGLES, element_budget, element_params, make_element, material_names, require_free_materials
 from ..cover_masks import camera_object
 from ..cover_nodes import points_object, realized_vertices
 from ..cover_plan import plan_cover
-from ..cover_populations import POPULATION, resolved_populations
+from ..cover_populations import KIND_POPULATION, MAX_POPULATIONS, POPULATION, kind_group, merged, resolved_populations
 from ..cover_presets import PRESET_POPULATIONS
 from ..cover_sampling import View, surface_tree
-from ..cover_shading import CONTACT_DEFAULT, CONTACT_FLOOR
+from ..cover_shading import CONTACT_DEFAULT
 from ..errors import bad_args
-from ..limits import MAX_MESH_VERTICES
+from ..limits import (BASE_NAME_LENGTH, MAX_CONTACT_DARKENING, MAX_COVER_INSTANCES, MAX_DENSITY_SCALE, MAX_MESH_VERTICES,
+                      MAX_SEED, MAX_VIEW_CAMERAS, MAX_VIEW_MARGIN)
 from ..registry import command
 from ..scatter_surface import read_surface
-from ..schema import array, boolean, described, integer, length, names, number, point3, string
+from ..schema import CREATES, EXISTS, array, boolean, described, integer, length, names, number, point3, ref, string
 from ..util import get_mesh_object, link_object, require_free_name, vec
 
-MAX_BUDGET = 5_000_000
+MAX_BUDGET = MAX_COVER_INSTANCES
 CARD_BOUNCES = 512
 FORM_LIST = {"geometry": ["geometry"], "cards": ["cards"], "auto": ["geometry", "cards"]}
 
@@ -43,6 +44,12 @@ class ElementSet:
         self.embedded = numpy.array([0.0 if mesh.flat() else 1.0 for mesh in meshes])
 
 
+def plan_ground_element(args, state):
+    """Plan hook: the element's materials are named after it."""
+    for material in material_names(args["name"], args["kind"], args["form"]):
+        state.add("material", material)
+
+
 @command(
     "ground_element",
     "Build one ground-cover element for a meadow or forest floor in metres: a grass clump, tuft, sedge, wildflower, fallen leaf, twig or pebble, within a triangle budget.",
@@ -50,14 +57,15 @@ class ElementSet:
         "kind": string("Element kind.", list(KINDS)),
         "form": string("geometry: real blades, petals and leaves; cards: alpha-mapped cards.", list(FORMS), "geometry"),
         "params": described(ELEMENT, "Element parameters in metres and degrees; each kind takes its own fields and has its own defaults."),
-        "triangles": integer("Triangle budget; the generator fits its detail into it.", 1, 20_000),
-        "seed": integer("Random seed; the same seed gives the same element.", 0, 2**31 - 1, 0),
+        "triangles": integer("Triangle budget; the generator fits its detail into it.", 1, MAX_ELEMENT_TRIANGLES),
+        "seed": integer("Random seed; the same seed gives the same element.", 0, MAX_SEED, 0),
         "wind": boolean("Store the wind colours (see ground_cover) as the active colour attribute.", False),
-        "name": string("Name of the new object; its materials are named after it.", default="GroundElement"),
+        "name": ref(string("Name of the new object; its materials are named after it.", default="GroundElement"), "object", CREATES),
         "location": point3("Where the base of the element goes."),
     },
     ["kind"],
     slow=True,
+    plan=plan_ground_element,
     family="ground_cover",
     intents=("one grass clump, tuft or sedge", "a single wildflower for a meadow", "a dry fallen leaf, twig or pebble for the forest floor"),
     nearest=(("ground_cover", "to cover a whole terrain with many elements"), ("tree_leaves", "for leaves on a tree")),
@@ -130,33 +138,54 @@ def element_holder(ctx, name):
     return holder
 
 
+def plan_ground_cover(args, state):
+    """Plan hook: the empty name, the hidden collection name_elements, and per population (preset and given) the
+    object name_population, its collection, element objects name_population_e000 and on, and its materials."""
+    name = args["name"]
+    state.add("collection", f"{name}_elements")
+    for entry in merged(args.get("preset"), args.get("populations", [])):
+        if "element" not in entry:
+            continue
+        filled = dict(KIND_POPULATION[kind_group(entry["element"])], **entry)
+        prefix = f"{name}_{entry['name']}"
+        state.add("object", prefix)
+        state.add("collection", f"{prefix}_elements")
+        forms = FORM_LIST[filled["form"]]
+        for index in range(len(forms) * filled["variants"]):
+            state.add("object", f"{prefix}_e{index:03d}")
+        for form in forms:
+            for material in material_names(prefix, entry["element"], form):
+                state.add("material", material)
+
+
 @command(
     "ground_cover",
     "Cover a surface with layered ground cover (grass, tufts, sedges, flowers, leaves, twigs, pebbles) as instances: densities per m2, masks, clumps, a camera falloff and an instance budget.",
     {
-        "target": string("Mesh object to cover, in world space (modifiers included)."),
-        "name": string("Name of the empty that holds the populations; each population is an object name_population.", default="GroundCover", max_length=40),
+        "target": ref(string("Mesh object to cover, in world space (modifiers included)."), "object", EXISTS),
+        "name": ref(string("Name of the empty that holds the populations; each population is an object name_population.", default="GroundCover", max_length=BASE_NAME_LENGTH), "object", CREATES),
         "preset": string("Populations to start from: meadow, forest_floor, dry_steppe or lawn; populations of the same name change them.", list(PRESET_POPULATIONS)),
-        "populations": array(POPULATION, "Layers of ground cover.", 1, 16),
-        "density_scale": number("Multiply every density, for a sparser or a test cover.", exclusive_minimum=0.0, maximum=100.0, default=1.0),
-        "obstacles": names("Objects the cover keeps clear of where a population sets avoid: trunks, rocks.", 1, 256),
-        "trees": names("Objects litter gathers under where a population sets under.", 1, 256),
-        "camera": string("Camera whose position is the centre of the density falloff."),
-        "cameras": names("Several cameras: the falloff counts from the nearest, and view_only keeps what any of them sees.", 1, 8),
+        "populations": array(POPULATION, "Layers of ground cover.", 1, MAX_POPULATIONS),
+        "density_scale": number("Multiply every density, for a sparser or a test cover.", exclusive_minimum=0.0, maximum=MAX_DENSITY_SCALE, default=1.0),
+        "obstacles": ref(names("Objects the cover keeps clear of where a population sets avoid: trunks, rocks."), "object", EXISTS),
+        "trees": ref(names("Objects litter gathers under where a population sets under."), "object", EXISTS),
+        "camera": ref(string("Camera whose position is the centre of the density falloff."), "object", EXISTS),
+        "cameras": ref(names("Several cameras: the falloff counts from the nearest, and view_only keeps what any of them sees.", 1, MAX_VIEW_CAMERAS), "object", EXISTS),
         "point": point3("Centre of the density falloff instead of a camera."),
-        "near": length("Full density up to this distance from the camera or point; beyond it the density falls as (near / distance)^2, so each screen area keeps about the same count.", 12.0, 100_000.0),
+        "near": length("Full density up to this distance from the camera or point; beyond it the density falls as (near / distance)^2, so each screen area keeps about the same count.", 12.0),
         "far": length("No elements beyond this distance from the camera or point."),
         "view_only": boolean("Only place elements inside the camera's view.", False),
-        "view_margin": number("view_only: margin around the frame, as a share of its size.", 0.0, 2.0, 0.1),
+        "view_margin": number("view_only: margin around the frame, as a share of its size.", 0.0, MAX_VIEW_MARGIN, 0.1),
         "budget": integer("Most instances in all; when the populations would place more, the near distance shrinks (or, without a camera or point, every density) until they fit.", 1, MAX_BUDGET, 1_000_000),
-        "seed": integer("Random seed; the same seed, surface and settings give the same cover.", 0, 2**31 - 1, 0),
+        "seed": integer("Random seed; the same seed, surface and settings give the same cover.", 0, MAX_SEED, 0),
         "wind": boolean("Give every element the wind colours, an RGBA colour attribute named wind: R flutter, G phase, B main bend, A height share.", False),
         "contact_attribute": string("Point attribute written on the target: the share of ground the cover hides around each vertex, 0 to 1.", default="cover_density"),
-        "darken": number("Darken the target's base colour by up to this share where the cover is full, through contact_attribute: the colour is multiplied by 1 - darken * cover, never below 0.64 (the darkest soil of the CC0 forest-ground photo against its median).", 0.0, 1.0 - CONTACT_FLOOR, CONTACT_DEFAULT),
+        "darken": number("Darken the target's base colour by up to this share where the cover is full, through contact_attribute: the colour is multiplied by 1 - darken * cover, never below 0.64 (the darkest soil of the CC0 forest-ground photo against its median).", 0.0, MAX_CONTACT_DARKENING, CONTACT_DEFAULT),
         "realize": boolean("Realize the instances in the modifier instead of keeping them as instances.", False),
     },
     ["target"],
     slow=True,
+    plan=plan_ground_cover,
     family="ground_cover",
     intents=("grass, wildflowers and leaf litter over terrain", "make a meadow, lawn, dry steppe or forest floor", "millions of grass blades with a camera falloff and an instance budget"),
     nearest=(("scatter", "for a few large objects such as rocks with Poisson spacing"), ("ground_element", "for one element")),

@@ -1,10 +1,13 @@
 import bpy
 
 from ..errors import bad_args
+from ..kit_limits import MAX_SEGMENTS
+from ..limits import (ASPECT_RATIO, FEWEST_BRANCH_SIDES, FEWEST_RING_SEGMENTS_PER_METRE, LEAST_BARK_GRAIN, FEWEST_TRIANGLES, FRACTION, LINEAR_DENSITY, MAX_LENGTH,
+                      MAX_RELIEF, RELIEF_SHARE, RINGS_BETWEEN_NODES, SWELLING, TRIANGLE_BUDGET)
 from ..meshdata import MeshData
 from ..noise_stack import STACK_FIELDS
 from ..registry import command
-from ..schema import boolean, described, integer, length, number, obj, string, validate, vector3
+from ..schema import CREATES, ENSURES, boolean, described, integer, length, number, obj, ref, string, validate, vector3
 from ..topology import mesh_report
 from ..tree_bark import build_bark, triangle_count
 from ..tree_rings import BARK, ROOTS, WOOD
@@ -15,15 +18,15 @@ from ..tree_twigs import twig_cards
 from ..util import get_object, link_object, mesh_counts, require_free_name
 from .procedural import ensure_material
 
-MAX_BUDGET = 2_000_000
+MAX_BUDGET = TRIANGLE_BUDGET
 DEFAULT_MIN_RADIUS = 0.004
 
 RING_SEGMENTS = described(
     obj(
         {
-            "min": integer("Fewest segments around a branch; thin twigs get this many.", 5, 64, 6),
-            "max": integer("Most segments around a branch; the trunk gets at most this many.", 5, 128, 32),
-            "per_metre": number("Segments per metre of circumference, so the count follows the radius between min and max.", 1.0, 1000.0, 24.0),
+            "min": integer("Fewest segments around a branch; thin twigs get this many.", FEWEST_BRANCH_SIDES, MAX_SEGMENTS, 6),
+            "max": integer("Most segments around a branch; the trunk gets at most this many.", FEWEST_BRANCH_SIDES, MAX_SEGMENTS, 32),
+            "per_metre": number("Segments per metre of circumference, so the count follows the radius between min and max.", FEWEST_RING_SEGMENTS_PER_METRE, LINEAR_DENSITY, 24.0),
         }
     ),
     "Segments around each branch by its radius, between a minimum and a maximum.",
@@ -32,9 +35,9 @@ RING_SEGMENTS = described(
 FLARE = described(
     obj(
         {
-            "amount": number("Extra radius at the trunk base as a share of the skeleton radius (Weber-Penn flare: 1 + amount (100^(1 - z / height) - 1) / 99).", 0.0, 3.0, 0.5),
-            "height": length("Height of the flare above the base in metres. Default 3 times the base radius.", maximum=100.0),
-            "lobes": number("Share of the flare gathered towards the roots, so the base swells into buttresses.", 0.0, 1.0, 0.6),
+            "amount": number("Extra radius at the trunk base as a share of the skeleton radius (Weber-Penn flare: 1 + amount (100^(1 - z / height) - 1) / 99).", 0.0, SWELLING, 0.5),
+            "height": length("Height of the flare above the base in metres. Default 3 times the base radius.", maximum=MAX_RELIEF),
+            "lobes": number("Share of the flare gathered towards the roots, so the base swells into buttresses.", 0.0, FRACTION, 0.6),
         }
     ),
     "Trunk-base flare.",
@@ -43,43 +46,43 @@ FLARE = described(
 ROOT_FLARE = described(
     obj(
         {
-            "amount": number("Extra radius of each root where it leaves the trunk, as a share of its skeleton radius, fading as (1 - s / length)^2.", 0.0, 4.0, 1.5),
-            "length": length("Distance along the root over which the swelling fades, in metres. Default 3 times the base radius.", maximum=100.0),
+            "amount": number("Extra radius of each root where it leaves the trunk, as a share of its skeleton radius, fading as (1 - s / length)^2.", 0.0, SWELLING, 1.5),
+            "length": length("Distance along the root over which the swelling fades, in metres. Default 3 times the base radius."),
         }
     ),
     "Swelling of the roots where they join the trunk base.",
 )
 
 NOISE_FIELDS = {
-    "amplitude": number("Largest bark displacement in metres; 0 turns it off.", 0.0, 1.0, 0.05),
-    "share": number("Bound on the displacement as a share of the local branch radius, so twigs are not torn.", 0.0, 0.5, 0.12),
-    "grain": number("How much longer the bark features are along the branch than around it.", 1.0, 10.0, 3.0),
+    "amplitude": number("Largest bark displacement in metres; 0 turns it off.", 0.0, MAX_RELIEF, 0.05),
+    "share": number("Bound on the displacement as a share of the local branch radius, so twigs are not torn.", 0.0, RELIEF_SHARE, 0.12),
+    "grain": number("How much longer the bark features are along the branch than around it.", LEAST_BARK_GRAIN, ASPECT_RATIO, 3.0),
     **STACK_FIELDS,
-    "scale": length("Wavelength of the first octave in metres.", 0.4, 100.0),
-    "hurst": number("Hurst exponent of the octaves.", 0.0, 1.0, 0.55),
+    "scale": length("Wavelength of the first octave in metres.", 0.4),
+    "hurst": number("Hurst exponent of the octaves.", 0.0, FRACTION, 0.55),
 }
 
 BARK_NOISE = described(obj(NOISE_FIELDS), "A noise_displace stack in metres along the vertex normals, faded to zero at the junctions.")
 
 FIELDS = {
-    "name": string("Object that carries a tree skeleton: the grow_tree preview, or an object imported from a glb."),
-    "mesh_name": string("Name of the bark mesh. Default name_bark."),
+    "name": ref(string("Object that carries a tree skeleton: the grow_tree preview, or an object imported from a glb."), "object"),
+    "mesh_name": ref(string("Name of the bark mesh. Default name_bark."), "object", CREATES),
     "junction": string("skin joins the generalised cylinders where they meet with an exact manifold union and keeps their rings and UVs; voxel rebuilds the union by a voxel remesh, smooths the junctions and maps the UVs back.", ["skin", "voxel"], "skin"),
-    "voxel_size": length("voxel: cell size in metres. Default 0.3 times the thinnest kept radius.", maximum=10.0),
+    "voxel_size": length("voxel: cell size in metres. Default 0.3 times the thinnest kept radius."),
     "ring_segments": RING_SEGMENTS,
-    "rings_per_segment": integer("Most rings between two skeleton nodes; rings sit about one edge apart along the branch.", 1, 32, 3),
+    "rings_per_segment": integer("Most rings between two skeleton nodes; rings sit about one edge apart along the branch.", 1, RINGS_BETWEEN_NODES, 3),
     "flare": FLARE,
     "root_flare": ROOT_FLARE,
-    "collar": number("Branch collar: a branch swells by up to this share where it leaves a thicker parent, less the closer their radii.", 0.0, 2.0, 0.5),
+    "collar": number("Branch collar: a branch swells by up to this share where it leaves a thicker parent, less the closer their radii.", 0.0, SWELLING, 0.5),
     "bark_noise": BARK_NOISE,
-    "min_radius": number(f"Twigs thinner than this, in metres, are dropped (or made into cards); a branch cut short ends in fresh wood. Default {DEFAULT_MIN_RADIUS}, or the species' (birch, pine and willow keep their fine twigs).", 0.0, 10.0),
+    "min_radius": number(f"Twigs thinner than this, in metres, are dropped (or made into cards); a branch cut short ends in fresh wood. Default {DEFAULT_MIN_RADIUS}, or the species' (birch, pine and willow keep their fine twigs).", 0.0, MAX_LENGTH),
     "twigs": string("drop leaves out the twigs under min_radius; cards adds them as crossed bark cards in a separate object name_twigs.", ["drop", "cards"], "drop"),
-    "lod": integer("Target triangle budget; ring density (and if needed min_radius, or the voxel size) is chosen to meet it within 10 %.", 100, MAX_BUDGET),
+    "lod": integer("Target triangle budget; ring density (and if needed min_radius, or the voxel size) is chosen to meet it within 10 %.", FEWEST_TRIANGLES, MAX_BUDGET),
     "keep_skeleton": boolean("Keep the skeleton object (hidden) after building the mesh; false deletes it. The mesh carries the skeleton either way.", True),
     "view": vector3("Direction from the tree towards the viewer; UV seams go on the far side.", [0.0, -1.0, 0.0]),
-    "bark_material": string("Material for the bark; created when missing. Default bark, or species_bark (the species bark preset) for a tree grown from a species preset."),
-    "wood_material": string("Material for cut ends; created when missing.", default="fresh_wood"),
-    "root_material": string("Material for the roots; created when missing.", default="roots"),
+    "bark_material": ref(string("Material for the bark; created when missing. Default bark, or species_bark (the species bark preset) for a tree grown from a species preset."), "material", ENSURES),
+    "wood_material": ref(string("Material for cut ends; created when missing.", default="fresh_wood"), "material", ENSURES),
+    "root_material": ref(string("Material for the roots; created when missing.", default="roots"), "material", ENSURES),
 }
 
 PLACEHOLDERS = {BARK: (0.12, 0.09, 0.07, 1.0), WOOD: (0.62, 0.48, 0.3, 1.0), ROOTS: (0.1, 0.075, 0.055, 1.0)}
@@ -151,6 +154,19 @@ def face_materials_used(mesh):
     return values
 
 
+def plan_tree_mesh(args, state):
+    """The bark object defaults to name_bark, with name_bark_twigs for twig cards; the default bark material follows
+    the tree's species, which only the scene knows."""
+    bark = args.get("mesh_name") or f"{args['name']}_bark"
+    state.add("object", bark)
+    if args["twigs"] == "cards":
+        state.add("object", f"{bark}_twigs")
+    if not args["keep_skeleton"]:
+        state.remove("object", args["name"])
+    if "bark_material" not in args:
+        state.unknown(("material",))
+
+
 @command(
     "tree_mesh",
     "Build one closed, UV-mapped bark mesh from a tree skeleton: generalised cylinders joined at smooth junctions, a flared base and roots, bark noise, lod budget.",
@@ -165,6 +181,7 @@ def face_materials_used(mesh):
         "game-ready tree mesh within a triangle budget",
     ),
     nearest=(("grow_tree", "to grow the skeleton first"), ("sweep", "for one tube along a path"), ("tree_leaves", "to add the foliage")),
+    plan=plan_tree_mesh,
 )
 def tree_mesh(ctx, args):
     source = get_object(args["name"])

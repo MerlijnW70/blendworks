@@ -1,10 +1,10 @@
 from .errors import bad_args
 from .graph_catalog import INPUT_KEYS, KINDS, SETTING_KEYS
+from .limits import MAX_RAMP_STOPS
 from .nodes import Graph
 
 VALUE_KEYS = ("number", "vector", "color", "boolean")
 SETTING_TYPES = {"ENUM": "text", "STRING": "text", "BOOLEAN": "boolean", "INT": "number", "FLOAT": "number"}
-MAX_RAMP_STOPS = 32
 
 
 def socket_names(sockets):

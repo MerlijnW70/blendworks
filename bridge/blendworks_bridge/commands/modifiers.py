@@ -2,18 +2,19 @@ import bmesh
 import bpy
 
 from ..cutmarks import mark_cut_edges, mark_cutter, unmark
-from ..errors import bad_args, failed, not_found
-from ..limits import MAX_MESH_VERTICES
+from ..errors import BridgeError, bad_args, failed, not_found
+from ..limits import FRACTION, MAX_LENGTH, MAX_MESH_VERTICES, MAX_NAMES, MAX_SCALE_FACTOR, PAIR
 from ..meshdata import MeshData
+from ..modifier_growth import check_growth, input_shape
 from ..modifier_specs import SPECS, configure, kind_schemas
 from ..registry import command
-from ..schema import array, boolean, integer, length, names, number, string, vector3
+from ..schema import array, boolean, integer, length, names, number, ref, string, vector3
 from ..slivers import SLIVER_ASPECT
 from ..topology import describe_problems, mesh_report
 from ..util import check_vertex_cap, get_mesh_object, get_object, mesh_counts
 from .clean import clean_object
 
-OBJECT = string("Mesh object.")
+OBJECT = ref(string("Mesh object."), "object")
 APPLY = boolean("Apply the modifier to the mesh now instead of keeping it live.", False)
 
 
@@ -28,6 +29,7 @@ def finish_modifier(ctx, obj, modifier, kind, apply):
     name = modifier.name
     if apply:
         apply_modifiers(ctx, obj, [name])
+        check_vertex_cap(len(obj.data.vertices))
         return {"name": obj.name, "modifier": name, "applied": True, "mesh": mesh_counts(obj.data)}
     evaluated = evaluated_counts(ctx, obj)
     if evaluated["faces"] == 0 and len(obj.data.polygons) > 0:
@@ -156,20 +158,26 @@ def dispose_cutters(ctx, cutters, action):
                 bpy.data.meshes.remove(data)
 
 
+def plan_boolean(args, state):
+    if args["cutter_action"] == "delete":
+        for name in args["cutters"] if "cutters" in args else [args["cutter"]]:
+            state.remove("object", name)
+
+
 @command(
     "boolean",
     "Combine a mesh with one cutter or a list of cutters (unioned first, one exact operation): union, difference or intersect; cleans the result like clean_mesh, and can refuse a non-manifold result.",
     {
         "name": OBJECT,
-        "cutter": string("The other mesh object."),
-        "cutters": names("Several other mesh objects, joined by union first and applied in one operation with the exact solver.", 1, 1000),
+        "cutter": ref(string("The other mesh object."), "object"),
+        "cutters": ref(names("Several other mesh objects, joined by union first and applied in one operation with the exact solver.", 1, MAX_NAMES), "object"),
         "operation": string("Boolean operation.", ["union", "difference", "intersect"], "difference"),
         "solver": string("exact is robust, float is fast, manifold needs closed meshes; auto measures the meshes and picks manifold when all are closed, else exact. The result says which and why.", ["exact", "float", "manifold", "auto"], "exact"),
         "cutter_action": string("What to do with the cutters: hide them, keep them shown, or delete them (needs apply).", ["hide", "keep", "delete"], "hide"),
         "apply": boolean("Apply the boolean to the mesh now instead of keeping it live.", True),
         "manifold": boolean("Refuse and roll back when the result is not a closed manifold.", False),
         "clean": boolean("After applying, run clean_mesh: merge close vertices, dissolve degenerate faces, retriangulate slivers, drop collinear vertices, fix normals.", True),
-        "merge_distance": length("Clean merge distance in metres.", 0.00001, 1.0),
+        "merge_distance": length("Clean merge distance in metres.", 0.00001, MAX_LENGTH),
     },
     ["name"],
     slow=True,
@@ -177,6 +185,7 @@ def dispose_cutters(ctx, cutters, action):
     family="mesh_edit",
     intents=("cut holes with cutter objects", "subtract, union or intersect meshes", "drill many holes in one operation"),
     nearest=(("join", "to combine objects without merging geometry"), ("engrave", "to cut text")),
+    plan=plan_boolean,
 )
 def boolean_command(ctx, args):
     obj = get_mesh_object(args["name"])
@@ -242,8 +251,8 @@ def pick_solver(asked, obj, cutters, multiple):
     {
         "name": OBJECT,
         "axes": array({"type": "string", "enum": ["x", "y", "z"]}, "Axes to mirror across.", 1, 3, ["x"]),
-        "mirror_object": string("Mirror across this object's origin and axes instead of the mesh's own."),
-        "merge_distance": length("Merge seam vertices within this many metres.", 0.001, 10.0),
+        "mirror_object": ref(string("Mirror across this object's origin and axes instead of the mesh's own."), "object"),
+        "merge_distance": length("Merge seam vertices within this many metres.", 0.001, MAX_LENGTH),
         "bisect": boolean("Cut away the geometry on the far side before mirroring.", False),
         "apply": APPLY,
     },
@@ -280,8 +289,8 @@ def get_object_for_modifier(name, obj):
     "Repeat a mesh count times, each copy shifted by relative_offset (times its size) or a fixed offset in metres.",
     {
         "name": OBJECT,
-        "count": integer("Total number of copies.", 2, 1000),
-        "relative_offset": vector3("Shift per copy as a factor of the mesh's size.", [1.0, 0.0, 0.0], -1000.0, 1000.0),
+        "count": integer("Total number of copies; the copies together stay under the mesh_vertices limit.", PAIR, MAX_MESH_VERTICES),
+        "relative_offset": vector3("Shift per copy as a factor of the mesh's size.", [1.0, 0.0, 0.0], -MAX_SCALE_FACTOR, MAX_SCALE_FACTOR),
         "offset": vector3("Shift per copy in metres; replaces relative_offset."),
         "merge": boolean("Merge touching vertices of neighbouring copies.", False),
         "apply": APPLY,
@@ -308,8 +317,8 @@ def array_command(ctx, args):
     "Give a surface thickness in metres.",
     {
         "name": OBJECT,
-        "thickness": number("Thickness in metres; not zero.", -1000.0, 1000.0),
-        "offset": number("-1 grows inward, 1 outward, 0 both ways.", -1.0, 1.0, -1.0),
+        "thickness": number("Thickness in metres; not zero.", -MAX_LENGTH, MAX_LENGTH),
+        "offset": number("-1 grows inward, 1 outward, 0 both ways.", -FRACTION, FRACTION, -1.0),
         "even": boolean("Keep the thickness even at corners.", True),
         "apply": APPLY,
     },
@@ -331,7 +340,7 @@ def solidify(ctx, args):
     "Reduce the face count to a ratio of the current count.",
     {
         "name": OBJECT,
-        "ratio": number("Share of faces to keep, above 0 and up to 1.", None, 1.0, exclusive_minimum=0.0),
+        "ratio": number("Share of faces to keep, above 0 and up to 1.", None, FRACTION, exclusive_minimum=0.0),
         "apply": APPLY,
     },
     ["name", "ratio"],
@@ -368,8 +377,14 @@ def add_modifier_command(ctx, args):
     if len(given) != 1:
         raise bad_args(f"give exactly one modifier field out of: {', '.join(SPECS)}")
     kind = given[0]
+    shape = input_shape(ctx, obj, SPECS[kind]["blender"], args["apply"])
     modifier = obj.modifiers.new(name=args.get("modifier_name", kind.title()), type=SPECS[kind]["blender"])
     configure(obj, kind, args[kind], modifier)
+    try:
+        check_growth(shape, modifier)
+    except BridgeError:
+        obj.modifiers.remove(modifier)
+        raise
     result = finish_modifier(ctx, obj, modifier, kind, args["apply"])
     result["kind"] = kind
     return result

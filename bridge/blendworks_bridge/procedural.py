@@ -1,6 +1,7 @@
 import random
 
 from .errors import bad_args
+from .limits import BUMP_DEPTH, MAX_SCALE_FACTOR, MAX_SEED, SMALLEST_FEATURE_MULTIPLIER
 from .schema import integer, number, obj, string
 
 SEED_RANGE = 100.0
@@ -27,10 +28,10 @@ class Preset:
 
 def common_properties(bump):
     return {
-        "scale": number("Feature size multiplier; 2 makes every feature half as big.", 0.01, 100.0, 1.0),
-        "seed": integer("Random seed; another seed gives another variation.", 0, 1_000_000, 0),
+        "scale": number("Feature size multiplier; 2 makes every feature half as big.", SMALLEST_FEATURE_MULTIPLIER, MAX_SCALE_FACTOR, 1.0),
+        "seed": integer("Random seed; another seed gives another variation.", 0, MAX_SEED, 0),
         "coordinates": string("object: texture follows the object's local space in metres; uv: the UV map, one unit per UV square.", ["object", "uv"], "object"),
-        "bump": number("Bump depth in millimetres.", 0.0, 50.0, bump),
+        "bump": number("Bump depth in millimetres.", 0.0, BUMP_DEPTH, bump),
     }
 
 

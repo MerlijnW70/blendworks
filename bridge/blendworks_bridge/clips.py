@@ -4,13 +4,14 @@ import re
 import bpy
 from bpy_extras import anim_utils
 
+from . import limits
 from .errors import bad_args, not_found
 from .util import rounded
 
 INTERPOLATIONS = ("constant", "linear", "bezier")
 CLIP_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 _.\-]{0,62}$")
 MAX_CLIPS = 256
-MAX_FRAME = 100_000
+MAX_FRAME = limits.MAX_FRAME
 CYCLES = "CYCLES"
 
 

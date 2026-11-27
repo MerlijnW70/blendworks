@@ -7,59 +7,86 @@ from mathutils.bvhtree import BVHTree
 
 from .. import liquid_cavity, liquid_container, liquid_extras, liquid_foam, liquid_grid, liquid_mesh, liquid_presets, liquid_shader
 from ..errors import BridgeError, bad_args
+from ..limits import (BASE_NAME_LENGTH, FRACTION, LEAST_CAVITY_VOXELS, LEAST_CONTACT_ANGLE, MAX_BUBBLES,
+                      MAX_CAVITY_VOXELS, MAX_CONTACT_ANGLE, MAX_COORDINATE, MAX_DRIPS, MAX_LIQUID_TILT,
+                      MAX_LIQUID_VOLUME, MAX_RELIEF, MAX_SEED, MAX_SPILL_AREA, MAX_WALL_GAP, TURN)
 from ..registry import command
-from ..schema import boolean, described, integer, length, number, obj, point3, string, vector3
+from ..schema import CREATES, EXISTS, boolean, described, integer, length, number, obj, point3, ref, string, vector3
 from ..util import get_mesh_object, link_object, require_free_name, vec
 
 LITRE = 0.001
 GAP = 1e-4
 DEPOSIT = "lq_deposit"
-MAX_VOXELS = 160
+MAX_VOXELS = MAX_CAVITY_VOXELS
 TILT = described(obj({
-    "angle": number("Tilt of the liquid surface from level, in degrees, as in a sloshing or accelerating container.", 0.0, 60.0),
-    "direction": number("Compass direction the surface rises towards, in degrees.", 0.0, 360.0, 0.0),
+    "angle": number("Tilt of the liquid surface from level, in degrees, as in a sloshing or accelerating container.", 0.0, MAX_LIQUID_TILT),
+    "direction": number("Compass direction the surface rises towards, in degrees.", 0.0, TURN, 0.0),
 }), "Tilt the liquid's surface, as in a sloshing or accelerating container.")
 SPILL = described(obj({
     "point": point3("Centre of the spill; it rests on the surface below."),
-    "area": length("Area of the spill's footprint in square metres.", None, 1000.0),
-    "surface": string("Object the spill lies on. Default: whatever is below the point."),
-    "contact_angle": number("Contact angle on the surface in degrees; with the capillary length it sets the thickness. Default: the preset's.", 1.0, 179.0),
+    "area": length("Area of the spill's footprint in square metres.", None, MAX_SPILL_AREA),
+    "surface": ref(string("Object the spill lies on. Default: whatever is below the point."), "object", EXISTS),
+    "contact_angle": number("Contact angle on the surface in degrees; with the capillary length it sets the thickness. Default: the preset's.", LEAST_CONTACT_ANGLE, MAX_CONTACT_ANGLE),
 }, ["point", "area"]), "A spilled puddle of the liquid with a footprint of the given area, as thick as gravity and the contact angle make it.")
 POUR = described(obj({
     "start": point3("Where the stream leaves the lip."),
     "velocity": vector3("Initial velocity of the liquid in m/s, at least 0.05 m/s (default 0.3 m/s straight down)."),
-    "radius": length("Radius of the stream at the lip in metres.", 0.004, 0.2),
+    "radius": length("Radius of the stream at the lip in metres.", 0.004),
 }, ["start"]), "A free-falling stream from a lip down to the first surface it meets, narrowing as it speeds up.")
 DRIPS = described(obj({
-    "count": integer("Number of drips on the outside of the wall.", 1, 64, 3),
-    "band": length("Height below the rim where drips sit, in metres.", 0.04, 10.0),
+    "count": integer("Number of drips on the outside of the wall.", 1, MAX_DRIPS, 3),
+    "band": length("Height below the rim where drips sit, in metres.", 0.04, MAX_RELIEF),
 }, []), "Drops running down the outside of the container below its rim, longer for thicker liquids.")
+
+
+def plan_liquid_fill(args, state):
+    """Plan hook: the liquid's material (name, or name_preset when taken), its parts name_foam, name_bubbles,
+    name_drips and name_pour with their materials, and the spill (name_spill beside a container, else name)."""
+    name, preset = args["name"], args["preset"]
+    if "container" in args:
+        state.add("material", f"{name}_{preset}" if state.has("material", name) else name)
+        entry = liquid_presets.preset(preset)
+        if args.get("foam", (entry.get("foam") or {}).get("height", 0.0)) > 0.0:
+            state.add("object", f"{name}_foam")
+            state.add("material", f"{name}_foam")
+        if args.get("bubbles", 120 if entry.get("bubbles") else 0) > 0:
+            state.add("object", f"{name}_bubbles")
+            state.add("material", f"{name}_bubble")
+        for part in ("drips", "pour"):
+            if part in args:
+                state.add("object", f"{name}_{part}")
+    if "spill" in args:
+        spill = f"{name}_spill" if "container" in args else name
+        film = f"{spill}_film" if "container" in args else spill
+        state.add("object", spill)
+        state.add("material", f"{film}_{preset}" if state.has("material", film) else film)
 
 
 @command(
     "liquid_fill",
     "Fill a glass, bottle, cup, bowl, pan, bucket or tank with liquid to a level or volume in litres: meniscus, tilt, a thin gap to the wall, foam, drips, pour stream, spills.",
     {
-        "container": string("Container mesh, open or closed; its inner wall is found by voxels."),
+        "container": ref(string("Container mesh, open or closed; its inner wall is found by voxels."), "object", EXISTS),
         "preset": string("material_liquid preset.", list(liquid_presets.PRESETS), "water_fresh"),
-        "name": string("Name of the liquid object; parts get suffixes (_foam, _drips, _pour, _spill, _bubbles).", default="Liquid", max_length=60),
-        "level": number("Flat surface height (world z) away from the wall.", -100_000.0, 100_000.0),
-        "volume": length("Volume of liquid in litres.", None, 1_000_000.0),
-        "fill": number("Share of the container's capacity, 0 to 1.", 0.0, 1.0),
+        "name": ref(string("Name of the liquid object; parts get suffixes (_foam, _drips, _pour, _spill, _bubbles).", default="Liquid", max_length=BASE_NAME_LENGTH), "object", CREATES),
+        "level": number("Flat surface height (world z) away from the wall.", -MAX_COORDINATE, MAX_COORDINATE),
+        "volume": length("Volume of liquid in litres.", None, MAX_LIQUID_VOLUME),
+        "fill": number("Share of the container's capacity, 0 to 1.", 0.0, FRACTION),
         "tilt": TILT,
-        "gap": number("Distance between the liquid and the inner wall in metres, so refraction renders through two separate surfaces.", 0.0, 0.01, GAP),
+        "gap": number("Distance between the liquid and the inner wall in metres, so refraction renders through two separate surfaces.", 0.0, MAX_WALL_GAP, GAP),
         "meniscus": boolean("Raise the surface at the wall by the capillary rise of the preset (or depress it for a contact angle over 90 degrees).", True),
-        "voxels": integer("Voxels across the container's largest side to find its cavity; doubled once by itself when the walls are too thin for it.", 16, MAX_VOXELS, 56),
+        "voxels": integer("Voxels across the container's largest side to find its cavity; doubled once by itself when the walls are too thin for it.", LEAST_CAVITY_VOXELS, MAX_VOXELS, 56),
         "glass": boolean("Give the container a glass material whose shadows let light through.", False),
-        "foam": number("Foam head height in metres (beer has one by default; 0 for none).", 0.0, 1.0),
-        "bubbles": integer("Gas bubbles in the liquid (carbonated presets have 120 by default; 0 for none).", 0, 5000),
+        "foam": number("Foam head height in metres (beer has one by default; 0 for none).", 0.0, MAX_RELIEF),
+        "bubbles": integer("Gas bubbles in the liquid (carbonated presets have 120 by default; 0 for none).", 0, MAX_BUBBLES),
         "drips": DRIPS,
         "pour": POUR,
         "spill": SPILL,
-        "seed": integer("Seed of foam, bubbles, drips and spill outline.", 0, 2**31 - 1, 0),
+        "seed": integer("Seed of foam, bubbles, drips and spill outline.", 0, MAX_SEED, 0),
     },
     [],
     slow=True,
+    plan=plan_liquid_fill,
     family="liquids",
     intents=("fill a glass with water or wine", "half a litre of milk in a jug", "beer with a foam head", "spilled coffee puddle on a table", "honey pouring from a spoon"),
     nearest=(("liquid_body", "for lakes, rivers, the ocean and puddles in terrain"), ("material_liquid", "for only the material")),

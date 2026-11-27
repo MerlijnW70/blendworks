@@ -2,7 +2,8 @@ from mathutils import Vector
 
 from ..errors import bad_args, not_found
 from ..registry import command
-from ..schema import number, string, vector3
+from ..limits import ELEMENT_NAME_LENGTH, FRACTION, MAX_RELIEF
+from ..schema import number, ref, string, vector3
 from ..util import get_mesh_object, rounded
 
 MAX_SHAPE_KEYS = 128
@@ -26,12 +27,12 @@ def group_weights(obj, name):
     "shape_key_add",
     "Add a shape key (morph target) from offsets: a world-space displacement and a push along the normals in metres, weighted by a vertex group.",
     {
-        "name": string("Mesh object."),
-        "key": string("Shape key name, such as blink or smile.", max_length=63),
+        "name": ref(string("Mesh object."), "object"),
+        "key": string("Shape key name, such as blink or smile.", max_length=ELEMENT_NAME_LENGTH),
         "vertex_group": string("Weights of the offset. Default: every vertex fully."),
         "offset": vector3("Displacement [x, y, z] in world metres.", [0.0, 0.0, 0.0]),
-        "normal": number("Push along each vertex normal in metres; negative pulls in.", -100.0, 100.0, 0.0),
-        "value": number("Starting value of the key.", 0.0, 1.0, 0.0),
+        "normal": number("Push along each vertex normal in metres; negative pulls in.", -MAX_RELIEF, MAX_RELIEF, 0.0),
+        "value": number("Starting value of the key.", 0.0, FRACTION, 0.0),
     },
     ["name", "key"],
     family="animation",

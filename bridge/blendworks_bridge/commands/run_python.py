@@ -13,6 +13,11 @@ from ..registry import command
 from ..schema import string
 
 
+def plan_run_python(args, state):
+    """Arbitrary code may make, rename or remove any datablock."""
+    state.unknown()
+
+
 @command(
     "run_python",
     "DANGEROUS: run arbitrary Python inside Blender; set result to return a JSON value. Off unless --allow-python.",
@@ -24,6 +29,7 @@ from ..schema import string
     family="python",
     intents=("arbitrary Python as a last resort",),
     nearest=(("find_tools", "to find a built-in tool first"),),
+    plan=plan_run_python,
 )
 def run_python(ctx, args):
     namespace = {"bpy": bpy, "bmesh": bmesh, "mathutils": mathutils, "result": None, "__name__": "blendworks_run_python"}

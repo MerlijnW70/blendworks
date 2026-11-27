@@ -3,6 +3,8 @@ import math
 import numpy
 from mathutils import Matrix
 
+from .errors import bad_args
+from .kit_limits import MAX_INSTANCES
 from .meshdata import MeshData
 from .tree_axes import heights_from_tips
 from .tree_frames import first_normal, reflect
@@ -52,6 +54,24 @@ def along_path(normal, previous, position, points, directions, segment):
     return normal
 
 
+def side_leaf_count(total, density):
+    """Exact: leaves sit at (index + 0.5) / density while that is below total; the kept indices are a prefix."""
+    if density <= 0.0:
+        return 0
+    most = int(math.floor(total * density + 0.5))
+    count = max(0, min(most, math.ceil(total * density - 0.5)))
+    while count > 0 and (count - 0.5) / density >= total:
+        count -= 1
+    while count < most and (count + 0.5) / density < total:
+        count += 1
+    return count
+
+
+def chain_length(skeleton, chain):
+    lengths = numpy.linalg.norm(numpy.diff(skeleton.positions[chain].astype(float), axis=0), axis=1)
+    return float(numpy.cumsum(lengths)[-1]) if (lengths > EPSILON).any() else None
+
+
 def chain_leaves(skeleton, chain, height, density, tip_leaves, divergence, phase, chain_index):
     points = skeleton.positions[chain].astype(float)
     radii = skeleton.radii[chain].astype(float)
@@ -63,9 +83,8 @@ def chain_leaves(skeleton, chain, height, density, tip_leaves, divergence, phase
     directions = steps / numpy.maximum(lengths, EPSILON)[:, None]
     along = numpy.concatenate([[0.0], numpy.cumsum(lengths)])
     total = float(along[-1])
-    count = int(math.floor(total * density + 0.5))
-    places = [(index + 0.5) / density for index in range(count) if (index + 0.5) / density < total] if density > 0 else []
-    count = len(places)
+    count = side_leaf_count(total, density)
+    places = [(index + 0.5) / density for index in range(count)]
     places += [total] * tip_leaves
     leaves = []
     normal = None
@@ -113,17 +132,32 @@ def leaf_matrix(leaf, angle, sun, factor, roll, scale):
     return matrix
 
 
+def check_leaf_count(skeleton, bearing):
+    """Exact: every bearing chain gets side_leaf_count side leaves plus its tip leaves, as chain_leaves places them."""
+    total = 0
+    for _, chain, _, tips, density in bearing:
+        length = chain_length(skeleton, chain)
+        if length is not None:
+            total += side_leaf_count(length, density) + tips
+    if total > MAX_INSTANCES:
+        raise bad_args(f"{total} leaves; the {MAX_INSTANCES.key} limit is {MAX_INSTANCES.plain()} ({MAX_INSTANCES.reason}) "
+                       "Lower density, tip_leaves or orders.")
+
+
 def place_leaves(skeleton, args):
     rng = numpy.random.default_rng(args["seed"])
     sun = numpy.asarray(args["align"]["sun"], dtype=float)
     sun = sun / max(numpy.linalg.norm(sun), EPSILON)
     leaves = []
     child_count = numpy.bincount(skeleton.parents[1:], minlength=skeleton.count)
+    bearing = []
     for index, chain, _, height in shoot_chains(skeleton):
         tips = args["tip_leaves"] if child_count[chain[-1]] == 0 else 0
         density = args["density"] if height <= args["orders"] else 0.0
-        if tips == 0 and density == 0.0:
-            continue
+        if tips != 0 or density != 0.0:
+            bearing.append((index, chain, height, tips, density))
+    check_leaf_count(skeleton, bearing)
+    for index, chain, height, tips, density in bearing:
         phase = float(rng.uniform(0.0, 360.0))
         leaves.extend(chain_leaves(skeleton, chain, min(height, args["orders"]), density, tips, args["divergence"], phase, index))
     jitter = args["jitter"]

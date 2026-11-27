@@ -1,5 +1,8 @@
 from ..builder import finish_shape
-from ..kit_limits import MAX_PROFILE_POINTS
+from ..kit_limits import MAX_PROFILE_POINTS, MAX_SEGMENTS
+from ..limits import (ASPECT_RATIO, CURVE_DISTANCE, FEWEST_ROUND_STEPS, FEWEST_SIDES, FRACTION, LIP_FLARE,
+                      LIP_THICKENING, RELIEF_SHARE, RIBS as RIB_COUNT, SHORTEST_LIP, SMALLEST_ASPECT_RATIO, SMALLEST_CURVE_DISTANCE,
+                      SMALLEST_WHORL_EXPANSION, WHORL_EXPANSION, WHORL_TRANSLATION, WHORLS)
 from ..registry import command
 from ..schema import described, integer, length, number, obj, points2, string
 from ..shell import shell_data
@@ -10,8 +13,8 @@ from .shapes import with_shape_fields
 RIBS = described(
     obj(
         {
-            "count": integer("Ribs per whorl.", 1, 64),
-            "height": number("Rib height as a fraction of the local aperture size.", exclusive_minimum=0, maximum=0.5),
+            "count": integer("Ribs per whorl.", 1, RIB_COUNT),
+            "height": number("Rib height as a fraction of the local aperture size.", exclusive_minimum=0, maximum=RELIEF_SHARE),
         },
         ["count", "height"],
     ),
@@ -21,8 +24,8 @@ RIBS = described(
 SPIRAL_RIDGES = described(
     obj(
         {
-            "count": integer("Ridges around the profile.", 1, 64),
-            "height": number("Ridge height as a fraction of the local aperture size.", exclusive_minimum=0, maximum=0.5),
+            "count": integer("Ridges around the profile.", 1, RIB_COUNT),
+            "height": number("Ridge height as a fraction of the local aperture size.", exclusive_minimum=0, maximum=RELIEF_SHARE),
         },
         ["count", "height"],
     ),
@@ -32,9 +35,9 @@ SPIRAL_RIDGES = described(
 LIP = described(
     obj(
         {
-            "flare": number("Growth of the profile at the aperture, as a fraction of the aperture size.", exclusive_minimum=0, maximum=2.0, default=0.3),
-            "length": number("How much of the last whorl the lip takes, in turns.", 0.02, 1.0, 0.15),
-            "thicken": number("Extra wall at the rim as a fraction of thickness; used with thickness.", 0.0, 4.0, 0.5),
+            "flare": number("Growth of the profile at the aperture, as a fraction of the aperture size.", exclusive_minimum=0, maximum=LIP_FLARE, default=0.3),
+            "length": number("How much of the last whorl the lip takes, in turns.", SHORTEST_LIP, FRACTION, 0.15),
+            "thicken": number("Extra wall at the rim as a fraction of thickness; used with thickness.", 0.0, LIP_THICKENING, 0.5),
         }
     ),
     "A flared, thickened rim at the aperture.",
@@ -46,16 +49,16 @@ LIP = described(
     "Grow a closed Raup shell: a generating curve swept along a logarithmic helico-spiral, with ribs, ridges, a lip and an optional wall.",
     with_shape_fields(
         {
-            "W": number("Expansion of the radius per whorl: the radius one whorl further on is W times larger.", 1.05, 100.0, 1.6),
-            "D": number("Distance of the generating curve from the axis: its inner distance divided by its outer distance.", 0.01, 0.95, 0.3),
-            "T": number("Translation along the axis per whorl, as a fraction of the distance of the curve's centre from the axis; 0 gives a flat coil, and the shell winds downwards with the apex at the top.", 0.0, 20.0, 1.0),
-            "turns": number("Whorls from the apex to the aperture.", exclusive_minimum=0, maximum=24.0, default=4.0),
+            "W": number("Expansion of the radius per whorl: the radius one whorl further on is W times larger.", SMALLEST_WHORL_EXPANSION, WHORL_EXPANSION, 1.6),
+            "D": number("Distance of the generating curve from the axis: its inner distance divided by its outer distance.", SMALLEST_CURVE_DISTANCE, CURVE_DISTANCE, 0.3),
+            "T": number("Translation along the axis per whorl, as a fraction of the distance of the curve's centre from the axis; 0 gives a flat coil, and the shell winds downwards with the apex at the top.", 0.0, WHORL_TRANSLATION, 1.0),
+            "turns": number("Whorls from the apex to the aperture.", exclusive_minimum=0, maximum=WHORLS, default=4.0),
             "profile": string("Generating curve: circle, ellipse (with aspect) or points.", SHAPES, "circle"),
-            "aspect": number("ellipse: height divided by width of the curve in the plane through the axis. Default 0.6.", 0.05, 20.0),
-            "points": points2("points: the curve as [u, v] points in metres, u away from the axis and v along it, at the aperture; any winding.", 3, MAX_PROFILE_POINTS),
-            "profile_segments": integer("circle, ellipse: points on the curve; a multiple of 4. Default 24.", 8, 256),
+            "aspect": number("ellipse: height divided by width of the curve in the plane through the axis. Default 0.6.", SMALLEST_ASPECT_RATIO, ASPECT_RATIO),
+            "points": points2("points: the curve as [u, v] points in metres, u away from the axis and v along it, at the aperture; any winding.", FEWEST_SIDES, MAX_PROFILE_POINTS),
+            "profile_segments": integer("circle, ellipse: points on the curve; a multiple of 4. Default 24.", FEWEST_ROUND_STEPS, MAX_PROFILE_POINTS),
             "size": length("Size of the final aperture in metres: the larger extent of the generating curve at the end (before a lip). Default 0.1, or the extent of the given points."),
-            "steps": integer("Rings per whorl.", 8, 360, 48),
+            "steps": integer("Rings per whorl; whorls times rings stays under the path_points limit.", FEWEST_ROUND_STEPS, MAX_SEGMENTS, 48),
             "ribs": RIBS,
             "spiral_ridges": SPIRAL_RIDGES,
             "lip": LIP,

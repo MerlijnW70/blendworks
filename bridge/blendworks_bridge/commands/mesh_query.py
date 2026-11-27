@@ -5,12 +5,13 @@ from mathutils import Matrix, Vector
 
 from ..errors import bad_args
 from ..kit_limits import DEFAULT_QUERY_PAGE, MAX_QUERY_PAGE
+from ..limits import MAX_INDICES, MAX_LENGTH, MAX_SCALE_FACTOR
 from ..registry import command
-from ..schema import indices, integer, number, point3, string, vector3
+from ..schema import indices, integer, number, point3, ref, string, vector3
 from ..selection import EXTENDED_FACE_PROPERTIES, face_islands, has_selector, select_faces, world_area
 from ..util import EditMesh, bounds_dict, bounds_of, get_mesh_object, mesh_counts, rounded, vec
 
-OBJECT = string("Mesh object.")
+OBJECT = ref(string("Mesh object."), "object")
 
 
 def selection_fields(extra):
@@ -104,11 +105,11 @@ def selected_vertices(bm, obj, args):
     "Move, rotate and scale the vertices of selected faces (same selectors as extrude) or listed vertices about a pivot, in world space: scale, then rotate, then move.",
     selection_fields(
         {
-            "vertices": indices("Vertex indices to transform instead of a face selection."),
+            "vertices": indices("Vertex indices to transform instead of a face selection.", 1, MAX_INDICES),
             "move": vector3("Translation in metres.", [0.0, 0.0, 0.0]),
-            "push": number("Extra translation in metres along the selection's average face normal.", -10_000.0, 10_000.0, 0.0),
+            "push": number("Extra translation in metres along the selection's average face normal.", -MAX_LENGTH, MAX_LENGTH, 0.0),
             "rotate": vector3("Euler XYZ rotation in degrees about the pivot.", [0.0, 0.0, 0.0]),
-            "scale": vector3("Scale factors per world axis about the pivot; none may be zero.", [1.0, 1.0, 1.0], -1000.0, 1000.0),
+            "scale": vector3("Scale factors per world axis about the pivot; none may be zero.", [1.0, 1.0, 1.0], -MAX_SCALE_FACTOR, MAX_SCALE_FACTOR),
             "pivot": point3("Pivot [x, y, z] in metres; default the centre of the selection's bounds."),
         }
     ),

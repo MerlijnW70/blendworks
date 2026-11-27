@@ -1,9 +1,10 @@
 import bpy
 
 from ..errors import bad_args, not_found
+from ..limits import EMISSION_STRENGTH, FRACTION
 from ..materials_info import PRINCIPLED_INPUTS, material_summary, principled_node
 from ..registry import command
-from ..schema import color, number, string
+from ..schema import ENSURES, color, number, ref, string
 from ..selection import FACE_PROPERTIES, select_faces
 from ..util import EditMesh, get_object
 
@@ -21,13 +22,13 @@ DEFAULTS = {
     "add_material",
     "Create a Principled BSDF material, or update the given values of an existing one.",
     {
-        "name": string("Material name."),
+        "name": ref(string("Material name; created when missing, else the given values are updated."), "material", ENSURES),
         "base_color": color("Base colour, linear RGB or RGBA from 0 to 1 (default 0.8 grey)."),
-        "metallic": number("Metallic, 0 to 1 (default 0).", 0.0, 1.0),
-        "roughness": number("Roughness, 0 to 1 (default 0.5).", 0.0, 1.0),
+        "metallic": number("Metallic, 0 to 1 (default 0).", 0.0, FRACTION),
+        "roughness": number("Roughness, 0 to 1 (default 0.5).", 0.0, FRACTION),
         "emission_color": color("Emission colour, linear RGB from 0 to 1 (default black).", allow_alpha=False),
-        "emission_strength": number("Emission strength (default 0).", 0.0, 1000.0),
-        "alpha": number("Opacity, 0 to 1 (default 1).", 0.0, 1.0),
+        "emission_strength": number("Emission strength (default 0).", 0.0, EMISSION_STRENGTH),
+        "alpha": number("Opacity, 0 to 1 (default 1).", 0.0, FRACTION),
     },
     ["name"],
     family="materials",
@@ -64,7 +65,7 @@ def add_material(ctx, args):
 @command(
     "assign_material",
     "Give an object a material: the whole object, or only the selected faces of a mesh.",
-    dict({"name": string("Object."), "material": string("Material name.")}, **FACE_PROPERTIES),
+    dict({"name": ref(string("Object."), "object"), "material": ref(string("Material name."), "material")}, **FACE_PROPERTIES),
     ["name", "material"],
     family="materials",
     intents=("put a material on an object", "assign a material to faces"),
@@ -103,7 +104,7 @@ def assign_material(ctx, args):
     "Paint a colour into a mesh's colour attribute, on all faces or the selected ones.",
     dict(
         {
-            "name": string("Mesh object."),
+            "name": ref(string("Mesh object."), "object"),
             "color": color("Colour, RGB or RGBA from 0 to 1."),
             "layer": string("Colour attribute name; created (white) when missing.", default="Color"),
         },

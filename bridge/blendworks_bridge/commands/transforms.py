@@ -2,7 +2,8 @@ from mathutils import Matrix, Vector
 
 from ..errors import bad_args
 from ..registry import command
-from ..schema import boolean, string, vector3
+from ..limits import MAX_SCALE_FACTOR
+from ..schema import boolean, ref, string, vector3
 from ..util import bounds_of, compensate_children, degrees, euler_from_degrees, evaluated_points, get_mesh_object
 from ..util import get_object, vec
 
@@ -13,10 +14,10 @@ TRANSFORMABLE_DATA = ("MESH", "CURVE")
     "transform",
     "Set (or with relative, add to) an object's location in metres, rotation in degrees and scale.",
     {
-        "name": string("Object to transform."),
+        "name": ref(string("Object to transform."), "object"),
         "location": vector3("Location in metres."),
         "rotation": vector3("Euler XYZ rotation in degrees."),
-        "scale": vector3("Scale factors; none may be zero.", minimum=-1000.0, maximum=1000.0),
+        "scale": vector3("Scale factors; none may be zero.", minimum=-MAX_SCALE_FACTOR, maximum=MAX_SCALE_FACTOR),
         "relative": boolean("Add location and rotation, and multiply scale, instead of setting them.", False),
     },
     ["name"],
@@ -53,7 +54,7 @@ def transform(ctx, args):
     "apply_transform",
     "Bake an object's location, rotation and/or scale into its mesh so they become zero, zero and one.",
     {
-        "name": string("Mesh or curve object."),
+        "name": ref(string("Mesh or curve object."), "object"),
         "location": boolean("Apply the location.", False),
         "rotation": boolean("Apply the rotation.", True),
         "scale": boolean("Apply the scale.", True),
@@ -88,7 +89,7 @@ def apply_transform(ctx, args):
     "set_origin",
     "Move an object's origin without moving its geometry: to its bounds centre, its bottom centre, or the cursor.",
     {
-        "name": string("Mesh object."),
+        "name": ref(string("Mesh object."), "object"),
         "to": string(
             "geometry_centre: centre of the bounds (modifiers included); bottom_centre: centre of the bounds in X and Y at the lowest Z "
             "in world space; cursor: the 3D cursor or point.",

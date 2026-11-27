@@ -1,5 +1,6 @@
 import numpy
 
+from .limits import FRACTION, LACUNARITY, MAX_LENGTH, MAX_SEED, OCTAVES, SMALLEST_LACUNARITY
 from .noise import BASES, basis_value
 from .schema import integer, length, number, string
 
@@ -8,16 +9,16 @@ OFFSET_SPAN = 512.0
 WARP_STREAMS = 3
 
 STACK_FIELDS = {
-    "seed": integer("Random seed; the same seed gives the same field.", 0, 2**31 - 1, 0),
+    "seed": integer("Random seed; the same seed gives the same field.", 0, MAX_SEED, 0),
     "basis": string("perlin is smooth gradient noise; worley_f1 is the distance to the nearest feature point (pits); worley_f2_minus_f1 is zero on cell borders (cracks, flagstones).", list(BASES), "perlin"),
-    "scale": length("Wavelength of the first octave in metres, measured in world space.", 1.0, 10_000.0),
-    "octaves": integer("Number of octaves, each at lacunarity times the frequency of the last.", 1, 12, 4),
-    "lacunarity": number("Frequency ratio between octaves.", 1.0, 8.0, 2.0),
-    "hurst": number("Hurst exponent 0..1: each octave's amplitude is lacunarity^-hurst of the last (0.5 rough, 1 smooth); at lacunarity 2 the gain is 2^-hurst.", 0.0, 1.0, 0.7),
+    "scale": length("Wavelength of the first octave in metres, measured in world space.", 1.0, MAX_LENGTH),
+    "octaves": integer("Number of octaves, each at lacunarity times the frequency of the last.", 1, OCTAVES, 4),
+    "lacunarity": number("Frequency ratio between octaves.", SMALLEST_LACUNARITY, LACUNARITY, 2.0),
+    "hurst": number("Hurst exponent 0..1: each octave's amplitude is lacunarity^-hurst of the last (0.5 rough, 1 smooth); at lacunarity 2 the gain is 2^-hurst.", 0.0, FRACTION, 0.7),
     "mode": string("fbm sums the noise; ridged sums ridge_offset - |noise| (crests); billow sums |noise| (rounded lumps).", list(MODES), "fbm"),
-    "ridge_offset": number("ridged: the value of a crest before scaling, 0..1; the octave term is ridge_offset - |noise|.", 0.0, 1.0, 1.0),
-    "warp": number("Domain warp in metres: the lookup point moves by warp times a second fBm, at most this far on each axis.", 0.0, 10_000.0, 0.0),
-    "warp_octaves": integer("Octaves of the warp fBm.", 1, 8, 2),
+    "ridge_offset": number("ridged: the value of a crest before scaling, 0..1; the octave term is ridge_offset - |noise|.", 0.0, FRACTION, 1.0),
+    "warp": number("Domain warp in metres: the lookup point moves by warp times a second fBm, at most this far on each axis.", 0.0, MAX_LENGTH, 0.0),
+    "warp_octaves": integer("Octaves of the warp fBm.", 1, OCTAVES, 2),
 }
 
 

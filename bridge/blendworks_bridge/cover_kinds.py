@@ -6,13 +6,17 @@ from .cover_flowers import flower_cards, flower_geometry
 from .cover_litter import leaf_cards, leaf_geometry, pebble_cards, pebble_geometry, twig_cards, twig_geometry
 from .cover_shading import preset_material
 from .errors import bad_args
+from .limits import (FRACTION, HALF_TURN, LEAST_PETALS, MAX_BASE_LEAVES, MAX_CLUMP_BLADES, MAX_ELEMENT_TRIANGLES as ELEMENT_TRIANGLES,
+                     MAX_LEAF_ASPECT, MAX_LENGTH, MAX_PEBBLE_ELONGATION, MAX_PEBBLE_FLATNESS, MAX_PETALS, MAX_SIDE_SHOOTS, QUARTER_TURN,
+                     SHORTEST_LEAF, SMALLEST_ASPECT_RATIO, SMALLEST_BLADE_WIDTH, SMALLEST_ELEMENT_SIZE,
+                     SMALLEST_PLANT_PART)
 from .schema import array, color, integer, number, obj
 
 KINDS = ("grass", "tuft", "sedge", "flower", "twig", "leaf", "pebble")
 FORMS = ("geometry", "cards")
 BLADE_KINDS = ("grass", "tuft", "sedge")
 LITTER_KINDS = ("twig", "leaf", "pebble")
-MAX_ELEMENT_TRIANGLES = 20_000
+MAX_ELEMENT_TRIANGLES = ELEMENT_TRIANGLES
 CARD_BLADE_SHARE = 0.45
 BLADE_BUMP = 0.6
 TIP_GAIN = (2.1, 1.65, 1.0)
@@ -23,36 +27,36 @@ def pair(description, low, high):
 
 
 ELEMENT_FIELDS = {
-    "blades": integer("grass, tuft, sedge: blades in one clump.", 1, 400),
-    "height": pair("grass, tuft, sedge, flower: shortest and tallest height in metres.", 0.001, 5.0),
-    "width": number("grass, tuft, sedge: blade width at the root in metres.", 0.0002, 0.1),
-    "taper": number("grass, tuft, sedge: how much the width shrinks towards the tip, 0 to 1.", 0.0, 1.0),
-    "curvature": number("grass, tuft, sedge: extra bend at the tip in quarter turns, 0 straight to 1 arching over.", 0.0, 1.0),
-    "lean": number("grass, tuft, sedge: largest outward lean of a blade from vertical in degrees.", 0.0, 80.0),
-    "spread": number("grass, tuft, sedge: radius of the clump base in metres.", 0.0, 0.5),
-    "twist": number("grass, tuft, sedge: largest twist of a blade from root to tip in degrees.", 0.0, 180.0),
-    "fold": number("grass, tuft, sedge: V fold along the midrib as a share of the half width (sedges are folded).", 0.0, 1.0),
-    "dry_tips": number("grass, tuft, sedge: share of blades with a dry tip, 0 to 1.", 0.0, 1.0),
-    "dry_length": pair("grass, tuft, sedge: shortest and longest dry tip as a share of the blade.", 0.0, 1.0),
-    "petals": integer("flower: petals, placed at the golden angle.", 3, 40),
-    "petal_length": number("flower: petal length in metres.", 0.001, 0.2),
-    "petal_width": number("flower: petal width in metres.", 0.0005, 0.1),
-    "centre_radius": number("flower: radius of the disc in the middle in metres.", 0.0005, 0.1),
-    "cup": number("flower: how far the petals rise from the disc plane in degrees.", -60.0, 80.0),
-    "head_tilt": number("flower: largest tilt of the head from the stem direction in degrees.", 0.0, 90.0),
-    "stem_width": number("flower: stem diameter in metres.", 0.0005, 0.05),
-    "leaves": integer("flower: leaves at the base.", 0, 8),
-    "leaf_width": number("flower: base leaf width in metres.", 0.0005, 0.05),
-    "length": pair("twig, leaf: shortest and longest length in metres.", 0.002, 3.0),
-    "thickness": number("twig: radius of the main twig in metres.", 0.0005, 0.1),
-    "branches": integer("twig: most side shoots.", 0, 6),
-    "aspect": number("leaf: width over length.", 0.05, 1.5),
-    "curl": number("leaf: how far the edges curl up, 0 to 1.", 0.0, 1.0),
-    "arch": number("leaf: how far the midrib arches, 0 to 1.", 0.0, 1.0),
-    "size": pair("pebble: smallest and largest radius in metres.", 0.001, 1.0),
-    "flatness": number("pebble: how flat, 0 round to 0.9 flat.", 0.0, 0.9),
-    "elongation": number("pebble: how long, 0 round to 2.", 0.0, 2.0),
-    "roughness": number("pebble: lumpiness of the outline, 0 to 1.", 0.0, 1.0),
+    "blades": integer("grass, tuft, sedge: blades in one clump.", 1, MAX_CLUMP_BLADES),
+    "height": pair("grass, tuft, sedge, flower: shortest and tallest height in metres.", SMALLEST_ELEMENT_SIZE, MAX_LENGTH),
+    "width": number("grass, tuft, sedge: blade width at the root in metres.", SMALLEST_BLADE_WIDTH, MAX_LENGTH),
+    "taper": number("grass, tuft, sedge: how much the width shrinks towards the tip, 0 to 1.", 0.0, FRACTION),
+    "curvature": number("grass, tuft, sedge: extra bend at the tip in quarter turns, 0 straight to 1 arching over.", 0.0, FRACTION),
+    "lean": number("grass, tuft, sedge: largest outward lean of a blade from vertical in degrees.", 0.0, QUARTER_TURN),
+    "spread": number("grass, tuft, sedge: radius of the clump base in metres.", 0.0, MAX_LENGTH),
+    "twist": number("grass, tuft, sedge: largest twist of a blade from root to tip in degrees.", 0.0, HALF_TURN),
+    "fold": number("grass, tuft, sedge: V fold along the midrib as a share of the half width (sedges are folded).", 0.0, FRACTION),
+    "dry_tips": number("grass, tuft, sedge: share of blades with a dry tip, 0 to 1.", 0.0, FRACTION),
+    "dry_length": pair("grass, tuft, sedge: shortest and longest dry tip as a share of the blade.", 0.0, FRACTION),
+    "petals": integer("flower: petals, placed at the golden angle.", LEAST_PETALS, MAX_PETALS),
+    "petal_length": number("flower: petal length in metres.", SMALLEST_ELEMENT_SIZE, MAX_LENGTH),
+    "petal_width": number("flower: petal width in metres.", SMALLEST_PLANT_PART, MAX_LENGTH),
+    "centre_radius": number("flower: radius of the disc in the middle in metres.", SMALLEST_PLANT_PART, MAX_LENGTH),
+    "cup": number("flower: how far the petals rise from the disc plane in degrees.", -QUARTER_TURN, QUARTER_TURN),
+    "head_tilt": number("flower: largest tilt of the head from the stem direction in degrees.", 0.0, QUARTER_TURN),
+    "stem_width": number("flower: stem diameter in metres.", SMALLEST_PLANT_PART, MAX_LENGTH),
+    "leaves": integer("flower: leaves at the base.", 0, MAX_BASE_LEAVES),
+    "leaf_width": number("flower: base leaf width in metres.", SMALLEST_PLANT_PART, MAX_LENGTH),
+    "length": pair("twig, leaf: shortest and longest length in metres.", SHORTEST_LEAF, MAX_LENGTH),
+    "thickness": number("twig: radius of the main twig in metres.", SMALLEST_PLANT_PART, MAX_LENGTH),
+    "branches": integer("twig: most side shoots.", 0, MAX_SIDE_SHOOTS),
+    "aspect": number("leaf: width over length.", SMALLEST_ASPECT_RATIO, MAX_LEAF_ASPECT),
+    "curl": number("leaf: how far the edges curl up, 0 to 1.", 0.0, FRACTION),
+    "arch": number("leaf: how far the midrib arches, 0 to 1.", 0.0, FRACTION),
+    "size": pair("pebble: smallest and largest radius in metres.", SMALLEST_ELEMENT_SIZE, MAX_LENGTH),
+    "flatness": number("pebble: how flat, 0 round to 0.9 flat.", 0.0, MAX_PEBBLE_FLATNESS),
+    "elongation": number("pebble: how long, 0 round to 2.", 0.0, MAX_PEBBLE_ELONGATION),
+    "roughness": number("pebble: lumpiness of the outline, 0 to 1.", 0.0, FRACTION),
     "color": color("Main colour, linear RGB: the blade body, the twig bark, the leaf or the pebble.", None, False),
     "dry_color": color("grass, tuft, sedge: colour of the dry tips, linear RGB.", None, False),
     "petal_color": color("flower: petal colour, linear RGB.", None, False),

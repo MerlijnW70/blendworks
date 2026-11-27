@@ -1,10 +1,12 @@
 from .. import liquid_light, liquid_presets, liquid_shader
 from ..errors import bad_args
+from ..limits import (ATTENUATION, CONCENTRATION, FRACTION, GLOW_TEMPERATURE, INDEX_OF_REFRACTION, MAX_NAMES,
+                      SMALLEST_GLOW_TEMPERATURE, VACUUM_IOR)
 from ..registry import command
-from ..schema import array, color, length, names, number, string
+from ..schema import REPLACES, array, color, length, names, number, ref, string
 from ..util import get_object
 
-RGB = {"type": "number", "minimum": 0.0, "maximum": 1_000_000.0}
+RGB = {"type": "number", "minimum": 0.0, "maximum": ATTENUATION}
 OVERRIDES = ("ior", "absorption", "scattering", "concentration", "roughness", "temperature", "crust", "color")
 
 
@@ -53,27 +55,33 @@ def describe_entry(entry):
     return report
 
 
+def plan_material_liquid(args, state):
+    if "name" not in args:
+        state.add("material", args["preset"])
+
+
 @command(
     "material_liquid",
     "Physically based liquid material: water (fresh, sea, muddy), wine, beer, oil, milk, juice, coffee, paint, honey, syrup, mud, lava and molten metal.",
     {
         "preset": string("Liquid preset.", list(liquid_presets.PRESETS)),
-        "name": string("Material name; created, or rebuilt when it exists. Default: the preset name."),
-        "objects": names("Objects to give the material.", 1, 256),
-        "ior": number("Index of refraction.", 1.0, 4.0),
+        "name": ref(string("Material name; created, or rebuilt when it exists. Default: the preset name."), "material", REPLACES),
+        "objects": ref(names("Objects to give the material.", 1, MAX_NAMES), "object"),
+        "ior": number("Index of refraction.", VACUUM_IOR, INDEX_OF_REFRACTION),
         "absorption": array(RGB, "Absorption coefficient per metre, red, green, blue.", 3, 3),
         "scattering": array(RGB, "Scattering coefficient per metre, red, green, blue.", 3, 3),
-        "concentration": number("Multiply absorption and scattering, as diluting (below 1) or concentrating the liquid.", 0.0, 100.0),
-        "roughness": number("Surface roughness.", 0.0, 1.0),
+        "concentration": number("Multiply absorption and scattering, as diluting (below 1) or concentrating the liquid.", 0.0, CONCENTRATION),
+        "roughness": number("Surface roughness.", 0.0, FRACTION),
         "color": color("Opaque liquids (paint, mud): the diffuse colour.", allow_alpha=False),
-        "temperature": number("Lava and molten metal: core temperature in degrees Celsius.", 400.0, 3000.0),
-        "crust": number("Lava and molten metal: share of the surface under cool crust, 0 to 1.", 0.0, 1.0),
-        "crust_scale": length("Lava and molten metal: size of the crust plates in metres.", 0.4, 1000.0),
+        "temperature": number("Lava and molten metal: core temperature in degrees Celsius.", SMALLEST_GLOW_TEMPERATURE, GLOW_TEMPERATURE),
+        "crust": number("Lava and molten metal: share of the surface under cool crust, 0 to 1.", 0.0, FRACTION),
+        "crust_scale": length("Lava and molten metal: size of the crust plates in metres.", 0.4),
     },
     ["preset"],
     family="liquids",
     intents=("water material with refraction and depth colour", "red wine or milk material", "glowing lava with a dark crust", "honey or oil material"),
     nearest=(("liquid_fill", "to fill a container with liquid"), ("liquid_body", "for lakes, rivers, the ocean and puddles")),
+    plan=plan_material_liquid,
 )
 def material_liquid(ctx, args):
     entry = resolved(args)

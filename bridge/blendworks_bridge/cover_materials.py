@@ -1,5 +1,6 @@
 from .natural import leaf_shape, leaf_veins, tone
 from .procedural import Preset, preset_vector
+from .limits import FEWEST_VEIN_PAIRS, FRACTION, LEAST_CARD_BLADES, MAX_CARD_BLADES, VEIN_PAIRS
 from .schema import boolean, color, integer, number, string
 
 LITTER_SHAPES = ("none", "leaf", "twig", "pebble")
@@ -8,7 +9,7 @@ RIB_LIGHT = 0.35
 
 
 def amount(description, default):
-    return number(description, 0.0, 1.0, default)
+    return number(description, 0.0, FRACTION, default)
 
 
 def instance_random(graph):
@@ -130,7 +131,7 @@ def cover_presets():
             "variation": amount("Colour change from blade to blade.", 0.5),
             "dry_tips": amount("cards: share of the drawn blades with a dry tip (blade geometry carries its own share in gc_dry).", 0.25),
             "card": boolean("Draw blades into the alpha of a card, u across and v up, instead of colouring blade geometry.", False),
-            "card_blades": integer("cards: blades across one card.", 2, 64, 12),
+            "card_blades": integer("cards: blades across one card.", LEAST_CARD_BLADES, MAX_CARD_BLADES, 12),
             "card_blade_width": amount("cards: width of a blade at its root as a share of its column.", 0.7),
             "card_height_min": amount("cards: the shortest blade as a share of the card height.", 0.45),
             "translucency": amount("Light passing through the blade: transmission weight.", 0.3),
@@ -144,7 +145,7 @@ def cover_presets():
             "dark_color": color("Colour of the dark blotches, linear RGB.", [0.07, 0.04, 0.02], False),
             "vein_color": color("Vein colour for leaves, linear RGB.", [0.3, 0.2, 0.09], False),
             "vein_contrast": amount("How much the veins of a leaf stand out.", 0.5),
-            "vein_pairs": integer("Lateral veins on each side of the midrib.", 2, 40, 6),
+            "vein_pairs": integer("Lateral veins on each side of the midrib.", FEWEST_VEIN_PAIRS, VEIN_PAIRS, 6),
             "spread": amount("How far instances spread from color towards second_color.", 1.0),
             "mottling": amount("Strength of the fine speckle.", 0.5),
             "translucency": amount("Transmission weight.", 0.1),

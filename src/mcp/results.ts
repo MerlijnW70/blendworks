@@ -6,6 +6,7 @@ const PAGING_HINTS: Record<string, string> = {
   scene_info: "Ask for a page: scene_info takes detail (summary, objects or full), names (a glob such as \"Bolt*\"), limit and offset.",
   run_python: "Print less, or set result to a smaller value.",
   uv_info: "Ask for fewer objects with names.",
+  validate: "Validate fewer calls at a time, and fix the problems already listed first.",
   image_info: "Ask for fewer images with names.",
 };
 

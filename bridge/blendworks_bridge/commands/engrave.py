@@ -3,7 +3,7 @@ import math
 import bpy
 
 from .. import limits
-from ..analytic_paths import DEFAULT_TOLERANCE
+from ..analytic_paths import ANGLE_LIMIT, DEFAULT_TOLERANCE
 from ..cutters import add_solid
 from ..engraving import cut, sampler_for
 from ..errors import bad_args, failed
@@ -11,13 +11,13 @@ from ..glyphs import bounds_of, load_font
 from ..kit_limits import MAX_PATH_POINTS
 from ..meshdata import MeshData
 from ..registry import command
-from ..schema import boolean, integer, length, number, obj as object_schema, point3, points3, string, vector3
+from ..schema import EXISTS, boolean, integer, length, number, obj as object_schema, point3, points3, ref, string, vector3
 from ..selection import EXTENDED_FACE_PROPERTIES
 from ..surfaces import FaceRegion, build_surface
 from ..textlayout import ALIGNS, VALIGNS, min_edge, text_shapes
 from ..util import check_vertex_cap, get_mesh_object
 
-MAX_REPEATS = 720
+MAX_REPEATS = limits.MAX_REPEATS
 DEFAULT_SIZE = 0.01
 
 
@@ -30,9 +30,9 @@ def surface_properties():
         {
             "centre": vector3("A point on the axis in metres.", [0.0, 0.0, 0.0]),
             "axis": vector3("Axis of the ring or cylinder; the top of the text points along it.", [0.0, 0.0, 1.0]),
-            "radius": length("Radius of the surface in metres.", maximum=1000.0),
+            "radius": length("Radius of the surface in metres."),
             "side": string("outer: the text reads on the outside; inner: on the inside of a ring.", ["outer", "inner"], "outer"),
-            "angle": number("Angle in degrees around the axis where the text is anchored.", -36000.0, 36000.0, 0.0),
+            "angle": number("Angle in degrees around the axis where the text is anchored.", -ANGLE_LIMIT, ANGLE_LIMIT, 0.0),
             "reference": vector3("Direction of angle 0, made perpendicular to the axis. Default +X, or +Y when the axis runs along X."),
         },
         ["radius"],
@@ -40,8 +40,8 @@ def surface_properties():
     cylinder["description"] = "A cylinder or ring band: the text wraps around the axis."
     curve = object_schema(
         {
-            "object": string("Name of a curve object (one spline) to follow."),
-            "waypoints": points3("Path points [x, y, z] in metres, instead of a curve object.", 2, MAX_PATH_POINTS),
+            "object": ref(string("Name of a curve object (one spline) to follow."), "object", EXISTS),
+            "waypoints": points3("Path points [x, y, z] in metres, instead of a curve object.", limits.PAIR, MAX_PATH_POINTS),
             "closed": boolean("Join the end of the path to its start."),
             "normal": vector3("Direction the text faces; the path must not run along it.", [0.0, 0.0, 1.0]),
         }
@@ -55,9 +55,9 @@ def ring_schema():
         {
             "centre": vector3("Centre of the ring face in metres; the face lies in the plane through it, square to the axis.", [0.0, 0.0, 0.0]),
             "axis": vector3("Direction the flat ring face looks at.", [0.0, 0.0, 1.0]),
-            "radius": length("Radius in metres of the circle the text or marks follow.", maximum=1000.0),
+            "radius": length("Radius in metres of the circle the text or marks follow."),
             "up": string("outward: the top of the text points away from the centre and the text reads clockwise seen along -axis; inward: towards the centre, reading anticlockwise.", ["outward", "inward"], "outward"),
-            "angle": number("Angle in degrees around the axis where the text is anchored, anticlockwise from reference.", -36000.0, 36000.0, 0.0),
+            "angle": number("Angle in degrees around the axis where the text is anchored, anticlockwise from reference.", -ANGLE_LIMIT, ANGLE_LIMIT, 0.0),
             "reference": vector3("Direction of angle 0, made perpendicular to the axis. Default +X, or +Y when the axis runs along X."),
         },
         ["radius"],
@@ -69,10 +69,10 @@ def ring_schema():
 def repeat_schema():
     schema = object_schema(
         {
-            "count": integer("How many copies.", 2, MAX_REPEATS),
-            "step": number("Distance between copies: degrees around a cylinder, degrees anticlockwise around a ring, metres on other surfaces.", -100000.0, 100000.0),
-            "number_start": number("Value of {n} in the first copy.", -1e9, 1e9, 0.0),
-            "number_step": number("Add this to {n} for each copy; the text must contain {n}.", -1e9, 1e9),
+            "count": integer("How many copies.", limits.PAIR, MAX_REPEATS),
+            "step": number("Distance between copies: degrees around a cylinder, degrees anticlockwise around a ring, metres on other surfaces.", -limits.MAX_LENGTH, limits.MAX_LENGTH),
+            "number_start": number("Value of {n} in the first copy.", -limits.MAX_LABEL_NUMBER, limits.MAX_LABEL_NUMBER, 0.0),
+            "number_step": number("Add this to {n} for each copy; the text must contain {n}.", -limits.MAX_LABEL_NUMBER, limits.MAX_LABEL_NUMBER),
         },
         ["count", "step"],
     )
@@ -120,21 +120,21 @@ def check_fit(surface, shapes, shift):
     "engrave",
     "Cut or emboss text and symbols (zodiac, planets) along a plane, face region, cylinder band, flat ring face or curve; repeats number a scale. For tick marks use engrave_scale.",
     {
-        "name": string("Mesh object to engrave."),
+        "name": ref(string("Mesh object to engrave."), "object", EXISTS),
         "text": string("The text. {aries}, {sun} and the like, or the Unicode signs, give built-in symbols; {n} is the repeat number.", max_length=limits.MAX_TEXT_LENGTH),
         **surface_properties(),
-        "size": length("Letter size in metres, as text_object's size.", DEFAULT_SIZE, 1000.0),
-        "depth": length("Cut this deep into the surface, in metres.", maximum=1000.0),
-        "height": length("Emboss this high above the surface, in metres.", maximum=1000.0),
-        "spacing": number("Letter spacing factor; 1 is the font's own.", 0.1, 10.0, 1.0),
+        "size": length("Letter size in metres, as text_object's size.", DEFAULT_SIZE),
+        "depth": length("Cut this deep into the surface, in metres."),
+        "height": length("Emboss this high above the surface, in metres."),
+        "spacing": number("Letter spacing factor; 1 is the font's own.", limits.LEAST_LETTER_SPACING, limits.MAX_LETTER_SPACING, 1.0),
         "align": string("Which part of the text sits at the anchor.", list(ALIGNS), "centre"),
         "valign": string("middle: half a letter height above the anchor line; baseline: the text sits on it.", list(VALIGNS), "middle"),
-        "rotation": number("Turn the text by this many degrees on the surface.", -360.0, 360.0, 0.0),
-        "offset": number("Move the text along the path, in metres: round a cylinder along the arc.", -10000.0, 10000.0, 0.0),
-        "shift": number("Move the text across the path, in metres; positive is towards the top of the text.", -10000.0, 10000.0, 0.0),
+        "rotation": number("Turn the text by this many degrees on the surface.", -limits.TURN, limits.TURN, 0.0),
+        "offset": number("Move the text along the path, in metres: round a cylinder along the arc.", -limits.MAX_LENGTH, limits.MAX_LENGTH, 0.0),
+        "shift": number("Move the text across the path, in metres; positive is towards the top of the text.", -limits.MAX_LENGTH, limits.MAX_LENGTH, 0.0),
         "font": string("A .ttf, .otf, .woff or .woff2 file in the workspace. Default: Blender's bundled font."),
         "repeat": repeat_schema(),
-        "tolerance": length("Largest distance in metres between a curved surface and the flat facets of the cutter.", DEFAULT_TOLERANCE, 1.0),
+        "tolerance": length("Largest distance in metres between a curved surface and the flat facets of the cutter.", DEFAULT_TOLERANCE),
         "clean": boolean("Run clean_mesh on the result.", True),
     },
     ["name", "text"],

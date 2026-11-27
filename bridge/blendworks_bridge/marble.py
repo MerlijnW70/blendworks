@@ -1,4 +1,5 @@
 from .procedural import preset_vector
+from .limits import FRACTION
 from .schema import color, number, obj, string
 
 VEIN_DIRECTIONS = ((0.82, 0.46, 0.34), (-0.35, 0.9, 0.27), (0.12, -0.5, 0.86))
@@ -39,9 +40,9 @@ def veins_schema():
     schema = obj(
         {
             "color": color("Vein colour, linear RGB.", DEFAULT_VEIN_COLOR, False),
-            "width": number("Vein width: 0 is hair-thin, 1 is broad bands.", 0.0, 1.0, 0.14),
-            "turbulence": number("How far the veins wander: 0 gives straight parallel bands.", 0.0, 1.0, 0.5),
-            "strength": number("How dark the veins get, 0 to 1.", 0.0, 1.0, 1.0),
+            "width": number("Vein width: 0 is hair-thin, 1 is broad bands.", 0.0, FRACTION, 0.14),
+            "turbulence": number("How far the veins wander: 0 gives straight parallel bands.", 0.0, FRACTION, 0.5),
+            "strength": number("How dark the veins get, 0 to 1.", 0.0, FRACTION, 1.0),
         }
     )
     schema["description"] = "Banded, ridged veins with domain warping, laid over the stone."

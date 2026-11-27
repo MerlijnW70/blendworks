@@ -13,7 +13,7 @@ from ..registry import command
 from ..schema import boolean, string
 
 CHECKPOINT_FOLDER = os.path.join(FOLDER, "checkpoints")
-CHECKPOINT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
+CHECKPOINT_NAME = re.compile(rf"^[A-Za-z0-9][A-Za-z0-9_.-]{{0,{limits.CHECKPOINT_NAME_LENGTH - 1}}}$")
 DISCARD = boolean("Desktop only: replace the open file even though it has unsaved changes.", False)
 
 
@@ -23,7 +23,7 @@ def checkpoint_folder(workspace):
 
 def checkpoint_path(workspace, name):
     if not CHECKPOINT_NAME.match(name) or name.endswith("."):
-        raise bad_args("a checkpoint name is 1 to 64 letters, digits, _, - or ., starting with a letter or digit")
+        raise bad_args(f"a checkpoint name is 1 to {limits.CHECKPOINT_NAME_LENGTH} letters, digits, _, - or ., starting with a letter or digit")
     return os.path.join(checkpoint_folder(workspace), f"{name}.blend")
 
 
@@ -45,6 +45,12 @@ def list_checkpoints(workspace):
     return found
 
 
+def plan_replaced_scene(args, state):
+    """Plan hook: the scene becomes the one in a file, whose names a plan cannot know."""
+    state.clear()
+    state.unknown()
+
+
 def ensure_may_replace(ctx, discard):
     if ctx.desktop and bpy.data.is_dirty and not discard:
         raise forbidden("the open file has unsaved changes; save it first, or pass discard_unsaved true")
@@ -62,7 +68,7 @@ def opened(ctx, path):
 @command(
     "checkpoint",
     "Save the whole scene as a named checkpoint in the workspace, to bring back later with restore_checkpoint.",
-    {"name": string("Checkpoint name: letters, digits, _, - and ., at most 64 characters.", max_length=64)},
+    {"name": string(f"Checkpoint name: letters, digits, _, - and ., at most {limits.CHECKPOINT_NAME_LENGTH} characters.", max_length=limits.CHECKPOINT_NAME_LENGTH)},
     ["name"],
     mutates=False,
     slow=True,
@@ -90,11 +96,12 @@ def checkpoint(ctx, args):
 @command(
     "restore_checkpoint",
     "Replace the scene with a checkpoint saved earlier; scene_info lists the checkpoints.",
-    {"name": string("Checkpoint name.", max_length=64), "discard_unsaved": DISCARD},
+    {"name": string("Checkpoint name.", max_length=limits.CHECKPOINT_NAME_LENGTH), "discard_unsaved": DISCARD},
     ["name"],
     slow=True,
     destructive=True,
     snapshot=REPLACES_FILE,
+    plan=plan_replaced_scene,
     family="files",
     intents=("go back to a saved snapshot", "undo a bad step by loading a named state"),
     nearest=(("load_blend", "to open a .blend file"),),
@@ -117,6 +124,7 @@ def restore_checkpoint(ctx, args):
     slow=True,
     internal=True,
     snapshot=NO_SNAPSHOT,
+    plan=plan_replaced_scene,
     family="scene",
     intents=("reload the autosave after Blender crashed",),
     nearest=(("restore_checkpoint", "to go back to a state you saved by name"),),

@@ -2,11 +2,16 @@ from .commands.scatter import NOISE
 from .cover_kinds import BLADE_KINDS, ELEMENT, KINDS, LITTER_KINDS, element_params
 from .cover_presets import PRESET_POPULATIONS
 from .errors import bad_args
+from .limits import (BASE_NAME_LENGTH, FRACTION, HALF_TURN, HEIGHT_BAND, LEAST_CLUMP_SIZE, LEAST_WIDENING,
+                     MAX_ATTRIBUTE_VALUE, MAX_CLUMP_SIZE, MAX_COVER_DENSITY, MAX_DISTANCE_MASKS, MAX_ELEMENT_TRIANGLES,
+                     MAX_ELEMENT_VARIANTS, MAX_LENGTH, MAX_POPULATIONS as POPULATION_LIMIT, MAX_RELIEF,
+                     MAX_SCALE_FACTOR, MAX_WIDENING, QUARTER_TURN, SMALLEST_COVER_PATCH,
+                     SMALLEST_INSTANCE_SCALE)
 from .liquid_masks import MODES as LIQUID_MODES
-from .schema import array, boolean, described, integer, names, number, obj, string, validate
+from .schema import EXISTS, array, boolean, described, integer, names, number, obj, ref, string, validate
 
 FORM_CHOICES = ("auto", "geometry", "cards")
-MAX_POPULATIONS = 16
+MAX_POPULATIONS = POPULATION_LIMIT
 
 
 def pair(description, low, high):
@@ -16,10 +21,10 @@ def pair(description, low, high):
 DISTANCE = described(
     obj(
         {
-            "objects": names("Mesh objects to measure the distance to (their evaluated surfaces in world space; a point inside counts as a negative distance).", 1, 256),
-            "min": number("Keep elements at least this many metres from the surfaces, so none grow inside a trunk or a rock.", -100.0, 1000.0),
-            "max": number("Keep elements at most this many metres from the surfaces, as litter under trees.", -100.0, 1000.0),
-            "edge": number("Soft edge in metres inside the limits.", 0.0, 100.0, 0.0),
+            "objects": ref(names("Mesh objects to measure the distance to (their evaluated surfaces in world space; a point inside counts as a negative distance)."), "object", EXISTS),
+            "min": number("Keep elements at least this many metres from the surfaces, so none grow inside a trunk or a rock.", -MAX_LENGTH, MAX_LENGTH),
+            "max": number("Keep elements at most this many metres from the surfaces, as litter under trees.", -MAX_LENGTH, MAX_LENGTH),
+            "edge": number("Soft edge in metres inside the limits.", 0.0, MAX_LENGTH, 0.0),
         },
         ["objects"],
     ),
@@ -29,35 +34,35 @@ DISTANCE = described(
 POPULATION = described(
     obj(
         {
-            "name": string("Name of the population, unique in this call; with a preset, a preset population of this name is changed instead of a new one added.", max_length=48),
+            "name": string("Name of the population, unique in this call; with a preset, a preset population of this name is changed instead of a new one added.", max_length=BASE_NAME_LENGTH),
             "element": string("Element kind.", list(KINDS)),
             "params": described(ELEMENT, "Element parameters; each kind takes its own fields and has its own defaults."),
-            "variants": integer("Different element meshes, each from its own seed; every instance picks one.", 1, 16),
-            "triangles": integer("Triangle budget per element; the generator fits its detail into it.", 1, 20_000),
+            "variants": integer("Different element meshes, each from its own seed; every instance picks one.", 1, MAX_ELEMENT_VARIANTS),
+            "triangles": integer("Triangle budget per element; the generator fits its detail into it.", 1, MAX_ELEMENT_TRIANGLES),
             "form": string("geometry: real blades, petals and leaves; cards: alpha-mapped cards; auto: geometry up to card_distance from the camera or point, cards beyond.", list(FORM_CHOICES)),
-            "card_distance": number("auto: distance in metres from the camera or point where cards take over.", 0.0, 10_000.0),
-            "density": number("Elements per square metre where every mask is 1 and the camera falloff is full.", exclusive_minimum=0.0, maximum=100_000.0),
-            "clumping": described(obj({"radius": number("Radius in metres that holds most of a clump (two standard deviations of a Thomas cluster process).", 0.01, 100.0), "per_clump": number("Mean elements per clump.", 1.0, 1000.0)}, ["radius", "per_clump"]), "Gather the elements in clumps around random centres; the mean density stays density."),
-            "slope": pair("Keep elements where the surface normal is between these angles from vertical, in degrees.", 0.0, 180.0),
-            "slope_edge": number("Soft edge of the slope mask in degrees, inside its limits.", 0.0, 90.0, 4.0),
-            "height_range": pair("Keep elements between these world heights in metres.", -100_000.0, 100_000.0),
-            "height_edge": number("Soft edge of the height mask in metres, inside its limits.", 0.0, 10_000.0, 0.0),
-            "attribute": described(obj({"name": string("Float attribute of the target, such as erosion, deposition, slope or curvature."), "range": pair("Density rises from 0 at the first value to 1 at the second; give them the other way round to fall.", -1_000_000.0, 1_000_000.0)}, ["name", "range"]), "An attribute mask."),
-            "distance": array(DISTANCE, "Distance masks; they multiply.", 1, 8),
-            "avoid": number("Keep this many metres clear of the obstacles of the call; the density then rises linearly to full over avoid_falloff.", 0.0, 100.0),
-            "avoid_falloff": number("Distance in metres beyond avoid over which the density rises from 0 to full, so cover thins gradually towards a rock or trunk.", 0.0, 100.0, 0.3),
-            "hug": number("Keep within this many metres of the obstacles of the call (not inside them), for tufts or litter at the base of rocks and trunks; skipped when no obstacles are given.", 0.0, 100.0),
-            "under": number("Keep within this many metres of the trees of the call; skipped when no trees are given.", 0.0, 1000.0),
+            "card_distance": number("auto: distance in metres from the camera or point where cards take over.", 0.0, MAX_LENGTH),
+            "density": number("Elements per square metre where every mask is 1 and the camera falloff is full.", exclusive_minimum=0.0, maximum=MAX_COVER_DENSITY),
+            "clumping": described(obj({"radius": number("Radius in metres that holds most of a clump (two standard deviations of a Thomas cluster process).", SMALLEST_COVER_PATCH, MAX_LENGTH), "per_clump": number("Mean elements per clump.", LEAST_CLUMP_SIZE, MAX_CLUMP_SIZE)}, ["radius", "per_clump"]), "Gather the elements in clumps around random centres; the mean density stays density."),
+            "slope": pair("Keep elements where the surface normal is between these angles from vertical, in degrees.", 0.0, HALF_TURN),
+            "slope_edge": number("Soft edge of the slope mask in degrees, inside its limits.", 0.0, QUARTER_TURN, 4.0),
+            "height_range": pair("Keep elements between these world heights in metres.", -HEIGHT_BAND, HEIGHT_BAND),
+            "height_edge": number("Soft edge of the height mask in metres, inside its limits.", 0.0, MAX_RELIEF, 0.0),
+            "attribute": described(obj({"name": string("Float attribute of the target, such as erosion, deposition, slope or curvature."), "range": pair("Density rises from 0 at the first value to 1 at the second; give them the other way round to fall.", -MAX_ATTRIBUTE_VALUE, MAX_ATTRIBUTE_VALUE)}, ["name", "range"]), "An attribute mask."),
+            "distance": array(DISTANCE, "Distance masks; they multiply.", 1, MAX_DISTANCE_MASKS),
+            "avoid": number("Keep this many metres clear of the obstacles of the call; the density then rises linearly to full over avoid_falloff.", 0.0, MAX_LENGTH),
+            "avoid_falloff": number("Distance in metres beyond avoid over which the density rises from 0 to full, so cover thins gradually towards a rock or trunk.", 0.0, MAX_LENGTH, 0.3),
+            "hug": number("Keep within this many metres of the obstacles of the call (not inside them), for tufts or litter at the base of rocks and trunks; skipped when no obstacles are given.", 0.0, MAX_LENGTH),
+            "under": number("Keep within this many metres of the trees of the call; skipped when no trees are given.", 0.0, MAX_LENGTH),
             "noise": NOISE,
             "liquid": string("Water from liquid_body or liquid_fill: avoid keeps the population out of it (the default), shore keeps it within shore metres of the water line, ignore grows it anyway.", list(LIQUID_MODES)),
-            "shore": number("shore: width in metres of the band above the water line the population keeps to.", 0.01, 1000.0),
-            "scale_range": pair("Smallest and largest uniform scale of an instance.", 0.01, 100.0),
-            "color_variation": number("Colour change from instance to instance, 0 to 1, through the gc_tint instance attribute.", 0.0, 1.0),
-            "align": number("0 keeps elements upright, 1 tilts them with the slope.", 0.0, 1.0),
-            "tilt": number("Random lean of each element in degrees.", 0.0, 60.0),
-            "embed": number("Depth in metres, times the scale, the base sinks below the surface; tilted bases sink further so no edge floats.", 0.0, 1.0),
+            "shore": number("shore: width in metres of the band above the water line the population keeps to.", SMALLEST_COVER_PATCH, MAX_LENGTH),
+            "scale_range": pair("Smallest and largest uniform scale of an instance.", SMALLEST_INSTANCE_SCALE, MAX_SCALE_FACTOR),
+            "color_variation": number("Colour change from instance to instance, 0 to 1, through the gc_tint instance attribute.", 0.0, FRACTION),
+            "align": number("0 keeps elements upright, 1 tilts them with the slope.", 0.0, FRACTION),
+            "tilt": number("Random lean of each element in degrees.", 0.0, QUARTER_TURN),
+            "embed": number("Depth in metres, times the scale, the base sinks below the surface; tilted bases sink further so no edge floats.", 0.0, MAX_RELIEF),
             "widen": boolean("Widen sparse far elements across by the inverse square root of the falloff, so the ground stays covered."),
-            "max_widen": number("Largest widening factor.", 1.0, 4.0, 2.0),
+            "max_widen": number("Largest widening factor.", LEAST_WIDENING, MAX_WIDENING, 2.0),
         },
         ["name"],
     ),

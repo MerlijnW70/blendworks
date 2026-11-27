@@ -5,8 +5,9 @@ from mathutils import Vector
 from ..bones import add_bones, get_armature, require_bone, rig_metadata, to_world
 from ..errors import bad_args
 from ..posing import bend_direction
+from ..limits import ELEMENT_NAME_LENGTH, FRACTION, MAX_IK_CHAIN_BONES, TURN
 from ..registry import command
-from ..schema import array, boolean, integer, length, number, string, vector3
+from ..schema import EXISTS, array, boolean, integer, length, number, ref, string, vector3
 from ..util import get_object, rounded, vec
 
 KINDS = {"copy_rotation": "COPY_ROTATION", "damped_track": "DAMPED_TRACK", "limit_rotation": "LIMIT_ROTATION", "copy_location": "COPY_LOCATION"}
@@ -58,15 +59,15 @@ def pole_angle(base, tip, pole):
     "ik_chain",
     "Add an IK chain to a bone: a target bone (made at the tip unless named) or object, chain length, and a pole target that keeps the bend direction.",
     {
-        "armature": string("Armature object."),
-        "bone": string("Last bone of the chain, such as the shin.", max_length=63),
-        "chain_length": integer("Bones in the chain, counted up from bone.", 1, 16, 2),
-        "target_bone": string("Control bone the chain reaches for; made at the bone's tail when it does not exist.", max_length=63),
-        "target_object": string("Object the chain reaches for, instead of a target bone."),
+        "armature": ref(string("Armature object."), "object", EXISTS),
+        "bone": string("Last bone of the chain, such as the shin.", max_length=ELEMENT_NAME_LENGTH),
+        "chain_length": integer("Bones in the chain, counted up from bone.", 1, MAX_IK_CHAIN_BONES, 2),
+        "target_bone": string("Control bone the chain reaches for; made at the bone's tail when it does not exist.", max_length=ELEMENT_NAME_LENGTH),
+        "target_object": ref(string("Object the chain reaches for, instead of a target bone."), "object", EXISTS),
         "pole": boolean("Add a pole target in front of the middle joint so the knee or elbow bends the way the rest pose does.", True),
-        "pole_bone": string("Pole control bone; made when it does not exist.", max_length=63),
+        "pole_bone": string("Pole control bone; made when it does not exist.", max_length=ELEMENT_NAME_LENGTH),
         "pole_distance": length("How far the pole sits from the middle joint, in metres. Default: half the chain length."),
-        "control_parent": string("Parent of new control bones. Default: the template's Root bone, or the top bone above the chain.", max_length=63),
+        "control_parent": string("Parent of new control bones. Default: the template's Root bone, or the top bone above the chain.", max_length=ELEMENT_NAME_LENGTH),
     },
     ["armature", "bone"],
     family="rigging",
@@ -174,16 +175,16 @@ def reach_error(armature, tip, target_name, target_object):
     "bone_constraint",
     "Add a bone constraint for posing: copy rotation or location, damped track, or limit rotation in degrees, with a target bone or object and influence.",
     {
-        "armature": string("Armature object."),
-        "bone": string("Bone that gets the constraint.", max_length=63),
+        "armature": ref(string("Armature object."), "object", EXISTS),
+        "bone": string("Bone that gets the constraint.", max_length=ELEMENT_NAME_LENGTH),
         "type": string("Constraint kind.", list(KINDS)),
-        "name": string("Constraint name. Default: from the type.", max_length=63),
-        "target_bone": string("Target bone in the same armature.", max_length=63),
-        "target_object": string("Target object."),
-        "influence": number("How strongly it acts, 0 to 1.", 0.0, 1.0, 1.0),
+        "name": string("Constraint name. Default: from the type.", max_length=ELEMENT_NAME_LENGTH),
+        "target_bone": string("Target bone in the same armature.", max_length=ELEMENT_NAME_LENGTH),
+        "target_object": ref(string("Target object."), "object", EXISTS),
+        "influence": number("How strongly it acts, 0 to 1.", 0.0, FRACTION, 1.0),
         "axes": array(string("Axis.", ["x", "y", "z"]), "copy rotation, copy location, limit rotation: the axes it acts on. Default all three.", 1, 3),
-        "min": vector3("limit rotation: lowest angles per axis in degrees.", [-180.0, -180.0, -180.0], -360.0, 360.0),
-        "max": vector3("limit rotation: highest angles per axis in degrees.", [180.0, 180.0, 180.0], -360.0, 360.0),
+        "min": vector3("limit rotation: lowest angles per axis in degrees.", [-180.0, -180.0, -180.0], -TURN, TURN),
+        "max": vector3("limit rotation: highest angles per axis in degrees.", [180.0, 180.0, 180.0], -TURN, TURN),
         "track_axis": string("damped track: the bone axis that points at the target.", list(TRACK_AXES), "y"),
         "mix": string("copy rotation: how the copied rotation joins the bone's own.", list(MIXES), "replace"),
         "space": string("Space of owner and target: world, pose or local.", list(SPACES)),

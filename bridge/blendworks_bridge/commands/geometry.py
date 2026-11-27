@@ -8,12 +8,12 @@ from .. import kit_limits, limits
 from ..errors import bad_args, not_found
 from ..meshdata import MeshData
 from ..registry import command
-from ..schema import array, boolean, integer, length, names, number, obj as object_schema, string, validate, vector3
+from ..schema import CREATES, EXISTS, array, boolean, integer, length, names, number, obj as object_schema, ref, string, validate, vector3
 from ..util import link_object, mesh_counts, place, require_free_name, vec
 
-POINT = {"type": "array", "items": {"type": "number", "minimum": -10_000.0, "maximum": 10_000.0}, "minItems": 3, "maxItems": 3}
+POINT = {"type": "array", "items": {"type": "number", "minimum": -limits.MAX_COORDINATE, "maximum": limits.MAX_COORDINATE}, "minItems": 3, "maxItems": 3}
 INDEX = {"type": "integer", "minimum": 0}
-UV = {"type": "array", "items": {"type": "number", "minimum": -1000.0, "maximum": 1000.0}, "minItems": 2, "maxItems": 2}
+UV = {"type": "array", "items": {"type": "number", "minimum": -limits.MAX_UV_COORDINATE, "maximum": limits.MAX_UV_COORDINATE}, "minItems": 2, "maxItems": 2}
 PLACEMENT = {
     "location": vector3("Object location in metres.", [0.0, 0.0, 0.0]),
     "rotation": vector3("Euler XYZ rotation in degrees.", [0.0, 0.0, 0.0]),
@@ -29,7 +29,7 @@ def with_placement(properties):
 DATA_FIELDS = {
     "vertices": array(POINT, "Vertex positions [x, y, z] in metres.", 1, limits.MAX_MESH_FROM_DATA_VERTICES),
     "faces": array(
-        {"type": "array", "items": INDEX, "minItems": 3, "maxItems": 10_000},
+        {"type": "array", "items": INDEX, "minItems": limits.FEWEST_SIDES, "maxItems": limits.MAX_FACE_CORNERS},
         "Faces, each a list of three or more distinct vertex indices.",
         0,
         limits.MAX_MESH_FROM_DATA_FACES,
@@ -41,10 +41,10 @@ DATA_FIELDS = {
         limits.MAX_MESH_FROM_DATA_FACES,
     ),
     "material_indices": array(
-        {"type": "integer", "minimum": 0, "maximum": 32767}, "Material slot index of each face, one per face.", 1, limits.MAX_MESH_FROM_DATA_FACES
+        {"type": "integer", "minimum": 0, "maximum": limits.MAX_MATERIAL_SLOTS}, "Material slot index of each face, one per face.", 1, limits.MAX_MESH_FROM_DATA_FACES
     ),
-    "materials": names("Existing materials to put in the slots, in order.", 1, 256),
-    "uvs": array(UV, "UV [u, v] of every face corner, in face order: as many as the faces have corners in total.", 1, 4 * limits.MAX_MESH_FROM_DATA_FACES),
+    "materials": ref(names("Existing materials to put in the slots, in order."), "material", EXISTS),
+    "uvs": array(UV, "UV [u, v] of every face corner, in face order: as many as the faces have corners in total.", 1, limits.MAX_MESH_FROM_DATA_CORNERS),
     "vertex_uvs": array(UV, "UV [u, v] per vertex, shared by all its corners; an alternative to uvs.", 1, limits.MAX_MESH_FROM_DATA_VERTICES),
     "smooth": boolean("Shade every face smooth."),
     "smooth_faces": array(INDEX, "Indices of the faces to shade smooth; the others stay flat.", 1, limits.MAX_MESH_FROM_DATA_FACES),
@@ -55,7 +55,7 @@ DATA_FIELDS = {
         object_schema(
             {
                 "edge": array(INDEX, "The edge as two vertex indices.", 2, 2),
-                "value": {"type": "number", "description": "Crease from 0 (none) to 1 (full).", "minimum": 0.0, "maximum": 1.0},
+                "value": {"type": "number", "description": "Crease from 0 (none) to 1 (full).", "minimum": 0.0, "maximum": limits.FRACTION},
             },
             ["edge", "value"],
         ),
@@ -149,8 +149,8 @@ def mesh_data_from(data):
     "with material indices, UVs, smooth flags and creases; or read it all from a JSON file.",
     with_placement(
         {
-            "name": string("Object name; must be unused.", default="Mesh"),
-            "path": string("JSON file in the workspace holding vertices, faces and the optional fields below, instead of giving them here."),
+            "name": ref(string("Object name; must be unused.", default="Mesh"), "object", CREATES),
+            "path": string("JSON file in the workspace holding vertices, faces and the optional fields below, instead of giving them here.", max_length=limits.PATH_LENGTH),
             **DATA_FIELDS,
         }
     ),
@@ -188,13 +188,13 @@ def mesh_from_data(ctx, args):
     "Build a curve through points in metres, optionally with a round thickness (bevel_depth).",
     with_placement(
         {
-            "name": string("Object name; must be unused.", default="Curve"),
-            "points": array(POINT, "Points [x, y, z] in metres.", 2, limits.MAX_CURVE_POINTS),
+            "name": ref(string("Object name; must be unused.", default="Curve"), "object", CREATES),
+            "points": array(POINT, "Points [x, y, z] in metres.", limits.PAIR, limits.MAX_CURVE_POINTS),
             "kind": string("poly joins points with straight lines; bezier and nurbs are smooth.", ["poly", "bezier", "nurbs"], "poly"),
             "closed": boolean("Join the last point back to the first.", False),
-            "bevel_depth": number("Radius of the round profile in metres; 0 for a bare curve.", 0.0, 1000.0, 0.0),
-            "bevel_resolution": integer("Segments in a quarter of the profile.", 0, 32, 4),
-            "resolution": integer("Segments between two points of a smooth curve.", 1, 64, 12),
+            "bevel_depth": number("Radius of the round profile in metres; 0 for a bare curve.", 0.0, limits.MAX_LENGTH, 0.0),
+            "bevel_resolution": integer("Segments in a quarter of the profile.", 0, limits.MAX_BEVEL_RESOLUTION, 4),
+            "resolution": integer("Segments between two points of a smooth curve.", 1, limits.MAX_CURVE_RESOLUTION, 12),
         }
     ),
     ["points"],
@@ -238,9 +238,9 @@ def curve_from_points(ctx, args):
     with_placement(
         {
             "text": string("The text.", max_length=limits.MAX_TEXT_LENGTH),
-            "name": string("Object name; must be unused.", default="Text"),
-            "size": length("Letter size in metres.", 1.0, 1000.0),
-            "extrude": number("Depth in metres (each side of the text plane).", 0.0, 1000.0, 0.0),
+            "name": ref(string("Object name; must be unused.", default="Text"), "object", CREATES),
+            "size": length("Letter size in metres.", 1.0, limits.MAX_TEXT_SIZE),
+            "extrude": number("Depth in metres (each side of the text plane).", 0.0, limits.MAX_LENGTH, 0.0),
             "align": string("Horizontal alignment around the location.", ["left", "centre", "right"], "left"),
         }
     ),

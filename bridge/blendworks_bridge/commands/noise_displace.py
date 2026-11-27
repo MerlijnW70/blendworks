@@ -1,10 +1,11 @@
 import bmesh
 import numpy
 
+from ..limits import MAX_RELIEF
 from ..mesh_attributes import ATTRIBUTES, write_attributes
 from ..noise_stack import STACK_FIELDS, finest_wavelength, stack_field
 from ..registry import command
-from ..schema import array, number, string
+from ..schema import array, number, ref, string
 from ..selection import EXTENDED_FACE_PROPERTIES, has_selector, select_faces
 from ..util import get_mesh_object, mesh_counts, rounded
 from .wear import vertex_weights
@@ -75,8 +76,8 @@ def read_world(obj):
     "noise_displace",
     "Displace a mesh with a seeded noise stack in metres: perlin or worley fBm, ridged or billow, domain warp; no vertex moves more than amplitude and coincident vertices move together.",
     {
-        "name": string("Mesh object."),
-        "amplitude": number("Largest displacement of any vertex in metres (a hard bound); 0 leaves the shape alone.", 0.0, 100.0),
+        "name": ref(string("Mesh object."), "object"),
+        "amplitude": number("Largest displacement of any vertex in metres (a hard bound); 0 leaves the shape alone.", 0.0, MAX_RELIEF),
         **STACK_FIELDS,
         "direction": string("normal moves along the averaged vertex normal; z straight up in world space.", ["normal", "z"], "normal"),
         "vertex_group": string("Only move vertices in this vertex group, scaled by their weight."),

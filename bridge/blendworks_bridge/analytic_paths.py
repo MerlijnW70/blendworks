@@ -4,21 +4,22 @@ from mathutils import Vector
 
 from .errors import bad_args
 from .kit_limits import MAX_PATH_POINTS
+from .limits import MAX_HELIX_TURNS, WINDING
 from .schema import length, number, obj, string, vector3
 
 DEFAULT_TOLERANCE = 0.0002
 MIN_CIRCLE_SEGMENTS = 8
-MAX_TURNS = 1000.0
-ANGLE_LIMIT = 36000.0
+MAX_TURNS = MAX_HELIX_TURNS
+ANGLE_LIMIT = WINDING
 
 
 def path_fields():
     placement = {
         "centre": vector3("Centre [x, y, z] in metres.", [0.0, 0.0, 0.0]),
         "axis": vector3("Axis the path turns around; the profile v direction follows it unless up is given.", [0.0, 0.0, 1.0]),
-        "radius": length("Radius in metres.", maximum=1000.0),
+        "radius": length("Radius in metres."),
         "reference": vector3("Direction of angle 0, made perpendicular to the axis. Default: +X, or +Y when the axis is along X."),
-        "tolerance": length("Largest distance in metres between a chord of the path and the true circle; sets the segment count.", DEFAULT_TOLERANCE, 1000.0),
+        "tolerance": length("Largest distance in metres between a chord of the path and the true circle; sets the segment count.", DEFAULT_TOLERANCE),
     }
     start = number("Angle in degrees of the first point.", -ANGLE_LIMIT, ANGLE_LIMIT, 0.0)
     end = number("Angle in degrees of the last point; below the start it turns the other way, and it stays under one full turn from the start.", -ANGLE_LIMIT, ANGLE_LIMIT)
@@ -27,7 +28,7 @@ def path_fields():
     helix = obj(
         {
             **placement,
-            "pitch": length("Rise along the axis per full turn in metres.", maximum=1000.0),
+            "pitch": length("Rise along the axis per full turn in metres."),
             "turns": length("Number of turns, fractions allowed.", maximum=MAX_TURNS),
             "start_angle": start,
             "handed": string("right: the angle grows as the helix rises; left: it shrinks.", ["right", "left"], "right"),

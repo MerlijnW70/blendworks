@@ -1,19 +1,17 @@
-import math
-
 import bpy
 import numpy
 
-from ..limits import MAX_COORDINATE, MAX_MESH_VERTICES
+from ..limits import MAX_COORDINATE, MAX_GRID_SIDE, MAX_RELIEF, MAX_TILE_INDEX as TILE_INDEX_LIMIT, PAIR
 from ..mesh_attributes import write_attributes
 from ..noise_stack import STACK_FIELDS, finest_wavelength, stack_bounds
 from ..registry import command
-from ..schema import array, boolean, integer, length, number, string
+from ..schema import CREATES, array, boolean, integer, length, number, ref, string
 from ..terrain import TileMesh, grid_points, surface_heights
 from ..util import check_vertex_cap, link_object, mesh_counts, require_free_name, rounded
 from .noise_displace import ATTRIBUTE_FIELD
 
-MAX_TILE_INDEX = 1_000
-MAX_RESOLUTION = math.isqrt(MAX_MESH_VERTICES)
+MAX_TILE_INDEX = TILE_INDEX_LIMIT
+MAX_RESOLUTION = MAX_GRID_SIDE
 
 
 def positive_pair(description):
@@ -21,22 +19,39 @@ def positive_pair(description):
     return array(item, description, 2, 2, [100.0, 100.0])
 
 
+def tile_inside_world(args):
+    """The tile covers world x from tile[0] * size[0] to (tile[0] + 1) * size[0], and so for y; both ends must stay
+    within the coordinate limit."""
+    problems = []
+    for axis, label in enumerate("xy"):
+        ends = [args["tile"][axis] * args["size"][axis], (args["tile"][axis] + 1) * args["size"][axis]]
+        far = max(ends, key=abs)
+        if abs(far) > MAX_COORDINATE:
+            problems.append({"argument": f"args.tile[{axis}]", "value": args["tile"][axis],
+                             "limit": {"name": MAX_COORDINATE.key, "value": MAX_COORDINATE.plain()},
+                             "message": f"args.tile[{axis}] times args.size[{axis}] puts the tile's {label} edge at {far:g} m, past "
+                                        f"the coordinate limit {MAX_COORDINATE.plain():g} m ({MAX_COORDINATE.reason})",
+                             "instead": "a larger size with a smaller tile index, or fewer tiles"})
+    return problems
+
+
 @command(
     "heightfield",
     "Build a terrain tile from the noise stack at world metres, so neighbouring tiles share edge heights; optional closed skirt, UVs that continue across tiles, slope, height and curvature attributes.",
     {
-        "name": string("New mesh object; must be unused."),
+        "name": ref(string("New mesh object; must be unused."), "object", CREATES),
         "size": positive_pair("Tile size [x, y] in metres."),
-        "resolution": integer("Vertices per side of the tile, at least 2; capped by the mesh vertex limit.", 2, MAX_RESOLUTION, 65),
+        "resolution": integer("Vertices per side of the tile, at least 2; capped by the mesh vertex limit.", PAIR, MAX_RESOLUTION, 65),
         "tile": array({"type": "integer", "minimum": -MAX_TILE_INDEX, "maximum": MAX_TILE_INDEX}, "Tile index [i, j]: the tile covers world x from i*size_x and y from j*size_y, and the object sits there.", 2, 2, [0, 0]),
-        "height": number("Height scale in metres: the noise (-1..1) times this is added to base_height, so no surface point is more than height from it.", 0.0, 10_000.0),
+        "height": number("Height scale in metres: the noise (-1..1) times this is added to base_height, so no surface point is more than height from it.", 0.0, MAX_RELIEF),
         "base_height": number("Mean surface level in metres; the surface stays within height of it."),
         "skirt": boolean("Close the tile into a solid: walls down to a flat underside, so it passes the manifold rule.", False),
-        "skirt_depth": length("skirt: metres from the lowest height the noise can reach (base_height + height times its lowest value) down to the underside, the same for every tile.", 1.0, 10_000.0),
+        "skirt_depth": length("skirt: metres from the lowest height the noise can reach (base_height + height times its lowest value) down to the underside, the same for every tile.", 1.0, MAX_RELIEF),
         "attributes": ATTRIBUTE_FIELD,
         **STACK_FIELDS,
     },
     ["name", "height"],
+    rules=tile_inside_world,
     slow=True,
     family="shapes",
     intents=("terrain tile or heightfield from noise", "landscape ground with ridged mountains, in tiles that join without seams"),

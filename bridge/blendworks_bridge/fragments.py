@@ -23,6 +23,12 @@ def fresh_material():
     return material
 
 
+def plan_fresh_material(args, state):
+    """Plan hook: without fresh_material the call makes FreshBreak when the mesh has no fresh slot yet."""
+    if "fresh_material" not in args:
+        state.add("material", FRESH_MATERIAL)
+
+
 def named_fresh_material(name):
     if name is None:
         return fresh_material()

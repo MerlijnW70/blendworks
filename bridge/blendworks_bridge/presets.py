@@ -1,6 +1,8 @@
 from .brass import brass, brass_schema
 from .cover_materials import cover_presets
 from .marble import MARBLE_VEIN_COLOR, finish_schema, marble, vein_mask, veins_schema
+from .limits import (FEWEST_GROWTH_RINGS, FEWEST_STONE_CELLS, FEWEST_THREADS, FRACTION, LEAST_SCRATCH_DENSITY,
+                     MAX_SCRATCH_DENSITY, TEXTURE_FREQUENCY, WAVE_DISTORTION)
 from .natural import natural_presets
 from .procedural import AXES, Preset, preset_vector, stretched
 from .scratches import DIRECTIONS, SCRATCH_DIRECTION_HELP, scratch_axis_schema, scratch_lines
@@ -153,7 +155,7 @@ def dirt(graph, p):
 
 
 def amount(description, default):
-    return number(description, 0.0, 1.0, default)
+    return number(description, 0.0, FRACTION, default)
 
 
 PRESETS = {
@@ -163,15 +165,15 @@ PRESETS = {
             "light_color": color("Early-wood colour, linear RGB.", [0.34, 0.2, 0.095], False),
             "dark_color": color("Late-wood ring colour, linear RGB.", [0.13, 0.065, 0.03], False),
             "grain": string("Axis the grain runs along.", AXIS_CHOICE, "x"),
-            "ring_density": number("Growth rings per metre.", 1.0, 500.0, 45.0),
-            "ring_distortion": number("How wavy the rings are.", 0.0, 20.0, 7.0),
+            "ring_density": number("Growth rings per metre.", FEWEST_GROWTH_RINGS, TEXTURE_FREQUENCY, 45.0),
+            "ring_distortion": number("How wavy the rings are.", 0.0, WAVE_DISTORTION, 7.0),
             "roughness": amount("Average roughness.", 0.68),
         }, wood),
         Preset("worn_metal", "Bare metal with scratches, smudges and tarnish.", 0.15, {
             "color": color("Metal colour, linear RGB.", [0.56, 0.57, 0.58], False),
             "roughness": amount("Average roughness.", 0.35),
             "wear": amount("How worn: scratch density and tarnish.", 0.4),
-            "scratch_scale": number("Scratch density multiplier.", 0.1, 20.0, 1.0),
+            "scratch_scale": number("Scratch density multiplier.", LEAST_SCRATCH_DENSITY, MAX_SCRATCH_DENSITY, 1.0),
             "scratch_direction": string(SCRATCH_DIRECTION_HELP, DIRECTIONS, "x"),
             "scratch_axis": scratch_axis_schema(),
         }, worn_metal),
@@ -186,7 +188,7 @@ PRESETS = {
         Preset("stone", "Stone with soft colour patches, fine grain, optional hard cells and cracks, and optional veins.", 2.0, {
             "color": color("Main stone colour, linear RGB.", [0.33, 0.31, 0.28], False),
             "secondary_color": color("Second stone colour, linear RGB.", [0.2, 0.19, 0.18], False),
-            "cell_scale": number("Colour patches (and, with cracks or hard_cells, stone cells) per metre.", 0.1, 200.0, 4.0),
+            "cell_scale": number("Colour patches (and, with cracks or hard_cells, stone cells) per metre.", FEWEST_STONE_CELLS, TEXTURE_FREQUENCY, 4.0),
             "hard_cells": boolean("Colour the patches as flat voronoi cells with hard polygon edges, like separate stones laid side by side; false gives soft, natural patches that follow no cell borders.", False),
             "cracks": boolean("Draw the dark cracks between the cells; false leaves a seamless stone.", True),
             "crack_width": amount("Width of the cracks between cells.", 0.05),
@@ -213,7 +215,7 @@ PRESETS = {
         Preset("fabric", "Woven fabric with crossing threads and fuzz.", 0.3, {
             "color": color("Thread colour, linear RGB.", [0.22, 0.28, 0.45], False),
             "thread_color": color("Shadow colour between threads, linear RGB.", [0.08, 0.1, 0.18], False),
-            "threads": number("Threads per metre (per UV unit with uv coordinates).", 1.0, 5000.0, 120.0),
+            "threads": number("Threads per metre (per UV unit with uv coordinates).", FEWEST_THREADS, TEXTURE_FREQUENCY, 120.0),
             "fuzz": amount("Fuzz over the weave.", 0.3),
             "roughness": amount("Average roughness.", 0.9),
         }, fabric),

@@ -1,5 +1,7 @@
 from .procedural import AXES, Preset, preset_vector, stretched
 from . import tree_leaf_shader as leaf_shader
+from .limits import (FEWEST_NEEDLES, FEWEST_VEIN_PAIRS, FRACTION, MAX_LENGTH, MAX_RELIEF, NEEDLES,
+                     SMALLEST_CRUMB, SMALLEST_PATTERN_SPACING, VEIN_PAIRS)
 from .schema import boolean, color, integer, number, string
 
 AXIS_CHOICE = list(AXES)
@@ -7,7 +9,7 @@ WAVE_FREQUENCY = 3.1831
 
 
 def amount(description, default):
-    return number(description, 0.0, 1.0, default)
+    return number(description, 0.0, FRACTION, default)
 
 
 def scaled(values, factor):
@@ -247,11 +249,11 @@ def natural_presets():
             "lichen_color": color("Colour of the pale lichen and dry patches, linear RGB.", [0.16, 0.15, 0.1], False),
             "grain": string("Axis the fissures run along (z for an upright trunk).", AXIS_CHOICE, "z"),
             "fissure_depth": amount("How wide and deep the fissures are; 0 gives shallow cracks, 1 deep furrows.", 0.6),
-            "fissure_spacing": number("Distance between fissures in metres.", 0.005, 1.0, 0.04),
+            "fissure_spacing": number("Distance between fissures in metres.", SMALLEST_PATTERN_SPACING, MAX_LENGTH, 0.04),
             "lenticels": amount("Dark dashes across the grain, as on birch and cherry bark; 0 none.", 0.0),
             "upper_color": color("Plate colour of the thin, flaking bark high on the tree, as the orange-red upper trunk and limbs of a Scots pine, linear RGB; used above upper_start.", [0.45, 0.17, 0.07], False),
-            "upper_start": number("Height in metres, in the object's own space, where the bark starts to turn into the upper bark.", 0.0, 1000.0, 0.0),
-            "upper_end": number("Height in metres above which the bark is all upper bark, with a ragged edge between; 0 gives no upper bark.", 0.0, 1000.0, 0.0),
+            "upper_start": number("Height in metres, in the object's own space, where the bark starts to turn into the upper bark.", 0.0, MAX_RELIEF, 0.0),
+            "upper_end": number("Height in metres above which the bark is all upper bark, with a ragged edge between; 0 gives no upper bark.", 0.0, MAX_RELIEF, 0.0),
             "upper_fissures": amount("How deep the upper bark's fissures are compared with the lower bark's: thin papery plates have shallow ones.", 0.25),
             "roughness": amount("Average roughness.", 0.9),
         }, bark),
@@ -260,7 +262,7 @@ def natural_presets():
             "tip_color": color("Colour of the sunlit tuft tips, linear RGB.", [0.15, 0.27, 0.04], False),
             "ground_color": color("Colour of the bare ground between the patches, linear RGB.", [0.06, 0.045, 0.03], False),
             "patchiness": amount("How patchy the cover is: 0 covers everything, 1 leaves mostly bare ground.", 0.5),
-            "clump_size": number("Size of one tuft clump in metres.", 0.002, 0.5, 0.03),
+            "clump_size": number("Size of one tuft clump in metres.", SMALLEST_CRUMB, MAX_LENGTH, 0.03),
             "height": amount("How tall the tufts stand: scales the relief of the bump.", 0.7),
         }, moss),
         Preset("leaf", "A leaf blade with a midrib, lateral veins and a fine vein net; fits one UV square, optional outline alpha and translucency.", 0.6, {
@@ -268,11 +270,11 @@ def natural_presets():
             "dark_color": color("Colour of the darker blotches, linear RGB.", [0.01, 0.04, 0.006], False),
             "vein_color": color("Vein colour, linear RGB.", [0.32, 0.42, 0.12], False),
             "vein_contrast": amount("How much the veins stand out from the blade.", 0.7),
-            "vein_pairs": integer("Lateral veins on each side of the midrib along the leaf (one UV unit or one metre long).", 2, 40, 7),
+            "vein_pairs": integer("Lateral veins on each side of the midrib along the leaf (one UV unit or one metre long).", FEWEST_VEIN_PAIRS, VEIN_PAIRS, 7),
             "alpha": amount("Opacity of the leaf; below 1 the material blends.", 1.0),
             "cutout": boolean("Cut the leaf outline (shape) out of the card with alpha; needs a UV map.", False),
             "shape": string("Leaf outline cut out of the unit UV square: pointed, ovate, deltoid (birch), lanceolate (willow, olive), lobed (oak), palmate (maple), needle, tuft (a fan of needles) or brush (a shoot with needles on both sides, for cards along a conifer's twigs); the face attribute leaf_shape varies it per leaf.", list(leaf_shader.LEAF_SHAPES), "pointed"),
-            "needles": integer("tuft shape: needles in a fan, the three leaf shapes using 0.75, 1 and 1.4 times as many; brush shape: needles on each side along the card, 0.8, 1 and 1.25 times as many.", 3, 64, leaf_shader.TUFT_NEEDLES),
+            "needles": integer("tuft shape: needles in a fan, the three leaf shapes using 0.75, 1 and 1.4 times as many; brush shape: needles on each side along the card, 0.8, 1 and 1.25 times as many.", FEWEST_NEEDLES, NEEDLES, leaf_shader.TUFT_NEEDLES),
             "petiole": amount("Share of the card along v taken by the leaf stalk, drawn as a thin stalk; tree_leaves clusters use the same share.", 0.0),
             "translucency": amount("Light passing through the thin blade: the thin-walled subsurface weight, lit from behind.", 0.35),
             "subsurface_tint": color("Tint of the light passing through the blade.", [1.0, 0.9, 0.35], False),
@@ -286,14 +288,14 @@ def natural_presets():
             "pebble_color": color("Pebble colour, linear RGB.", [0.28, 0.25, 0.2], False),
             "moisture": amount("How damp the soil is: darker and less rough.", 0.3),
             "pebbles": amount("How many pebbles lie in the soil.", 0.6),
-            "clod_size": number("Size of the crumbs in metres; clods are four times as big.", 0.002, 0.5, 0.025),
+            "clod_size": number("Size of the crumbs in metres; clods are four times as big.", SMALLEST_CRUMB, MAX_LENGTH, 0.025),
             "roughness": amount("Average roughness when dry.", 0.95),
         }, soil),
         Preset("sand", "Sand: fine grain, dark mineral flecks and soft wind ripples a few centimetres apart.", 3.0, {
             "color": color("Dry sand colour, linear RGB.", [0.5, 0.38, 0.22], False),
             "fleck_color": color("Colour of the dark mineral flecks, linear RGB.", [0.09, 0.07, 0.05], False),
             "ripples": amount("How strong the wind ripples are.", 0.8),
-            "ripple_spacing": number("Distance between ripple crests in metres.", 0.005, 2.0, 0.07),
+            "ripple_spacing": number("Distance between ripple crests in metres.", SMALLEST_PATTERN_SPACING, MAX_LENGTH, 0.07),
             "ripple_direction": string("Axis the wind blows along; the crests lie across it.", AXIS_CHOICE, "x"),
             "moisture": amount("How damp the sand is: darker and less rough.", 0.0),
             "roughness": amount("Average roughness when dry.", 0.9),
@@ -304,7 +306,7 @@ def natural_presets():
             "soil_color": color("Bare soil between the tufts, linear RGB.", [0.07, 0.05, 0.03], False),
             "density": amount("How much of the ground the grass covers.", 0.75),
             "dryness": amount("Share of dry, yellow grass.", 0.3),
-            "tuft_size": number("Size of one tuft in metres.", 0.005, 2.0, 0.12),
+            "tuft_size": number("Size of one tuft in metres.", SMALLEST_PATTERN_SPACING, MAX_LENGTH, 0.12),
             "roughness": amount("Average roughness.", 0.85),
         }, grass_ground),
     )

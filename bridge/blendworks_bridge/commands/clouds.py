@@ -5,25 +5,27 @@ import bpy
 
 from .. import cloud_forms, cloud_genera, cloud_layers, cloud_sheet, cloud_volume, sky_world, weather_objects, world_background
 from ..errors import bad_args
+from ..limits import (FRACTION, LEAST_EXTINCTION_SCALE, MAX_BRIGHTNESS_SCALE, MAX_CLOUD_LAYERS, MAX_EXTINCTION_SCALE,
+                      MAX_LENGTH, MAX_RELIEF, MAX_SEED, MAX_VOLUME_BOUNCES, TURN)
 from ..registry import command
 from ..schema import array, boolean, color, integer, length, number, obj, point2, string
 
-MAX_LAYERS = 6
+MAX_LAYERS = MAX_CLOUD_LAYERS
 DEFAULT_BOUNCES = 24
 RAIN_SHADE = 0.6
 LAYER = obj(
     {
         "genus": string("Cloud genus.", list(cloud_genera.GENERA)),
-        "coverage": number("Share of the layer (and of the sky overhead) covered, 0 to 1. Default: the genus's.", 0.0, 1.0),
-        "base": length("Cloud base height above the ground in metres. Default: the genus's.", None, 20_000.0),
-        "thickness": length("Thickness from base to top in metres. Default: the genus's.", None, 16_000.0),
-        "density": number("Multiplies the genus's extinction per metre.", 0.01, 20.0, 1.0),
-        "cell": length("Horizontal size of the cloud cells in metres. Default: the genus's.", None, 50_000.0),
-        "seed": integer("Pattern seed. Default: the layer index.", 0, 2_147_483_647),
-        "wind_direction": number("Compass direction the clouds drift towards, in degrees; they stretch along it.", 0.0, 360.0, 90.0),
-        "drift": number("How far the pattern has drifted along the wind, in metres.", -1_000_000.0, 1_000_000.0, 0.0),
+        "coverage": number("Share of the layer (and of the sky overhead) covered, 0 to 1. Default: the genus's.", 0.0, FRACTION),
+        "base": length("Cloud base height above the ground in metres. Default: the genus's.", None, MAX_RELIEF),
+        "thickness": length("Thickness from base to top in metres. Default: the genus's.", None, MAX_RELIEF),
+        "density": number("Multiplies the genus's extinction per metre.", LEAST_EXTINCTION_SCALE, MAX_EXTINCTION_SCALE, 1.0),
+        "cell": length("Horizontal size of the cloud cells in metres. Default: the genus's."),
+        "seed": integer("Pattern seed. Default: the layer index.", 0, MAX_SEED),
+        "wind_direction": number("Compass direction the clouds drift towards, in degrees; they stretch along it.", 0.0, TURN, 90.0),
+        "drift": number("How far the pattern has drifted along the wind, in metres.", -MAX_LENGTH, MAX_LENGTH, 0.0),
         "centre": point2("Cumulonimbus only: [x, y] of the storm cell in metres. Default: 14 km ahead of the active camera."),
-        "brightness": number("Multiplies the sheet form's cloud radiance.", 0.0, 10.0, 1.0),
+        "brightness": number("Multiplies the sheet form's cloud radiance.", 0.0, MAX_BRIGHTNESS_SCALE, 1.0),
         "tint": color("Multiplies the sheet form's cloud colour, for cool storm light.", [1.0, 1.0, 1.0], allow_alpha=False),
     },
     ["genus"],
@@ -31,10 +33,10 @@ LAYER = obj(
 CLOUD_FIELDS = {
     "layers": array(LAYER, "Cloud layers, each one genus.", 1, MAX_LAYERS),
     "form": string("auto: sheet in previews and EEVEE, volumes in render_final; volume: volumes everywhere; sheet: no volumes.", list(cloud_layers.FORMS), "auto"),
-    "radius": length("Radius in metres of the volume region around the centre; sheets continue to the horizon.", cloud_layers.DEFAULT_RADIUS, 60_000.0),
+    "radius": length("Radius in metres of the volume region around the centre; sheets continue to the horizon.", cloud_layers.DEFAULT_RADIUS),
     "centre": point2("Observer [x, y] in metres the sheet is seen from. Default: the active camera, else the origin."),
-    "visibility": length("Visibility in metres used to fade distant clouds into the horizon.", cloud_layers.SKY_VISIBILITY, 500_000.0),
-    "bounces": integer("Volume bounces for the volume form (render setting).", 1, 128, DEFAULT_BOUNCES),
+    "visibility": length("Visibility in metres used to fade distant clouds into the horizon.", cloud_layers.SKY_VISIBILITY),
+    "bounces": integer("Volume bounces for the volume form (render setting).", 1, MAX_VOLUME_BOUNCES, DEFAULT_BOUNCES),
     "remove": boolean("Remove the clouds instead.", False),
 }
 KINDS = ("cloud_volume", "cloud_shadow")
@@ -45,6 +47,7 @@ KINDS = ("cloud_volume", "cloud_shadow")
     "Clouds in the procedural sky by genus: cumulus to cumulonimbus, coverage, base, thickness, density, wind and seed; shadows on the ground.",
     CLOUD_FIELDS,
     slow=True,
+    plan=lambda args, state: state.unknown(("object", "material")),
     family="weather",
     intents=("add cumulus clouds to the sky", "overcast cloud layer", "cirrus streaks high up", "thunderstorm cloud with an anvil", "cloud shadows on the ground"),
     nearest=(("weather", "for whole weather presets with rain and light"), ("sky", "for the sky and sun first")),

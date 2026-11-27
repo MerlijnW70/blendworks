@@ -2,9 +2,9 @@ import bmesh
 import numpy
 
 from ..errors import bad_args
-from ..limits import MAX_MESH_VERTICES
+from ..limits import FRACTION, MAX_MESH_VERTICES
 from ..registry import command
-from ..schema import boolean, length, number, string
+from ..schema import boolean, length, number, ref, string
 from ..topology import mesh_report
 from ..util import get_mesh_object, mesh_counts, rounded
 from .modifiers import add_modifier
@@ -62,9 +62,9 @@ def voxel_remesh(ctx, obj, voxel_size, adaptivity, smooth):
     "remesh",
     "Rebuild a mesh as one clean surface of even voxels (Remesh modifier, voxel mode) and apply it at once; refuses a voxel size that would exceed the vertex cap.",
     {
-        "name": string("Mesh object."),
-        "voxel_size": length("Voxel edge in metres; smaller is finer and slower.", 0.05, 100.0),
-        "adaptivity": number("0 keeps even quads; larger values merge flat areas into fewer triangles.", 0.0, 1.0, 0.0),
+        "name": ref(string("Mesh object."), "object"),
+        "voxel_size": length("Voxel edge in metres; smaller is finer and slower; the mesh_vertices limit caps how fine.", 0.05),
+        "adaptivity": number("0 keeps even quads; larger values merge flat areas into fewer triangles.", 0.0, FRACTION, 0.0),
         "smooth_shading": boolean("Shade the result smooth.", False),
     },
     ["name", "voxel_size"],

@@ -1,6 +1,7 @@
 import bpy
 
 from .errors import bad_args
+from .limits import MAX_CONTACT_DARKENING
 from .nodes import Graph, find_socket
 from .presets import PRESETS
 from .procedural import surface_principled, wire_channels
@@ -14,7 +15,7 @@ CONTACT_MIX = "gc_contact_mix"
 CONTACT_ATTRIBUTE = "gc_contact_attribute"
 CONTACT_STRENGTH = "gc_contact_strength"
 CONTACT_MULTIPLIER = "gc_contact_multiplier"
-CONTACT_FLOOR = 0.64
+CONTACT_FLOOR = 1.0 - MAX_CONTACT_DARKENING
 CONTACT_DEFAULT = 0.2
 
 

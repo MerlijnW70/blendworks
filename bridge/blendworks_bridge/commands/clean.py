@@ -3,8 +3,9 @@ import math
 from ..cleaning import clean_bmesh
 from ..slivers import SLIVER_AREA
 from ..errors import failed
+from ..limits import MAX_LENGTH, ZERO_TOLERANCE
 from ..registry import command
-from ..schema import length, number, string
+from ..schema import EXISTS, length, number, ref, string
 from ..topology import manifold_report
 from ..util import EditMesh, get_mesh_object, mesh_counts, rounded
 from .mesh_edit import local_length
@@ -31,9 +32,9 @@ def clean_object(obj, tolerance=DEFAULT_TOLERANCE, merge_distance=DEFAULT_MERGE_
     "clean_mesh",
     "Repair a mesh after booleans: merge close vertices, dissolve degenerate faces, retriangulate sliver polygons, drop collinear vertices and loose geometry, fix normals; reports each count.",
     {
-        "name": string("Mesh object."),
-        "tolerance": length("Distance in metres under which a triangle's height or a vertex's offset from a straight edge counts as zero.", DEFAULT_TOLERANCE, 0.01),
-        "merge_distance": number("Merge vertices closer than this many metres; 0 skips merging.", 0.0, 1.0, DEFAULT_MERGE_DISTANCE),
+        "name": ref(string("Mesh object."), "object", EXISTS),
+        "tolerance": length("Distance in metres under which a triangle's height or a vertex's offset from a straight edge counts as zero.", DEFAULT_TOLERANCE, ZERO_TOLERANCE),
+        "merge_distance": number("Merge vertices closer than this many metres; 0 skips merging.", 0.0, MAX_LENGTH, DEFAULT_MERGE_DISTANCE),
     },
     ["name"],
     slow=True,

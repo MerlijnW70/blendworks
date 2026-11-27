@@ -2,6 +2,7 @@ import importlib
 
 MODULES = (
     "scene",
+    "validate",
     "objects",
     "hierarchy",
     "transforms",

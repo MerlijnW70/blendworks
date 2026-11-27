@@ -7,12 +7,15 @@ from ..erosion_thermal import max_slope_degrees, thermal_erode
 from ..errors import bad_args
 from ..heightgrid import TileSet
 from ..mesh_attributes import ATTRIBUTES, write_attributes
+from ..limits import (FRACTION, LEAST_TALUS_ANGLE, MAX_DROPLET_GRAVITY, MAX_DROPLET_INERTIA, MAX_DROPLET_LIFETIME,
+                      MAX_DROPLETS as DROPLET_LIMIT, MAX_EROSION_BRUSH, MAX_EROSION_TILES, MAX_LENGTH, MAX_RELIEF, MAX_SEDIMENT_CAPACITY,
+                      MAX_SEED, MAX_TALUS_ANGLE, MAX_THERMAL_SWEEPS, SHORTEST_DROPLET_STEP, SMALLEST_EROSION_BRUSH)
 from ..registry import command
-from ..schema import integer, names, number, string
+from ..schema import EXISTS, integer, names, number, ref, string
 from ..util import get_mesh_object, rounded
 
-MAX_DROPLETS = 2_000_000
-MAX_SWEEPS = 20_000
+MAX_DROPLETS = DROPLET_LIMIT
+MAX_SWEEPS = MAX_THERMAL_SWEEPS
 ROUNDS = 20
 HYDRAULIC_KEYS = ("inertia", "capacity", "min_capacity", "erode_rate", "deposit_rate", "evaporation", "gravity", "radius", "max_lifetime", "step")
 
@@ -57,24 +60,24 @@ def refresh_attributes(tile):
     "erode",
     "Erode heightfield terrain in metres: thermal talus slides, hydraulic droplets or both; tile edges stay fixed; writes erosion and deposition attributes and reports the volumes.",
     {
-        "name": string("Heightfield tile to erode (a mesh built by heightfield, with or without skirt, moved or scaled but not rotated)."),
-        "names": names("Neighbouring tiles to erode together with name as one grid, written back with shared edges equal; they must form a complete rectangle of equal tiles. Without them the edge heights of name stay unchanged.", 1, 64),
+        "name": ref(string("Heightfield tile to erode (a mesh built by heightfield, with or without skirt, moved or scaled but not rotated)."), "object", EXISTS),
+        "names": ref(names("Neighbouring tiles to erode together with name as one grid, written back with shared edges equal; they must form a complete rectangle of equal tiles. Without them the edge heights of name stay unchanged.", 1, MAX_EROSION_TILES), "object", EXISTS),
         "mode": string("thermal slides material down slopes past the talus angle; hydraulic runs droplets; both runs the droplets in 20 rounds, each followed by thermal sweeps, so gully walls settle at the talus angle as they form.", ["thermal", "hydraulic", "both"], "both"),
         "iterations": integer("Thermal sweeps (they stop early once no slope exceeds talus_angle by more than 0.05 degrees); in both mode the total, split over the 20 rounds.", 1, MAX_SWEEPS, 100),
-        "seed": integer("Seed of the droplet start points: the same seed gives the same heights.", 0, 2**31 - 1, 0),
-        "talus_angle": number("Thermal: steepest stable slope in degrees from horizontal.", 1.0, 89.0, 35.0),
-        "rate": number("Thermal: fraction of the excess moved per sweep.", 0.0, 1.0, 0.5, exclusive_minimum=0.0),
+        "seed": integer("Seed of the droplet start points: the same seed gives the same heights.", 0, MAX_SEED, 0),
+        "talus_angle": number("Thermal: steepest stable slope in degrees from horizontal.", LEAST_TALUS_ANGLE, MAX_TALUS_ANGLE, 35.0),
+        "rate": number("Thermal: fraction of the excess moved per sweep.", 0.0, FRACTION, 0.5, exclusive_minimum=0.0),
         "droplets": integer("Hydraulic: number of droplets, started at random points of the grid.", 1, MAX_DROPLETS, 20_000),
-        "inertia": number("Hydraulic: how much a droplet keeps its direction, 0 follows the slope exactly.", 0.0, 0.99, 0.05),
-        "capacity": number("Hydraulic: Kc in C = Kc * sin(slope) * speed * water.", 0.0, 1000.0, 4.0),
-        "min_capacity": number("Hydraulic: lowest capacity in metres, so droplets on flat ground still carry a little.", 0.0, 10.0, 0.01),
-        "erode_rate": number("Hydraulic: fraction of the missing capacity picked up per step.", 0.0, 1.0, 0.3),
-        "deposit_rate": number("Hydraulic: fraction of the excess sediment dropped per step.", 0.0, 1.0, 0.3),
-        "evaporation": number("Hydraulic: fraction of the water lost per step.", 0.0, 1.0, 0.01),
-        "gravity": number("Hydraulic: how fast a droplet speeds up per metre it descends.", 0.0, 1000.0, 4.0),
-        "radius": number("Hydraulic: erosion brush radius in metres, at least 1.5 grid spacings.", 0.01, 1000.0, 3.0),
-        "max_lifetime": integer("Hydraulic: steps a droplet lives.", 1, 10_000, 30),
-        "step": number("Hydraulic: metres a droplet moves per step, so the result does not depend on the grid spacing.", 0.001, 1000.0, 1.0),
+        "inertia": number("Hydraulic: how much a droplet keeps its direction, 0 follows the slope exactly.", 0.0, MAX_DROPLET_INERTIA, 0.05),
+        "capacity": number("Hydraulic: Kc in C = Kc * sin(slope) * speed * water.", 0.0, MAX_SEDIMENT_CAPACITY, 4.0),
+        "min_capacity": number("Hydraulic: lowest capacity in metres, so droplets on flat ground still carry a little.", 0.0, MAX_RELIEF, 0.01),
+        "erode_rate": number("Hydraulic: fraction of the missing capacity picked up per step.", 0.0, FRACTION, 0.3),
+        "deposit_rate": number("Hydraulic: fraction of the excess sediment dropped per step.", 0.0, FRACTION, 0.3),
+        "evaporation": number("Hydraulic: fraction of the water lost per step.", 0.0, FRACTION, 0.01),
+        "gravity": number("Hydraulic: how fast a droplet speeds up per metre it descends.", 0.0, MAX_DROPLET_GRAVITY, 4.0),
+        "radius": number("Hydraulic: erosion brush radius in metres, at least 1.5 grid spacings.", SMALLEST_EROSION_BRUSH, MAX_EROSION_BRUSH, 3.0),
+        "max_lifetime": integer("Hydraulic: steps a droplet lives.", 1, MAX_DROPLET_LIFETIME, 30),
+        "step": number("Hydraulic: metres a droplet moves per step, so the result does not depend on the grid spacing.", SHORTEST_DROPLET_STEP, MAX_LENGTH, 1.0),
         "mask": string("Vertex group or float point attribute (0 to 1) scaling how much each vertex may change; 0 protects it."),
     },
     ["name"],

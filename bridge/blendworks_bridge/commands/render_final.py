@@ -6,26 +6,29 @@ import bpy
 
 from .. import atmosphere_haze, camera_exposure, cloud_forms, device, exr_read, liquid_render, render_outputs, render_view, view_materials
 from ..errors import bad_args
+from ..limits import (FINAL_RESOLUTION, FINAL_SAMPLES, FRACTION, LEAST_BIT_DEPTH, MAX_BIT_DEPTH, MAX_FRAME, MAX_SEED,
+                      PATH_LENGTH, RENDER_SECONDS, SHORTEST_RENDER_SECONDS, SHORTEST_SHUTTER_FRAMES, SHUTTER_FRAMES,
+                      SMALLEST_RENDER_SIZE, THINNEST_WIRE, WIRE_WIDTH)
 from ..registry import command
 from ..rig import stamp_fields
-from ..schema import array, boolean, integer, number, obj, string
+from ..schema import array, boolean, integer, number, obj, ref, string
 from ..util import get_object
 from .camera_setup import camera_report
 
-MAX_FINAL_RESOLUTION = 4096
-MAX_FINAL_SAMPLES = 65_536
+MAX_FINAL_RESOLUTION = FINAL_RESOLUTION
+MAX_FINAL_SAMPLES = FINAL_SAMPLES
 DEFAULT_FINAL_SAMPLES = 1024
 CALL_TIMEOUT = 900
 CALL_MAX_TIMEOUT = 1800
 OVERHEAD_SECONDS = 300
-MAX_FINAL_SECONDS = float(CALL_TIMEOUT - OVERHEAD_SECONDS)
+MAX_FINAL_SECONDS = RENDER_SECONDS
 DEFAULT_FINAL_SECONDS = 300.0
-MIN_FINAL_SECONDS = 0.01
+MIN_FINAL_SECONDS = SHORTEST_RENDER_SECONDS
 OUTPUTS = {".png": "PNG", ".exr": "OPEN_EXR"}
 MOTION_POSITIONS = {"start": "START", "center": "CENTER", "end": "END"}
 MOTION = obj(
     {
-        "shutter": number("Shutter in frames: how long the shutter is open (0.5 is a 180 degree shutter).", 0.01, 10.0, 0.5),
+        "shutter": number("Shutter in frames: how long the shutter is open (0.5 is a 180 degree shutter).", SHORTEST_SHUTTER_FRAMES, SHUTTER_FRAMES, 0.5),
         "position": string("Where the open shutter sits around the frame.", list(MOTION_POSITIONS), "center"),
     }
 )
@@ -36,12 +39,12 @@ MOTION["description"] = "Motion blur for animated scenes: objects, cameras and d
     "render_final",
     "Final-quality render from a camera into the workspace: up to 4096 px, adaptive sampling, denoising, time budget, passes.",
     {
-        "path": string("Output file inside the workspace: .png (with exposure and look) or .exr (scene-linear).", max_length=1024),
-        "camera": string("Camera object to render from. Default: the scene's active camera."),
-        "width": integer("Image width in pixels.", 16, MAX_FINAL_RESOLUTION, 1920),
-        "height": integer("Image height in pixels.", 16, MAX_FINAL_RESOLUTION, 1080),
+        "path": string("Output file inside the workspace: .png (with exposure and look) or .exr (scene-linear).", max_length=PATH_LENGTH),
+        "camera": ref(string("Camera object to render from. Default: the scene's active camera."), "object"),
+        "width": integer("Image width in pixels.", SMALLEST_RENDER_SIZE, MAX_FINAL_RESOLUTION, 1920),
+        "height": integer("Image height in pixels.", SMALLEST_RENDER_SIZE, MAX_FINAL_RESOLUTION, 1080),
         "samples": integer("Most samples per pixel.", 1, MAX_FINAL_SAMPLES, DEFAULT_FINAL_SAMPLES),
-        "noise_threshold": number("Adaptive sampling stops a pixel below this noise; 0 turns adaptive sampling off.", 0.0, 1.0, 0.01),
+        "noise_threshold": number("Adaptive sampling stops a pixel below this noise; 0 turns adaptive sampling off.", 0.0, FRACTION, 0.01),
         "min_samples": integer("Samples before adaptive sampling may stop a pixel; 0 is automatic.", 0, MAX_FINAL_SAMPLES, 0),
         "denoise": boolean("Denoise with OpenImageDenoise, guided by albedo and normal passes.", True),
         "time_limit": number(
@@ -52,9 +55,9 @@ MOTION["description"] = "Motion blur for animated scenes: objects, cameras and d
             MAX_FINAL_SECONDS,
             DEFAULT_FINAL_SECONDS,
         ),
-        "seed": integer("Noise seed; the same seed gives the same image on the same CPU.", 0, 2_147_483_647, 0),
+        "seed": integer("Noise seed; the same seed gives the same image on the same CPU.", 0, MAX_SEED, 0),
         "device": string("auto: GPU when usable, else CPU; gpu: fail without one; cpu. Default: BLENDWORKS_DEVICE or auto.", list(device.MODES)),
-        "frame": integer("Frame to render. Default: the current frame.", -1_048_574, 1_048_574),
+        "frame": integer("Frame to render. Default: the current frame.", -MAX_FRAME, MAX_FRAME),
         "motion_blur": MOTION,
         "passes": array(
             {"type": "string", "enum": list(render_outputs.PASS_NAMES)},
@@ -63,7 +66,7 @@ MOTION["description"] = "Motion blur for animated scenes: objects, cameras and d
             len(render_outputs.PASS_NAMES),
         ),
         "exr": boolean("Also write a scene-linear .exr next to a .png.", False),
-        "depth": integer("Bits per channel of the .png: 8 or 16.", 8, 16, 8),
+        "depth": integer("Bits per channel of the .png: 8 or 16.", LEAST_BIT_DEPTH, MAX_BIT_DEPTH, 8),
         "transparent": boolean("Transparent background (alpha) instead of the world.", False),
         "preview": boolean("Return a small JPEG of the result to look at.", True),
         "shading": string(
@@ -74,11 +77,12 @@ MOTION["description"] = "Motion blur for animated scenes: objects, cameras and d
             list(render_view.VIEWS),
             "shaded",
         ),
-        "wire_width": number("shading wireframe: line width in pixels, the same at every distance.", 0.25, 32.0, view_materials.DEFAULT_WIRE_WIDTH),
+        "wire_width": number("shading wireframe: line width in pixels, the same at every distance.", THINNEST_WIRE, WIRE_WIDTH, view_materials.DEFAULT_WIRE_WIDTH),
         "wire_triangles": boolean("shading wireframe: also draw the diagonals the renderer cuts each quad and n-gon into.", False),
     },
     ["path"],
     mutates=False,
+    renders=True,
     writes_files=True,
     destructive_when="an output file already exists",
     slow=True,

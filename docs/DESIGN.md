@@ -39,6 +39,8 @@ The error for a missing Blender lists the places it looked and the download link
 - **Recovery:** the internal `recover` command opens the newest readable autosave, or else the previous one, and reports which file it loaded, with its time and reason.
 - **Files and checkpoints:** `load_blend` opens a `.blend` from the workspace in place of the scene, with auto-run off, so the file's scripts and Python drivers never run. `checkpoint` saves a named copy in `.blendworks/checkpoints/` (at most 64), and `restore_checkpoint` opens one. Both opening commands update the autosave. In the desktop add-on they refuse to drop unsaved changes unless `discard_unsaved` is true.
 - **No arbitrary code by default.** `run_python` exists only when the session or add-on is started with `--allow-python`, and the MCP server marks the tool as dangerous.
+- **Limits:** every bound in a tool schema is a named limit from `bridge/blendworks_bridge/limits.py` with a stated reason (physical range, memory, time, Blender or the protocol); `docs/LIMITS.md` lists them all and explains precision far from the origin. Worlds reach 200 km from the origin, lengths and distances 400 km, heights and displacements 20 km; counts that cost memory derive from the memory the process may use. A refusal names the argument, the value, the limit with its reason, and what to use instead where something else exists. `describe` returns the table as `limits_table`.
+- **Plans checked first:** `validate` takes `calls` (a list of `{cmd, args}`) and checks every call against its schema and against the names the earlier calls make or remove, without running any. It answers `{valid, calls, problems, ran: 0}`; each problem names the call index, the command, the argument, the value and, for a bound, the limit and the alternative. Name fields carry `x-ref` marks in the schema (exists, creates, replaces, ensures), and commands that change names otherwise (new_scene, delete, rename, load_blend) declare a plan hook. The handler runs the same schema check before every call, and the MCP server and scripts reach the same handler, so both get the same answer. Every command also takes `timeout_seconds` from scripts: the MCP server waits that long, a script only has it checked against the command's cap.
 - **Caps:** sizes and times are capped in `bridge/blendworks_bridge/limits.py`. Images are at most 8192 px per side. A bake is at most 4096 px and runs at most 600 s. It stops between channels once it passes its time limit (default 100 s), and the bake is then undone. The MCP server waits up to 660 s for a `bake` reply, so a bake at the cap still answers.
 - **Bake device:** `bake` picks its device from `BLENDWORKS_DEVICE` as defined in section 4 (Render device); its `device` field overrides the variable for one call. The result names the device, the backend, any CPU fallback and the seconds per channel.
 - **Texturing workflow:** model, then UV, then procedural or image materials, then bake, then export.
@@ -529,11 +531,11 @@ Liquids differ in how they pass light (clear with coloured absorption, milky wit
 <!-- numbers: printed by npm run bench:tools, checked by test/mcp-routing-bench.test.ts -->
 | Figure | Value |
 |---|---|
-| Tools (bridge commands and library tools) | 127 |
+| Tools (bridge commands and library tools) | 128 |
 | Tools in the default core listing | 12 |
-| Full listing, tokens | about 168 000 |
+| Full listing, tokens | about 169 000 |
 | Default listing, tokens | about 16 000 |
-| Benchmark intents | 311 |
+| Benchmark intents | 314 |
 | Held-out intents | 113 |
 | Instructions with a 200-character workspace path, characters | 4 091 |
 | Tier 0 of the instructions, characters | 1 432 |

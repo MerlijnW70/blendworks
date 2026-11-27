@@ -28,7 +28,9 @@ class Routing:
 
 
 class Command:
-    def __init__(self, name, description, schema, run, policy, dangerous, routing):
+    def __init__(self, name, description, schema, run, policy, dangerous, routing, plan=None, rules=None):
+        self.plan = plan
+        self.rules = rules
         self.name = name
         self.description = description
         self.schema = schema
@@ -63,16 +65,20 @@ class Command:
 
 
 def command(name, description, properties=None, required=(), mutates=True, dangerous=False, family=None, intents=(),
-            nearest=(), **policy):
+            nearest=(), plan=None, rules=None, **policy):
+    """plan, when given, is plan(args, state): what the command does to the scene's names beyond the x-ref fields of
+    its schema (see plan.py), so validate can follow a list of calls without running them. It may return a list of
+    problems it finds on the way. rules, when given, is rules(args): problems that need several arguments at once
+    (each a dict with argument, value and message); the handler refuses a call with any, and validate lists them."""
     if "\n" in description or len(description) > 200:
         raise ValueError(f"{name}: the description must be one short line")
-    rules = Policy(name, mutates, **policy)
+    policy_rules = Policy(name, mutates, **policy)
     routing = Routing(name, family, intents, nearest)
 
     def register(run):
         if name in COMMANDS:
             raise ValueError(f"command {name} is registered twice")
-        COMMANDS[name] = Command(name, description, obj(properties or {}, required), run, rules, dangerous, routing)
+        COMMANDS[name] = Command(name, description, obj(properties or {}, required), run, policy_rules, dangerous, routing, plan, rules)
         return run
 
     return register

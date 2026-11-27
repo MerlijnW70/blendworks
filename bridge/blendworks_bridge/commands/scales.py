@@ -5,14 +5,15 @@ from ..analytic_paths import DEFAULT_TOLERANCE
 from ..cutters import add_solid
 from ..engraving import cut, sampler_for
 from ..errors import bad_args, failed
+from ..limits import DIAL_MARKS, MARK_CLASSES, TURN, WINDING
 from ..meshdata import MeshData
 from ..registry import command
-from ..schema import array, boolean, integer, length, number, obj as object_schema, string
+from ..schema import array, boolean, integer, length, number, obj as object_schema, ref, string
 from ..surfaces import CylinderSurface, RingSurface
 from ..util import check_vertex_cap, get_mesh_object
 from .engrave import surface_properties
 
-MAX_MARKS = 3600
+MAX_MARKS = DIAL_MARKS
 ANGLE_EPSILON = 1e-9
 DEFAULT_WIDTH = 0.0005
 DEFAULT_LENGTH = 0.004
@@ -23,10 +24,10 @@ def class_schema():
     schema = object_schema(
         {
             "every": integer("This class takes every n-th mark, counted from the first mark of the range (which every class takes).", 1, MAX_MARKS),
-            "length": length("Mark length in metres across the circle: radially on a ring, along the axis on a cylinder.", maximum=10.0),
-            "width": length("Mark width in metres along the circle.", maximum=10.0),
-            "depth": length("Cut depth in metres, for a cut scale.", maximum=10.0),
-            "height": length("Emboss height in metres, for an embossed scale.", maximum=10.0),
+            "length": length("Mark length in metres across the circle: radially on a ring, along the axis on a cylinder."),
+            "width": length("Mark width in metres along the circle."),
+            "depth": length("Cut depth in metres, for a cut scale."),
+            "height": length("Emboss height in metres, for an embossed scale."),
         },
         ["every"],
     )
@@ -38,21 +39,21 @@ def class_schema():
     "engrave_scale",
     "Cut or emboss the tick marks of a dial in one boolean: an angular range on a ring face or cylinder band, by step or count, with major classes and quadrant mirroring. Numbers: engrave.",
     {
-        "name": string("Mesh object to mark."),
+        "name": ref(string("Mesh object to mark."), "object"),
         "ring": surface_properties()["ring"],
         "cylinder": surface_properties()["cylinder"],
-        "start": number("Angle in degrees of the first mark, anticlockwise from the surface's reference.", -36000.0, 36000.0, 0.0),
-        "end": number("Angle in degrees of the last mark; a range of 360 degrees or more is a full circle, which leaves out the mark that would repeat the first.", -36000.0, 36000.0, 360.0),
-        "step": number("Degrees between marks.", -360.0, 360.0),
+        "start": number("Angle in degrees of the first mark, anticlockwise from the surface's reference.", -WINDING, WINDING, 0.0),
+        "end": number("Angle in degrees of the last mark; a range of 360 degrees or more is a full circle, which leaves out the mark that would repeat the first.", -WINDING, WINDING, 360.0),
+        "step": number("Degrees between marks.", -TURN, TURN),
         "count": integer("Number of marks, spread evenly from start to end.", 1, MAX_MARKS),
         "mirror": string("none, or quadrants: repeat the marks at 180 - a, 180 + a and 360 - a for every mark at angle a, as on a meridian ring numbered 0-90-0-90.", ["none", "quadrants"], "none"),
         "place": string("Where the marks sit on the circle: above (from it outward on a ring, along +axis on a cylinder), centre, or below.", list(PLACES), "above"),
-        "length": length("Length of the ordinary marks in metres.", DEFAULT_LENGTH, 10.0),
-        "width": length("Width of the ordinary marks in metres.", DEFAULT_WIDTH, 10.0),
-        "depth": length("Cut depth of the ordinary marks in metres.", maximum=10.0),
-        "height": length("Emboss height of the ordinary marks in metres.", maximum=10.0),
-        "classes": array(class_schema(), "Mark classes with their own size, for example {every: 10, length: 0.008, depth: 0.0008} for major marks.", 0, 16, []),
-        "tolerance": length("Largest distance in metres between the curved surface and the flat facets of a mark.", DEFAULT_TOLERANCE, 1.0),
+        "length": length("Length of the ordinary marks in metres.", DEFAULT_LENGTH),
+        "width": length("Width of the ordinary marks in metres.", DEFAULT_WIDTH),
+        "depth": length("Cut depth of the ordinary marks in metres."),
+        "height": length("Emboss height of the ordinary marks in metres."),
+        "classes": array(class_schema(), "Mark classes with their own size, for example {every: 10, length: 0.008, depth: 0.0008} for major marks.", 0, MARK_CLASSES, []),
+        "tolerance": length("Largest distance in metres between the curved surface and the flat facets of a mark.", DEFAULT_TOLERANCE),
         "clean": boolean("Run clean_mesh on the result.", True),
     },
     ["name"],
@@ -118,6 +119,7 @@ def source_angles(args):
         total = int(math.floor((end - start) / step + ANGLE_EPSILON)) + 1
         if full and abs(start + (total - 1) * step - end) < ANGLE_EPSILON:
             total -= 1
+        check_marks(total)
         return [start + index * step for index in range(total)]
     count = args["count"]
     if count == 1:
@@ -126,10 +128,16 @@ def source_angles(args):
     return [start + index * gap for index in range(count)]
 
 
+def check_marks(total):
+    """Exact: total is the number of marks source_angles lists, counted before listing them."""
+    if total > MAX_MARKS:
+        raise bad_args(f"the scale has {total} marks; the {MAX_MARKS.key} limit is {MAX_MARKS.plain()} ({MAX_MARKS.reason}) "
+                       "Raise step or narrow start to end.")
+
+
 def mark_angles(args):
     sources = source_angles(args)
-    if len(sources) > MAX_MARKS:
-        raise bad_args(f"the scale has {len(sources)} marks; the cap is {MAX_MARKS}")
+    check_marks(len(sources))
     marks = []
     seen = []
     for index, angle in enumerate(sources):

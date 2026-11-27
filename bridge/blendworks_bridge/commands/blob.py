@@ -5,9 +5,9 @@ import numpy
 
 from .. import kit_limits
 from ..errors import bad_args, failed
-from ..limits import MAX_MESH_VERTICES
+from ..limits import LEAST_METABALL_LEVEL, MAX_MESH_VERTICES, MAX_METABALL_LEVEL
 from ..registry import command
-from ..schema import array, length, number, obj, string, vector3
+from ..schema import CREATES, array, length, number, obj, ref, string, vector3
 from ..topology import mesh_report
 from ..util import link_object, mesh_counts, require_free_name, rounded
 from .remesh import MIN_VOXEL, shell_count, voxel_remesh
@@ -20,7 +20,7 @@ SURFACE_SHARE = 1.0 - 1.0 / (INFLUENCE * INFLUENCE)
 POINT = obj(
     {
         "position": vector3("Centre of the sphere in metres."),
-        "radius": length("Radius in metres of this sphere on its own; neighbours blend into it.", maximum=1000.0),
+        "radius": length("Radius in metres of this sphere on its own; neighbours blend into it."),
     },
     ["position", "radius"],
 )
@@ -65,9 +65,9 @@ def metaball_mesh(ctx, centres, radii, threshold, voxel_size):
     "blob",
     "Build a smooth union of spheres as metaballs, converted and voxel remeshed into one closed mesh with no modifiers; an isolated sphere keeps exactly its radius and close spheres blend.",
     {
-        "name": string("Name of the new mesh object."),
+        "name": ref(string("Name of the new mesh object."), "object", CREATES),
         "points": array(POINT, "Spheres to blend.", 1, kit_limits.MAX_BLOB_POINTS),
-        "threshold": number("Field level of the surface, 0.05 to 4: lower blends over a wider neck, higher gives tighter necks; a sphere on its own keeps its radius.", 0.05, 4.0, 1.0),
+        "threshold": number(f"Field level of the surface, {LEAST_METABALL_LEVEL:g} to {MAX_METABALL_LEVEL:g}: lower blends over a wider neck, higher gives tighter necks; a sphere on its own keeps its radius.", LEAST_METABALL_LEVEL, MAX_METABALL_LEVEL, 1.0),
         "voxel_size": length("Cell size in metres of the metaball surface and the remesh; every radius must be at least two voxels.", 0.05),
     },
     ["name", "points"],

@@ -1,7 +1,8 @@
 from .. import limits
 from ..errors import bad_args
 from ..registry import command
-from ..schema import boolean, integer, names, number, string
+from ..limits import FRACTION, PACK_MARGIN, SEARCH_SECONDS, SHORTEST_SEARCH_SECONDS
+from ..schema import boolean, integer, names, number, ref, string
 from ..texel import average_island_scale, margin_memory, pack, scale_to_density
 from ..uv_coverage import pack_for_coverage
 from .uv import uv_mesh_object, uv_report
@@ -38,14 +39,14 @@ def summary(reports):
     "uv_pack",
     "Pack the UV islands of one or more meshes into the UV square as one shared atlas or each on its own; target coverage merges slivers, evens the texel density and searches the packing.",
     {
-        "names": names("Mesh objects whose UVs to pack."),
+        "names": ref(names("Mesh objects whose UVs to pack."), "object"),
         "target": string("fit: one packing pass. coverage: merge tiny islands, even out the texel density, then search margin, rotation and shape for the best coverage.", TARGETS, "fit"),
-        "margin": number("Space between islands, as a share of the UV square; with target coverage the largest margin the search tries.", 0.0, 0.5, 0.01),
+        "margin": number("Space between islands, as a share of the UV square; with target coverage the largest margin the search tries.", 0.0, PACK_MARGIN, 0.01),
         "rotate": boolean("Allow rotating islands for a tighter fit.", True),
         "shared": boolean("Pack every object's islands together into one atlas; false packs each object on its own.", True),
         "uniform_density": boolean("In a shared atlas, give every island of every object the same texel density first; target coverage always does.", True),
-        "min_island_area": number("target coverage: merge islands under this share of the surface area into a neighbour where the seams allow. Default 0.002.", 0.0, 1.0),
-        "time_limit": number("target coverage: seconds the packing search may run; it stops after the trial that passes it. Default 30.", 1.0, 300.0),
+        "min_island_area": number("target coverage: merge islands under this share of the surface area into a neighbour where the seams allow. Default 0.002.", 0.0, FRACTION),
+        "time_limit": number("target coverage: seconds the packing search may run; it stops after the trial that passes it. Default 30.", SHORTEST_SEARCH_SECONDS, SEARCH_SECONDS),
         "texel_density": number(
             "Scale the islands to this many pixels per metre and pack them without rescaling; they may spill out of the square.",
             maximum=limits.MAX_TEXEL_DENSITY,

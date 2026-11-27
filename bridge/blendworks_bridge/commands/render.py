@@ -7,13 +7,13 @@ import tempfile
 import bpy
 from mathutils import Vector
 
-from .. import atmosphere_haze, device, limits, render_outputs
+from .. import atmosphere_haze, device, floating_origin, limits, render_outputs
 from ..errors import bad_args, failed
 from ..render_view import UNDENOISED_VIEWS
 from ..preview import DIRECTIONS, SHADINGS, Shading, aim, frame_width
 from ..registry import command
 from ..rig import TEMPORARY_PREFIX, PreviewRig, RenderSettings, sphere_of, stamp_fields
-from ..schema import array, integer, length, obj, string, vector3
+from ..schema import array, integer, length, obj, ref, string, vector3
 from ..util import GEOMETRY_TYPES, get_object, object_bounds, scene_bounds, vec
 
 SEED = 0
@@ -23,7 +23,7 @@ TEXT_CHUNKS = (b"tEXt", b"zTXt", b"iTXt")
 FORMATS = {"png": ("PNG", "image/png", ".png"), "jpeg": ("JPEG", "image/jpeg", ".jpg")}
 FOCUS = obj(
     {
-        "object": string("Object to frame; its bounds centre is the focus."),
+        "object": ref(string("Object to frame; its bounds centre is the focus."), "object"),
         "point": vector3("Point to frame, in metres."),
         "width": length("Visible width at the focus, in metres. Default: the object's size, or 1 m around a point."),
         "direction": vector3("Direction from the focus towards the camera. Default: the views, or three-quarter."),
@@ -36,7 +36,7 @@ FOCUS["description"] = "Close-up: frame an object or a point at a chosen width i
     "render_preview",
     "Render previews (base64 PNG or JPEG) from a camera, turntable views or a close-up focus, in a chosen shading.",
     {
-        "camera": string("Camera object to render from."),
+        "camera": ref(string("Camera object to render from."), "object"),
         "views": array(
             {"type": "string", "enum": list(DIRECTIONS)},
             "Turntable views with a camera fitted to the scene, or around focus. Default without camera: the active "
@@ -51,7 +51,7 @@ FOCUS["description"] = "Close-up: frame an object or a point at a chosen width i
             SHADINGS,
             "shaded",
         ),
-        "resolution": integer("Image width and height in pixels.", 64, limits.MAX_RENDER_RESOLUTION, limits.DEFAULT_RENDER_RESOLUTION),
+        "resolution": integer("Image width and height in pixels.", limits.SMALLEST_PREVIEW_RESOLUTION, limits.MAX_RENDER_RESOLUTION, limits.DEFAULT_RENDER_RESOLUTION),
         "samples": integer("Render samples.", 1, limits.MAX_PREVIEW_SAMPLES, limits.DEFAULT_PREVIEW_SAMPLES),
         "engine": string("auto: Cycles headless, EEVEE in the desktop add-on.", ["auto", "cycles", "eevee"], "auto"),
         "device": string("Cycles device. auto: GPU when usable, else CPU; gpu: fail without one; cpu. Default: BLENDWORKS_DEVICE or auto.", list(device.MODES)),
@@ -59,6 +59,7 @@ FOCUS["description"] = "Close-up: frame an object or a point at a chosen width i
         "quality": integer(f"JPEG quality. Default: {limits.DEFAULT_JPEG_QUALITY}.", 1, limits.MAX_JPEG_QUALITY),
     },
     mutates=False,
+    renders=True,
     slow=True,
     family="output",
     intents=("look at the model, render preview images", "close-up of a detail", "clay, wireframe, normals, UV checker or material id view", "see the topology of a mesh of any size as a wireframe"),
@@ -254,7 +255,7 @@ def render_view(scene, shot, folder, args, rig, haze=None):
     path = os.path.join(folder, f"{len(os.listdir(folder))}{extension}")
     scene.render.filepath = path
     if haze is None:
-        bpy.ops.render.render(write_still=True)
+        floating_origin.render(scene, write_still=True)
     else:
         render_outputs.render_hazed_still(scene, haze[0], camera, path, haze[1])
     if not os.path.isfile(path):

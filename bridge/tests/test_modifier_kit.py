@@ -106,6 +106,17 @@ def test_bevel_modifier_gives_the_hand_counted_chamfer(bridge):
     assert result["mesh"] == {"vertices": 24, "edges": 48, "faces": 26, "triangles": 44}
 
 
+def test_growing_modifiers_are_refused_before_blender_builds_them(bridge):
+    bridge.ok("add_primitive", type="sphere", name="Ball", segments=256, rings=128)
+    message = bridge.refuse("add_modifier", "bad_args", name="Ball", bevel={"segments": 100, "limit_method": "none", "width": 0.001})
+    assert "mesh_vertices limit is 2000000" in message and "Lower segments" in message, message
+    assert len(bpy.data.objects["Ball"].modifiers) == 0
+    bridge.ok("mesh_from_data", name="Edge", vertices=[[1, 0, 0], [1, 0, 1]], edges=[[0, 1]])
+    message = bridge.refuse("add_modifier", "bad_args", name="Edge", screw={"steps": 10_000, "iterations": 10_000}, apply=True)
+    assert "at least 200000000 vertices" in message and "Lower steps or iterations" in message, message
+    assert len(bpy.data.objects["Edge"].modifiers) == 0
+
+
 def test_solidify_gives_a_plane_thickness(bridge):
     bridge.ok("add_primitive", type="plane", name="Sheet", size=2.0)
     result = bridge.ok("add_modifier", name="Sheet", solidify={"thickness": 0.1, "offset": -1.0})

@@ -10,8 +10,9 @@ REPLACES_FILE = "file"
 
 class Policy:
     def __init__(self, name, mutates, slow=False, timeout=None, max_timeout=None, destructive=False,
-                 destructive_when=None, writes_files=False, internal=False, snapshot=None):
+                 destructive_when=None, writes_files=False, internal=False, snapshot=None, renders=False):
         self.mutates = bool(mutates)
+        self.renders = bool(renders)
         self.slow = bool(slow)
         self.timeout = timeout or (SLOW_TIMEOUT if self.slow else DEFAULT_TIMEOUT)
         self.max_timeout = max_timeout or (SLOW_MAX_TIMEOUT if self.slow else DEFAULT_MAX_TIMEOUT)

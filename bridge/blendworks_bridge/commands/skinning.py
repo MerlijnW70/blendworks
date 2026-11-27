@@ -4,7 +4,8 @@ from ..bones import deforming_armatures, get_armature
 from ..errors import bad_args, failed
 from ..operators import only_selected, operator_context
 from ..registry import command
-from ..schema import array, boolean, integer, names, number, obj as object_schema, point3, string
+from ..limits import BONE_INFLUENCES, ELEMENT_NAME_LENGTH, FRACTION, RIGID_PARTS, SMOOTHING_PASSES
+from ..schema import array, boolean, integer, names, number, obj as object_schema, point3, ref, string
 from ..selection import EXTENDED_FACE_PROPERTIES, has_selector, select_faces
 from ..util import EditMesh, get_mesh_object
 from ..weights import (
@@ -25,7 +26,7 @@ from ..weights import (
 METHODS = {"automatic": "ARMATURE_AUTO", "envelope": "ARMATURE_ENVELOPE", "none": "ARMATURE_NAME"}
 RIGID = object_schema(
     {
-        "bone": string("Deforming bone that carries the whole part.", max_length=63),
+        "bone": string("Deforming bone that carries the whole part.", max_length=ELEMENT_NAME_LENGTH),
         "vertex_group": string("The part: the vertices of this vertex group."),
         "island": integer("The part: this loose part, numbered from 0 by lowest vertex index.", 0),
         "near": point3("The part: the loose part whose surface passes nearest to this world point."),
@@ -38,9 +39,9 @@ RIGID = object_schema(
     "vertex_group",
     "Create or change a vertex group from a face selection (box, island, material, normal): replace, add or remove vertices with a weight.",
     {
-        "name": string("Mesh object."),
-        "group": string("Vertex group name.", max_length=63),
-        "weight": number("Weight of the chosen vertices.", 0.0, 1.0, 1.0),
+        "name": ref(string("Mesh object."), "object"),
+        "group": string("Vertex group name.", max_length=ELEMENT_NAME_LENGTH),
+        "weight": number("Weight of the chosen vertices.", 0.0, FRACTION, 1.0),
         "mode": string("replace makes the group exactly the chosen vertices; add and remove change it.", ["replace", "add", "remove"], "replace"),
         **EXTENDED_FACE_PROPERTIES,
     },
@@ -153,15 +154,15 @@ def refine(obj, armature, deform, args):
     "skin_bind",
     "Bind meshes to an armature with automatic (heat) weights: limit influences (default 4), normalise, smooth, rigid parts; reports unweighted vertices.",
     {
-        "meshes": names("Meshes to bind."),
-        "armature": string("Armature to bind to."),
+        "meshes": ref(names("Meshes to bind."), "object"),
+        "armature": ref(string("Armature to bind to."), "object"),
         "weights": string("automatic heat weights, bone envelopes, or none (only rigid parts and the nearest-bone fill).", list(METHODS), "automatic"),
         "bones": names("Deforming bones the weights may use, such as the leg bones for a leg mesh. Default: every deforming bone."),
-        "max_influences": integer("Most bones per vertex; extra weights are dropped, smallest first.", 1, 8, 4),
+        "max_influences": integer("Most bones per vertex; extra weights are dropped, smallest first.", 1, BONE_INFLUENCES, 4),
         "normalize": boolean("Make every vertex's weights sum to 1.", True),
-        "smooth": integer("Smoothing passes over the mesh edges before limiting.", 0, 50, 0),
-        "smooth_factor": number("How far each pass moves a weight towards its neighbours' mean.", 0.0, 1.0, 0.5),
-        "rigid": array(RIGID, "Parts that move with one bone only: a vertex group, a loose part by number or near a point.", 1, 256),
+        "smooth": integer("Smoothing passes over the mesh edges before limiting.", 0, SMOOTHING_PASSES, 0),
+        "smooth_factor": number("How far each pass moves a weight towards its neighbours' mean.", 0.0, FRACTION, 0.5),
+        "rigid": array(RIGID, "Parts that move with one bone only: a vertex group, a loose part by number or near a point.", 1, RIGID_PARTS),
         "rigid_parts": boolean("Give every loose part wholly to the bone with the most weight on it, for rigid props and mannequins.", False),
         "fill_unweighted": boolean("Give each vertex left without weight to its nearest deforming bone.", True),
     },

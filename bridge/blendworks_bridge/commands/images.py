@@ -5,20 +5,26 @@ import bpy
 from ..errors import bad_args, failed
 from ..image_header import image_dimensions
 from ..images import ALPHA_DEPTHS, COLORSPACES, NOT_IMAGES, get_image, image_summary, is_data, load_image, new_image
-from ..limits import MAX_IMAGE_SIZE
+from ..limits import LEAST_BIT_DEPTH, MAX_BIT_DEPTH, MAX_IMAGE_SIZE, MAX_JPEG_QUALITY, PATH_LENGTH
 from ..registry import command
-from ..schema import boolean, color, integer, names, string
+from ..schema import CREATES, EXISTS, boolean, color, integer, names, ref, string
 
 SAVE_FORMATS = {".png": "PNG", ".jpg": "JPEG", ".jpeg": "JPEG"}
 TEMPORARY_SCENE = "blendworks_image_save"
+
+
+def plan_image_load(args, state):
+    """Plan hook: without name the image is named after its file."""
+    if "name" not in args:
+        state.add("image", os.path.basename(args["path"].replace("\\", "/")))
 
 
 @command(
     "image_load",
     "Load a PNG, JPEG, OpenEXR or WebP image from the workspace as a named image.",
     {
-        "path": string("Image file inside the workspace, relative to it (.png, .jpg, .jpeg, .exr, .webp).", max_length=1024),
-        "name": string("Image name. Default: the file name."),
+        "path": string("Image file inside the workspace, relative to it (.png, .jpg, .jpeg, .exr, .webp).", max_length=PATH_LENGTH),
+        "name": ref(string("Image name. Default: the file name."), "image", CREATES),
         "colorspace": string(
             "srgb for colour maps, non_color for data maps (roughness, normal, height), linear for HDR colour. "
             "Default: linear for .exr files, srgb for the others.",
@@ -26,6 +32,7 @@ TEMPORARY_SCENE = "blendworks_image_save"
         ),
     },
     ["path"],
+    plan=plan_image_load,
     family="textures",
     intents=("load an image file from the workspace", "open a texture PNG, JPEG, EXR or WebP", "load a map as non-colour data"),
     nearest=(("image_new", "for a blank image"),),
@@ -39,7 +46,7 @@ def image_load(ctx, args):
     "image_new",
     "Create a blank image filled with one colour, for example as a bake target.",
     {
-        "name": string("Image name; must be new."),
+        "name": ref(string("Image name; must be new."), "image", CREATES),
         "width": integer("Width in pixels.", 1, MAX_IMAGE_SIZE, 1024),
         "height": integer("Height in pixels.", 1, MAX_IMAGE_SIZE, 1024),
         "color": color("Fill colour, RGB or RGBA from 0 to 1 (default opaque black).", [0.0, 0.0, 0.0, 1.0]),
@@ -62,10 +69,10 @@ def image_new(ctx, args):
     "image_save",
     "Write an image into the workspace as PNG or JPEG; colour maps are written sRGB-encoded, data maps raw.",
     {
-        "name": string("Image to save."),
-        "path": string("File path inside the workspace, relative to it (.png, .jpg or .jpeg).", max_length=1024),
-        "quality": integer("JPEG quality, 1 to 100.", 1, 100, 90),
-        "depth": integer("Bits per channel: 8, or 16 for PNG.", 8, 16, 8),
+        "name": ref(string("Image to save."), "image", EXISTS),
+        "path": string("File path inside the workspace, relative to it (.png, .jpg or .jpeg).", max_length=PATH_LENGTH),
+        "quality": integer(f"JPEG quality, 1 to {MAX_JPEG_QUALITY}.", 1, MAX_JPEG_QUALITY, 90),
+        "depth": integer("Bits per channel: 8, or 16 for PNG.", LEAST_BIT_DEPTH, MAX_BIT_DEPTH, 8),
         "relink": boolean("Point the image at the saved file afterwards, so exports and .blend files use it.", True),
     },
     ["name", "path"],
@@ -142,7 +149,7 @@ def relink(txn, image, path, data):
 @command(
     "image_info",
     "List images with their size, colour space, file or packed state and number of users.",
-    {"names": names("Images to report. Default: every image.")},
+    {"names": ref(names("Images to report. Default: every image."), "image", EXISTS)},
     mutates=False,
     family="textures",
     intents=("image sizes and colour spaces", "list loaded textures"),

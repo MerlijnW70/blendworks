@@ -309,5 +309,8 @@
   {"id":"liquid_body-2","text":"Add a river that runs down the terrain's lowest line into the lake","kind":"single","split":"tune","expect":["blender_liquid_body"]},
   {"id":"liquid_body-3","text":"An ocean with waves for a 12 m/s wind and foam on the crests up to a sandy beach","kind":"single","split":"tune","expect":["blender_liquid_body"]},
   {"id":"liquid_fill-1","text":"Pour a quarter litre of milk into the glass so the surface meets the wall with a meniscus","kind":"near-miss","split":"tune","expect":["blender_liquid_fill"],"confusable":"blender_material_liquid"},
-  {"id":"liquid_fill-2","text":"A pint of beer with a foam head, and a puddle of spilled coffee on the table","kind":"single","split":"tune","expect":["blender_liquid_fill"]}
+  {"id":"liquid_fill-2","text":"A pint of beer with a foam head, and a puddle of spilled coffee on the table","kind":"single","split":"tune","expect":["blender_liquid_fill"]},
+  {"id":"validate-1","text":"Check my plan of twenty tool calls before running any of them","kind":"single","split":"tune","expect":["blender_validate"]},
+  {"id":"validate-2","text":"Validate these calls and list every problem in one answer without building anything","kind":"single","split":"tune","expect":["blender_validate"]},
+  {"id":"validate-3","text":"How big can a scene be before the limits refuse my landscape?","kind":"single","split":"tune","expect":["blender_validate"]}
 ]
