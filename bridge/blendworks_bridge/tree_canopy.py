@@ -5,6 +5,7 @@ import numpy
 from mathutils import Matrix
 
 from .copies import linked_copies
+from .edge_order import canonical_edges
 from .errors import bad_args
 from .limits import MAX_MESH_VERTICES
 from .tree_foliage import ATTRIBUTES, leaf_attributes, spray_matrix
@@ -24,6 +25,7 @@ def write_mesh(name, batch, attributes):
     mesh.polygons.add(count)
     mesh.polygons.foreach_set("loop_start", numpy.arange(0, 3 * count, 3, dtype=numpy.int32))
     mesh.update(calc_edges=True)
+    canonical_edges(mesh)
     layer = mesh.uv_layers.new(name="UVMap")
     layer.data.foreach_set("uv", batch.uvs.astype(numpy.float32).reshape(-1))
     mesh.polygons.foreach_set("material_index", batch.materials.astype(numpy.int32))

@@ -116,9 +116,7 @@ def build_primitive(mesh, kind, options):
                 calc_uvs=True,
             )
         elif kind == "sphere":
-            bmesh.ops.create_uvsphere(
-                bm, u_segments=options["segments"], v_segments=options["rings"], radius=options["radius"], calc_uvs=True
-            )
+            build_uv_sphere(bm, uv, options)
         elif kind == "ico_sphere":
             bmesh.ops.create_icosphere(bm, subdivisions=options["subdivisions"], radius=options["radius"], calc_uvs=True)
         else:
@@ -129,6 +127,29 @@ def build_primitive(mesh, kind, options):
         bm.to_mesh(mesh)
     finally:
         bm.free()
+
+
+def build_uv_sphere(bm, uv, options):
+    radius, around, rings = options["radius"], options["segments"], options["rings"]
+    top = bm.verts.new((0.0, 0.0, radius))
+    grid = []
+    for ring in range(1, rings):
+        theta = math.pi * ring / rings
+        grid.append([bm.verts.new((radius * math.sin(theta) * math.cos(2 * math.pi * i / around), radius * math.sin(theta) * math.sin(2 * math.pi * i / around), radius * math.cos(theta))) for i in range(around)])
+    bottom = bm.verts.new((0.0, 0.0, -radius))
+
+    def face(corners, coords):
+        made = bm.faces.new(corners)
+        for loop, (u, v) in zip(made.loops, coords):
+            loop[uv].uv = (u / around, 1.0 - v / rings)
+
+    for i in range(around):
+        following = (i + 1) % around
+        face([top, grid[0][i], grid[0][following]], [(i + 0.5, 0), (i, 1), (i + 1, 1)])
+        for ring in range(rings - 2):
+            face([grid[ring][i], grid[ring + 1][i], grid[ring + 1][following], grid[ring][following]], [(i, ring + 1), (i, ring + 2), (i + 1, ring + 2), (i + 1, ring + 1)])
+        face([bottom, grid[-1][following], grid[-1][i]], [(i + 0.5, rings), (i + 1, rings - 1), (i, rings - 1)])
+    bm.normal_update()
 
 
 def build_torus(bm, uv, options):

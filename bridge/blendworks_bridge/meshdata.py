@@ -1,5 +1,6 @@
 from mathutils import Vector
 
+from .edge_order import canonical_edges
 from .errors import bad_args
 
 
@@ -86,6 +87,7 @@ class MeshData:
         mesh.clear_geometry()
         mesh.from_pydata([tuple(co) for co in self.verts], self.edges, self.faces)
         corrected = mesh.validate(verbose=False)
+        canonical_edges(mesh)
         intact = len(mesh.polygons) == len(self.faces) and len(mesh.loops) == sum(len(face) for face in self.faces)
         if not intact and self.has_face_data():
             raise bad_args("the faces were invalid (for example duplicate faces), so their UVs, materials and flags cannot be kept; fix the mesh data")

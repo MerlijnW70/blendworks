@@ -2,6 +2,7 @@ import bmesh
 import bpy
 
 from ..cutmarks import mark_cut_edges, mark_cutter, unmark
+from ..edge_order import canonical_edges
 from ..errors import BridgeError, bad_args, failed, not_found
 from ..limits import FRACTION, MAX_LENGTH, MAX_MESH_VERTICES, MAX_NAMES, MAX_SCALE_FACTOR, PAIR
 from ..meshdata import MeshData
@@ -73,6 +74,7 @@ def apply_modifiers(ctx, obj, names):
 
 
 def replace_geometry(obj, source):
+    canonical_edges(source)
     bm = bmesh.new()
     try:
         bm.from_mesh(source)

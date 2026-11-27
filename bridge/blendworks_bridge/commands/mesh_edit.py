@@ -139,7 +139,8 @@ def bevel(ctx, args):
     normals = None
     with EditMesh(obj) as bm:
         edges = bevel_edges(bm, obj, args)
-        verts = list({vert for edge in edges for vert in edge.verts})
+        bm.verts.index_update()
+        verts = sorted({vert for edge in edges for vert in edge.verts}, key=lambda vert: vert.index)
         check_vertex_cap(least_bevel_vertices(len(bm.verts), len(verts), args["segments"]))
         created = bmesh.ops.bevel(
             bm,
@@ -214,7 +215,8 @@ def subdivide(ctx, args):
         raise failed(f"subdividing would give about {estimate} vertices; the cap is {MAX_MESH_VERTICES}")
     with EditMesh(obj) as bm:
         faces = select_faces(bm, obj, args)
-        edges = list({edge for face in faces for edge in face.edges})
+        bm.edges.index_update()
+        edges = sorted({edge for face in faces for edge in face.edges}, key=lambda edge: edge.index)
         bmesh.ops.subdivide_edges(bm, edges=edges, cuts=args["cuts"], use_grid_fill=True, smooth=args["smooth"])
     return edit_result(obj)
 

@@ -1,5 +1,6 @@
 import numpy
 
+from .edge_order import canonical_edges
 from .noise_stack import stack_field
 
 
@@ -91,6 +92,7 @@ class TileMesh:
         mesh.polygons.foreach_set("loop_total", sizes)
         mesh.polygons.foreach_set("use_smooth", numpy.concatenate(self.smooth))
         mesh.update(calc_edges=True)
+        canonical_edges(mesh)
         layer = mesh.uv_layers.new(name="UVMap")
         layer.uv.foreach_set("vector", numpy.concatenate(self.uvs).ravel())
         if self.rim is not None:

@@ -4,6 +4,7 @@ import bpy
 import numpy
 
 from .. import kit_limits
+from ..edge_order import canonical_edges
 from ..errors import bad_args, failed
 from ..limits import LEAST_METABALL_LEVEL, MAX_MESH_VERTICES, MAX_METABALL_LEVEL
 from ..registry import command
@@ -54,7 +55,9 @@ def metaball_mesh(ctx, centres, radii, threshold, voxel_size):
     ctx.scene.collection.objects.link(field)
     try:
         ctx.view_layer.update()
-        return bpy.data.meshes.new_from_object(field.evaluated_get(ctx.depsgraph()))
+        mesh = bpy.data.meshes.new_from_object(field.evaluated_get(ctx.depsgraph()))
+        canonical_edges(mesh)
+        return mesh
     finally:
         bpy.data.objects.remove(field)
         bpy.data.metaballs.remove(ball)

@@ -97,7 +97,8 @@ def selected_vertices(bm, obj, args):
             raise bad_args(f"vertex index {wanted[-1]} is out of range; {obj.name} has {len(bm.verts)} vertices")
         return [bm.verts[index] for index in wanted], []
     faces = select_faces(bm, obj, args)
-    return list({vert for face in faces for vert in face.verts}), faces
+    bm.verts.index_update()
+    return sorted({vert for face in faces for vert in face.verts}, key=lambda vert: vert.index), faces
 
 
 @command(

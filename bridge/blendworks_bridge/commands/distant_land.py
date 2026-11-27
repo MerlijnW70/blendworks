@@ -5,6 +5,7 @@ import bpy
 import numpy
 
 from .. import land_material, land_stats
+from ..edge_order import canonical_edges
 from ..errors import bad_args
 from ..land_border import BorderCorrection
 from ..land_field import STYLES, LandField, earth_drop, smoothstep
@@ -240,6 +241,7 @@ def build_object(ctx, args, region, rings, z, water, fine_reach):
     mesh.polygons.foreach_set("loop_total", numpy.full(len(faces), 3, dtype=numpy.int32))
     mesh.polygons.foreach_set("use_smooth", numpy.ones(len(faces), dtype=bool))
     mesh.update(calc_edges=True)
+    canonical_edges(mesh)
     affine = uv_affine(region.objects[0])
     uv_points = rings.xy if affine is None else numpy.column_stack([rings.xy, numpy.ones(len(rings.xy))]) @ affine
     layer = mesh.uv_layers.new(name="UVMap")

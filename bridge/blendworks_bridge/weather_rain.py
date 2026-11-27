@@ -4,6 +4,7 @@ import random
 import bpy
 
 from . import atmosphere_haze, cloud_field, sky_nodes, weather_objects
+from .edge_order import canonical_edges
 
 VEIL_START = 1200.0
 VEIL_DISTANCES = (2500.0, 5000.0, 9000.0, 15_000.0, 25_000.0)
@@ -173,6 +174,7 @@ def add_streaks(scene, camera, rate, seed, wind_direction, brightness):
         uvs.extend([(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)])
     mesh = bpy.data.meshes.new("Rain streaks")
     mesh.from_pydata(vertices, [], faces)
+    canonical_edges(mesh)
     layer = mesh.uv_layers.new(name="UVMap")
     for loop_index, loop in enumerate(mesh.loops):
         layer.data[loop_index].uv = uvs[loop.vertex_index]

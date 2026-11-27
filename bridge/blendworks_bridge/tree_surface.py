@@ -110,7 +110,7 @@ def triangulate_crossings(mesh, involved):
         bm.verts.ensure_lookup_table()
         chosen = {face for index in involved.tolist() for face in bm.verts[index].link_faces if len(face.verts) > 3}
         if chosen:
-            bmesh.ops.triangulate(bm, faces=list(chosen), quad_method="BEAUTY", ngon_method="BEAUTY")
+            bmesh.ops.triangulate(bm, faces=sorted(chosen, key=lambda face: face.index), quad_method="BEAUTY", ngon_method="BEAUTY")
             bm.to_mesh(mesh)
             mesh.update()
         return len(chosen)

@@ -5,6 +5,7 @@ import bpy
 
 from .. import atmosphere_haze
 from ..blendfile import open_blend, save_atomically
+from ..edge_order import canonical_edges
 from ..errors import bad_args, failed, forbidden
 from ..gltf_extras import add_skeleton_extras
 from ..bones import deforming_armatures
@@ -209,6 +210,8 @@ def import_command(ctx, args):
     imported = [obj for obj in ctx.scene.objects if obj.as_pointer() not in before]
     if not imported:
         raise failed(f"{args['path']} holds no objects to import")
+    for mesh in {obj.data for obj in imported if obj.type == "MESH"}:
+        canonical_edges(mesh)
     if not args["select"]:
         for obj in imported:
             obj.select_set(False, view_layer=ctx.view_layer)

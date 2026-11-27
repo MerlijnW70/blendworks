@@ -3,6 +3,7 @@ import math
 import bpy
 import numpy
 
+from .edge_order import canonical_edges
 from .liquid_world import LIQUID_PROPERTY, TOP_ATTRIBUTE
 from .limits import MAX_MESH_VERTICES
 from .errors import bad_args
@@ -27,6 +28,7 @@ def build_mesh(name, points, triangles, uvs=None, top=None, scalars=None, vector
     mesh.polygons.foreach_set("loop_total", numpy.full(len(triangles), 3, dtype=numpy.int32))
     mesh.update(calc_edges=True)
     mesh.validate(clean_customdata=False)
+    canonical_edges(mesh)
     if uvs is not None:
         layer = mesh.uv_layers.new(name="UVMap")
         corner = numpy.asarray(uvs, dtype=numpy.float32)[triangles.ravel()]

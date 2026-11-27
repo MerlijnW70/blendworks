@@ -8,6 +8,7 @@ import numpy
 
 from ..cover_gltf import add_instancing
 from ..cover_nodes import CARD, CARDS_PROPERTY, KEY, MODIFIER_NAME, PICK, TINT, TRANSFORM, get_input, realized_vertices, set_input
+from ..edge_order import canonical_edges
 from ..errors import bad_args, failed
 from ..limits import MAX_LOD_LEVELS, MAX_MESH_VERTICES, PATH_LENGTH
 from ..operators import only_selected, operator_context
@@ -82,6 +83,7 @@ def realized_level(ctx, obj, level, cards):
         obj.update_tag()
         depsgraph = ctx.depsgraph()
         mesh = bpy.data.meshes.new_from_object(obj.evaluated_get(depsgraph), preserve_all_data_layers=True, depsgraph=depsgraph)
+        canonical_edges(mesh)
     finally:
         for key, value in saved.items():
             set_input(modifier, key, value)

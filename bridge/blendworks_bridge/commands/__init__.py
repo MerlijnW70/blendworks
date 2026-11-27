@@ -33,6 +33,7 @@ MODULES = (
     "lsystem",
     "tree_mesh",
     "tree_leaves",
+    "tree_batch",
     "rigging",
     "skinning",
     "constraints",

@@ -1,6 +1,7 @@
 import bpy
 import numpy
 
+from .edge_order import canonical_edges
 from .errors import failed
 
 UV_NAME = "UVMap"
@@ -60,6 +61,7 @@ def write_mesh(mesh, points, corners, sizes, uvs, corner_values, face_values):
     starts = numpy.concatenate([[0], numpy.cumsum(sizes)[:-1]]).astype(numpy.int32)
     mesh.polygons.foreach_set("loop_start", starts)
     mesh.update(calc_edges=True)
+    canonical_edges(mesh)
     layer = mesh.uv_layers.new(name=UV_NAME)
     layer.uv.foreach_set("vector", numpy.asarray(uvs, dtype=numpy.float32).reshape(-1))
     for name, values in corner_values.items():
@@ -91,7 +93,9 @@ def remove_objects(objects):
 def evaluated_copy(ctx, obj, name):
     ctx.view_layer.update()
     evaluated = obj.evaluated_get(ctx.depsgraph())
-    return bpy.data.meshes.new_from_object(evaluated, preserve_all_data_layers=True, depsgraph=ctx.depsgraph())
+    mesh = bpy.data.meshes.new_from_object(evaluated, preserve_all_data_layers=True, depsgraph=ctx.depsgraph())
+    canonical_edges(mesh)
+    return mesh
 
 
 def skin_union(ctx, tubes, name):

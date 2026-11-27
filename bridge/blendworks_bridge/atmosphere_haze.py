@@ -5,6 +5,8 @@ import bpy
 import numpy as np
 from mathutils import Vector
 
+from .edge_order import canonical_edges
+
 KOSCHMIEDER = -math.log(0.02)
 SCENE_PROPERTY = "blendworks_atmosphere"
 DOMAIN_NAME = "Atmosphere"
@@ -329,6 +331,7 @@ def box_mesh(name, low, high):
     faces = [(0, 2, 3, 1), (4, 5, 7, 6), (0, 1, 5, 4), (2, 6, 7, 3), (0, 4, 6, 2), (1, 3, 7, 5)]
     mesh = bpy.data.meshes.new(name)
     mesh.from_pydata([tuple(corner) for corner in corners], [], faces)
+    canonical_edges(mesh)
     mesh.update()
     return mesh
 

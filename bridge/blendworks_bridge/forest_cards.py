@@ -9,6 +9,7 @@ import numpy
 from mathutils import Matrix, Vector
 
 from . import exr_read, impostors
+from .edge_order import canonical_edges
 from .errors import failed
 from .land_material import FOREST_ATTRIBUTE, SURFACE_NODE, attribute
 from .liquid_world import write_point_attribute
@@ -53,6 +54,7 @@ def card_mesh(name, trees, frames, variants):
     mesh.polygons.foreach_set("loop_start", numpy.arange(0, count * 4, 4, dtype=numpy.int32))
     mesh.polygons.foreach_set("loop_total", numpy.full(count, 4, dtype=numpy.int32))
     mesh.update(calc_edges=True)
+    canonical_edges(mesh)
     for slot, layer_name in enumerate(UV_LAYERS):
         layer = mesh.uv_layers.new(name=layer_name)
         layer.uv.foreach_set("vector", uvs[slot].astype(numpy.float32).ravel())

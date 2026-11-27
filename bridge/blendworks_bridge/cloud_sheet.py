@@ -3,6 +3,7 @@ import math
 import bpy
 
 from . import cloud_field, sky_nodes, sky_sun, sky_world, weather_objects, weather_rain
+from .edge_order import canonical_edges
 
 EARTH_RADIUS = 6_371_000.0
 AEROSOL_HEIGHT = 1500.0
@@ -166,6 +167,7 @@ def shadow_plane(scene, name, layer, centre, size, beyond_volume):
     corners = [(centre[0] - half, centre[1] - half, height), (centre[0] + half, centre[1] - half, height),
                (centre[0] + half, centre[1] + half, height), (centre[0] - half, centre[1] + half, height)]
     mesh.from_pydata(corners, [], [(0, 1, 2, 3)])
+    canonical_edges(mesh)
     mesh.update()
     mesh.materials.append(shadow_material(name, layer, beyond_volume))
     obj = bpy.data.objects.new(name, mesh)

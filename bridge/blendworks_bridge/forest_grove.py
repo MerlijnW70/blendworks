@@ -12,6 +12,7 @@ import numpy
 from mathutils import Matrix, Vector
 
 from . import exr_read, impostors
+from .edge_order import canonical_edges
 from .errors import failed
 from .forest_cards import GAIN_RANGE, LUMINANCE, card_mesh
 
@@ -85,6 +86,7 @@ class Grove:
         ground = bpy.data.meshes.new("grove ground")
         side = (max(ROWS, COLUMNS) + 4) * self.spacing
         ground.from_pydata([(-side, -side, 0.0), (side, -side, 0.0), (side, side, 0.0), (-side, side, 0.0)], [], [(0, 1, 2, 3)])
+        canonical_edges(ground)
         meshes.append(ground)
         plane = bpy.data.objects.new("grove ground", ground)
         plane.is_holdout = True

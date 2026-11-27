@@ -3,6 +3,8 @@ import math
 import bpy
 import numpy
 
+from .edge_order import canonical_edges
+
 WIND_LAYER = "wind"
 BLADE_ATTRIBUTE = "gc_blade"
 DRY_ATTRIBUTE = "gc_dry"
@@ -97,6 +99,7 @@ class ElementMesh:
         mesh = bpy.data.meshes.new(name)
         mesh.from_pydata(self.points, [], self.faces)
         mesh.validate(verbose=False)
+        canonical_edges(mesh)
         layer = mesh.uv_layers.new(name="UVMap")
         flat = [value for corners in self.uvs for uv in corners for value in uv]
         layer.uv.foreach_set("vector", flat)
