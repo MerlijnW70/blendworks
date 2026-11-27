@@ -32,7 +32,6 @@ export function pinned(command: string, args: string[], quota: number | null = c
   return ["taskset", ["-c", allowed.slice(0, count).join(","), command, ...args]];
 }
 
-export function jobsFor(env: NodeJS.ProcessEnv, quota: number | null = cpuQuota()): string {
-  if (env["BLENDWORKS_JOBS"]) return env["BLENDWORKS_JOBS"];
-  return quota !== null && quota < 4 ? "1" : "2";
+export function jobsFor(env: NodeJS.ProcessEnv): string | undefined {
+  return env["BLENDWORKS_JOBS"] || undefined;
 }

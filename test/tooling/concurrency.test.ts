@@ -66,10 +66,11 @@ describe("the Blender process cap", { timeout: 60_000 }, () => {
 });
 
 describe("the BLENDWORKS_JOBS setting", () => {
-  it("defaults to 2 and reads a whole number", () => {
-    expect(blenderJobs({})).toBe(2);
-    expect(blenderJobs({ BLENDWORKS_JOBS: "" })).toBe(2);
-    expect(blenderJobs({ BLENDWORKS_JOBS: "5" })).toBe(5);
+  it("defaults to 2 on a host and reads a whole number", () => {
+    const host = { cpus: 32, quota: undefined, source: "logical CPUs" } as const;
+    expect(blenderJobs({}, host)).toBe(2);
+    expect(blenderJobs({ BLENDWORKS_JOBS: "" }, host)).toBe(2);
+    expect(blenderJobs({ BLENDWORKS_JOBS: "5" }, host)).toBe(5);
   });
 
   it("refuses zero, fractions and words", () => {
@@ -77,9 +78,9 @@ describe("the BLENDWORKS_JOBS setting", () => {
   });
 
   it("divides the processor count between the jobs, at least one thread each", () => {
-    expect(blenderThreads(2, 32)).toBe(16);
-    expect(blenderThreads(3, 8)).toBe(2);
-    expect(blenderThreads(8, 4)).toBe(1);
-    expect(blenderThreadArguments(4, 16)).toEqual(["--threads", "4"]);
+    expect(blenderThreads(2, 32, {})).toBe(16);
+    expect(blenderThreads(3, 8, {})).toBe(2);
+    expect(blenderThreads(8, 4, {})).toBe(1);
+    expect(blenderThreadArguments(4, 16, {})).toEqual(["--threads", "4"]);
   });
 });

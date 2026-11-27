@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { availableParallelism, homedir, platform } from "node:os";
 import { posix, win32 } from "node:path";
 
@@ -8,6 +8,7 @@ export const BLENDER_DOWNLOAD_URL = "https://www.blender.org/download/lts/";
 export const BLENDER_VARIABLE = "BLENDER";
 export const JOBS_VARIABLE = "BLENDWORKS_JOBS";
 export const DEFAULT_JOBS = 2;
+export const HOST_JOBS = DEFAULT_JOBS;
 
 export type BlenderSource = "BLENDER" | "default location" | "PATH";
 
@@ -100,17 +101,66 @@ export function blenderVersionOutput(blender: string): string {
   }
 }
 
-export function blenderJobs(env: NodeJS.ProcessEnv = process.env): number {
+export type Machine = { cpus: number; quota: number | undefined; source: "cgroup quota" | "logical CPUs" };
+
+export type CgroupFiles = { v2: string | undefined; v1Quota: string | undefined; v1Period: string | undefined };
+
+function readQuiet(path: string): string | undefined {
+  try {
+    return readFileSync(path, "utf8").trim();
+  } catch {
+    return undefined;
+  }
+}
+
+export function readCgroupCpu(): CgroupFiles {
+  return { v2: readQuiet("/sys/fs/cgroup/cpu.max"), v1Quota: readQuiet("/sys/fs/cgroup/cpu/cpu.cfs_quota_us"), v1Period: readQuiet("/sys/fs/cgroup/cpu/cpu.cfs_period_us") };
+}
+
+export function cgroupCpuQuota(files: CgroupFiles): number | undefined {
+  const [quota, period] = files.v2 !== undefined ? files.v2.split(/\s+/) : [files.v1Quota, files.v1Period];
+  if (quota === undefined || period === undefined || !/^\d+$/.test(quota) || !/^\d+$/.test(period)) return undefined;
+  const value = Number(quota) / Number(period);
+  return Number.isFinite(value) && value > 0 ? value : undefined;
+}
+
+export function machineCpus(files: CgroupFiles = readCgroupCpu(), logical: number = availableParallelism()): Machine {
+  const quota = cgroupCpuQuota(files);
+  if (quota === undefined) return { cpus: logical, quota, source: "logical CPUs" };
+  return { cpus: Math.max(1, Math.min(logical, Math.floor(quota))), quota, source: "cgroup quota" };
+}
+
+let cachedMachine: Machine | undefined;
+
+export function thisMachine(): Machine {
+  cachedMachine ??= machineCpus();
+  return cachedMachine;
+}
+
+export const SANDBOX_THREADS = 2;
+
+export function defaultJobs(machine: Machine = thisMachine()): number {
+  return machine.source === "cgroup quota" ? Math.max(1, Math.floor(machine.cpus / SANDBOX_THREADS)) : Math.min(HOST_JOBS, machine.cpus);
+}
+
+export function blenderJobs(env: NodeJS.ProcessEnv = process.env, machine: Machine = thisMachine()): number {
   const text = env[JOBS_VARIABLE];
-  if (text === undefined || text.trim() === "") return DEFAULT_JOBS;
+  if (text === undefined || text.trim() === "") return defaultJobs(machine);
   if (!/^\d+$/.test(text.trim()) || Number(text) < 1) throw new Error(`${JOBS_VARIABLE} must be a whole number of at least 1, not "${text}"`);
   return Number(text);
 }
 
-export function blenderThreads(jobs: number, cpus: number = availableParallelism()): number {
+export const THREADS_VARIABLE = "BLENDWORKS_THREADS";
+
+export function blenderThreads(jobs: number, cpus: number = thisMachine().cpus, env: NodeJS.ProcessEnv = process.env): number {
+  const text = env[THREADS_VARIABLE];
+  if (text !== undefined && text.trim() !== "") {
+    if (!/^\d+$/.test(text.trim()) || Number(text) < 1) throw new Error(`${THREADS_VARIABLE} must be a whole number of at least 1, not "${text}"`);
+    return Number(text);
+  }
   return Math.max(1, Math.floor(cpus / Math.max(1, jobs)));
 }
 
-export function blenderThreadArguments(jobs: number = blenderJobs(), cpus: number = availableParallelism()): string[] {
-  return ["--threads", String(blenderThreads(jobs, cpus))];
+export function blenderThreadArguments(jobs: number = blenderJobs(), cpus: number = thisMachine().cpus, env: NodeJS.ProcessEnv = process.env): string[] {
+  return ["--threads", String(blenderThreads(jobs, cpus, env))];
 }

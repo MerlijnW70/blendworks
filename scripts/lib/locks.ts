@@ -7,7 +7,9 @@ const UNREADABLE_GRACE_MS = 5_000;
 const RECLAIM_GRACE_MS = 10_000;
 const BUSY_CODES = new Set(["EEXIST", "EPERM", "EACCES", "EBUSY"]);
 
-export type Owner = { pid: number; token: string; since: number };
+export type Owner = { pid: number; token: string; since: number; file?: string; needMb?: number; stage?: string };
+
+export type OwnerDetails = Pick<Owner, "file" | "needMb" | "stage">;
 
 export type FileLock = { path: string; token: string; release(): boolean };
 
@@ -49,7 +51,9 @@ export function readOwner(path: string): Owner | "unreadable" | undefined {
   }
   try {
     const parsed = JSON.parse(text) as Partial<Owner>;
-    if (typeof parsed.pid === "number" && typeof parsed.token === "string") return { pid: parsed.pid, token: parsed.token, since: parsed.since ?? 0 };
+    if (typeof parsed.pid === "number" && typeof parsed.token === "string") {
+      return { pid: parsed.pid, token: parsed.token, since: parsed.since ?? 0, ...(typeof parsed.file === "string" ? { file: parsed.file } : {}), ...(typeof parsed.needMb === "number" ? { needMb: parsed.needMb } : {}), ...(typeof parsed.stage === "string" ? { stage: parsed.stage } : {}) };
+    }
   } catch {
     return "unreadable";
   }
@@ -137,8 +141,8 @@ function installExitHook(): void {
   });
 }
 
-export function tryLock(path: string): FileLock | undefined {
-  const owner: Owner = { pid: process.pid, token: randomUUID(), since: Date.now() };
+export function tryLock(path: string, details: OwnerDetails = {}): FileLock | undefined {
+  const owner: Owner = { pid: process.pid, token: randomUUID(), since: Date.now(), ...details };
   if (!createExclusive(path, owner)) {
     if (isStale(path)) reclaimStale(path);
     return undefined;

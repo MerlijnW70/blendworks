@@ -127,7 +127,7 @@ export function runCheck(repo: string, env: NodeJS.ProcessEnv, limits: typeof CH
   });
 }
 
-export type PatchRequest = { layout: Layout; artifact: string | undefined; commit: string | null; isolation: string; env: NodeJS.ProcessEnv; jobs: string };
+export type PatchRequest = { layout: Layout; artifact: string | undefined; commit: string | null; isolation: string; env: NodeJS.ProcessEnv; jobs: string | undefined };
 
 export async function judgePatch(request: PatchRequest): Promise<EntryResult> {
   const { layout } = request;
@@ -150,7 +150,6 @@ export async function judgePatch(request: PatchRequest): Promise<EntryResult> {
     HOME: join(scratch, "home"),
     TMPDIR: join(scratch, "tmp"),
     BLENDER: layout.blender,
-    BLENDWORKS_JOBS: request.jobs,
     GIT_CONFIG_NOSYSTEM: "1",
     GIT_CONFIG_GLOBAL: "/dev/null",
     npm_config_cache: join(scratch, "npm"),
@@ -160,6 +159,7 @@ export async function judgePatch(request: PatchRequest): Promise<EntryResult> {
     UV_THREADPOOL_SIZE: "2",
     GOMAXPROCS: "2",
     NODE_OPTIONS: "--v8-pool-size=2",
+    ...(request.jobs === undefined ? {} : { BLENDWORKS_JOBS: request.jobs }),
   };
   for (const step of [["init", "-q", "-b", "main"], ["add", "-A"], ["commit", "-q", "-m", "base"]]) {
     const done = git(repo, step, env);

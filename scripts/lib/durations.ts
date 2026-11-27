@@ -9,7 +9,7 @@ export type Durations = Record<string, number>;
 
 export const UNMEASURED_SECONDS = 1;
 
-const SCHEDULED = /^(test\/.+\.test\.ts|bridge\/tests\/test_\w+\.py)$/;
+export const SCHEDULED_FILE = /^(test\/.+\.test\.ts|bridge\/tests\/test_\w+\.py)$/;
 
 function testFilesIn(directory: string, prefix: string, pattern: RegExp): string[] {
   const folder = join(repoRoot, directory);
@@ -18,6 +18,16 @@ function testFilesIn(directory: string, prefix: string, pattern: RegExp): string
     if (entry.isDirectory()) return entry.name === "node_modules" ? [] : testFilesIn(`${directory}/${entry.name}`, `${prefix}${entry.name}/`, pattern);
     return pattern.test(entry.name) ? [`${prefix}${entry.name}`] : [];
   });
+}
+
+export function ownStage(file: string): string | undefined {
+  if (/^test\/.+\.test\.ts$/.test(file)) return "test";
+  if (/^bridge\/tests\/test_\w+\.py$/.test(file)) return "test:bridge";
+  return undefined;
+}
+
+export function topLevelRun(file: string, stage: string | undefined): boolean {
+  return stage !== undefined && ownStage(file) === stage;
 }
 
 export function scheduledFiles(): string[] {
@@ -53,7 +63,7 @@ export function knownDurations(root: string = cacheRoot()): Durations {
 export function rememberDurations(timings: Timing[], root: string = cacheRoot()): Durations {
   const path = measuredDurationsPath(root);
   const merged = readDurations(path);
-  for (const timing of timings) if (timing.kind === "file" && SCHEDULED.test(timing.file)) merged[timing.file] = Math.round((timing.wallMs - timing.waitMs) / 100) / 10;
+  for (const timing of timings) if (timing.kind === "file" && topLevelRun(timing.file, timing.stage)) merged[timing.file] = Math.round((timing.wallMs - timing.waitMs) / 100) / 10;
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(merged, Object.keys(merged).sort(), 2)}\n`);
   return merged;

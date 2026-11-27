@@ -137,9 +137,9 @@ describe("the CPUs an entry point uses", () => {
     expect(pinned("npm", ["run", "check"], 2.5, [0, 1, 2, 3, 4, 5])).toEqual(["taskset", ["-c", "0,1,2", "npm", "run", "check"]]);
     expect(pinned("npm", ["run", "check"], null, [0, 1, 2, 3])).toEqual(["npm", ["run", "check"]]);
     expect(pinned("npm", ["run", "check"], 8, [0, 1, 2, 3])).toEqual(["npm", ["run", "check"]]);
-    expect(jobsFor({}, 8)).toBe("2");
-    expect(jobsFor({}, 2)).toBe("1");
-    expect(jobsFor({ BLENDWORKS_JOBS: "1" }, 8)).toBe("1");
+    expect(jobsFor({})).toBeUndefined();
+    expect(jobsFor({ BLENDWORKS_JOBS: "" })).toBeUndefined();
+    expect(jobsFor({ BLENDWORKS_JOBS: "1" })).toBe("1");
   });
 });
 

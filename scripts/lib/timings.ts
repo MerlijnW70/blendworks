@@ -4,10 +4,11 @@ import { dirname } from "node:path";
 export const TIMINGS_VARIABLE = "BLENDWORKS_TIMINGS";
 export const STAGE_VARIABLE = "BLENDWORKS_STAGE";
 
-export type ProcessTiming = { kind: "process"; stage: string; label: string; waitMs: number; workMs: number; endedAt: number };
+export type ProcessTiming = { kind: "process"; stage: string; label: string; waitMs: number; workMs: number; endedAt: number; memoryWaitMs?: number; memoryReasons?: string[] };
 export type FileTiming = { kind: "file"; stage: string; file: string; wallMs: number; waitMs: number; processes: number; endedAt: number };
 export type WaitTiming = { kind: "wait"; file: string; state: "begin" | "end"; waitedMs?: number };
-export type Timing = ProcessTiming | FileTiming | WaitTiming;
+export type ResultTiming = { kind: "result"; stage: string; file: string; passed: boolean; tests: { name: string; passed: boolean }[] };
+export type Timing = ProcessTiming | FileTiming | WaitTiming | ResultTiming;
 
 export function currentStage(env: NodeJS.ProcessEnv = process.env): string {
   const stage = env[STAGE_VARIABLE];
@@ -75,5 +76,10 @@ export function timingReport(timings: Timing[], wallSeconds: number, jobs: numbe
   const work = totals.reduce((sum, entry) => sum + entry.workSeconds, 0);
   for (const entry of totals) lines.push(`Blender in ${entry.stage}: ${entry.processes} processes, ${entry.workSeconds.toFixed(0)} s working, ${entry.waitSeconds.toFixed(0)} s waiting for a slot`);
   if (wallSeconds > 0) lines.push(`slots busy ${Math.round((100 * work) / (jobs * wallSeconds))} % of ${jobs} x ${wallSeconds.toFixed(0)} s`);
+  const held = timings.filter((timing): timing is ProcessTiming => timing.kind === "process" && (timing.memoryWaitMs ?? 0) > 0);
+  if (held.length > 0) {
+    const by = (reason: string) => held.filter((timing) => timing.memoryReasons?.includes(reason)).length;
+    lines.push(`memory gate held back ${held.length} Blender starts for ${(held.reduce((sum, timing) => sum + (timing.memoryWaitMs ?? 0), 0) / 1000).toFixed(0)} s in all (recorded peaks ${by("recorded peaks")}, cgroup memory ${by("cgroup memory")})`);
+  }
   return lines;
 }
