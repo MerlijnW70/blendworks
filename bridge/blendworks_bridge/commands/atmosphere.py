@@ -2,8 +2,9 @@ import bpy
 from mathutils import Vector
 
 from .. import atmosphere_haze as haze
+from ..ground_level import low_ground
 from ..errors import bad_args
-from ..limits import MAX_ANISOTROPY, MAX_RELIEF
+from ..limits import MAX_ANISOTROPY, MAX_COORDINATE, MAX_RELIEF
 from ..registry import command
 from ..schema import boolean, color, length, number, obj, string, vector3
 from ..util import GEOMETRY_TYPES, object_bounds, rounded, vec
@@ -14,12 +15,14 @@ PREVIEWS = ("depth", "volume")
 SAMPLE_DISTANCES = (10.0, 100.0, 1000.0)
 FOG = obj(
     {
-        "visibility": length("Visibility inside the fog at the base height, in metres."),
-        "height": length("Height in metres over which the fog density falls to 1/e."),
+        "visibility": length("Visibility inside the fog layer, in metres."),
+        "height": length("Height in metres over which the fog thins to 1/e above its top."),
+        "thickness": length("Thickness in metres of the layer of full density above its base.", 0.0, MAX_RELIEF),
+        "base": number("Height of the fog's base in metres. Default: the low ground around the camera (water, valley floors).", -MAX_COORDINATE, MAX_COORDINATE),
     },
     ["visibility", "height"],
 )
-FOG["description"] = "Ground fog: a second, denser layer that hugs the ground."
+FOG["description"] = "Ground fog: a denser layer lying on the low ground, of full density up to base + thickness and thinning above; never denser below."
 BOUNDS = obj({"min": vector3("Lowest corner in metres."), "max": vector3("Highest corner in metres.")}, ["min", "max"])
 BOUNDS["description"] = "Box domain corners. Default: the scene and its cameras, with a margin."
 
@@ -142,7 +145,7 @@ def settings_from(ctx, args):
         "base_height": args["base_height"],
         "tint": list(args["tint"]),
         "anisotropy": args["anisotropy"],
-        "ground_fog": args.get("ground_fog"),
+        "ground_fog": fog_settings(ctx, args),
         "domain": args["domain"],
         "method": args["method"],
         "preview": args["preview"],
@@ -153,6 +156,19 @@ def settings_from(ctx, args):
         settings["bounds"] = [list(bounds["min"]), list(bounds["max"])] if bounds is not None else default_bounds(ctx)
     settings["airlight"] = list(args["airlight"]) if "airlight" in args else haze.estimated_airlight(ctx.scene.world)
     return settings
+
+
+def fog_settings(ctx, args):
+    fog = args.get("ground_fog")
+    if fog is None:
+        return None
+    fog = dict(fog)
+    fog.setdefault("thickness", 0.0)
+    if "base" in fog:
+        fog["base_source"] = "given"
+    else:
+        fog["base"], fog["base_source"] = low_ground(ctx.scene, ctx.view_layer, args.get("bounds"))
+    return fog
 
 
 def report(settings):

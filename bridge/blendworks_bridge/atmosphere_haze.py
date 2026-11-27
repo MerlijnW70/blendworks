@@ -23,18 +23,32 @@ def extinction(visibility):
 
 
 def layers_of(settings):
-    layers = [(extinction(settings["visibility"]), settings["base_height"], settings.get("height_falloff"))]
+    """(extinction, base, falloff, top) per layer. The haze grows without bound below its base; ground fog has its full
+    density everywhere below its top (base plus thickness) and falls off above it, so it is bounded below."""
+    layers = [(extinction(settings["visibility"]), settings["base_height"], settings.get("height_falloff"), None)]
     fog = settings.get("ground_fog")
     if fog is not None:
-        layers.append((extinction(fog["visibility"]), settings["base_height"], fog["height"]))
+        base = fog.get("base", settings["base_height"])
+        layers.append((extinction(fog["visibility"]), base, fog["height"], base + fog.get("thickness", 0.0)))
     return layers
 
 
+def layer_density(sigma, base, scale, top, z):
+    if scale is None:
+        return sigma
+    if top is None:
+        return sigma * math.exp(-(z - base) / scale)
+    return sigma * min(1.0, math.exp(-(z - top) / scale))
+
+
 def density_at(settings, z):
-    total = 0.0
-    for sigma, base, scale in layers_of(settings):
-        total += sigma if scale is None else sigma * math.exp(-(z - base) / scale)
-    return total
+    return sum(layer_density(*layer, z) for layer in layers_of(settings))
+
+
+def capped_integral(z, top, scale):
+    """Antiderivative of min(1, exp(-(z - top) / scale)) in z, continuous at the top."""
+    above = -scale * np.exp(-np.maximum(z - top, 0.0) / scale)
+    return np.where(z <= top, z - top - scale, above)
 
 
 def optical_depth(settings, start_z, end_z, distance):
@@ -45,9 +59,14 @@ def optical_depth(settings, start_z, end_z, distance):
     rise = end_z - start_z
     flat = np.abs(rise) < FLAT_RISE
     safe_rise = np.where(flat, 1.0, rise)
-    for sigma, base, scale in layers_of(settings):
+    for sigma, base, scale, top in layers_of(settings):
         if scale is None:
             total = total + sigma * distance
+            continue
+        if top is not None:
+            level = np.minimum(1.0, np.exp(-(start_z - top) / scale))
+            sloped = sigma * distance * (capped_integral(end_z, top, scale) - capped_integral(start_z, top, scale)) / safe_rise
+            total = total + np.where(flat, sigma * distance * level, sloped)
             continue
         start = np.exp(-(start_z - base) / scale)
         end = np.exp(-(end_z - base) / scale)
@@ -101,6 +120,8 @@ def depth_haze(scene, camera, rgb, depth, settings):
     lengths = np.linalg.norm(rays, axis=-1)
     directions = rays / lengths[..., None]
     distance = depth * lengths
+    from . import mist_depth
+    rgb = mist_depth.apply(rgb, origin, directions, distance, settings["airlight"], scene, box_span)
     start = np.zeros_like(distance)
     if settings["domain"] == "box":
         low, high = settings["bounds"]
@@ -223,6 +244,10 @@ class VolumeHidden:
         if node is not None:
             self.saved.append((node, "mute", node.mute))
             node.mute = True
+        from . import mist_depth
+        for mist in mist_depth.mist_objects(self.scene):
+            self.saved.append((mist, "hide_render", mist.hide_render))
+            mist.hide_render = True
         return self
 
     def __exit__(self, kind, error, trace):
@@ -233,13 +258,13 @@ class VolumeHidden:
 
 def density_socket(tree, settings, position_z):
     total = None
-    for index, (sigma, base, scale) in enumerate(layers_of(settings)):
+    for index, (sigma, base, scale, top) in enumerate(layers_of(settings)):
         if scale is None:
             value = tree.nodes.new("ShaderNodeValue")
             value.outputs[0].default_value = sigma
             term = value.outputs[0]
         else:
-            term = exponential(tree, position_z, sigma, base, scale)
+            term = exponential(tree, position_z, sigma, base if top is None else top, scale, capped=top is not None)
         if total is None:
             total = term
         else:
@@ -259,13 +284,17 @@ def math_node(tree, operation, location, second=None):
     return node
 
 
-def exponential(tree, position_z, sigma, base, scale):
+def exponential(tree, position_z, sigma, base, scale, capped=False):
     shifted = math_node(tree, "SUBTRACT", (-800, 0), base)
     tree.links.new(position_z, shifted.inputs[0])
     scaled = math_node(tree, "DIVIDE", (-650, 0), -scale)
     tree.links.new(shifted.outputs[0], scaled.inputs[0])
     raised = math_node(tree, "EXPONENT", (-500, 0))
     tree.links.new(scaled.outputs[0], raised.inputs[0])
+    if capped:
+        bounded = math_node(tree, "MINIMUM", (-425, 0), 1.0)
+        tree.links.new(raised.outputs[0], bounded.inputs[0])
+        raised = bounded
     weighted = math_node(tree, "MULTIPLY", (-350, 0), sigma)
     tree.links.new(raised.outputs[0], weighted.inputs[0])
     return weighted.outputs[0]

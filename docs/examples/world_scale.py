@@ -22,6 +22,9 @@ from mathutils import Vector
 
 from blendworks_bridge import Handler
 
+sys.path.insert(0, HERE)
+import to_the_horizon
+
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 OUT = os.path.abspath(ARGS[0] if ARGS else os.path.join(os.getcwd(), "world-scale"))
 DETAIL = float(os.environ.get("BLENDWORKS_WORLD_DETAIL", "1.0"))
@@ -113,6 +116,10 @@ def main():
     target = [target_xy[0], target_xy[1], eye[2] - 600.0]
     cmd("add_camera", name="view", location=eye, target=target, lens=35.0)
     cmd("camera_setup", name="view", clip_start=0.5, clip_end=300_000.0, view_transform="AgX", look="base_contrast")
+    horizon = None
+    if to_the_horizon.enabled():
+        terrain = [o.name for o in bpy.data.objects if o.name.startswith("land_")]
+        horizon = to_the_horizon.surround(cmd, terrain, "view", species=("pine", "birch"), haze=False, seed=SEED)
     haze = cmd("atmosphere", visibility=VISIBILITY, height_falloff=2500.0, base_height=0.0)
     shot = cmd("render_final", path="world-scale.png", camera="view", width=WIDTH, height=HEIGHT, samples=SAMPLES,
                time_limit=SECONDS, device=DEVICE, preview=False)
@@ -124,6 +131,7 @@ def main():
         "haze": haze,
         "render": shot,
         "validated_calls": len(calls),
+        "horizon": horizon,
         "commands": LOG,
     }
     with open(os.path.join(OUT, "summary.json"), "w", encoding="utf-8") as handle:

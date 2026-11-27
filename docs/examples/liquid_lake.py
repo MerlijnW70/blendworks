@@ -13,6 +13,9 @@ import numpy
 from blendworks_bridge import Handler
 from blendworks_bridge.limits import MAX_COVER_INSTANCES
 
+sys.path.insert(0, HERE)
+import to_the_horizon
+
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 OUT = os.path.abspath(ARGS[0] if ARGS else os.path.join(os.getcwd(), "liquid-lake"))
 DEVICE = os.environ.get("BLENDWORKS_DEVICE", "auto")
@@ -28,6 +31,7 @@ FORM = os.environ.get("BLENDWORKS_CLOUD_FORM", "auto")
 SEED = int(os.environ.get("BLENDWORKS_TERRAIN_SEED", "3"))
 LAND_RESOLUTION = int(os.environ.get("BLENDWORKS_LAND_RESOLUTION", "301"))
 SHOTS = os.environ.get("BLENDWORKS_SHOTS", "lake,rocks").split(",")
+TIME_OF_DAY = os.environ.get("BLENDWORKS_TIME", "afternoon")
 TILE = 300.0
 SHIFT = 4.5 * TILE
 ROLLING = {"height": 9.0, "scale": 180.0, "octaves": 5, "hurst": 0.8}
@@ -68,11 +72,12 @@ def tile(name, size, index, resolution, skirt):
 
 def terrain():
     """Rolling land around the lake in a broad valley, hills to the horizon: a 300 m tile at full detail inside three rings
-    of coarser tiles out to 4 km. Each ring's tiles are three times the size of the last, so with the shift of 1350 m every
+    of coarser tiles out to 4 km (with the horizon option one ring, out to 450 m, and distant land beyond). Each ring's tiles are three times the size of the last, so with the shift of 1350 m every
     ring stays centred on the land; skirts close the small steps where a coarse tile meets a finer one."""
     cmd("material_procedural", name="ground", grass_ground={"density": 0.75, "dryness": 0.2})
     tile("land", TILE, (4, 4), LAND_RESOLUTION, None)
-    for size, indices, resolution, skirt in RINGS:
+    rings = RINGS[:1] if to_the_horizon.enabled() else RINGS
+    for size, indices, resolution, skirt in rings:
         centre = (indices.start + indices.stop - 1) // 2
         for i in indices:
             for j in indices:
@@ -210,7 +215,7 @@ def water_line_distances(placed):
 def build():
     cmd("new_scene")
     terrain()
-    cmd("weather", preset="fair_cumulus", time_of_day="afternoon", form=FORM, seed=2, haze=False)
+    cmd("weather", preset="fair_cumulus", time_of_day=TIME_OF_DAY, form=FORM, seed=2, haze=False)
     heights = points()
     report = lake(heights)
     water = heights[numpy.abs(heights[:, 2] - report["level"]) < 0.5]
@@ -225,15 +230,20 @@ def build():
     reeds = [{"name": "reeds", "element": "sedge", "density": 25.0, "liquid": "shore", "shore": 1.2, "clumping": {"radius": 0.6, "per_clump": 12.0}}]
     cmd("ground_cover", target="land", preset="meadow", cameras=shots, near=COVER_NEAR, view_only=True, budget=BUDGET, obstacles=obstacles + planted, trees=planted, seed=5, populations=reeds)
     cmd("atmosphere", visibility=10000.0, height_falloff=300.0)
+    horizon = None
+    if to_the_horizon.enabled():
+        tiles = [obj.name for obj in bpy.data.objects if obj.type == "MESH" and (obj.name == "land" or obj.name.startswith("ground_"))]
+        mist = {"radius": 2500.0, "thickness": 6.0, "fade": 6.0, "visibility": 300.0, "valley_width": 250.0}
+        horizon = to_the_horizon.surround(cmd, tiles, "eye", water=["lake", "river"], species=("birch", "pine", "oak"), mist=mist)
     cmd("save_blend", path="liquid-lake.blend")
-    return report, flow, placed, shots
+    return report, flow, placed, shots, horizon
 
 
 def main():
     global HANDLER
     os.makedirs(OUT, exist_ok=True)
     HANDLER = Handler(OUT, allow_python=False, desktop=False)
-    lake_report, river_report, placed, shots = build()
+    lake_report, river_report, placed, shots, horizon = build()
     distances = water_line_distances(placed)
     renders = {}
     for shot, path, key in (("eye", "lake.png", "lake"), ("shore", "rocks.png", "rocks")):
@@ -247,6 +257,7 @@ def main():
                   "highest_above_water": round(float(distances.max()), 4), "deepest_under_water": round(float(-distances.min()), 4)},
         "cameras": shots,
         "render": {key: final[key] for key in ("samples", "time_budget", "liquids", "clouds", "atmosphere")},
+        "horizon": horizon,
         "commands": LOG,
     }
     with open(os.path.join(OUT, "summary.json"), "w", encoding="utf-8") as handle:

@@ -13,6 +13,9 @@ import numpy
 
 from blendworks_bridge import Handler
 
+sys.path.insert(0, HERE)
+import to_the_horizon
+
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 OUT = os.path.abspath(ARGS[0] if ARGS else os.path.join(os.getcwd(), "weather-scene"))
 WEATHERS = (ARGS[1] if len(ARGS) > 1 else "clear,fair_cumulus,overcast,heavy_rain,thunderstorm").split(",")
@@ -134,6 +137,8 @@ def build():
     location = [location[0], location[1], ground_height(points, location[0], location[1]) + location[2]]
     cmd("add_camera", name="eye", location=location, target=target, lens=28.0)
     cmd("ground_cover", target="meadow", preset="meadow", camera="eye", near=12.0, budget=BUDGET, obstacles=parts + ["oak_bark"], trees=["oak_bark"], seed=5)
+    if to_the_horizon.enabled():
+        to_the_horizon.surround(cmd, ["plain"], "eye", species=("oak", "maple", "birch"), haze=False)
     cmd("save_blend", path="weather-scene.blend")
 
 

@@ -6,7 +6,6 @@ from .schema import validate
 
 EXTRA_KINDS = ("rain_veil", "rain_streaks", "lightning", "flash")
 HAZE_TINT = {"clear": [0.92, 0.96, 1.0], "cloudy": [0.97, 0.98, 1.0]}
-HAZE_REACH = 10_000.0
 BOLT_DISTANCE = 3000.0
 COOL_TINT = (0.8, 0.88, 1.0)
 DECK_GENERA = ("nimbostratus", "stratus", "cumulonimbus")
@@ -123,14 +122,14 @@ def wet(ctx, args, state):
 
 
 def haze(ctx, args, state, cloud_result):
-    if not args["haze"] or state["visibility"] > HAZE_REACH:
+    if not args["haze"]:
         call(ctx, "atmosphere", {"remove": True})
         return None
     if not any(obj.type in ("MESH", "CURVE") and weather_objects.kind_of(obj) is None for obj in ctx.scene.objects):
         return None
     cloudy = state["storm"] >= 0.46
     request = {
-        "visibility": min(state["visibility"], HAZE_REACH),
+        "visibility": state["visibility"],
         "height_falloff": 400.0 if state["rain"] <= 0.0 else 1500.0,
         "tint": HAZE_TINT["cloudy" if cloudy else "clear"],
         "anisotropy": 0.25 if cloudy else 0.55,

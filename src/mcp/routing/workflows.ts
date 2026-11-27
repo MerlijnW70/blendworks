@@ -190,6 +190,13 @@ export const WORKFLOWS: Workflow[] = [
     note: "blender_weather does it in one call: preset clear, hazy, fair_cumulus, scattered, broken, overcast, light_rain, heavy_rain or thunderstorm (golden_hour, clear_golden_hour, dusk, scattered_dusk, stormy_golden_hour), or storm 0-1, with time_of_day or sun, seed and overrides for dust, visibility, rain, wet, lightning. It builds the procedural sky (blender_sky: sun by elevation and azimuth or date, time, latitude and longitude, a matching sun lamp and exposure), the clouds (blender_clouds: genus, coverage, base, thickness, density, wind, seed), rain veils and streaks, wet ground, a lightning bolt and haze. Clouds form auto shows a cheap sheet in previews and EEVEE and volumes in blender_render_final.",
   },
   {
+    id: "to-the-horizon",
+    goal: "To the horizon",
+    examples: ["land to the horizon", "distant mountains", "forest in the distance", "mist in the valley"],
+    steps: ["blender_distant_land", "blender_distant_forest", "blender_valley_mist", "blender_atmosphere", "blender_render_final"],
+    note: "Build the near terrain, the camera and the sky first. blender_distant_land surrounds the terrain with land out to 80 km or more that continues its measured relief, slopes, wavelengths, water and flats (style rolling, or ranges rising behind each other), with nested LOD rings, earth curvature and the region's own material; the border meets the region within 1 cm. blender_distant_forest grows forest on it from the tree species: real trees near the camera, baked octahedral impostor cards farther out and a canopy surface beyond, placed by slope, height, water and a cover share. blender_valley_mist lays mist in low ground. blender_atmosphere with method depth fades the far land into the sky by the extinction and draws the mist clean; ground_fog lies on the low ground. Cameras' far clips cover the scene by themselves.",
+  },
+  {
     id: "liquids",
     goal: "Water and other liquids",
     examples: ["a lake with a river flowing into it", "ocean waves on a beach", "a glass of red wine", "spilled coffee on a table"],

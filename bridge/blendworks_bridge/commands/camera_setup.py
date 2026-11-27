@@ -2,7 +2,7 @@ import math
 
 from mathutils import Vector
 
-from .. import camera_exposure
+from .. import camera_exposure, camera_reach
 from ..errors import bad_args
 from ..limits import (HALF_TURN, LEAST_APERTURE_RATIO, LEAST_CAMERA_MILLIMETRES, LEAST_DISPLAY_GAMMA,
                       LEAST_EXPOSURE_VALUE, LEAST_F_NUMBER, LEAST_ISO, LEAST_SHUTTER, MAX_APERTURE_BLADES,
@@ -51,7 +51,8 @@ PHYSICAL["description"] = "Exposure from a real camera: EV100 = log2(N^2 / t) - 
         "shift_x": number("Horizontal lens shift, in frame widths.", -MAX_CAMERA_SHIFT, MAX_CAMERA_SHIFT),
         "shift_y": number("Vertical lens shift, in frame widths.", -MAX_CAMERA_SHIFT, MAX_CAMERA_SHIFT),
         "clip_start": length("Near clipping distance in metres."),
-        "clip_end": length("Far clipping distance in metres."),
+        "clip_end": length("Far clipping distance in metres; kept as given, also when the scene grows."),
+        "clip_to_scene": boolean("Set the far clip to reach the farthest visible object, and keep covering the scene as it grows."),
         "exposure": number("Scene exposure in stops (Blender's exposure); each stop doubles the brightness.", -MAX_EXPOSURE_STOPS, MAX_EXPOSURE_STOPS),
         "physical": PHYSICAL,
         "view_transform": string(
@@ -81,6 +82,7 @@ def camera_setup(ctx, args):
     check_arguments(args)
     data = camera.data
     set_lens(data, args)
+    set_far_clip(ctx, camera, args)
     set_depth_of_field(data, args)
     exposure = choose_exposure(args, data)
     camera_exposure.apply_view(ctx.scene.view_settings, args.get("view_transform"), args.get("look"), exposure, args.get("gamma"))
@@ -101,6 +103,8 @@ def check_arguments(args):
         raise bad_args("give exposure or physical, not both")
     if args.get("depth_of_field") is False and any(key in args for key in ("fstop", "focus_distance", "focus_object")):
         raise bad_args("depth_of_field false cannot take fstop or a focus")
+    if "clip_end" in args and args.get("clip_to_scene"):
+        raise bad_args("give clip_end or clip_to_scene, not both")
     if "clip_start" in args and "clip_end" in args and args["clip_start"] >= args["clip_end"]:
         raise bad_args("clip_start must be below clip_end")
     if "focus_object" in args:
@@ -123,6 +127,15 @@ def set_lens(data, args):
             setattr(data, name, args[name])
     if data.clip_start >= data.clip_end:
         raise bad_args("clip_start must stay below clip_end")
+
+
+def set_far_clip(ctx, camera, args):
+    if "clip_end" in args:
+        camera_reach.mark_explicit(camera.data, True)
+    if "clip_to_scene" in args:
+        camera_reach.mark_explicit(camera.data, False)
+        if args["clip_to_scene"]:
+            camera.data.clip_end = max(camera_reach.covering_clip(ctx.scene, ctx.view_layer, camera), camera.data.clip_start * 2.0)
 
 
 def set_depth_of_field(data, args):

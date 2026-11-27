@@ -61,7 +61,7 @@ def test_density_falls_with_height_and_ground_fog_adds_to_it(bridge):
     for name, height, settings in (
         ("low", 0.0, {}),
         ("high", 20.0, {}),
-        ("fog", 0.0, {"ground_fog": {"visibility": 30.0, "height": 2.0}}),
+        ("fog", 0.0, {"ground_fog": {"visibility": 30.0, "height": 2.0, "base": -20.0, "thickness": 40.0}}),
     ):
         card_at(bridge, distance, height)
         result = haze(bridge, method="depth", height_falloff=10.0, airlight=[0.5, 0.5, 0.5], **settings)

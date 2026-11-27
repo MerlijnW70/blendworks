@@ -34,6 +34,7 @@ describe("the weather scene example", workBudget(400_000), () => {
     const used = new Set(summary.commands.map((entry) => entry.cmd));
     for (const command of ["heightfield", "chip", "abrade", "instances", "grow_tree", "tree_mesh", "tree_leaves", "ground_cover", "weather", "render_final"]) expect(used.has(command), command).toBe(true);
     expect(used.has("set_world_hdri")).toBe(false);
+    for (const command of ["distant_land", "distant_forest", "valley_mist"]) expect(used.has(command), command).toBe(false);
     const clear = summary.shots["clear-noon"]!;
     const storm = summary.shots["thunderstorm-noon"]!;
     expect(clear.weather.storm).toBe(0);

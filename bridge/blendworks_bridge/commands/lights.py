@@ -4,7 +4,7 @@ import os
 import bpy
 from mathutils import Matrix, Vector
 
-from .. import world_background
+from .. import camera_reach, world_background
 from ..errors import bad_args, failed
 from ..limits import (HALF_TURN, LEAST_CAMERA_MILLIMETRES, LEAST_SPOT_ANGLE, MAX_FOCAL_LENGTH, MAX_LIGHT_POWER,
                       MAX_WORLD_STRENGTH, PATH_LENGTH, TURN)
@@ -82,7 +82,6 @@ def add_camera(ctx, args):
     camera.lens = args["lens"]
     camera.sensor_width = 36.0
     camera.clip_start = 0.01
-    camera.clip_end = 10_000.0
     if "orthographic_scale" in args:
         camera.type = "ORTHO"
         camera.ortho_scale = args["orthographic_scale"]
@@ -90,9 +89,11 @@ def add_camera(ctx, args):
     place(obj, args["location"], args.get("rotation"))
     if "target" in args:
         aim(ctx, obj, Vector(args["target"]))
+    camera.clip_end = camera_reach.covering_clip(ctx.scene, ctx.view_layer, obj, camera_reach.LEAST_CLIP)
     if args["active"]:
         ctx.scene.camera = obj
-    return {"name": obj.name, "location": vec(obj.location), "rotation": degrees(obj.rotation_euler), "active": args["active"]}
+    return {"name": obj.name, "location": vec(obj.location), "rotation": degrees(obj.rotation_euler), "active": args["active"],
+            "clip_end": round(camera.clip_end, 3)}
 
 
 def aim(ctx, obj, target, up_axis="Y"):
