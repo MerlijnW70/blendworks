@@ -312,5 +312,7 @@
   {"id":"liquid_fill-2","text":"A pint of beer with a foam head, and a puddle of spilled coffee on the table","kind":"single","split":"tune","expect":["blender_liquid_fill"]},
   {"id":"validate-1","text":"Check my plan of twenty tool calls before running any of them","kind":"single","split":"tune","expect":["blender_validate"]},
   {"id":"validate-2","text":"Validate these calls and list every problem in one answer without building anything","kind":"single","split":"tune","expect":["blender_validate"]},
-  {"id":"validate-3","text":"How big can a scene be before the limits refuse my landscape?","kind":"single","split":"tune","expect":["blender_validate"]}
+  {"id":"validate-3","text":"How big can a scene be before the limits refuse my landscape?","kind":"single","split":"tune","expect":["blender_validate"]},
+  {"id":"shore_stones-1","text":"Lay clustered boulders along the lake shore, rounder where the waves reach them","kind":"near-miss","split":"tune","expect":["blender_shore_stones"],"confusable":"blender_scatter"},
+  {"id":"shore_stones-2","text":"Natural pebbles and angular rocks half buried at the water line of the pond","kind":"single","split":"tune","expect":["blender_shore_stones"]}
 ]

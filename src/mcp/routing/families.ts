@@ -32,5 +32,5 @@ export const FAMILY_LINES: FamilyLine[] = [
   { family: "files", priority: 80, text: "Files: blender_save_blend, blender_load_blend, blender_import." },
   { family: "weather", priority: 40, text: "Weather: blender_weather, blender_sky, blender_clouds." },
   { family: "ground_cover", priority: 40, text: "Ground cover: blender_ground_cover grows meadows, lawns and forest floors." },
-  { family: "liquids", priority: 40, text: "Liquids: blender_liquid_body (ocean, lake, river, puddle), blender_liquid_fill (containers, spills), blender_material_liquid." },
+  { family: "liquids", priority: 40, text: "Liquids: blender_liquid_body (lakes, rivers), blender_liquid_fill (cups, spills), blender_shore_stones, blender_material_liquid." },
 ];

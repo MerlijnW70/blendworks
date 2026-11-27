@@ -6,13 +6,14 @@ import { FAMILY_LINES } from "../src/mcp/routing/families.js";
 import { WORKFLOWS } from "../src/mcp/routing/workflows.js";
 
 const PATH_200 = `/${"w".repeat(199)}`;
-const TOOLS = ["blender_liquid_body", "blender_liquid_fill", "blender_material_liquid"];
+const TOOLS = ["blender_liquid_body", "blender_liquid_fill", "blender_material_liquid", "blender_shore_stones"];
 
 function presetNames(): string[] {
   const source = readFileSync("bridge/blendworks_bridge/liquid_presets.py", "utf8");
   const start = source.indexOf("PRESETS = {");
   const body = source.slice(start, source.indexOf("\n}\n", start));
-  return [...body.matchAll(/^ {4}"([a-z_]+)": \{/gm)].map((match) => match[1]!);
+  const classes = [...source.matchAll(/^ {4}"([a-z_]+)": \{"pfund_mm"/gm)].map((match) => `honey_${match[1]!}`);
+  return [...body.matchAll(/^ {4}"([a-z_]+)": \{/gm)].map((match) => match[1]!).concat(["honey"], classes);
 }
 
 describe("liquids in the MCP server and the docs", () => {

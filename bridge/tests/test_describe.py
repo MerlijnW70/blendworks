@@ -32,7 +32,7 @@ DESIGN_COMMANDS = {
     "camera_setup", "atmosphere", "render_final",
     "ground_element", "ground_cover", "ground_cover_export",
     "sky", "clouds", "weather",
-    "material_liquid", "liquid_body", "liquid_fill",
+    "material_liquid", "liquid_body", "liquid_fill", "shore_stones",
 }
 ASSET_LIBRARY_COMMANDS = {"set_world_hdri"}
 SLOW = {"slow": True, "timeout": 300, "max_timeout": 1800}

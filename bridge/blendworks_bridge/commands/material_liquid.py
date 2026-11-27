@@ -52,6 +52,9 @@ def describe_entry(entry):
         report["crust"] = entry["crust"]
     if entry.get("foam"):
         report["foam"] = entry["foam"]
+    if entry.get("honey_class"):
+        report["honey_class"] = entry["honey_class"]
+        report["pfund_mm"] = list(liquid_presets.HONEY_CLASSES[entry["honey_class"]]["pfund_mm"])
     return report
 
 
@@ -64,7 +67,7 @@ def plan_material_liquid(args, state):
     "material_liquid",
     "Physically based liquid material: water (fresh, sea, muddy), wine, beer, oil, milk, juice, coffee, paint, honey, syrup, mud, lava and molten metal.",
     {
-        "preset": string("Liquid preset.", list(liquid_presets.PRESETS)),
+        "preset": string("Liquid preset. Honey takes a USDA colour class: honey_water_white, honey_extra_white, honey_white, honey_extra_light_amber, honey_light_amber, honey_amber or honey_dark_amber; honey is extra light amber, the colour of most retail blossom honey.", list(liquid_presets.PRESETS)),
         "name": ref(string("Material name; created, or rebuilt when it exists. Default: the preset name."), "material", REPLACES),
         "objects": ref(names("Objects to give the material.", 1, MAX_NAMES), "object"),
         "ior": number("Index of refraction.", VACUUM_IOR, INDEX_OF_REFRACTION),

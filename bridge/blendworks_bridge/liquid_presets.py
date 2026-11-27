@@ -32,6 +32,54 @@ FRESH_ABSORPTION, FRESH_SCATTERING = water(1.0)
 SEA_ABSORPTION, SEA_SCATTERING = water(0.5)
 MUDDY_ABSORPTION, MUDDY_SCATTERING = water(100.0)
 
+PFUND_CELL = 0.0315
+HONEY_HUE_SLOPE = 0.0137
+HONEY_WAVELENGTHS = (600.0, 550.0, 450.0)
+HONEY_REFERENCE = 560.0
+DEFAULT_HONEY_CLASS = "extra_light_amber"
+NOTE_39 = "USDA colour designations of extracted honey (Pfund grader, 1985 table 1): the class's upper optical density at 560 nm in a 3.15 cm cell, and the Pfund reading in mm that it matches. Dark amber has no upper limit."
+HONEY_CLASSES = {
+    "water_white": {"pfund_mm": (0, 8), "od": (0.0, 0.0945)},
+    "extra_white": {"pfund_mm": (9, 17), "od": (0.0945, 0.189)},
+    "white": {"pfund_mm": (18, 34), "od": (0.189, 0.378)},
+    "extra_light_amber": {"pfund_mm": (35, 50), "od": (0.378, 0.595)},
+    "light_amber": {"pfund_mm": (51, 85), "od": (0.595, 1.389)},
+    "amber": {"pfund_mm": (86, 114), "od": (1.389, 3.008)},
+    "dark_amber": {"pfund_mm": (115, None), "od": (3.008, None)},
+}
+
+
+def honey_density(name):
+    """The optical density at 560 nm (3.15 cm) of a class: the geometric mean of its limits. The two open ends take the
+    limit ratio of their neighbour (2.0 below water white's 0.0945, 2.17 above dark amber's 3.008): an estimate."""
+    low, high = HONEY_CLASSES[name]["od"]
+    names = list(HONEY_CLASSES)
+    index = names.index(name)
+    if low == 0.0:
+        neighbour = HONEY_CLASSES[names[index + 1]]["od"]
+        low = high / (neighbour[1] / neighbour[0])
+    if high is None:
+        neighbour = HONEY_CLASSES[names[index - 1]]["od"]
+        high = low * (neighbour[1] / neighbour[0])
+    return (low * high) ** 0.5
+
+
+def honey_absorption(name):
+    """Absorption per metre at 600, 550 and 450 nm: a(560) = OD ln 10 / 0.0315 m, the caramel hue slope for the other channels."""
+    import math
+
+    reference = honey_density(name) * math.log(10.0) / PFUND_CELL
+    return [reference * math.exp(-HONEY_HUE_SLOPE * (wavelength - HONEY_REFERENCE)) for wavelength in HONEY_WAVELENGTHS]
+
+
+def honey(name):
+    return {
+        "mode": "clear", "ior": 1.4915, "absorption": honey_absorption(name), "scattering": [0.0, 0.0, 0.0], "anisotropy": 0.0,
+        "roughness": 0.005, "density": 1420.0, "viscosity": 14.1, "surface_tension": 0.06, "contact_angle": 30.0,
+        "honey_class": name, "sources": ["honey_refraction", "usda_honey_colour", "honey_viscosity", "caramel_hue"],
+    }
+
+
 PRESETS = {
     "water_fresh": {
         "mode": "clear", "ior": 1.333, "absorption": FRESH_ABSORPTION, "scattering": FRESH_SCATTERING, "anisotropy": 0.9,
@@ -95,11 +143,6 @@ PRESETS = {
         "roughness": 0.25, "density": 1300.0, "viscosity": 1.0, "surface_tension": 0.035, "contact_angle": 30.0,
         "sources": ["paint_hiding", "paint_properties"],
     },
-    "honey": {
-        "mode": "clear", "ior": 1.4915, "absorption": [20.0, 39.8, 156.5], "scattering": [0.0, 0.0, 0.0], "anisotropy": 0.0,
-        "roughness": 0.005, "density": 1420.0, "viscosity": 14.1, "surface_tension": 0.06, "contact_angle": 30.0,
-        "sources": ["honey_refraction", "usda_honey_colour", "honey_viscosity", "caramel_hue"],
-    },
     "syrup": {
         "mode": "clear", "ior": 1.455, "absorption": [27.6, 54.8, 215.7], "scattering": [0.0, 0.0, 0.0], "anisotropy": 0.0,
         "roughness": 0.005, "density": 1330.0, "viscosity": 0.15, "surface_tension": 0.06, "contact_angle": 30.0,
@@ -122,6 +165,10 @@ PRESETS = {
         "sources": ["kobatake_iron_emissivity", "iron_properties"],
     },
 }
+
+PRESETS["honey"] = honey(DEFAULT_HONEY_CLASS)
+for _name in HONEY_CLASSES:
+    PRESETS[f"honey_{_name}"] = honey(_name)
 
 GLASS = {"ior": 1.52, "absorption": [1.2, 0.4, 1.0], "roughness": 0.0, "sources": ["soda_lime_glass"]}
 

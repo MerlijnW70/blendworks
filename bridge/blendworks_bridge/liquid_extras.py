@@ -15,6 +15,8 @@ RING_WIDTH = 0.6
 RING_FADE = 0.6
 STREAM_SIDES = 14
 DT = 0.004
+PROFILE_STEPS = 400
+PROFILE_LAST = 1e-4
 
 
 def outline(area, seed, roughness):
@@ -43,6 +45,35 @@ def puddle_thickness(capillary, contact_angle):
     return 2.0 * capillary * math.sin(math.radians(contact_angle) / 2.0)
 
 
+def edge_profile(distance, capillary, contact_angle):
+    """Height of a puddle's surface at the given distances from its contact line (de Gennes, Brochard-Wyart and Quere 2004,
+    section 1.2: the static capillary equation integrates once to (e - z)^2 = 2 l_c^2 (1 - cos phi), phi the slope angle of
+    the surface, so z = e - 2 l_c sin(phi / 2) with e = 2 l_c sin(theta / 2)). The distance at which the slope has fallen to
+    phi is x = l_c [ln tan(theta / 4) + 2 cos(theta / 2) - ln tan(phi / 4) - 2 cos(phi / 2)]: a wedge of angle theta at the
+    contact line, flattening to the plateau over a few capillary lengths."""
+    theta = math.radians(contact_angle)
+    thickness = puddle_thickness(capillary, contact_angle)
+    slope = theta * numpy.geomspace(1.0, PROFILE_LAST, PROFILE_STEPS)
+    reach = capillary * (math.log(math.tan(theta / 4.0)) + 2.0 * math.cos(theta / 2.0) - numpy.log(numpy.tan(slope / 4.0)) - 2.0 * numpy.cos(slope / 2.0))
+    height = thickness - 2.0 * capillary * numpy.sin(slope / 2.0)
+    return numpy.interp(distance, reach, height, left=0.0, right=thickness)
+
+
+def contour_distance(points, outline):
+    """Distance of each plane point to the closed outline: to the nearest of its segments."""
+    start = outline
+    along = numpy.roll(outline, -1, axis=0) - outline
+    length2 = numpy.maximum(numpy.einsum("ij,ij->i", along, along), 1e-30)
+    result = numpy.full(len(points), math.inf)
+    for block in range(0, len(points), 512):
+        chunk = points[block:block + 512]
+        offset = chunk[:, None, :] - start[None, :, :]
+        share = numpy.clip(numpy.einsum("ijk,jk->ij", offset, along) / length2[None, :], 0.0, 1.0)
+        gap = offset - share[:, :, None] * along[None, :, :]
+        result[block:block + 512] = numpy.sqrt(numpy.einsum("ijk,ijk->ij", gap, gap).min(axis=1))
+    return result
+
+
 def spill_rings(shape, capillary):
     """Shares of the outline radius for each ring, outermost first: fine steps over the first few capillary lengths from the
     edge, where the film rises and the coffee ring lies, then even steps to the centre. Every ring shrinks along the same rays,
@@ -63,17 +94,17 @@ def spill_rings(shape, capillary):
 
 def spill(centre, area, seed, capillary, contact_angle, height_at, overlap):
     """A spilled film: an organic outline of the given area, rising from nothing at the contact line to the puddle thickness
-    over about a capillary length, lying on the surface below. Returns the top sheet, its triangles, a 0-1 coffee-ring
+    along the capillary profile of a wedge at the contact angle, lying on the surface below. Returns the top sheet, its triangles, a 0-1 coffee-ring
     weight per point (the deposit at the contact line) and a report."""
     shape = outline(area, seed, 0.35)
     thickness = puddle_thickness(capillary, contact_angle)
     rings = spill_rings(shape, capillary)
     count = len(shape)
-    points, inward = [], []
+    points = []
     for share in rings:
         ring = shape * share[:, None] if numpy.ndim(share) else shape * share
         points.extend((centre[0] + x, centre[1] + y) for x, y in ring.tolist())
-        inward.extend(numpy.linalg.norm(shape - ring, axis=1).tolist())
+    inward = contour_distance(numpy.array(points) - numpy.array(centre[:2]), shape).tolist()
     points.append((centre[0], centre[1]))
     inward.append(math.inf)
     triangles = []
@@ -88,7 +119,7 @@ def spill(centre, area, seed, capillary, contact_angle, height_at, overlap):
         triangles.append((last + row, last + (row + 1) % count, centre_index))
     inward = numpy.array(inward)
     distance = numpy.where(numpy.isinf(inward), 1e9, inward)
-    lift = thickness * (1.0 - numpy.exp(-distance / max(capillary, 1e-6)))
+    lift = edge_profile(distance, capillary, contact_angle)
     fade = numpy.clip((distance - RING_WIDTH * capillary) / max(RING_FADE * capillary, 1e-9), 0.0, 1.0)
     deposit = 1.0 - fade * fade * (3.0 - 2.0 * fade)
     result = numpy.zeros((len(points), 3))
@@ -98,7 +129,11 @@ def spill(centre, area, seed, capillary, contact_angle, height_at, overlap):
             raise bad_args("the spill reaches past the edge of the surface under it")
         result[row] = (x, y, ground + lift[row] - overlap)
     footprint = polygon_area(shape)
-    report = {"area": footprint, "thickness": thickness, "volume": footprint * thickness * 0.9, "ring_width": (RING_WIDTH + 0.5 * RING_FADE) * capillary}
+    flat, faces = numpy.array(points), numpy.array(triangles, dtype=int)
+    first, second, third = (flat[faces[:, corner]] for corner in range(3))
+    cover = 0.5 * numpy.abs((second[:, 0] - first[:, 0]) * (third[:, 1] - first[:, 1]) - (second[:, 1] - first[:, 1]) * (third[:, 0] - first[:, 0]))
+    volume = float(numpy.sum(cover * lift[faces].mean(axis=1)))
+    report = {"area": footprint, "thickness": thickness, "volume": volume, "ring_width": (RING_WIDTH + 0.5 * RING_FADE) * capillary}
     return result, numpy.array(triangles, dtype=int), deposit, report
 
 

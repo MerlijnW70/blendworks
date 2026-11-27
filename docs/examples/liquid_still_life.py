@@ -16,8 +16,8 @@ WIDTH = int(os.environ.get("BLENDWORKS_SHOT_WIDTH", "1600"))
 HEIGHT = int(os.environ.get("BLENDWORKS_SHOT_HEIGHT", "1000"))
 SAMPLES = int(os.environ.get("BLENDWORKS_SHOT_SAMPLES", "512"))
 SECONDS = float(os.environ.get("BLENDWORKS_SHOT_SECONDS", "300"))
+SHOTS = os.environ.get("BLENDWORKS_SHOTS", "still,spill").split(",")
 SEGMENTS = int(os.environ.get("BLENDWORKS_LATHE_SEGMENTS", "96"))
-RECEDING_ANGLE = 35.0
 HANDLER = None
 LOG = []
 
@@ -96,7 +96,7 @@ def liquids():
     cmd("liquid_fill", container="glass_oil", preset="oil", fill=0.62, name="oil", glass=True)
     vessel("jar", jar(), [0.3, 0.1, 0.0])
     cmd("liquid_fill", container="jar", preset="honey", fill=0.82, name="honey", glass=True, voxels=72)
-    cmd("liquid_fill", preset="coffee", name="coffee", spill={"point": [-0.05, -0.18, 0.0], "area": 0.018, "surface": "table", "contact_angle": RECEDING_ANGLE}, seed=4)
+    cmd("liquid_fill", preset="coffee", name="coffee", spill={"point": [-0.05, -0.18, 0.0], "area": 0.018, "surface": "table"}, seed=4)
 
 
 def lights():
@@ -106,6 +106,8 @@ def lights():
     cmd("add_light", type="area", name="top", location=[0.1, 0.3, 1.6], rotation=[0.0, 0.0, 0.0], energy=60.0, size=1.6, color=[1.0, 0.98, 0.95])
     cmd("add_camera", name="eye", location=[0.03, -1.05, 0.26], target=[0.02, 0.05, 0.045], lens=50.0)
     cmd("camera_setup", name="eye", fstop=4.0, focus_object="glass_wine", exposure=0.0, view_transform="AgX", look="base_contrast")
+    cmd("add_camera", name="close", location=[-0.02, -0.5, 0.1], target=[-0.05, -0.18, 0.0], lens=60.0)
+    cmd("camera_setup", name="close", fstop=16.0, focus_object="coffee", exposure=0.0, view_transform="AgX", look="base_contrast")
 
 
 def main():
@@ -117,7 +119,11 @@ def main():
     liquids()
     lights()
     cmd("save_blend", path="liquid-still-life.blend")
-    final = cmd("render_final", path="still-life.png", camera="eye", width=WIDTH, height=HEIGHT, samples=SAMPLES, time_limit=SECONDS, device=DEVICE, preview=False)
+    renders = {}
+    for shot, path, camera in (("still", "still-life.png", "eye"), ("spill", "spill.png", "close")):
+        if shot in SHOTS:
+            renders[shot] = cmd("render_final", path=path, camera=camera, width=WIDTH, height=HEIGHT, samples=SAMPLES, time_limit=SECONDS, device=DEVICE, preview=False)
+    final = renders.get("still") or next(iter(renders.values()))
     with open(os.path.join(OUT, "summary.json"), "w", encoding="utf-8") as handle:
         json.dump({"render": {key: final[key] for key in ("samples", "time_budget", "liquids", "device")}, "commands": LOG}, handle, indent=1)
 

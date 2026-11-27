@@ -210,6 +210,22 @@ LEAST_CAVITY_VOXELS = limit("least_cavity_voxels", 16, "voxels", PHYSICAL,
                             "Fewer than 16 voxels across cannot tell a container's wall from its cavity.")
 MAX_CAVITY_VOXELS = limit("cavity_voxels", 160, "voxels", MEMORY,
                           "The cavity is found on a cube of voxels; 160 a side is 4.1 million cells.")
+MAX_STONE_GROUP_DENSITY = limit("stone_group_density", 10.0, "1/m^2", PHYSICAL,
+                                "Groups of shore stones come at most ten to the square metre, past which their stones "
+                                "overlap into one bed.")
+MAX_STONES_PER_GROUP = limit("stones_per_group", 1_000.0, "stones", TIME,
+                             "A mean of a thousand stones in a group is a talus slope; each stone is placed and thinned "
+                             "against its neighbours.")
+LEAST_STONE_SIZE = limit("least_stone_size", 0.005, "m", PHYSICAL,
+                         "Gravel from 5 mm up; finer sediment is sand, which is a texture, not a stone.")
+MAX_STONE_SIZE = limit("stone_size", 100.0, "m", PHYSICAL,
+                       "The longest side of the largest boulders of a shore (rock fall blocks, glacial erratics) is "
+                       "tens of metres.")
+MAX_STONE_CLASSES = limit("stone_classes", 8, "classes", TIME,
+                          "One set of stone meshes is built for each class (fracture, chip, abrade); eight steps from "
+                          "angular to round are finer than the eye tells apart.")
+MAX_STONE_VARIANTS = limit("stone_variants", 8, "meshes", TIME,
+                           "Meshes built for each class; eight give a shore no two alike next to each other.")
 MAX_BUBBLES = limit("bubbles", 5_000, "bubbles", MEMORY, "Each bubble is a small closed mesh in the bubbles object.")
 MAX_GRAMMAR_TEXT = limit("grammar_text", 1_024, "characters", PROTOCOL, "One axiom or production sent as text.")
 MAX_GRAMMAR_RULES = limit("grammar_rules", 64, "rules", TIME,

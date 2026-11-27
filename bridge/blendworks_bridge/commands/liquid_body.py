@@ -115,7 +115,7 @@ def liquid_body(ctx, args):
     shore = None
     if args["wet_shore"] and (kind != "ocean" or ground is not None or "beach" in report):
         ctx.view_layer.update()
-        shore = liquid_world.wet_shores(ctx, args.get("shore_width", SHORE_WIDTH[kind]), args.get("shore_objects"))
+        shore = liquid_world.wet_shores(ctx, args.get("shore_width", SHORE_WIDTH[kind]), args.get("shore_objects"), body.name)
     sea = {"hs": round(state["hs"], 6), "peak_wavelength": round(liquid_spectrum.peak_wavelength(state["omega"]), 6), "regime": state["regime"]}
     if tile is not None:
         upwind, crosswind = liquid_ripples.slope_statistics(tile, wind["direction"] if kind != "river" else 0.0)

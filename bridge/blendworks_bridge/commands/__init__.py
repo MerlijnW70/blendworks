@@ -55,6 +55,7 @@ MODULES = (
     "material_liquid",
     "liquid_body",
     "liquid_fill",
+    "shore_stones",
     "render",
     "camera_setup",
     "atmosphere",

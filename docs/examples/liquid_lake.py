@@ -116,30 +116,13 @@ def river(heights, lake_report):
 
 
 def rocks():
-    """Boulders along the water line of the lake and the river banks: lumpy, chipped and worn, granite grey with lichen on
-    top, 0.3 to 1.5 m with a few larger, partly standing in the shallows and wet where the water reaches."""
+    """Stones along the water line of the lake and the river banks, laid by `shore_stones`: in groups of alike size with bare
+    shore between them, partly sunk and some standing in the shallows, angular on the bank and round where the water works
+    them, granite grey with lichen on top and wet where the water reaches."""
     cmd("material_procedural", name="rock", stone={"color": [0.2, 0.19, 0.175], "secondary_color": [0.1, 0.095, 0.088], "cell_scale": 2.5, "cracks": False, "roughness": 0.8})
     cmd("material_layer", material="rock", mask="up_facing", moss={}, amount=0.2, softness=0.5, seed=4)
-    variants = []
-    for index, size in enumerate(([1.0, 0.8, 0.6], [1.2, 0.75, 0.55], [0.8, 0.7, 0.65], [1.1, 0.9, 0.5])):
-        name = f"rock_{index}"
-        cmd("add_primitive", type="ico_sphere", name=name, radius=0.5, subdivisions=1, location=[0.0, 0.0, 0.5 * size[2]], rotation=[0.0, 0.0, 17.0 * index])
-        cmd("transform", name=name, scale=size)
-        cmd("apply_transform", name=name, location=True, rotation=True, scale=True)
-        cmd("chip", name=name, count=6, depth=0.12, seed=31 + index)
-        cmd("abrade", name=name, amount=0.7, seed=index, edge_length=0.04)
-        cmd("noise_displace", name=name, amplitude=0.04, seed=7 + index, scale=0.5, octaves=4, hurst=0.6)
-        cmd("shade_smooth", name=name)
-        cmd("uv_smart_project", name=name)
-        cmd("assign_material", name=name, material="rock")
-        variants.append(name)
-    placed = cmd("scatter", target="land", sources=[{"name": name, "weight": 1.0} for name in variants], min_distance=0.6,
-                 density_mask=["shore", "noise"], shore_width=2.5, shore_depth=0.3, shore_wet=0.6,
-                 noise={"scale": 18.0, "octaves": 2, "threshold": 0.3, "softness": 0.25, "seed": 9},
-                 scale_range=[0.3, 2.2], scale_distribution="power", scale_exponent=-2.2, embed=0.25, align="blend", align_factor=0.3,
-                 seed=4, name="shore_rocks", realize=True, max_count=900)
-    cmd("delete", names=variants)
-    return placed
+    return cmd("shore_stones", target="land", name="shore_rocks", material="rock", shore_width=2.5, shore_depth=0.3, cluster_density=0.03, per_cluster=9.0,
+               cluster_radius=0.7, size_range=[0.12, 1.4], burial=[0.2, 0.55], worked_distance=0.9, shore_wet=0.6, seed=4, max_count=700)
 
 
 def trees(heights, level, mouth):
@@ -184,7 +167,7 @@ def cameras(heights, lake_report, mouth, placed):
     """The main shot stands on a rise of the land, the lake between it and the river mouth, so the lake, the mouth, the
     rocks on its banks, the trees near it and the hills behind are in one frame: of the spots 90 to 170 m from the mouth
     inside the land, the one whose line to the mouth passes closest to the lake's centre. The second shot stands at the
-    water line by the rocks nearest the mouth, looking along them over the lake."""
+    water line by the most crowded group of stones, looking across it over the lake."""
     level = lake_report["level"]
     centre = numpy.array(lake_report["centre"])
     best = None
@@ -205,11 +188,13 @@ def cameras(heights, lake_report, mouth, placed):
     cmd("camera_setup", name="eye", view_transform="AgX", look="base_contrast")
     rocks = rock_points(placed)
     shore = rocks[numpy.abs(rocks[:, 2] - level) < 0.8]
-    rock = shore[numpy.argmin(numpy.hypot(shore[:, 0] - mouth[0], shore[:, 1] - mouth[1]))]
+    shore = shore[:: max(1, len(shore) // 1500)]
+    crowded = (numpy.hypot(shore[:, None, 0] - shore[None, :, 0], shore[:, None, 1] - shore[None, :, 1]) < 2.0).sum(axis=1)
+    rock = shore[numpy.argmax(crowded)]
     outward = (rock[:2] - centre) / numpy.linalg.norm(rock[:2] - centre)
-    stand = rock[:2] + outward * 7.0
-    look = [float(rock[0] - outward[0] * 4.0), float(rock[1] - outward[1] * 4.0), level + 0.3]
-    cmd("add_camera", name="shore", location=[float(stand[0]), float(stand[1]), ground_at(heights, *stand) + 1.6], target=look, lens=32.0)
+    stand = rock[:2] + outward * 4.5
+    look = [float(rock[0]), float(rock[1]), level + 0.2]
+    cmd("add_camera", name="shore", location=[float(stand[0]), float(stand[1]), ground_at(heights, *stand) + 1.1], target=look, lens=32.0)
     cmd("camera_setup", name="shore", view_transform="AgX", look="base_contrast")
     return ["eye", "shore"]
 

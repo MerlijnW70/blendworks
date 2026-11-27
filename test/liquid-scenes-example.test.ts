@@ -38,10 +38,10 @@ function run(script: string, name: string): { out: string; summary: Summary } {
 }
 
 describe("the liquid scene examples", workBudget(900_000), () => {
-  it("builds the lake scene by commands only: a river into a lake with rocks at the water line, cover, trees, hills and fair cumulus", () => {
+  it("builds the lake scene by commands only: a river into a lake with stones at the water line, cover, trees, hills and fair cumulus", () => {
     const { out, summary } = run("docs/examples/liquid_lake.py", "liquid-lake-example");
     const used = new Set(summary.commands.map((entry) => entry.cmd));
-    for (const command of ["heightfield", "noise_displace", "weather", "liquid_body", "scatter", "grow_tree", "tree_mesh", "tree_leaves", "ground_cover", "atmosphere", "render_final"]) expect(used.has(command), command).toBe(true);
+    for (const command of ["heightfield", "noise_displace", "weather", "liquid_body", "shore_stones", "grow_tree", "tree_mesh", "tree_leaves", "ground_cover", "atmosphere", "render_final"]) expect(used.has(command), command).toBe(true);
     for (const command of ["set_world_hdri", "library_apply", "import", "run_python"]) expect(used.has(command), command).toBe(false);
     expect(summary.lake!.area).toBeGreaterThan(1000);
     expect(summary.lake!.max_depth).toBeGreaterThan(1);
@@ -68,5 +68,14 @@ describe("the liquid scene examples", workBudget(900_000), () => {
     for (const command of ["set_world_hdri", "library_apply", "import", "run_python"]) expect(used.has(command), command).toBe(false);
     expect(summary.render.liquids!.objects).toEqual(expect.arrayContaining(["water", "wine", "milk", "oil", "honey", "coffee"]));
     expect(statSync(join(out, "still-life.png")).size).toBeGreaterThan(500);
+    expect(statSync(join(out, "spill.png")).size).toBeGreaterThan(500);
+  });
+
+  it("builds a row of jars of honey, one for each USDA colour class", () => {
+    const { out, summary } = run("docs/examples/liquid_honey_classes.py", "liquid-honey-example");
+    const used = summary.commands.filter((entry) => entry.cmd === "liquid_fill").length;
+    expect(used).toBe(7);
+    expect(summary.render.liquids!.objects.filter((name) => name.startsWith("honey_"))).toHaveLength(7);
+    expect(statSync(join(out, "honey.png")).size).toBeGreaterThan(500);
   });
 });

@@ -18,14 +18,20 @@ def corner_depth(target, surface, depsgraph, band=0.0):
     return depth[surface.vertex_ids]
 
 
-def mask(corners, surface, triangle, weights, mode, shore, edge=WATERLINE_EDGE, depth=0.0):
-    """avoid: 0 under water, rising to 1 over edge metres above the water line; shore: 1 from depth metres under the water
-    line to shore metres above it."""
-    if corners is None or mode == "ignore":
-        return numpy.ones(len(triangle))
-    dry = -surface.interpolate(corners, triangle, weights)
+def band(dry, mode, shore, edge=WATERLINE_EDGE, depth=0.0):
+    """The mask as a function of how far points lie above the water line (dry, minus when under water)."""
+    if mode == "ignore":
+        return numpy.ones(len(dry))
     if mode == "avoid":
         return numpy.clip(dry / max(edge, 1e-6), 0.0, 1.0)
     rising = numpy.clip((dry + depth) / max(min(edge, shore * 0.25), 1e-6), 0.0, 1.0)
     falling = numpy.clip((shore - dry) / max(edge, 1e-6), 0.0, 1.0)
     return rising * falling
+
+
+def mask(corners, surface, triangle, weights, mode, shore, edge=WATERLINE_EDGE, depth=0.0):
+    """avoid: 0 under water, rising to 1 over edge metres above the water line; shore: 1 from depth metres under the water
+    line to shore metres above it."""
+    if corners is None or mode == "ignore":
+        return numpy.ones(len(triangle))
+    return band(-surface.interpolate(corners, triangle, weights), mode, shore, edge, depth)
