@@ -16,7 +16,7 @@ DESIGN_COMMANDS = {
     "mesh_from_data", "curve_from_points", "text_object",
     "lathe", "sweep", "loft", "extrude_outline", "gear", "sprocket", "roller_chain",
     "instances", "rivet_line", "generate_lods", "add_modifier", "mesh_query", "transform_selection", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell",
-    "grow_tree", "tree_skeleton", "lsystem", "tree_mesh", "tree_leaves", "grow_trees",
+    "grow_tree", "tree_skeleton", "lsystem", "tree_mesh", "tree_leaves", "grow_trees", "woodland",
     "fracture", "chip", "abrade", "remesh", "blob",
     "add_material", "assign_material", "vertex_colors",
     "uv_smart_project", "uv_unwrap", "uv_info", "uv_pack",

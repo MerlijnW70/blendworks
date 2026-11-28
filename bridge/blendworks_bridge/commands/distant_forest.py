@@ -19,7 +19,7 @@ from ..limits_land import (LEAST_IMPOSTOR_PIXELS, MAX_FOREST_BAND, MAX_FOREST_TR
 from ..registry import COMMANDS, command
 from ..schema import CREATES, EXISTS, array, boolean, integer, length, names, number, ref, string, validate
 from ..tree_presets import SPECIES as TREE_PRESETS
-from ..tree_species import SPECIES_NAMES
+from ..tree_species import TREE_NAMES
 from ..util import get_object, require_free_name, rounded
 from .distant_land import PROPERTY
 
@@ -28,6 +28,7 @@ TRANSPARENT_BOUNCES = 256
 GROWN_POINTS = 6000
 LEAST_POINTS = 200
 EMBED = 0.15
+FIELD_PROPERTY = "blendworks_distant_forest"
 
 
 class Placed:
@@ -52,7 +53,7 @@ def plan_forest(args, state):
     {
         "name": ref(string("Name of the forest's group; its parts get suffixes.", default=DEFAULT_NAME), "object", CREATES),
         "land": ref(string("The distant_land object the forest grows on."), "object", EXISTS),
-        "species": array({"type": "string", "enum": list(SPECIES_NAMES)}, "Tree species to grow, each a variant or more.", 1, MAX_PROTOCOL_SPECIES, ["pine", "oak", "birch"]),
+        "species": array({"type": "string", "enum": list(TREE_NAMES)}, "Tree species to grow, each a variant or more.", 1, MAX_PROTOCOL_SPECIES, ["pine", "oak", "birch"]),
         "variants": integer("Trees grown per species.", 1, MAX_FOREST_VARIANTS, 1),
         "sources": ref(names("Existing tree meshes (trunk base at the origin, leaves joined) to use instead of growing species.", max_items=MAX_FOREST_VARIANTS), "object"),
         "tree_detail": number("Share of a full tree's attraction points the grown trees use; distant trees need few.", None, FRACTION, 0.25, exclusive_minimum=0.0),
@@ -110,7 +111,7 @@ def distant_forest(ctx, args):
     eye = numpy.array(camera.matrix_world.translation)
     widths = [crown_radius(obj) for obj in variants]
     spacing = args.get("spacing", 1.6 * float(numpy.mean(widths)))
-    share, covered = forest_share(land, points, faces, args)
+    share, covered, threshold = forest_share(land, points, faces, args)
     placed = place_trees(ctx, args, camera, tree, faces, share, spacing, spheres, points)
     toward = switch_direction(placed, eye, tree, camera, args["near"])
     grove = forest_grove.Grove(ctx.scene, bake_collections, spheres, args["frames"], spacing, sun_direction(ctx.scene), args["seed"])
@@ -126,7 +127,8 @@ def distant_forest(ctx, args):
     near = near_trees(ctx, name, placed, spheres, trees_collection, group)
     cards, shadows = card_object(ctx, name, placed, spheres, args["frames"], len(variants), material, group, eye)
     ctx.scene.cycles.transparent_max_bounces = max(ctx.scene.cycles.transparent_max_bounces, TRANSPARENT_BOUNCES)
-    group["blendworks_distant_forest"] = json.dumps({"land": land.name, "near": args["near"], "far": far, "band": args["band"]})
+    group[FIELD_PROPERTY] = json.dumps({"land": land.name, "near": args["near"], "far": far, "band": args["band"], "seed": args["seed"], "patch_size": args["patch_size"],
+                                   "threshold": threshold, "species": [] if "sources" in args else list(args["species"]), "spacing": spacing})
     ctx.view_layer.update()
     clipped = raise_all(ctx.scene, ctx.view_layer)
     return {

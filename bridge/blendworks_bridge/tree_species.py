@@ -1,7 +1,9 @@
 """Tree species data and materials."""
 
 SPECIES_PROPERTY = "blendworks_species"
-SPECIES_NAMES = ("oak", "birch", "pine", "willow", "maple", "olive")
+TREE_NAMES = ("oak", "birch", "pine", "willow", "maple", "olive")
+SHRUB_NAMES = ("hazel", "hawthorn", "elder", "sallow")
+SPECIES_NAMES = TREE_NAMES + SHRUB_NAMES
 PRESET_SPECIES = {"weeping_willow": "willow", "gnarled_oak": "oak"}
 
 FOLIAGE_DEFAULTS = {
@@ -88,6 +90,29 @@ FOLIAGE = {
         "clusters": {"arrangement": "opposite", "leaves": [10, 16], "spacing": 0.08, "per_tip": 2, "twig_length": 0.2, "twig_radius": 0.0016, "leaf_angle": 38.0, "petiole": 0.06, "inner_keep": 0.4},
         "variation": {"hue": 0.02, "saturation": 0.1, "value": 0.15},
     },
+    "hazel": {
+        "size": 0.095,
+        "card": {"width": 0.85, "fold": 10.0},
+        "clusters": {"arrangement": "alternate", "leaves": [4, 7], "forks": [0, 1], "spacing": 0.11, "per_tip": 2, "twig_length": 0.12, "twig_radius": 0.0018, "leaf_angle": 60.0, "petiole": 0.1, "droop": 0.15, "inner_keep": 0.45},
+    },
+    "hawthorn": {
+        "size": 0.045,
+        "card": {"width": 0.8, "fold": 8.0},
+        "clusters": {"arrangement": "terminal", "leaves": [5, 9], "spacing": 0.06, "per_tip": 3, "twig_length": 0.08, "twig_radius": 0.0015, "leaf_angle": 50.0, "petiole": 0.12, "inner_keep": 0.55},
+        "variation": {"value": 0.15},
+    },
+    "elder": {
+        "size": 0.08,
+        "card": {"width": 0.38, "fold": 12.0},
+        "clusters": {"arrangement": "opposite", "leaves": [5, 7], "forks": [0, 1], "spacing": 0.07, "per_tip": 2, "twig_length": 0.18, "twig_radius": 0.002, "leaf_angle": 55.0, "petiole": 0.05, "droop": 0.3, "inner_keep": 0.35},
+    },
+    "sallow": {
+        "size": 0.07,
+        "card": {"width": 0.5, "fold": 14.0},
+        "align": {"factor": 0.4, "inner": 0.1},
+        "clusters": {"arrangement": "alternate", "leaves": [6, 9], "forks": [0, 1], "spacing": 0.09, "per_tip": 2, "twig_length": 0.16, "twig_radius": 0.0015, "leaf_angle": 40.0, "petiole": 0.06, "droop": 0.1, "inner_keep": 0.5},
+        "variation": {"hue": 0.02, "value": 0.15},
+    },
 }
 
 LEAF_MATERIALS = {
@@ -97,6 +122,10 @@ LEAF_MATERIALS = {
     "willow": {"color": [0.075, 0.14, 0.04], "dark_color": [0.03, 0.065, 0.016], "underside_color": [0.2, 0.24, 0.17], "shape": "lanceolate", "vein_pairs": 14, "roughness": 0.55},
     "maple": {"color": [0.045, 0.12, 0.022], "dark_color": [0.015, 0.05, 0.008], "underside_color": [0.1, 0.16, 0.06], "shape": "palmate", "vein_pairs": 5, "roughness": 0.5},
     "olive": {"color": [0.06, 0.08, 0.04], "dark_color": [0.025, 0.035, 0.016], "underside_color": [0.27, 0.29, 0.24], "shape": "lanceolate", "vein_pairs": 4, "roughness": 0.4},
+    "hazel": {"color": [0.05, 0.11, 0.022], "dark_color": [0.018, 0.045, 0.009], "underside_color": [0.1, 0.15, 0.06], "shape": "ovate", "vein_pairs": 7, "roughness": 0.6},
+    "hawthorn": {"color": [0.04, 0.1, 0.02], "dark_color": [0.014, 0.04, 0.008], "underside_color": [0.09, 0.14, 0.06], "shape": "lobed", "vein_pairs": 4, "roughness": 0.45},
+    "elder": {"color": [0.05, 0.12, 0.025], "dark_color": [0.018, 0.05, 0.01], "underside_color": [0.1, 0.16, 0.07], "shape": "lanceolate", "vein_pairs": 8, "roughness": 0.5},
+    "sallow": {"color": [0.05, 0.09, 0.035], "dark_color": [0.02, 0.04, 0.014], "underside_color": [0.2, 0.22, 0.17], "shape": "ovate", "vein_pairs": 9, "roughness": 0.6},
 }
 
 BARK_MATERIALS = {
@@ -106,6 +135,10 @@ BARK_MATERIALS = {
     "willow": {"color": [0.13, 0.11, 0.09], "fissure_color": [0.03, 0.025, 0.02], "lichen_color": [0.15, 0.15, 0.11], "fissure_depth": 0.85, "fissure_spacing": 0.035},
     "maple": {"color": [0.16, 0.14, 0.12], "fissure_color": [0.05, 0.04, 0.03], "lichen_color": [0.2, 0.2, 0.17], "fissure_depth": 0.4, "fissure_spacing": 0.03},
     "olive": {"color": [0.2, 0.19, 0.16], "fissure_color": [0.04, 0.035, 0.03], "lichen_color": [0.28, 0.27, 0.22], "fissure_depth": 0.7, "fissure_spacing": 0.05},
+    "hazel": {"color": [0.2, 0.14, 0.1], "fissure_color": [0.06, 0.045, 0.035], "lichen_color": [0.24, 0.24, 0.19], "fissure_depth": 0.12, "fissure_spacing": 0.05, "lenticels": 0.6},
+    "hawthorn": {"color": [0.17, 0.15, 0.13], "fissure_color": [0.04, 0.035, 0.03], "lichen_color": [0.22, 0.23, 0.18], "fissure_depth": 0.55, "fissure_spacing": 0.025},
+    "elder": {"color": [0.24, 0.21, 0.17], "fissure_color": [0.07, 0.06, 0.05], "lichen_color": [0.26, 0.26, 0.2], "fissure_depth": 0.7, "fissure_spacing": 0.03},
+    "sallow": {"color": [0.17, 0.16, 0.13], "fissure_color": [0.05, 0.045, 0.04], "lichen_color": [0.22, 0.22, 0.18], "fissure_depth": 0.3, "fissure_spacing": 0.04},
 }
 
 MESH = {
@@ -115,9 +148,13 @@ MESH = {
     "willow": {"flare": {"amount": 0.5, "lobes": 0.6}, "root_flare": {"amount": 1.4}, "min_radius": 0.002},
     "maple": {"flare": {"amount": 0.5, "lobes": 0.6}},
     "olive": {"flare": {"amount": 0.8, "lobes": 0.9}, "root_flare": {"amount": 2.0}},
+    "hazel": {"flare": {"amount": 0.2, "lobes": 0.3}, "min_radius": 0.0015},
+    "hawthorn": {"flare": {"amount": 0.3, "lobes": 0.4}, "min_radius": 0.0015},
+    "elder": {"flare": {"amount": 0.25, "lobes": 0.3}, "min_radius": 0.0018},
+    "sallow": {"flare": {"amount": 0.2, "lobes": 0.3}, "min_radius": 0.0015},
 }
 
-FILL_FLOOR = {"oak": 0.54, "birch": 0.34, "pine": 0.54, "willow": 0.5, "maple": 0.5, "olive": 0.54}
+FILL_FLOOR = {"oak": 0.54, "birch": 0.34, "pine": 0.54, "willow": 0.5, "maple": 0.5, "olive": 0.54, "hazel": 0.5, "hawthorn": 0.54, "elder": 0.45, "sallow": 0.5}
 
 NESTED = ("card", "align", "jitter", "clusters", "variation")
 

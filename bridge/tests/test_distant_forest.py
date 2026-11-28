@@ -90,7 +90,7 @@ def test_forest_follows_its_rules_and_cover(bridge):
     many = np.column_stack([rng.uniform(0, 5000, 4000), rng.uniform(0, 5000, 4000), np.zeros(4000)])
     flat = np.tile([0.0, 0.0, 1.0], (4000, 1))
     for cover in (0.2, 0.5):
-        share, covered = forest_place.forest_share(many, flat, np.zeros(4000), np.ones(4000), dict(args, cover=cover, height_range=[-1.0, 1.0]), 800.0)
+        share, covered, _ = forest_place.forest_share(many, flat, np.zeros(4000), np.ones(4000), dict(args, cover=cover, height_range=[-1.0, 1.0]), 800.0)
         assert abs(covered - cover) < COVER_TOLERANCE, (cover, covered)
         assert abs(share.mean() - cover) < COVER_TOLERANCE
 

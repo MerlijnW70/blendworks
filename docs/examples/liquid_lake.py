@@ -14,6 +14,7 @@ from blendworks_bridge import Handler
 from blendworks_bridge.limits import MAX_COVER_INSTANCES
 
 sys.path.insert(0, HERE)
+import lake_woodland
 import to_the_horizon
 
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
@@ -23,14 +24,12 @@ WIDTH = int(os.environ.get("BLENDWORKS_SHOT_WIDTH", "1600"))
 HEIGHT = int(os.environ.get("BLENDWORKS_SHOT_HEIGHT", "900"))
 SAMPLES = int(os.environ.get("BLENDWORKS_SHOT_SAMPLES", "256"))
 SECONDS = float(os.environ.get("BLENDWORKS_SHOT_SECONDS", "300"))
-DETAIL = float(os.environ.get("BLENDWORKS_TREE_DETAIL", "1.0"))
 BUDGET = int(os.environ.get("BLENDWORKS_COVER_BUDGET", str(min(5_000_000, MAX_COVER_INSTANCES))))
 COVER_NEAR = 120.0
-TREES = int(os.environ.get("BLENDWORKS_TREES", "6"))
 FORM = os.environ.get("BLENDWORKS_CLOUD_FORM", "auto")
 SEED = int(os.environ.get("BLENDWORKS_TERRAIN_SEED", "3"))
 LAND_RESOLUTION = int(os.environ.get("BLENDWORKS_LAND_RESOLUTION", "301"))
-SHOTS = os.environ.get("BLENDWORKS_SHOTS", "lake,rocks,meadow").split(",")
+SHOTS = os.environ.get("BLENDWORKS_SHOTS", "lake,rocks,meadow,edge").split(",")
 TIME_OF_DAY = os.environ.get("BLENDWORKS_TIME", "afternoon")
 TILE = 300.0
 SHIFT = 4.5 * TILE
@@ -134,33 +133,6 @@ def rocks():
     cmd("material_layer", material="rock", mask="up_facing", moss={}, amount=0.2, softness=0.5, seed=4)
     return cmd("shore_stones", target="land", name="shore_rocks", material="rock", shore_width=2.5, shore_depth=0.3, cluster_density=0.03, per_cluster=9.0,
                cluster_radius=0.7, size_range=[0.12, 1.4], burial=[0.2, 0.55], worked_distance=0.9, shore_wet=0.6, seed=4, max_count=700)
-
-
-def trees(heights, level, mouth):
-    """Trees on dry ground near where the river meets the lake, where the main shot looks."""
-    planted = []
-    generator = numpy.random.default_rng(6)
-    near = numpy.hypot(heights[:, 0] - mouth[0], heights[:, 1] - mouth[1])
-    dry = heights[(heights[:, 2] > level + 1.5) & (near > 12.0) & (near < 70.0)]
-    species = ["oak", "willow", "birch", "maple", "oak", "pine"]
-    chosen = []
-    for spot in dry[generator.permutation(len(dry))]:
-        if all(math.hypot(spot[0] - other[0], spot[1] - other[1]) > 14.0 for other in chosen):
-            chosen.append(spot)
-        if len(chosen) == TREES:
-            break
-    for index, spot in enumerate(chosen):
-        name = f"tree_{index}"
-        cmd("grow_tree", name=name, preset=species[index % len(species)], seed=10 + index, location=[float(spot[0]), float(spot[1]), float(spot[2]) - 0.1], limit=0)
-        cmd("tree_mesh", name=name)
-        cmd("tree_leaves", name=f"{name}_bark", leaves_name=f"{name}_leaves", seed=10 + index, **({"detail": "low"} if DETAIL < 1.0 else {}))
-        planted.append(f"{name}_bark")
-    return planted
-
-
-def crowns(planted):
-    """The trees' bark and leaves, which shade the ground."""
-    return [name for bark in planted for name in (bark, bark.replace("_bark", "_leaves")) if name in bpy.data.objects]
 
 
 def ground_at(heights, x, y):
@@ -279,22 +251,25 @@ def build():
     mouth = numpy.array(flow["path"][-1])
     heights = points()
     placed = rocks()
-    planted = trees(heights, report["level"], mouth)
     shots = cameras(heights, report, mouth, placed)
+    eye = numpy.array(bpy.data.objects["eye"].location)
+    cmd("atmosphere")
+    tiles = [obj.name for obj in bpy.data.objects if obj.type == "MESH" and (obj.name == "land" or obj.name.startswith("ground_"))]
+    horizon = None
+    if to_the_horizon.enabled():
+        mist = {"radius": 2500.0, "fade": 6.0, "valley_width": 250.0}
+        horizon = to_the_horizon.surround(cmd, tiles, "eye", water=["lake", "river"], species=("birch", "pine", "oak"), mist=mist, fields=True)
+    grown = lake_woodland.grow(cmd, tiles, eye, mouth, report["centre"], "DistantForest" if horizon and "forest" in horizon else None)
+    shots.append(lake_woodland.edge_camera(cmd, report["level"], eye, mouth, tiles))
     obstacles = placed.get("objects") or [placed["name"]]
     inner, outer = meadow_tiles()
-    fields = cmd("meadow_fields", targets=inner, seed=5, shade=crowns(planted) + obstacles, obstacles=obstacles)
+    fields = cmd("meadow_fields", targets=inner, seed=5, shade=obstacles, obstacles=obstacles)
     if outer:
         cmd("meadow_fields", targets=outer, seed=5, paths="none")
     shots.append(meadow_camera(report, heights))
     reeds = [{"name": "reeds", "element": "sedge", "density": 25.0, "liquid": "shore", "shore": 1.2, "clumping": {"radius": 0.6, "per_clump": 12.0}}]
-    cover = cmd("ground_cover", target="land", preset="meadow", cameras=shots, near=COVER_NEAR, view_only=True, budget=BUDGET, obstacles=obstacles + planted, trees=planted, seed=5, populations=reeds)
-    cmd("atmosphere")
-    horizon = None
-    if to_the_horizon.enabled():
-        tiles = [obj.name for obj in bpy.data.objects if obj.type == "MESH" and (obj.name == "land" or obj.name.startswith("ground_"))]
-        mist = {"radius": 2500.0, "fade": 6.0, "valley_width": 250.0}
-        horizon = to_the_horizon.surround(cmd, tiles, "eye", water=["lake", "river"], species=("birch", "pine", "oak"), mist=mist, fields=True)
+    cover = cmd("ground_cover", target="land", preset="meadow", cameras=shots, near=COVER_NEAR, view_only=True, budget=BUDGET, obstacles=obstacles, seed=5, populations=reeds)
+    horizon = dict(horizon or {}, woodland=lake_woodland.summary(grown))
     cmd("save_blend", path="liquid-lake.blend")
     meadow = {"fields": {key: fields[key] for key in ("moisture", "soil", "disturbance", "shade", "grazing", "paths", "path_length")},
               "cover": {entry["name"]: entry["count"] for entry in cover["populations"]}, "structure": cover.get("structure")}
@@ -308,7 +283,7 @@ def main():
     lake_report, river_report, placed, shots, horizon, meadow = build()
     distances = water_line_distances(placed)
     renders = {}
-    for shot, path, key in (("eye", "lake.png", "lake"), ("shore", "rocks.png", "rocks"), ("meadow", "meadow.png", "meadow")):
+    for shot, path, key in (("eye", "lake.png", "lake"), ("shore", "rocks.png", "rocks"), ("meadow", "meadow.png", "meadow"), ("edge", "edge.png", "edge")):
         if key in SHOTS:
             renders[shot] = cmd("render_final", path=path, camera=shot, width=WIDTH, height=HEIGHT, samples=SAMPLES, time_limit=SECONDS, device=DEVICE, preview=False)
     final = renders.get("eye") or next(iter(renders.values()))

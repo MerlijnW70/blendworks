@@ -190,7 +190,67 @@ SPECIES["willow"] = {
     "down_angle_variation": [15.0, 20.0, 10.0],
     "tip_radius": 0.018,
 }
+SHRUBS = {
+    "hazel": {
+        "method": "colonization",
+        "envelope": "inverse_conical",
+        "height": 5.0,
+        "trunk_height": 0.05,
+        "crown_radius": 2.4,
+        "points": 1800,
+        "influence": 1.0,
+        "kill": 0.25,
+        "step": 0.15,
+        "tip_radius": 0.006,
+        "phototropism": {"direction": [0.0, 0.0, 1.0], "strength": 0.3, "by_order": [0.6, 1.0], "thinness": 1.0},
+        "gnarl": {"amplitude": 0.06, "wavelength": 1.6},
+    },
+    "hawthorn": {
+        "method": "colonization",
+        "envelope": "spherical",
+        "height": 4.5,
+        "trunk_height": 0.25,
+        "crown_radius": 2.3,
+        "points": 2400,
+        "influence": 0.8,
+        "kill": 0.2,
+        "step": 0.12,
+        "tip_radius": 0.005,
+        "gnarl": {"amplitude": 0.12, "wavelength": 1.4, "radius_power": 0.3},
+        "kink_probability": 0.08,
+        "kink_angle": 24.0,
+    },
+    "elder": {
+        "method": "colonization",
+        "envelope": "hemispherical",
+        "height": 4.0,
+        "trunk_height": 0.05,
+        "crown_radius": 2.5,
+        "points": 2300,
+        "influence": 0.9,
+        "kill": 0.22,
+        "step": 0.13,
+        "tip_radius": 0.008,
+        "gravitropism": {"strength": 0.5, "by_order": [0.0, 0.3, 1.0], "thinness": 1.0},
+        "gnarl": {"amplitude": 0.08, "wavelength": 1.8},
+    },
+    "sallow": {
+        "method": "colonization",
+        "envelope": "hemispherical",
+        "height": 4.2,
+        "trunk_height": 0.05,
+        "crown_radius": 2.7,
+        "points": 2600,
+        "influence": 0.9,
+        "kill": 0.22,
+        "step": 0.15,
+        "tip_radius": 0.006,
+        "phototropism": {"direction": [0.0, 0.0, 1.0], "strength": 0.45, "by_order": [0.4, 1.0], "thinness": 1.0},
+        "gnarl": {"amplitude": 0.07, "wavelength": 1.6},
+    },
+}
 PRESETS.update(SPECIES)
+PRESETS.update(SHRUBS)
 
 
 def preset_names():

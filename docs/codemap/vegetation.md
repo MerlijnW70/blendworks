@@ -1,10 +1,10 @@
 # Code map: Vegetation and ground cover
 
-tree_*, trees, meadow_*, lsystem*, cover_*, ground_cover, forest_*, distant_forest, impostors. Part of [the code map index](../CODEMAP.md).
+tree_*, trees, woodland*, meadow_*, lsystem*, cover_*, ground_cover, forest_*, distant_forest, impostors. Part of [the code map index](../CODEMAP.md).
 
 One line per module: its docstring, its first public names (`fn`, `+` means more), the commands it registers (`cmd`) and its tests (`test`). Bridge tests are `bridge/tests/test_<name>.py`; vitest ones are `test/<name>.test.ts`. A module with no `test` is covered only by the core tests (smoke, describe, crate, scene).
 
-### bridge/blendworks_bridge/ (63)
+### bridge/blendworks_bridge/ (74)
 
 - `cover_blades`: Grass blade geometry for ground cover: triangles, widths, shapes and clumps. | fn: blade_triangles blade_plan + | test: cover_budget cover_contact +3
 - `cover_contact`: Ground contact shading for ground cover: triangle coverage and contact values. | fn: triangle_coverage vertex_values + | test: cover_contact
@@ -16,7 +16,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `cover_masks`: Ground cover masks: obstacles, distance, noise and view masks per population. | fn: soft_band Obstacles + | test: cover_masks
 - `cover_materials`: Ground cover shader helpers: per-instance randomness, UV parts and blade grass. | fn: amount instance_random + | test: cover_budget cover_contact +3
 - `cover_mesh`: The mesh of one ground cover element and its rotation and segment helpers. | fn: ElementMesh rotate_about + | test: cover_budget cover_contact +3
-- `cover_nodes`: Geometry node group that builds ground cover instances. | fn: named switch + | test: cover_budget cover_contact +3
+- `cover_nodes`: Geometry node group that builds ground cover instances. | fn: named switch + | test: woodland woodland_field
 - `cover_plan`: Ground cover planning: drawing candidates, budgets and populations of placed instances. | fn: Draw candidate_limit + | test: cover_budget cover_contact +3
 - `cover_populations`: Ground cover populations: merging presets with the caller's kind groups. | fn: pair kind_group + | test: cover_budget cover_contact +3
 - `cover_presets`: Data table of ground cover presets. | fn: respond | test: meadow_cover
@@ -27,7 +27,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `forest_cards`: Impostor cards, their material, the canopy surface far out, and the calibration that makes a card as bright as the tree | fn: card_mesh blended + | test: distant_forest
 - `forest_grove`: Calibration of impostor brightness in a grove: a small stand of trees on a ground, seen from the camera's direction | fn: Grove compare | test: distant_forest
 - `forest_inplace`: Calibration of impostor brightness in the scene itself. The trees nearest beyond the switch are rendered from the | fn: render InScene + | test: distant_forest
-- `forest_place`: Where distant forest grows, and how each tree is drawn. The land's vertices get a forest share from rules (slope, | fn: vertex_areas patch_noise + | test: distant_forest
+- `forest_place`: Where distant forest grows, and how each tree is drawn. The land's vertices get a forest share from rules (slope, | fn: vertex_areas patch_noise + | test: distant_forest woodland_field
 - `ground_level`: The low ground around the camera, where ground fog lies. | fn: low_ground | test: ground_cover ground_export
 - `impostors`: Octahedral impostors of trees. A tree is drawn into an atlas of frames x frames views over the upper hemisphere, laid out | fn: decode encode + | test: distant_forest
 - `lsystem_derive`: L-system derivation: rule tables, arithmetic checks and rule application. | fn: Derivation RuleTable + | test: lsystem_grammar lsystem_turtle +1
@@ -56,12 +56,12 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `tree_leaves`: Leaves along shoot chains: placement and counts. | fn: Leaf shoot_chains + | test: tree_leaves early_counts +2
 - `tree_levels`: Weber-Penn style level growth of a tree. | fn: per_level rotated + | test: tree_levels tree-example
 - `tree_plan`: Tree planning: presets, defaults, envelopes and the grown result. | fn: with_preset with_defaults + | test: tree_batch tree_colonization +14
-- `tree_presets`: Data table of tree presets. | fn: preset_names | test: tree_shape tree_species +1
+- `tree_presets`: Data table of tree presets. | fn: preset_names | test: tree_shape tree_species +2
 - `tree_radii`: Branch radii by pipe model, taper and branch order. | fn: children_lists Taper + | test: tree_batch tree_colonization +14
 - `tree_rings`: Tube rings for branches: strips, UVs and domes. | fn: Tube clamp_folds + | test: tree_batch tree_colonization +14
 - `tree_shapes`: Crown envelopes (revolution and mesh) and rejection sampling. | fn: shape_ratio segment_distances + | test: tree_colonization tree-example
-- `tree_skeleton`: Tree skeleton data: checks, chains and preview curve. | fn: Skeleton plain + | test: tree_skeleton lsystem_turtle +7
-- `tree_species`: Tree species data and materials. | fn: species_of merged + | test: tree_species tree_foliage +2
+- `tree_skeleton`: Tree skeleton data: checks, chains and preview curve. | fn: Skeleton plain + | test: tree_skeleton lsystem_turtle +8
+- `tree_species`: Tree species data and materials. | fn: species_of merged + | test: tree_species tree_foliage +3
 - `tree_sprays`: Twig sprays: style, frames and points. | fn: SprayStyle frame_of + | test: tree_foliage tree_leaf_shapes +1
 - `tree_strands`: Hanging strands of weeping trees. | fn: arc_positions coefficient_of_variation + | test: tree_strands tree-example
 - `tree_surface`: Tree surface data: corners, normals, creases and overlaps. | fn: corner_vertices vertex_values + | test: tree_batch tree_colonization +14
@@ -69,10 +69,21 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `tree_twigs`: Twig cards for foliage. | fn: twig_cards | test: tree_batch tree_colonization +14
 - `tree_vectors`: Plain vector maths used by tree code. | fn: add scaled + | test: tree_batch tree_colonization +14
 - `tree_voxel`: Transfers attributes from a bark skin to a voxel remeshed bark. | fn: Source barycentric + | test: tree_batch tree_colonization +14
+- `woodland_build`: Grows plant variants and instances them. | fn: call Variants + | test: woodland woodland_field +2
+- `woodland_canopy`: Canopy cover on the ground. | fn: opacity_of ground_points + | test: woodland woodland_field +2
+- `woodland_edges`: Graded edge profiles. | fn: shrub_profile herb_profile + | test: woodland_plan
+- `woodland_measure`: Measures of a woodland plan. | fn: interior_regularity clustering + | test: woodland_plan
+- `woodland_pattern`: Stem spacing processes and measures. | fn: Inhibition inhibit + | test: woodland_plan
+- `woodland_plan`: Where every plant stands. | fn: Plants class_of + | test: woodland_plan
+- `woodland_plants`: Ferns and tall herbs built in code. | fn: Builder arch + | test: woodland woodland_field +2
+- `woodland_shapes`: Stand footprints in plan. | fn: rim_noise segment_distance + | test: woodland_field woodland_plan
+- `woodland_site`: Ground height, water and moisture. | fn: world_triangles Site | test: woodland woodland_field +2
+- `woodland_species`: Species niches, age classes, allometry. | fn: site_scale niche_weights + | test: woodland_plan
+- `woodland_stands`: Stand schema and footprints. | fn: need area_footprint + | test: woodland woodland_field +2
 
-### bridge/blendworks_bridge/commands/ (9)
+### bridge/blendworks_bridge/commands/ (10)
 
-- `distant_forest`: The distant_forest command: forest on distant land from the tree species, as grown variants, cards and canopy. | fn: Placed plan_forest + | cmd: distant_forest | test: distant_forest
+- `distant_forest`: The distant_forest command: forest on distant land from the tree species, as grown variants, cards and canopy. | fn: Placed plan_forest + | cmd: distant_forest | test: distant_forest woodland_field
 - `ground_cover`: The ground_element and ground_cover commands: layered grass, flowers and litter over a surface. | fn: padded ElementSet + | cmd: ground_element ground_cover | test: ground_cover
 - `ground_export`: The ground_cover_export command: writes a ground cover to a .glb with GPU instancing. | fn: cover_objects instance_count + | cmd: ground_cover_export | test: ground_export cover_review
 - `lsystem`: The lsystem command: grows a plant from a parametric L-system with organs. | fn: organ_placements place_organs + | cmd: lsystem | test: lsystem_grammar lsystem_turtle +1
@@ -81,3 +92,4 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `tree_leaves`: The tree_leaves command: foliage clusters or single leaves on a tree skeleton. | fn: leaf_material twig_material + | cmd: tree_leaves | test: tree_leaves early_counts +2
 - `tree_mesh`: The tree_mesh command: one closed, UV-mapped bark mesh from a tree skeleton. | fn: material_for check_args + | cmd: tree_mesh | test: tree_mesh tree-example
 - `trees`: Tree skeleton commands: grow_tree (space colonisation or levels) and tree_skeleton. | fn: per_level tropism + | cmd: grow_tree tree_skeleton | test: tree-example
+- `woodland`: The woodland command. | fn: plan_woodland_names memory_of + | cmd: woodland | test: woodland woodland_field +2

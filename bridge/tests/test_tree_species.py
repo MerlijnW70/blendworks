@@ -9,10 +9,11 @@ from natural_stats import baked_pixels
 import bpy
 import numpy
 
-from blendworks_bridge.tree_presets import SPECIES
+from blendworks_bridge.tree_presets import SHRUBS, SPECIES
 from blendworks_bridge.tree_species import BARK_MATERIALS, FOLIAGE, LEAF_MATERIALS, SPECIES_NAMES, SPECIES_PROPERTY
 
-SMALL = {"oak": {"points": 900}, "maple": {"points": 700}, "olive": {"points": 700}, "birch": {"branches": [10, 8, 3]}, "pine": {"branches": [12, 8, 3]}, "willow": {"branches": [6, 16, 2]}}
+SMALL = {"oak": {"points": 900}, "maple": {"points": 700}, "olive": {"points": 700}, "birch": {"branches": [10, 8, 3]}, "pine": {"branches": [12, 8, 3]}, "willow": {"branches": [6, 16, 2]},
+         "hazel": {"points": 600}, "hawthorn": {"points": 600}, "elder": {"points": 600}, "sallow": {"points": 600}}
 
 
 def principled(material):
@@ -24,7 +25,7 @@ def attribute_names(material):
 
 
 def test_every_species_preset_combines_skeleton_bark_leaves_and_twigs(bridge):
-    assert set(SPECIES) == set(SPECIES_NAMES) == set(FOLIAGE) == set(LEAF_MATERIALS)
+    assert set(SPECIES) | set(SHRUBS) == set(SPECIES_NAMES) == set(FOLIAGE) == set(LEAF_MATERIALS)
     for species in SPECIES_NAMES:
         bridge.ok("new_scene")
         grown = bridge.ok("grow_tree", name="Tree", preset=species, seed=2, limit=0, **SMALL[species])

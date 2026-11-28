@@ -309,6 +309,7 @@
   {"id":"distant_land-1","text":"Surround the lake scene with land all the way to the horizon","kind":"single","split":"tune","expect":["blender_distant_land"]},
   {"id":"distant_land-2","text":"Add distant mountains, ranges behind ranges, beyond the valley","kind":"single","split":"tune","expect":["blender_distant_land"]},
   {"id":"distant_forest-1","text":"Put forest in the distance on the far hills","kind":"single","split":"tune","expect":["blender_distant_forest"]},
+  {"id":"woodland-1","text":"Plant copses and hedgerows around the fields, with shrubs and saplings at the wood edge instead of lone trees","kind":"single","split":"tune","expect":["blender_woodland"]},
   {"id":"valley_mist-1","text":"Lay mist in the valley that follows the low ground","kind":"single","split":"tune","expect":["blender_valley_mist"]},
   {"id":"material_liquid-1","text":"Give the bottle's contents a red wine material that is dark in the middle and red at the thin edges","kind":"near-miss","split":"tune","expect":["blender_material_liquid"],"confusable":"blender_add_material"},
   {"id":"material_liquid-2","text":"Make the flow glow like molten lava with a cooling black crust","kind":"single","split":"tune","expect":["blender_material_liquid"]},

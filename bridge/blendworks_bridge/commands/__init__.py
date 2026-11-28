@@ -37,6 +37,7 @@ MODULES = (
     "tree_mesh",
     "tree_leaves",
     "tree_batch",
+    "woodland",
     "rigging",
     "skinning",
     "constraints",

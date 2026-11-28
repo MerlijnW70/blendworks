@@ -19,6 +19,7 @@ HEIGHT_EDGE = 20.0
 VIEW_MARGIN = math.radians(8.0)
 DOWN = Vector((0.0, 0.0, -1.0))
 COVER_STEPS = 24
+PATCH_EDGE = 0.08
 
 
 def vertex_areas(xy, faces):
@@ -57,8 +58,8 @@ def rules(points, normals, water, args):
 
 
 def forest_share(points, normals, water, areas, args, wavelength):
-    """Forest share per land vertex, and the share of dry land it covers. The patch threshold is found by bisection so
-    that the forest's area over the dry land equals the stated cover, as far as the rules allow."""
+    """Forest share per land vertex, the share of dry land it covers and the patch threshold, found by bisection so that
+    the forest's area over the dry land equals the stated cover, as far as the rules allow."""
     allowed = rules(points, normals, water, args)
     noise = patch_noise(points[:, :2], wavelength, args["seed"])
     dry = areas * (water < 0.5)
@@ -66,7 +67,7 @@ def forest_share(points, normals, water, areas, args, wavelength):
     low, high = float(noise.min()) - 1.0, float(noise.max()) + 1.0
 
     def covered(threshold):
-        share = allowed * smoothstep(threshold + 0.08, threshold - 0.08, noise)
+        share = allowed * smoothstep(threshold + PATCH_EDGE, threshold - PATCH_EDGE, noise)
         return share, float((share * dry).sum()) / total
 
     for _ in range(COVER_STEPS):
@@ -75,7 +76,8 @@ def forest_share(points, normals, water, areas, args, wavelength):
             low = middle
         else:
             high = middle
-    return covered(high)
+    share, cover = covered(high)
+    return share, cover, high
 
 
 def land_tree(obj):

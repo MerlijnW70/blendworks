@@ -39,7 +39,8 @@ def inside(values, bounds):
 
 
 def ramp(values, low, high):
-    if high <= low:
+    """0 at low rising to 1 at high, falling when high is below low; equal values make a hard threshold."""
+    if high == low:
         return (values >= low).astype(float)
     return numpy.clip((values - low) / (high - low), 0.0, 1.0)
 
