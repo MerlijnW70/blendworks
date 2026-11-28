@@ -25,7 +25,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `sky_measure`: Measures the sky: sun irradiance, hemisphere and luminance with a probe scene. | fn: copy_sky ProbeScene + | test: air_and_light
 - `sky_nodes`: Node graph helper for the sky shader. | fn: Graph | test: sky
 - `sky_sun`: Solar position from date, time and place. | fn: direction angles + | test: sky
-- `sky_world`: Sky world nodes: build, store and place the sun lamp. | fn: node_settings build + | test: camera_photography landscape_air
+- `sky_world`: Sky world nodes: build, store and place the sun lamp. | fn: node_settings build + | test: camera_photography grass_light +1
 - `valley_mist`: Mist that lies in low ground. The ground under a square around a centre is measured on a grid by ray casts; the low | fn: burn_off formation + | test: valley_mist air_and_light
 - `view_materials`: Temporary shaders for preview shadings (clay, normals and so on). | fn: temporary_material Shader + | test: render_views
 - `view_surfaces`: Swaps surface shaders of materials while a preview renders. | fn: surface_output volume_only + | test: render_views_surfaces

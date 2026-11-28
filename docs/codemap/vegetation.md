@@ -1,17 +1,17 @@
 # Code map: Vegetation and ground cover
 
-tree_*, trees, woodland*, meadow_*, lsystem*, cover_*, ground_cover, forest_*, distant_forest, impostors. Part of [the code map index](../CODEMAP.md).
+tree_*, trees, woodland*, meadow_*, lsystem*, cover_*, ground_cover, forest_*, distant_forest, impostors, leaf_optics. Part of [the code map index](../CODEMAP.md).
 
 One line per module: its docstring, its first public names (`fn`, `+` means more), the commands it registers (`cmd`) and its tests (`test`). Bridge tests are `bridge/tests/test_<name>.py`; vitest ones are `test/<name>.test.ts`. A module with no `test` is covered only by the core tests (smoke, describe, crate, scene).
 
-### bridge/blendworks_bridge/ (74)
+### bridge/blendworks_bridge/ (75)
 
-- `cover_blades`: Grass blade geometry for ground cover: triangles, widths, shapes and clumps. | fn: blade_triangles blade_plan + | test: cover_budget cover_contact +3
+- `cover_blades`: Grass blade geometry for ground cover: triangles, widths, shapes and clumps. | fn: blade_triangles blade_plan + | test: grass_light
 - `cover_contact`: Ground contact shading for ground cover: triangle coverage and contact values. | fn: triangle_coverage vertex_values + | test: cover_contact
 - `cover_flowers`: Flower geometry for ground cover: stems, heads, petals and centres. | fn: flower_frame stem_points + | test: cover_budget cover_contact +3
 - `cover_gltf`: Reads and writes .glb files and adds GPU instancing for ground cover export. | fn: read_glb padded + | test: cover_budget cover_contact +3
-- `cover_ground`: Meadow ground layer in the materials. | fn: principled field + | test: cover_budget cover_contact +3
-- `cover_kinds`: Ground cover element kinds: parameters, budgets, geometry and materials. | fn: pair element_params + | test: cover_review
+- `cover_ground`: Meadow ground layer in the materials. | fn: principled field + | test: grass_light
+- `cover_kinds`: Ground cover element kinds: parameters, budgets, geometry and materials. | fn: pair element_params + | test: cover_review grass_light
 - `cover_litter`: Litter geometry for ground cover: twigs, leaf cards and tubes. | fn: twig_axes axis_nodes + | test: cover_budget cover_contact +3
 - `cover_masks`: Ground cover masks: obstacles, distance, noise and view masks per population. | fn: soft_band Obstacles + | test: cover_masks
 - `cover_materials`: Ground cover shader helpers: per-instance randomness, UV parts and blade grass. | fn: amount instance_random + | test: cover_budget cover_contact +3
@@ -19,7 +19,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `cover_nodes`: Geometry node group that builds ground cover instances. | fn: named switch + | test: woodland woodland_field
 - `cover_plan`: Ground cover planning: drawing candidates, budgets and populations of placed instances. | fn: Draw candidate_limit + | test: cover_budget cover_contact +3
 - `cover_populations`: Ground cover populations: merging presets with the caller's kind groups. | fn: pair kind_group + | test: cover_budget cover_contact +3
-- `cover_presets`: Data table of ground cover presets. | fn: respond | test: meadow_cover
+- `cover_presets`: Data table of ground cover presets. | fn: respond | test: grass_light meadow_cover
 - `cover_sampling`: Ground cover sampling: view, candidate points, usable areas and barycentric draws. | fn: View Candidates + | test: cover_budget cover_contact +3
 - `cover_shading`: Ground cover shading: preset materials, instance tint and ground darkening. | fn: preset_material instance_tint + | test: cover_budget cover_contact +3
 - `cover_structure`: Ground cover side of the meadow fields. | fn: wanted settings_of + | test: cover_budget cover_contact +3
@@ -30,6 +30,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `forest_place`: Where distant forest grows, and how each tree is drawn. The land's vertices get a forest share from rules (slope, | fn: vertex_areas patch_noise + | test: distant_forest woodland_field
 - `ground_level`: The low ground around the camera, where ground fog lies. | fn: low_ground | test: ground_cover ground_export
 - `impostors`: Octahedral impostors of trees. A tree is drawn into an atlas of frames x frames views over the upper hemisphere, laid out | fn: decode encode + | test: distant_forest
+- `leaf_optics`: Two-sided leaves: cited reflectance and transmittance per leaf type, a canopy's reflectance from them. | fn: ratio mix_factor + | test: grass_light natural_materials +3
 - `lsystem_derive`: L-system derivation: rule tables, arithmetic checks and rule application. | fn: Derivation RuleTable + | test: lsystem_grammar lsystem_turtle +1
 - `lsystem_expr`: L-system expression scanner and evaluator. | fn: truth binary + | test: lsystem_grammar lsystem_turtle +1
 - `lsystem_plan`: L-system planning: resolves a request into a checked word with organs. | fn: Planned resolve + | test: lsystem_grammar lsystem_turtle +1
@@ -41,7 +42,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `meadow_grid`: Height grid and terrain measures for meadow fields. | fn: Grid filled + | test: meadow_cover meadow_fields +1
 - `meadow_inputs`: Sun, water and shade on the field grid. | fn: sun_direction water_measures + | test: meadow_cover meadow_fields +1
 - `meadow_paths`: Worn paths as least-time routes. | fn: walking_time PathGrid + | test: meadow_cover meadow_fields
-- `meadow_rules`: Cover responses to the meadow fields. | fn: pair check_responses + | test: meadow_cover
+- `meadow_rules`: Cover responses to the meadow fields. | fn: pair check_responses + | test: grass_light meadow_cover
 - `tree_axes`: Tree axes and twigs built from a skeleton. | fn: Axis Twig + | test: tree_batch tree_colonization +14
 - `tree_bark`: Bark mesh: tubes skinned or voxel remeshed with density control. | fn: Built build_tubes + | test: tree_batch tree_colonization +14
 - `tree_canopy`: Tree canopy: writes meshes with materials and reports leaf variation and area. | fn: write_mesh with_materials + | test: tree_batch tree_colonization +14

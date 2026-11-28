@@ -11,6 +11,8 @@ from texture_helpers import graph_signature, linked_from, principled, world_stat
 from blendworks_bridge.commands import procedural as procedural_command
 from blendworks_bridge.nodes import find_socket
 from blendworks_bridge.presets import PRESETS
+from blendworks_bridge import leaf_optics
+from blendworks_bridge.procedural import surface_principled
 
 SIZE = 16
 BLUE = [0.05, 0.1, 0.6]
@@ -42,7 +44,9 @@ def test_every_preset_builds_a_bakeable_material(bridge):
         assert result["params"]["seed"] == 7 and result["params"]["coordinates"] == ("uv" if name in ("leaf", "grass_blade", "litter") else "object")
         material = bpy.data.materials[f"M_{name}"]
         shader = principled(material)
-        assert linked_from(output_of(material).inputs["Surface"])[0] == shader
+        assert surface_principled(material)[1] == shader
+        surface = linked_from(output_of(material).inputs["Surface"])[0]
+        assert surface == shader or (name in ("leaf", "grass_blade", "litter") and surface.name == leaf_optics.MIX_NODE), name
         for socket in ("Base Color", "Roughness"):
             assert shader.inputs[socket].is_linked, (name, socket)
         node, _ = linked_from(output_of(material).inputs["Displacement"])

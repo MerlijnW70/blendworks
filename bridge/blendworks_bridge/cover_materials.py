@@ -78,7 +78,6 @@ def grass_blade(graph, p):
         "base_color": graph.mix(dry, varied, straw),
         "roughness": graph.mix(dry, p["roughness"], min(1.0, p["roughness"] + 0.1), data_type="FLOAT"),
         "metallic": 0.0,
-        "translucency": p["translucency"],
         "alpha": alpha,
         "height": veins,
     }
@@ -118,7 +117,6 @@ def litter(graph, p):
         "roughness": graph.map_range(patches, 0.0, 1.0, max(0.0, p["roughness"] - 0.08), min(1.0, p["roughness"] + 0.05)),
         "metallic": 0.0,
         "height": height,
-        "translucency": p["translucency"],
         "alpha": litter_alpha(graph, p, u, v, field),
     }
 
@@ -136,7 +134,7 @@ def cover_presets():
             "card_blades": integer("cards: blades across one card.", LEAST_CARD_BLADES, MAX_CARD_BLADES, 12),
             "card_blade_width": amount("cards: width of a blade at its root as a share of its column.", 0.7),
             "card_height_min": amount("cards: the shortest blade as a share of the card height.", 0.45),
-            "translucency": amount("Light passing through the blade: transmission weight.", 0.3),
+            "translucency": amount("Light passing diffusely through the blade, as a share of a grass leaf's cited transmittance (leaf_optics; 1 cited, 0 opaque).", 1.0),
             "roughness": amount("Average roughness.", 0.55),
             "coordinates": string("Grass blades read the UV map: u across, v from root to tip.", ["uv"], "uv"),
         }, grass_blade),
@@ -150,7 +148,7 @@ def cover_presets():
             "vein_pairs": integer("Lateral veins on each side of the midrib.", FEWEST_VEIN_PAIRS, VEIN_PAIRS, 6),
             "spread": amount("How far instances spread from color towards second_color.", 1.0),
             "mottling": amount("Strength of the fine speckle.", 0.5),
-            "translucency": amount("Transmission weight.", 0.1),
+            "translucency": amount("Light passing diffusely through leaf litter, as a share of a dry leaf's cited transmittance (leaf_optics; twigs and pebbles stay opaque).", 1.0),
             "roughness": amount("Average roughness.", 0.75),
             "coordinates": string("uv: the UV square holds one leaf, twig or pebble.", ["object", "uv"], "uv"),
         }, litter),

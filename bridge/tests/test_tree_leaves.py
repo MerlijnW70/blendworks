@@ -9,6 +9,7 @@ from harness import run
 import bpy
 import numpy
 
+from blendworks_bridge import leaf_optics
 from blendworks_bridge.gltf_extras import read_glb
 from blendworks_bridge.kit_limits import MAX_INSTANCES
 from blendworks_bridge.tree_skeleton import PROPERTY
@@ -190,7 +191,8 @@ def test_cards_carry_the_leaf_preset_and_a_given_leaf_can_replace_them(bridge):
     assert numpy.allclose(per_card.min(axis=1), 0.0) and numpy.allclose(per_card.max(axis=1), 1.0)
     principled = next(node for node in bpy.data.materials["Leaf"].node_tree.nodes if node.type == "BSDF_PRINCIPLED")
     assert principled.inputs["Alpha"].is_linked
-    assert principled.inputs["Thin Wall"].default_value and abs(principled.inputs["Subsurface Weight"].default_value - 0.4) < 1e-6
+    mix = bpy.data.materials["Leaf"].node_tree.nodes[leaf_optics.MIX_NODE]
+    assert abs(mix.inputs["Fac"].default_value - leaf_optics.mix_factor("broadleaf", 0.4)) < 1e-5
     bridge.ok("mesh_from_data", name="Needles", vertices=[[0, 0, 0], [0.1, -0.003, 0], [0.1, 0.003, 0], [0.09, 0.03, 0.01], [0.09, -0.03, 0.01]], faces=[[0, 1, 2], [0, 2, 3], [0, 4, 1]])
     needles = bridge.ok("tree_leaves", name="Grown", leaves_name="Needled", layout="single", source="Needles", tip_leaves=0)
     assert len(bpy.data.objects["Needled"].data.vertices) == 5 * needles["leaves"]

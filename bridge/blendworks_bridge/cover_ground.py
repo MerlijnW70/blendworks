@@ -6,10 +6,15 @@ carry the meadow's colour structure at every distance. Three scales, none repeat
 - macro, tens to hundreds of metres: the fields themselves (moisture, soil depth, grazing, shade), and where a mesh has no
   fields a broad noise of 150 m stands in for moisture;
 - meso, 1 to 10 m: the grazing mosaic, trodden patches and paths of the fields, and noise of 6 m and 2 m in the dry share;
+  the dry share itself follows the main grass's dryness responses (cover_presets) and, tuft by tuft at 5 cm, scatters
+  by the blades' own instance jitter (meadow_rules.INSTANCE_JITTER; gradient noise spreads about 0.1 around 0.5);
 - micro, centimetres: noise of 5 cm and the material's own texture, a quarter of the result.
 
 The colours are green grass from deep (moist) to fresh, straw where it is dry, moss in damp shade, bare and wet soil on
-paths and trodden ground, and the petal colour of the flower drifts by the share of the ground their flowers cover."""
+paths and trodden ground, and the petal colour of the flower drifts by the share of the ground their flowers cover. Green
+grass and straw are the canopy reflectance of cited green and dry leaves (leaf_optics.meadow_colour), so the ground far
+away matches the blades near the camera."""
+from . import cover_presets, leaf_optics, meadow_rules
 from .errors import BAD_ARGS, BridgeError, bad_args
 from .meadow_fields import FIELDS, PREFIX, PRESENCE
 from .nodes import Graph, find_socket
@@ -17,8 +22,8 @@ from .nodes import Graph, find_socket
 BLOOM_ATTRIBUTE = "meadow_bloom"
 BLOOM_SHARE = "meadow_bloom_share"
 MIX_NAME = "meadow_ground_mix"
-LUSH = (0.05, 0.11, 0.025)
-STRAW = (0.2, 0.165, 0.075)
+LUSH = tuple(leaf_optics.meadow_colour("grass"))
+STRAW = tuple(leaf_optics.meadow_colour("straw"))
 MOSS = (0.035, 0.07, 0.015)
 SOIL = (0.09, 0.065, 0.04)
 TRODDEN = (0.09, 0.09, 0.045)
@@ -27,9 +32,7 @@ MACRO = 150.0
 MESO = (6.0, 2.0)
 MICRO = 0.05
 OWN_TEXTURE = 0.25
-DRY_BY_MOISTURE = 1.4
-DRY_BY_SOIL = 0.5
-DRY_BY_GRAZING = 0.3
+NOISE_SPREAD = 0.1
 DARKER_WHEN_MOIST = 0.4
 
 
@@ -51,6 +54,12 @@ def field(graph, name, presence, stand_in):
     return graph.mix(presence, stand_in, reader, data_type="FLOAT")
 
 
+def response(graph, value, rule):
+    """A meadow dryness response (cover_presets) as a node: the same linear ramp the blades' straw share follows."""
+    (start, end), (low, high) = rule["range"], rule["values"]
+    return graph.map_range(value, start, end, low, high)
+
+
 def smooth(graph, value, low, high):
     return graph.map_range(value, low, high, 0.0, 1.0, "SMOOTHSTEP")
 
@@ -60,14 +69,14 @@ def scaled(graph, colour, factor):
 
 
 def meadow_colour(graph, position, values):
-    moisture, soil, disturbance, shade, grazing = (values[name] for name in FIELDS)
+    moisture, soil, disturbance, shade, _ = (values[name] for name in FIELDS)
     meso_broad = graph.noise(position, 1.0 / MESO[0], detail=2.0).outputs["Fac"]
     meso_fine = graph.noise(position, 1.0 / MESO[1], detail=2.0).outputs["Fac"]
-    dry = graph.math("MULTIPLY_ADD", graph.math("SUBTRACT", 0.55, moisture), DRY_BY_MOISTURE, 0.15)
-    dry = graph.math("MULTIPLY_ADD", graph.math("SUBTRACT", 0.5, soil), DRY_BY_SOIL, dry)
-    dry = graph.math("MULTIPLY_ADD", graph.math("SUBTRACT", 0.5, grazing), DRY_BY_GRAZING, dry)
+    dry = graph.math("ADD", response(graph, moisture, cover_presets.DRY_BY_MOISTURE), response(graph, soil, cover_presets.DRY_BY_SOIL))
     dry = graph.math("MULTIPLY_ADD", graph.math("SUBTRACT", meso_broad, 0.5), 0.5, dry)
-    dry = graph.math("MULTIPLY_ADD", graph.math("SUBTRACT", meso_fine, 0.5), 0.25, dry, clamp=True)
+    dry = graph.math("MULTIPLY_ADD", graph.math("SUBTRACT", meso_fine, 0.5), 0.25, dry)
+    tufts = graph.noise(position, 1.0 / MICRO, detail=2.0).outputs["Fac"]
+    dry = graph.math("MULTIPLY_ADD", graph.math("SUBTRACT", tufts, 0.5), meadow_rules.INSTANCE_JITTER / NOISE_SPREAD, dry, clamp=True)
     grass = scaled(graph, graph.mix(dry, list(LUSH), list(STRAW)), graph.math("MULTIPLY_ADD", moisture, -DARKER_WHEN_MOIST, 1.1))
     moss = graph.math("MULTIPLY", smooth(graph, moisture, 0.45, 0.8), smooth(graph, shade, 0.25, 0.7))
     ground = graph.mix(moss, grass, list(MOSS))

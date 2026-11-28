@@ -75,8 +75,8 @@ def materials():
     cmd("material_procedural", name="bark", bark={"grain": "y", "coordinates": "uv", "fissure_spacing": 0.035, "bump": 12.0})
     cmd("material_procedural", name="roots", bark={"grain": "y", "coordinates": "uv", "color": [0.11, 0.08, 0.06], "lichen_color": [0.09, 0.07, 0.05], "fissure_depth": 0.3})
     cmd("material_procedural", name="fresh_wood", wood={"grain": "z", "coordinates": "uv", "light_color": [0.6, 0.45, 0.27], "dark_color": [0.42, 0.29, 0.16], "ring_density": 160.0})
-    cmd("material_procedural", name="leaf", leaf={"cutout": True, "translucency": 0.4})
-    cmd("material_procedural", name="willow_leaf", leaf={"cutout": True, "translucency": 0.5, "color": [0.24, 0.36, 0.1], "dark_color": [0.14, 0.24, 0.06]})
+    cmd("material_procedural", name="leaf", leaf={"cutout": True})
+    cmd("material_procedural", name="willow_leaf", leaf={"cutout": True, "color": [0.24, 0.36, 0.1], "dark_color": [0.14, 0.24, 0.06]})
     cmd("material_procedural", name="soil", soil={"moisture": 0.4})
 
 

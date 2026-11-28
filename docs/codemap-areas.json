@@ -44,8 +44,8 @@
     {
       "id": "vegetation",
       "title": "Vegetation and ground cover",
-      "blurb": "tree_*, trees, woodland*, meadow_*, lsystem*, cover_*, ground_cover, forest_*, distant_forest, impostors.",
-      "match": ["^py:(tree.*|trees|woodland.*|meadow.*|lsystem.*|cover_.*|ground_.*|forest_.*|distant_forest|impostors)$"]
+      "blurb": "tree_*, trees, woodland*, meadow_*, lsystem*, cover_*, ground_cover, forest_*, distant_forest, impostors, leaf_optics.",
+      "match": ["^py:(tree.*|trees|woodland.*|meadow.*|lsystem.*|cover_.*|ground_.*|forest_.*|distant_forest|impostors|leaf_optics)$"]
     },
     {
       "id": "terrain-liquids",

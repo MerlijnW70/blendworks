@@ -10,6 +10,7 @@ SEED_RANGE = 100.0
 AXES = {"x": "X", "y": "Y", "z": "Z"}
 EXTRA_CHANNELS = (("Alpha", "alpha"), ("Transmission Weight", "translucency"), ("Diffuse Roughness", "diffuse_roughness"), ("Normal", "normal"))
 PRESET_FLAGS = ("blendworks_rock",)
+LEAF_MIX = "Leaf Two-Sided"
 AXIS_VECTORS = {"x": (1.0, 0.0, 0.0), "y": (0.0, 1.0, 0.0), "z": (0.0, 0.0, 1.0)}
 
 
@@ -73,9 +74,12 @@ def surface_principled(material):
     if output is None:
         output = next((node for node in tree.nodes if node.type == "OUTPUT_MATERIAL"), None)
     surface = output.inputs["Surface"] if output is not None else None
-    if surface is None or not surface.is_linked or surface.links[0].from_node.type != "BSDF_PRINCIPLED":
+    node = surface.links[0].from_node if surface is not None and surface.is_linked else None
+    if node is not None and node.name == LEAF_MIX and node.inputs[1].is_linked:
+        node = node.inputs[1].links[0].from_node
+    if node is None or node.type != "BSDF_PRINCIPLED":
         raise bad_args(f"{material.name} has no Principled BSDF feeding its material output")
-    return output, surface.links[0].from_node
+    return output, node
 
 
 def displacement_of(graph, height, bump):

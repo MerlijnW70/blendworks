@@ -15,7 +15,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `marble`: Marble material: finish and vein layers with capillaries and clouds. | fn: finish_schema veins_schema + | test: marble marble_finish
 - `masks`: Geometric masks for procedural materials (window, axis and height masks). | fn: geometric_schema mask_kinds + | test: brass procedural +1
 - `materials_info`: Reads a material's Principled node and summarises it. | fn: principled_node material_summary | test: materials pbr
-- `natural`: Shared helpers of the natural material presets: scaling, tones and vectors. | fn: amount scaled + | test: natural_materials
+- `natural`: Shared helpers of the natural material presets: scaling, tones and vectors. | fn: amount scaled + | test: natural_materials grass_light
 - `nodes`: Shader node graph helper with socket lookup. | fn: find_socket Graph | test: materials pbr
 - `occlusion`: Ambient occlusion mask for procedural materials. | fn: occlusion_mask | test: brass procedural +1
 - `pbr`: PBR material builder: colour spaces, maps, warnings and glTF group. | fn: required_colorspace assign_colorspaces + | test: pbr textured_prop

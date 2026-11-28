@@ -69,7 +69,7 @@ def materials():
     cmd("material_procedural", name="boulder", stone={"color": [0.4, 0.38, 0.35], "cracks": False})
     cmd("material_layer", material="boulder", moss={"scale": 0.8, "patchiness": 0.5}, mask="up_facing", with_masks=["noise"], strength=0.55, mask_scale=1.5, amount=0.5, softness=0.6, seed=9)
     cmd("material_procedural", name="bark", bark={"grain": "z", "fissure_depth": 0.7, "lichen_color": [0.3, 0.28, 0.2]})
-    cmd("material_procedural", name="leaf", leaf={"cutout": True, "alpha": 1.0, "translucency": 0.4, "vein_pairs": 8})
+    cmd("material_procedural", name="leaf", leaf={"cutout": True, "alpha": 1.0, "vein_pairs": 8})
 
 
 def log():

@@ -88,7 +88,7 @@ def leaf_width(t):
 
 def materials():
     cmd("material_procedural", name="soil", soil={"scale": 0.2, "moisture": 0.5})
-    cmd("material_procedural", name="petal", leaf={"color": [0.95, 0.5, 0.0], "dark_color": [0.6, 0.2, 0.0], "vein_color": [1.0, 0.68, 0.04], "vein_pairs": 7, "translucency": 0.3})
+    cmd("material_procedural", name="petal", leaf={"leaf_type": "petal", "color": [0.95, 0.5, 0.0], "dark_color": [0.6, 0.2, 0.0], "vein_color": [1.0, 0.68, 0.04], "vein_pairs": 7})
     cmd("material_procedural", name="seed", dirt={"color": [0.045, 0.024, 0.012]})
     cmd("material_procedural", name="sepal", leaf={"color": [0.05, 0.17, 0.02]})
     cmd("material_procedural", name="cone_scale", bark={"color": [0.22, 0.12, 0.055], "fissure_color": [0.05, 0.025, 0.012], "lichen_color": [0.3, 0.18, 0.09], "fissure_spacing": 0.007, "fissure_depth": 0.5})

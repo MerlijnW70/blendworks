@@ -9,6 +9,7 @@ from natural_stats import baked_pixels
 import bpy
 import numpy
 
+from blendworks_bridge import leaf_optics
 from blendworks_bridge.tree_presets import SHRUBS, SPECIES
 from blendworks_bridge.tree_species import BARK_MATERIALS, FOLIAGE, LEAF_MATERIALS, SPECIES_NAMES, SPECIES_PROPERTY
 
@@ -42,7 +43,7 @@ def test_every_species_preset_combines_skeleton_bark_leaves_and_twigs(bridge):
         assert leaves["material"] == f"{species}_leaf" and leaves["twig_material"] == f"{species}_bark"
         material = bpy.data.materials[f"{species}_leaf"]
         shader = principled(material)
-        assert shader.inputs["Thin Wall"].default_value and shader.inputs["Subsurface Weight"].default_value > 0.0
+        assert leaf_optics.MIX_NODE in material.node_tree.nodes and shader.inputs["Transmission Weight"].default_value == 0.0
         assert shader.inputs["Alpha"].is_linked
         assert {"leaf_hue", "leaf_saturation", "leaf_value", "leaf_age", "leaf_damage", "leaf_shape", "leaf_seed"} <= attribute_names(material)
         foliage = bpy.data.objects[leaves["name"]]

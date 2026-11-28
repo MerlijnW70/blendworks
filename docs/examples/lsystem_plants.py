@@ -94,8 +94,8 @@ def materials():
     cmd("material_procedural", name="bark", bark={"grain": "z"})
     cmd("material_procedural", name="leaf", leaf={"color": [0.1, 0.34, 0.06], "dark_color": [0.05, 0.2, 0.03], "vein_color": [0.3, 0.5, 0.14], "vein_pairs": 6})
     cmd("material_procedural", name="fern_leaf", leaf={"color": [0.14, 0.38, 0.08], "dark_color": [0.07, 0.22, 0.04], "vein_color": [0.35, 0.55, 0.18], "vein_pairs": 3})
-    cmd("material_procedural", name="petal_yellow", leaf={"color": [0.95, 0.72, 0.05], "dark_color": [0.8, 0.45, 0.02], "vein_color": [1.0, 0.85, 0.2], "vein_pairs": 5, "translucency": 0.3})
-    cmd("material_procedural", name="petal_pink", leaf={"color": [0.95, 0.35, 0.5], "dark_color": [0.75, 0.15, 0.3], "vein_color": [1.0, 0.6, 0.7], "vein_pairs": 5, "translucency": 0.3})
+    cmd("material_procedural", name="petal_yellow", leaf={"leaf_type": "petal", "color": [0.95, 0.72, 0.05], "dark_color": [0.8, 0.45, 0.02], "vein_color": [1.0, 0.85, 0.2], "vein_pairs": 5})
+    cmd("material_procedural", name="petal_pink", leaf={"leaf_type": "petal", "color": [0.95, 0.35, 0.5], "dark_color": [0.75, 0.15, 0.3], "vein_color": [1.0, 0.6, 0.7], "vein_pairs": 5})
     cmd("material_procedural", name="heart", dirt={"color": [0.25, 0.12, 0.02]})
 
 

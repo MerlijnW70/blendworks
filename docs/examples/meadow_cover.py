@@ -63,7 +63,7 @@ def tree():
     base = [TREE[0], TREE[1], ground_height(TREE[0], TREE[1]) - 0.05]
     cmd("grow_tree", name="oak", preset="gnarled_oak", seed=3, points=max(200, int(4000 * DETAIL)), location=base, limit=0)
     cmd("material_procedural", name="bark", bark={"grain": "y", "coordinates": "uv", "fissure_spacing": 0.035, "bump": 12.0})
-    cmd("material_procedural", name="leaf", leaf={"cutout": True, "translucency": 0.4})
+    cmd("material_procedural", name="leaf", leaf={"cutout": True})
     cmd("tree_mesh", name="oak", bark_material="bark", wood_material="bark", root_material="bark", flare={"amount": 0.7, "lobes": 0.8})
     cmd("tree_leaves", name="oak_bark", leaves_name="oak_leaves", material="leaf", size=0.26, density=max(1.0, 12.0 * DETAIL), tip_leaves=5, orders=2, seed=3)
 

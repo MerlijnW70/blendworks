@@ -51,7 +51,7 @@ One map per area, each with the same per-module lines (docstring, first public n
 - [Bridge core](codemap/core.md): handler, registry, schema, policy, limits, util, workspace, plan, validate, autosave, scene, files, checkpoints, images, exports, session and add-on.
 - [Animation and rigging](codemap/animation.md): animation, clips, gaits, posing, rigs, bones, constraints, skinning, weights, shape keys.
 - [Sky, weather, atmosphere and render](codemap/sky-render.md): sky, clouds, weather, atmosphere, mist, camera, lights, previews, final renders, floating origin.
-- [Vegetation and ground cover](codemap/vegetation.md): tree_*, trees, woodland*, meadow_*, lsystem*, cover_*, ground_cover, forest_*, distant_forest, impostors.
+- [Vegetation and ground cover](codemap/vegetation.md): tree_*, trees, woodland*, meadow_*, lsystem*, cover_*, ground_cover, forest_*, distant_forest, impostors, leaf_optics.
 - [Terrain, rock and liquids](codemap/terrain-liquids.md): heightfields, fluvial terrain, erosion, noise, land and distant land, liquid_*, stones and rock (shape, lithology, weathering, relief), fracture, chip, abrade.
 - [Materials and texturing](codemap/materials.md): materials, procedural presets, PBR, node graphs, masks, wear, baking, UVs, texel density.
 - [Shapes and modelling](codemap/shapes.md): sweep, lathe, loft, solids, shells, mesh edits, modifiers, objects, transforms, placement, scatter, engraving, text, cleaning, LODs.

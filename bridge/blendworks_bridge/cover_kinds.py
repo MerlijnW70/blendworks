@@ -3,6 +3,7 @@
 import bpy
 import numpy
 
+from . import leaf_optics
 from .cover_blades import blade_cards, blade_clump
 from .cover_flowers import flower_cards, flower_geometry
 from .cover_litter import leaf_cards, leaf_geometry, pebble_cards, pebble_geometry, twig_cards, twig_geometry
@@ -78,10 +79,11 @@ KIND_FIELDS = {
     "pebble": ("size", "flatness", "elongation", "roughness", "color"),
     "mound": ("size", "flatness", "elongation", "roughness", "color"),
 }
+GRASS_LEAF = list(leaf_optics.OPTICS["grass"]["reflectance"])
 KIND_DEFAULTS = {
-    "grass": {"seed_heads": 0.0, "blades": 24, "height": [0.25, 0.5], "width": 0.004, "taper": 0.92, "curvature": 0.55, "lean": 22.0, "spread": 0.05, "twist": 40.0, "fold": 0.0, "dry_tips": 0.2, "dry_length": [0.15, 0.4], "color": [0.05, 0.125, 0.018], "dry_color": [0.36, 0.28, 0.12]},
-    "tuft": {"seed_heads": 0.0, "blades": 40, "height": [0.06, 0.16], "width": 0.003, "taper": 0.9, "curvature": 0.6, "lean": 40.0, "spread": 0.02, "twist": 60.0, "fold": 0.0, "dry_tips": 0.15, "dry_length": [0.1, 0.3], "color": [0.045, 0.125, 0.022], "dry_color": [0.36, 0.28, 0.12]},
-    "sedge": {"seed_heads": 0.0, "blades": 14, "height": [0.3, 0.6], "width": 0.008, "taper": 0.95, "curvature": 0.2, "lean": 14.0, "spread": 0.03, "twist": 15.0, "fold": 0.45, "dry_tips": 0.35, "dry_length": [0.1, 0.35], "color": [0.06, 0.12, 0.04], "dry_color": [0.33, 0.27, 0.14]},
+    "grass": {"seed_heads": 0.0, "blades": 24, "height": [0.25, 0.5], "width": 0.004, "taper": 0.92, "curvature": 0.55, "lean": 22.0, "spread": 0.05, "twist": 40.0, "fold": 0.0, "dry_tips": 0.2, "dry_length": [0.15, 0.4], "color": GRASS_LEAF, "dry_color": [0.36, 0.28, 0.12]},
+    "tuft": {"seed_heads": 0.0, "blades": 40, "height": [0.06, 0.16], "width": 0.003, "taper": 0.9, "curvature": 0.6, "lean": 40.0, "spread": 0.02, "twist": 60.0, "fold": 0.0, "dry_tips": 0.15, "dry_length": [0.1, 0.3], "color": GRASS_LEAF, "dry_color": [0.36, 0.28, 0.12]},
+    "sedge": {"seed_heads": 0.0, "blades": 14, "height": [0.3, 0.6], "width": 0.008, "taper": 0.95, "curvature": 0.2, "lean": 14.0, "spread": 0.03, "twist": 15.0, "fold": 0.45, "dry_tips": 0.35, "dry_length": [0.1, 0.35], "color": GRASS_LEAF, "dry_color": [0.33, 0.27, 0.14]},
     "flower": {"height": [0.2, 0.45], "petals": 13, "petal_length": 0.012, "petal_width": 0.006, "centre_radius": 0.005, "cup": 20.0, "head_tilt": 45.0, "stem_width": 0.0025, "leaves": 3, "leaf_width": 0.006, "color": [0.06, 0.14, 0.03], "petal_color": [0.82, 0.82, 0.76], "centre_color": [0.62, 0.4, 0.02]},
     "twig": {"length": [0.08, 0.3], "thickness": 0.003, "branches": 2, "color": [0.12, 0.085, 0.055]},
     "leaf": {"length": [0.04, 0.09], "aspect": 0.6, "curl": 0.6, "arch": 0.5, "color": [0.2, 0.1, 0.035]},
@@ -131,7 +133,7 @@ def scaled(values, factor):
 
 
 def blade_material(params, form, report):
-    overrides = {"color": params["color"], "root_color": scaled(params["color"], 0.45), "tip_color": [min(1.0, value * gain) for value, gain in zip(params["color"][:3], TIP_GAIN)], "dry_color": params["dry_color"], "variation": 0.7, "translucency": 0.15, "card": form == "cards", "dry_tips": params["dry_tips"], "bump": 0.0 if form == "cards" else BLADE_BUMP}
+    overrides = {"color": params["color"], "root_color": scaled(params["color"], 0.45), "tip_color": [min(1.0, value * gain) for value, gain in zip(params["color"][:3], TIP_GAIN)], "dry_color": params["dry_color"], "variation": 0.7, "card": form == "cards", "dry_tips": params["dry_tips"], "bump": 0.0 if form == "cards" else BLADE_BUMP}
     if form == "cards":
         columns = int(min(32, max(4, round(params["blades"] / 2))))
         column_width = report["card_width"] / columns
@@ -149,7 +151,7 @@ def material_specs(kind, form, params, report):
         return [blade_material(params, form, report)]
     if kind == "flower":
         stem = ("grass_blade", {"color": params["color"], "root_color": scaled(params["color"], 0.6), "tip_color": params["color"], "dry_tips": 0.0, "variation": 0.2})
-        petal = ("leaf", {"color": params["petal_color"], "dark_color": scaled(params["petal_color"], 0.8), "vein_color": scaled(params["petal_color"], 1.1), "vein_contrast": 0.15, "vein_pairs": 4, "cutout": cards, "coordinates": "uv", "translucency": 0.45, "roughness": 0.45})
+        petal = ("leaf", {"color": params["petal_color"], "dark_color": scaled(params["petal_color"], 0.8), "vein_color": scaled(params["petal_color"], 1.1), "vein_contrast": 0.15, "vein_pairs": 4, "cutout": cards, "coordinates": "uv", "leaf_type": "petal", "roughness": 0.45})
         centre = ("litter", dict(litter_material("pebble" if cards else "none", params["centre_color"])[1], vein_contrast=0.0, mottling=1.0))
         return [stem, petal, centre]
     if kind == "twig":

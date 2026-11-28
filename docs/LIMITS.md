@@ -197,7 +197,7 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `forest_species` | 6 | species | protocol | Blendworks grows six tree species: oak, birch, pine, willow, maple and olive. | - | (internal) |
 | `forest_trees` | 200,000 | trees | memory | Near trees are linked instances (about 300 bytes each) and impostor cards four vertices each; 200 000 of them stay under 100 MB. | - | `distant_forest.budget` |
 | `forest_variants` | 12 | trees | time | Each variant is a whole tree that is grown, meshed, leafed and baked into an atlas, several seconds each. | - | `distant_forest.variants`, `distant_forest.sources` |
-| `fraction` | 1 | - | physical | A share, weight, mix or colour channel runs from 0 to 1. | - | `abrade.amount`, `abrade.target_convexity`, `add_light.color[]`, `add_material.base_color[]`, `add_material.metallic`, `add_material.roughness` and 355 more |
+| `fraction` | 1 | - | physical | A share, weight, mix or colour channel runs from 0 to 1. | - | `abrade.amount`, `abrade.target_convexity`, `add_light.color[]`, `add_material.base_color[]`, `add_material.metallic`, `add_material.roughness` and 353 more |
 | `fracture_pieces` | 1,000 | pieces | time | Each piece is cut by exact planes and becomes its own object. | - | `fracture.pieces` |
 | `frame` | 1,048,574 | frames | blender | Blender's frame range ends at 1 048 574 (MAXFRAME). | - | `animation_preset.start`, `clip_edit.frame_start`, `clip_edit.frame_end`, `clip_keys.keys[].frame`, `clip_pose.frame`, `render_final.frame` |
 | `gear_teeth` | 400 | teeth | physical | Teeth of one gear or sprocket; at 400 a tooth spans under one degree of the pitch circle and reads as a knurl. | - | `gear.teeth`, `sprocket.teeth` |

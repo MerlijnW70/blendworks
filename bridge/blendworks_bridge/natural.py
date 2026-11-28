@@ -1,12 +1,16 @@
 """Shared helpers of the natural material presets: scaling, tones and vectors."""
 
 from .procedural import AXES, Preset, preset_vector, stretched
+from . import leaf_optics
 from . import tree_leaf_shader as leaf_shader
 from .limits import (FEWEST_NEEDLES, FEWEST_VEIN_PAIRS, FRACTION, MAX_LENGTH, MAX_RELIEF, NEEDLES,
                      SMALLEST_CRUMB, SMALLEST_PATTERN_SPACING, VEIN_PAIRS)
 from .schema import boolean, color, integer, number, string
 
 AXIS_CHOICE = list(AXES)
+GROUND_TONE = 0.6
+GRASS_CANOPY = leaf_optics.meadow_colour("grass")
+DRY_CANOPY = leaf_optics.meadow_colour("straw")
 WAVE_FREQUENCY = 3.1831
 
 
@@ -165,16 +169,20 @@ def leaf(graph, p):
     colour = leaf_shader.aged(graph, colour, values, p)
     colour = graph.mix(browned, colour, leaf_shader.DAMAGE_COLOR)
     colour = leaf_shader.two_sided(graph, leaf_shader.toned(graph, colour, values), p)
-    leaf_shader.thin_translucency(graph, p)
+    cutout = graph.math("MULTIPLY", opacity, graph.math("SUBTRACT", 1.0, holes)) if p["cutout"] else None
+    if p["alpha"] < 1.0:
+        cutout = graph.math("MULTIPLY", cutout, p["alpha"]) if cutout is not None else p["alpha"]
+    shader, _ = leaf_optics.principled_and_output(graph)
+    if shader is not None and cutout is not None:
+        graph.set(shader.inputs["Alpha"], cutout)
+    kind = leaf_optics.leaf_type_of_shape(p["shape"]) if p["leaf_type"] == "auto" else p["leaf_type"]
+    colour = leaf_optics.two_sided(graph, kind, p["translucency"], colour) or colour
     channels = {
         "base_color": colour,
         "roughness": graph.map_range(veins, 0.0, 1.0, p["roughness"], max(0.0, p["roughness"] - 0.12)),
         "metallic": 0.0,
         "height": graph.math("MULTIPLY_ADD", veins, 0.7, graph.math("MULTIPLY", speckle, 0.3)),
     }
-    cutout = graph.math("MULTIPLY", opacity, graph.math("SUBTRACT", 1.0, holes)) if p["cutout"] else None
-    if p["alpha"] < 1.0:
-        cutout = graph.math("MULTIPLY", cutout, p["alpha"]) if cutout is not None else p["alpha"]
     channels["alpha"] = cutout
     return channels
 
@@ -233,7 +241,8 @@ def grass_ground(graph, p):
     blades = graph.noise(vector, 1.0 / (size * 0.12), detail=6.0, roughness=0.72).outputs["Factor"]
     blade_tone = graph.map_range(blades, 0.41, 0.59)
     dry = graph.map_range(graph.noise(vector, 1.0 / (size * 8.0), detail=4.0, distortion=0.4).outputs["Factor"], 0.5 - 0.35 * p["dryness"] + 0.1, 0.6 - 0.35 * p["dryness"] + 0.2)
-    leaves = graph.mix(dry, graph.mix(blade_tone, scaled(p["color"], 0.25), scaled(p["color"], 2.0)), graph.mix(blade_tone, scaled(p["dry_color"], 0.35), scaled(p["dry_color"], 1.4)))
+    leaves = graph.mix(dry, graph.mix(blade_tone, scaled(p["color"], 1.0 - GROUND_TONE), scaled(p["color"], 1.0 + GROUND_TONE)),
+                       graph.mix(blade_tone, scaled(p["dry_color"], 1.0 - GROUND_TONE), scaled(p["dry_color"], 1.0 + GROUND_TONE)))
     earth = graph.mix(graph.map_range(blades, 0.4, 0.6), scaled(p["soil_color"], 0.4), scaled(p["soil_color"], 1.2))
     return {
         "base_color": graph.mix(cover, earth, leaves),
@@ -278,8 +287,8 @@ def natural_presets():
             "shape": string("Leaf outline cut out of the unit UV square: pointed, ovate, deltoid (birch), lanceolate (willow, olive), lobed (oak), palmate (maple), needle, tuft (a fan of needles) or brush (a shoot with needles on both sides, for cards along a conifer's twigs); the face attribute leaf_shape varies it per leaf.", list(leaf_shader.LEAF_SHAPES), "pointed"),
             "needles": integer("tuft shape: needles in a fan, the three leaf shapes using 0.75, 1 and 1.4 times as many; brush shape: needles on each side along the card, 0.8, 1 and 1.25 times as many.", FEWEST_NEEDLES, NEEDLES, leaf_shader.TUFT_NEEDLES),
             "petiole": amount("Share of the card along v taken by the leaf stalk, drawn as a thin stalk; tree_leaves clusters use the same share.", 0.0),
-            "translucency": amount("Light passing through the thin blade: the thin-walled subsurface weight, lit from behind.", 0.35),
-            "subsurface_tint": color("Tint of the light passing through the blade.", [1.0, 0.9, 0.35], False),
+            "translucency": amount("Light passing diffusely through the blade, as a share of the cited transmittance of its leaf_type (1 cited, 0 opaque).", 1.0),
+            "leaf_type": string("Leaf optics (leaf_optics, cited reflectance and transmittance): auto picks needle for the needle, tuft and brush shapes, else broadleaf.", ["auto"] + list(leaf_optics.LEAF_TYPES), "auto"),
             "underside_color": color("Colour of the paler underside, seen on back faces, linear RGB.", [0.09, 0.15, 0.05], False),
             "young_color": color("Colour of young leaves (attribute leaf_age below 0), linear RGB.", list(leaf_shader.YOUNG_COLOR), False),
             "roughness": amount("Average roughness.", 0.5),
@@ -303,12 +312,13 @@ def natural_presets():
             "roughness": amount("Average roughness when dry.", 0.9),
         }, sand),
         Preset("grass_ground", "Grass ground: tufts of green and dry blades over bare soil, seen from above.", 8.0, {
-            "color": color("Green blade colour, linear RGB.", [0.05, 0.13, 0.02], False),
-            "dry_color": color("Dry blade colour, linear RGB.", [0.22, 0.17, 0.06], False),
+            "color": color("Colour of the green grass seen from above, linear RGB. Default: the reflectance of a meadow canopy of cited grass "
+                           "leaves over soil (leaf_optics.canopy_reflectance), so far grass matches the near blades.", GRASS_CANOPY, False),
+            "dry_color": color("Colour of dry grass seen from above, linear RGB. Default: the same canopy of dry leaves.", DRY_CANOPY, False),
             "soil_color": color("Bare soil between the tufts, linear RGB.", [0.07, 0.05, 0.03], False),
             "density": amount("How much of the ground the grass covers.", 0.75),
             "dryness": amount("Share of dry, yellow grass.", 0.3),
             "tuft_size": number("Size of one tuft in metres.", SMALLEST_PATTERN_SPACING, MAX_LENGTH, 0.12),
-            "roughness": amount("Average roughness.", 0.85),
+            "roughness": amount("Average roughness. Default 1: a canopy seen from afar scatters its leaves' sheen over every direction, with no mirror-like sheen of a smooth surface.", 1.0),
         }, grass_ground),
     )

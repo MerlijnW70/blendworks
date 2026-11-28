@@ -118,7 +118,7 @@ FOLIAGE = {
 LEAF_MATERIALS = {
     "oak": {"color": [0.03, 0.085, 0.016], "dark_color": [0.012, 0.035, 0.007], "underside_color": [0.08, 0.13, 0.05], "shape": "lobed", "vein_pairs": 6, "roughness": 0.55},
     "birch": {"color": [0.065, 0.15, 0.03], "dark_color": [0.025, 0.07, 0.012], "underside_color": [0.12, 0.19, 0.07], "shape": "deltoid", "vein_pairs": 8, "roughness": 0.5},
-    "pine": {"color": [0.045, 0.08, 0.07], "dark_color": [0.014, 0.03, 0.026], "underside_color": [0.065, 0.09, 0.085], "translucency": 0.3, "shape": "brush", "needles": 24, "vein_pairs": 2, "vein_contrast": 0.12, "roughness": 0.45},
+    "pine": {"color": [0.045, 0.08, 0.07], "dark_color": [0.014, 0.03, 0.026], "underside_color": [0.065, 0.09, 0.085], "shape": "brush", "needles": 24, "vein_pairs": 2, "vein_contrast": 0.12, "roughness": 0.45},
     "willow": {"color": [0.075, 0.14, 0.04], "dark_color": [0.03, 0.065, 0.016], "underside_color": [0.2, 0.24, 0.17], "shape": "lanceolate", "vein_pairs": 14, "roughness": 0.55},
     "maple": {"color": [0.045, 0.12, 0.022], "dark_color": [0.015, 0.05, 0.008], "underside_color": [0.1, 0.16, 0.06], "shape": "palmate", "vein_pairs": 5, "roughness": 0.5},
     "olive": {"color": [0.06, 0.08, 0.04], "dark_color": [0.025, 0.035, 0.016], "underside_color": [0.27, 0.29, 0.24], "shape": "lanceolate", "vein_pairs": 4, "roughness": 0.4},
@@ -188,7 +188,7 @@ def species_material(ctx, kind, species, name):
         return existing
     params = dict(LEAF_MATERIALS[species] if kind == "leaf" else BARK_MATERIALS[species]) if species else {}
     if kind == "leaf":
-        params.update({"cutout": True, "translucency": params.get("translucency", 0.45), "petiole": foliage_settings(species, {})["clusters"]["petiole"]})
+        params.update({"cutout": True, "petiole": foliage_settings(species, {})["clusters"]["petiole"]})
     else:
         params.update({"coordinates": "uv", "grain": "y"})
     material_procedural(ctx, validate(COMMANDS["material_procedural"].schema, {"name": name, kind: params}))

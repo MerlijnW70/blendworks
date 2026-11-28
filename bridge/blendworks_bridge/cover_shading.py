@@ -2,6 +2,7 @@
 
 import bpy
 
+from . import leaf_optics
 from .errors import bad_args
 from .limits import MAX_CONTACT_DARKENING
 from .nodes import Graph, find_socket
@@ -21,6 +22,7 @@ CONTACT_STRENGTH = "gc_contact_strength"
 CONTACT_MULTIPLIER = "gc_contact_multiplier"
 CONTACT_FLOOR = 1.0 - MAX_CONTACT_DARKENING
 CONTACT_DEFAULT = 0.2
+LEAF_PRESETS = {"grass_blade": "grass", "litter": "litter"}
 
 
 def preset_material(name, preset_name, overrides):
@@ -39,6 +41,9 @@ def preset_material(name, preset_name, overrides):
     channels = preset.build(graph, params)
     wire_channels(graph, material, output, shader, channels, params["bump"])
     instance_tint(graph, shader, params.get("dry_color") if preset_name == "grass_blade" else None)
+    leaf = LEAF_PRESETS.get(preset_name)
+    if leaf is not None and not (preset_name == "litter" and params["shape"] in ("twig", "pebble")):
+        leaf_optics.two_sided(graph, leaf, params["translucency"])
     material.diffuse_color = list(params.get("color", (0.2, 0.3, 0.1))[:3]) + [1.0]
     graph.layout()
     return material

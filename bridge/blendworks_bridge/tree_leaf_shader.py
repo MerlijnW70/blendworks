@@ -197,12 +197,3 @@ def toned(graph, colour, values):
 def two_sided(graph, colour, p):
     backfacing = graph.node("ShaderNodeNewGeometry").outputs["Backfacing"]
     return graph.mix(graph.math("MULTIPLY", backfacing, 0.75), colour, p["underside_color"])
-
-
-def thin_translucency(graph, p):
-    shader = next((node for node in graph.nodes if node.type == "BSDF_PRINCIPLED"), None)
-    if shader is None or p["translucency"] <= 0.0:
-        return
-    shader.inputs["Thin Wall"].default_value = True
-    shader.inputs["Subsurface Weight"].default_value = p["translucency"]
-    shader.inputs["Subsurface Radius"].default_value = list(p["subsurface_tint"])
