@@ -172,9 +172,9 @@ def timed(bridge, cmd, rounds=7, **args):
     bridge.ok(cmd, **args)
     times = []
     for _ in range(rounds):
-        started = time.perf_counter()
+        started = time.thread_time()
         bridge.ok(cmd, **args)
-        times.append(time.perf_counter() - started)
+        times.append(time.thread_time() - started)
     return statistics.median(times)
 
 

@@ -8,6 +8,11 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { type StartOptions, type Started, startBlendworks } from "../src/mcp/start.js";
 import { FakeBridge, type FakeOptions } from "./mcp-fake-bridge.js";
+import { WAIT_FOR_SLOT_MS } from "./setup/work-clock.js";
+
+export function startWaitMs(workMs: number): number {
+  return workMs + WAIT_FOR_SLOT_MS;
+}
 
 export async function unusedPort(): Promise<number> {
   const server = createServer();

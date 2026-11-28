@@ -98,9 +98,10 @@ describe("tool routing on the real bridge", workBudget(240_000), () => {
     const search = productSearch(server.commands);
     for (const intent of intents) search.search(intent.text);
     for (const intent of intents) {
-      const started = performance.now();
+      const started = process.cpuUsage();
       search.search(intent.text, { limit: 5 });
-      expect(performance.now() - started, intent.id).toBeLessThan(MAX_SEARCH_MS);
+      const used = process.cpuUsage(started);
+      expect((used.user + used.system) / 1000, intent.id).toBeLessThan(MAX_SEARCH_MS);
     }
   });
 

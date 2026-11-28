@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { BlenderNotFoundError, blenderJobs, resolveBlender } from "../../src/blender.js";
-import { listBridgeTests, runPool, selectTests, slowestFirst, summarize } from "../../scripts/lib/bridge-runner.js";
+import { listBridgeTests, runPool, selectTests, slowestFirst, summarize, testEnvironment } from "../../scripts/lib/bridge-runner.js";
 
 const FILES = ["test_addon.py", "test_bake.py", "test_bake_failures.py", "test_render.py", "test_smoke.py"];
 
@@ -111,5 +111,13 @@ describe.skipIf(!blenderAvailable())("npm run test:bridge", { timeout: 120_000 }
 
   it("refuses an unknown option", () => {
     expect(run("--bogus").status).toBe(2);
+  });
+});
+
+describe("the device bridge test files render on", () => {
+  it("is the CPU unless the caller names one, as in vitest, so a busy GPU on the host never slows a bake or a render", () => {
+    expect(testEnvironment({ PATH: "x" })).toEqual({ PATH: "x", BLENDWORKS_DEVICE: "cpu" });
+    expect(testEnvironment({ BLENDWORKS_DEVICE: "" })["BLENDWORKS_DEVICE"]).toBe("cpu");
+    expect(testEnvironment({ BLENDWORKS_DEVICE: "gpu" })["BLENDWORKS_DEVICE"]).toBe("gpu");
   });
 });

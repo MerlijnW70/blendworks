@@ -4,7 +4,9 @@ export const HEARTBEAT_VARIABLE = "BLENDWORKS_HEARTBEAT_S";
 export const DEFAULT_FILE_LIMIT_S = 600;
 export const DEFAULT_HEARTBEAT_S = 60;
 
-export const EXEMPT_FILES: Record<string, string> = {};
+export const EXEMPT_FILES: Record<string, string> = {
+  "test/judge/equivalence.test.ts": "it judges every stored fixture, so its work grows with the fixture count; each judge run has its own work budget (CASE_WORK_MS), which stops a hung run within five minutes",
+};
 
 function seconds(name: string, fallback: number, env: NodeJS.ProcessEnv): number {
   const value = Number(env[name]);

@@ -83,9 +83,9 @@ def test_the_choice_follows_the_conditions_that_hold(bridge):
 
 
 def test_the_string_cap_refuses_an_exploding_grammar_before_expanding(bridge):
-    started = time.perf_counter()
+    started = time.thread_time()
     message = bridge.refuse("lsystem", "bad_args", name="Boom", axiom="F", rules=["F -> FFFFFFFFFF"], iterations=100, max_length=100_000)
-    assert time.perf_counter() - started < 5.0
+    assert time.thread_time() - started < 5.0
     assert "derivation step 6" in message and "from 100000 modules to at least 1000000" in message and "max_length" in message, message
     message = bridge.refuse("lsystem", "bad_args", name="Boom", axiom="F", rules=["F -> FFFFFFFFFF : 0.5", "F -> F : 0.5"], iterations=100, max_length=2000)
     assert "more than 2000" in message, message

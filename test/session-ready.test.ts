@@ -10,7 +10,9 @@ import { startHeadlessSession } from "../src/mcp/headless.js";
 import { LineLink } from "../src/mcp/line-link.js";
 import { BridgeError, readLine } from "../src/mcp/protocol.js";
 import { killLiveSessions, type Session, SessionError, startSession } from "../src/session.js";
-import { call, scratchDir, texts, unusedPort } from "./mcp-helpers.js";
+import { scratchDir, startWaitMs, texts, unusedPort } from "./mcp-helpers.js";
+import { acquireSlot } from "../scripts/lib/slots.js";
+import { blenderJobs } from "../src/blender.js";
 import { beginBlendworks } from "../src/mcp/start.js";
 import { useBlenderSlot, WAIT_FOR_SLOT_MS } from "./setup/slot.js";
 
@@ -148,6 +150,7 @@ describe("early exits through the server", () => {
       allowPython: false,
       listWaitMs: 20,
       bootBackoffMs: [1000],
+      startWaitMs: startWaitMs(20_000),
       connection: { now: () => clock, restartDelaysMs: [] },
       startHeadless: (options) => {
         spawns += 1;
@@ -155,18 +158,45 @@ describe("early exits through the server", () => {
       },
     });
     const client = await clientOf(begun.server);
-    const first = await callWaitingForSlot(client, "blender_scene_info");
-    expect(first.isError).toBe(true);
-    expect(texts(first)).toMatch(/Blender exited \(code 3.*libGL.*Check that BLENDER points to a working Blender.*Set BLENDER/s);
-    const second = await call(client, "blender_scene_info");
-    expect(texts(second)).toMatch(/tries to start Blender again in 1 s/);
-    expect(spawns).toBe(1);
-    clock += 1500;
-    const third = await callWaitingForSlot(client, "blender_find_tools", { query: "scene" });
-    expect(spawns).toBe(2);
-    expect(texts(third)).not.toMatch(/Blender exited/);
-    await client.close();
-    await begun.stop();
+    try {
+      const first = await callWaitingForSlot(client, "blender_scene_info");
+      expect(first.isError).toBe(true);
+      expect(texts(first)).toMatch(/Blender exited \(code 3.*libGL.*Check that BLENDER points to a working Blender.*Set BLENDER/s);
+      const second = await callWaitingForSlot(client, "blender_scene_info");
+      expect(texts(second)).toMatch(/tries to start Blender again in 1 s/);
+      expect(spawns).toBe(1);
+      clock += 1500;
+      const third = await callWaitingForSlot(client, "blender_find_tools", { query: "scene" });
+      expect(spawns).toBe(2);
+      expect(texts(third)).not.toMatch(/Blender exited/);
+    } finally {
+      await client.close();
+      await begun.stop();
+    }
+  });
+
+  it("count only the start itself against the server's start wait, not the queue for a Blender slot", async () => {
+    const held = await Promise.all(Array.from({ length: blenderJobs() }, () => acquireSlot({ label: "session-ready: every slot busy" })));
+    const release = setTimeout(() => held.forEach((slot) => slot.release()), 3000);
+    const begun = beginBlendworks({
+      workspace: scratchDir(),
+      port: await unusedPort(),
+      allowPython: false,
+      listWaitMs: 20,
+      startWaitMs: startWaitMs(1000),
+      startHeadless: (options) => startHeadlessSession(options, () => undefined, { blender: NODE, args: ANSWERS, readyTimeoutMs: 3000 }),
+    });
+    const client = await clientOf(begun.server);
+    try {
+      const result = await callWaitingForSlot(client, "blender_find_tools", { query: "scene" });
+      expect(texts(result)).not.toMatch(/still starting/);
+      expect(result.isError ?? false).toBe(false);
+    } finally {
+      clearTimeout(release);
+      held.forEach((slot) => slot.release());
+      await client.close();
+      await begun.stop();
+    }
   });
 });
 

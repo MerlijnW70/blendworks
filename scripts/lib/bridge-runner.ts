@@ -92,6 +92,11 @@ export function summarize(results: FileResult[], wallSeconds: number): string[] 
 }
 
 export const TESTS_VARIABLE = "BLENDWORKS_BRIDGE_TESTS";
+export const DEVICE_VARIABLE = "BLENDWORKS_DEVICE";
+
+export function testEnvironment(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  return { ...env, [DEVICE_VARIABLE]: env[DEVICE_VARIABLE] === undefined || env[DEVICE_VARIABLE] === "" ? "cpu" : env[DEVICE_VARIABLE] };
+}
 
 export function bridgeTestsDirectory(env: NodeJS.ProcessEnv = process.env): string {
   const chosen = env[TESTS_VARIABLE];
@@ -215,9 +220,9 @@ export async function bridgeMain(argv: string[], env: NodeJS.ProcessEnv = proces
   const started = performance.now();
   const peaks = knownPeaks(root);
   const needMb = (file: string): number => fileNeedMb(bridgeKey(file, directory), peaks);
-  const launch = (file: string, options: RunOptions) => runBlender(blender.path, ["--background", "--factory-startup", "--python-exit-code", "1", "--python", join(directory, file)], { root, jobs, label: file, file: bridgeKey(file, directory), needMb: needMb(file), ...options });
+  const launch = (file: string, options: RunOptions) => runBlender(blender.path, ["--background", "--factory-startup", "--python-exit-code", "1", "--python", join(directory, file)], { root, jobs, label: file, file: bridgeKey(file, directory), needMb: needMb(file), env: testEnvironment(env), ...options });
   const launchShared: SharedLaunch = (files, options) =>
-    runBlender(blender.path, ["--background", "--factory-startup", "--python", SHARED_HELPER, "--", ...files.map((file) => join(directory, file))], { root, jobs, label: files.length === 1 ? (files[0] as string) : `${files[0]} and ${files.length - 1} more`, file: bridgeKey(files[0] as string, directory), needMb: Math.max(...files.map(needMb)), ...options });
+    runBlender(blender.path, ["--background", "--factory-startup", "--python", SHARED_HELPER, "--", ...files.map((file) => join(directory, file))], { root, jobs, label: files.length === 1 ? (files[0] as string) : `${files[0]} and ${files.length - 1} more`, file: bridgeKey(files[0] as string, directory), needMb: Math.max(...files.map(needMb)), env: testEnvironment(env), ...options });
   const sharing = bridgeSharing(env);
   const fresh = new Map(selected.map((file) => [file, sharing.shared ? freshReason(file, directory) : sharing.reason]));
   const freshCount = [...fresh.values()].filter((reason) => reason !== undefined).length;

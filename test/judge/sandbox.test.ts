@@ -6,7 +6,7 @@ import { SCRIPTS_DIR } from "../../src/judge/run.js";
 import { BLENDER_FLAGS, detectTools, planSandbox, runSandboxed, sandboxEnvironment, type SandboxDevice, type Tools } from "../../src/judge/sandbox.js";
 import { freshDir } from "./helpers.js";
 import { useBlenderSlot } from "../setup/slot.js";
-import { workBudget } from "../setup/work-clock.js";
+import { slotTotals, workBudget } from "../setup/work-clock.js";
 
 useBlenderSlot();
 
@@ -112,9 +112,10 @@ describe("the sandbox on this machine", workBudget(120_000), () => {
 
   it("stops Blender at the timeout", async () => {
     const started = performance.now();
+    const waited = slotTotals().waitMs;
     const { run, result } = await probe("sleep", 8_000);
     expect(run.timedOut).toBe(true);
     expect(result).toBeUndefined();
-    expect(performance.now() - started).toBeLessThan(30_000);
+    expect(performance.now() - started - (slotTotals().waitMs - waited)).toBeLessThan(30_000);
   });
 });

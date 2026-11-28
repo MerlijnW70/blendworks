@@ -100,6 +100,23 @@ def test_names_that_clash_are_refused_before_any_work(bridge):
     assert "both make an object named a_bark" in message
 
 
+def test_the_plan_probes_host_memory_only_when_asked(bridge):
+    calls = []
+
+    def probe(value):
+        def read():
+            calls.append(value)
+            return value
+        return read
+
+    assert workers.plan(6, cpus=8, probe=probe(6.5e9))["workers"] == 3
+    assert workers.plan(6, cpus=8, probe=probe(6.5e9))["limited_by"] == "memory"
+    assert workers.plan(6, cpus=8, probe=probe(None))["workers"] == 6
+    assert workers.plan(6, cpus=8, memory=None, probe=probe(1.0))["workers"] == 6
+    assert workers.plan(6, cpus=8, memory=16e9, probe=probe(1.0))["workers"] == 6
+    assert calls == [6.5e9, 6.5e9, None]
+
+
 def test_the_plan_follows_cpus_memory_and_tasks(bridge):
     assert workers.plan(6, cpus=4, memory=16e9)["workers"] == 4
     assert workers.plan(6, cpus=32, memory=16e9)["workers"] == 6

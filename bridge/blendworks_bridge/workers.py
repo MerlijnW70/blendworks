@@ -98,12 +98,16 @@ def available_memory():
     return min(found) if found else None
 
 
-def plan(tasks, requested=None, cpus=None, memory=None, per_worker=WORKER_MEMORY_BYTES):
+PROBE = "probe"
+
+
+def plan(tasks, requested=None, cpus=None, memory=PROBE, per_worker=WORKER_MEMORY_BYTES, probe=available_memory):
     """Workers for a job: one per task at most, no more than the CPUs, and no more than the memory available holds at
-    per_worker bytes each (unknown memory does not limit). requested caps the count; without it, a job that would get
-    fewer than two workers runs serially (0 workers)."""
+    per_worker bytes each. memory is the bytes available; PROBE (the default) asks probe() for the host's available
+    memory now, and None means unknown, which does not limit. requested caps the count; without it, a job that would
+    get fewer than two workers runs serially (0 workers)."""
     cpus = available_cpus() if cpus is None else cpus
-    memory = available_memory() if memory is None else memory
+    memory = probe() if memory == PROBE else memory
     limits = {"tasks": tasks, "cpus": cpus, "most": MAX_WORKERS}
     if memory is not None:
         limits["memory"] = int(memory // per_worker)
