@@ -24,7 +24,10 @@ FROM debian AS runtime
 ARG SOURCE_DATE_EPOCH
 RUN test -n "$SOURCE_DATE_EPOCH" \
  && apt-get update -qq \
- && apt-get install -y -qq git libx11-6 libxrender1 libxfixes3 libxi6 libxkbcommon0 libsm6 libice6 libxext6 libgl1 >/dev/null \
+ && apt-get install -y -qq git libx11-6 libxrender1 libxfixes3 libxi6 libxkbcommon0 libsm6 libice6 libxext6 libgl1 rustc cargo >/dev/null \
+ && rustc --version | grep -q '^rustc 1\.63\.' \
+ && mkdir -p /etc/blendworks \
+ && printf 'the native terrain core must build and load in this image\n' > /etc/blendworks/native-required \
  && rm -rf /var/lib/apt/lists/* /var/cache/apt/* /var/cache/debconf/*-old /var/cache/ldconfig/aux-cache /var/log/* /var/lib/dpkg/*-old
 
 FROM runtime AS build

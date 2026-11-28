@@ -1,5 +1,7 @@
 {
   "bench/autosave/crash.ts": "Benchmark of autosave recovery after a crash of the headless session.",
+  "bench/terrain-kernels/run.ts": "Entry point of `npm run bench:terrain`: times the terrain kernels at 1 and 4 threads in Blender and can record the speed table.",
+  "bench/terrain-kernels/table.ts": "Reads the terrain benchmark results and writes the speed table into docs/terrain-core.md between its markers.",
   "bench/tool-selection/baseline-router.ts": "Baseline ranker the router is compared against.",
   "bench/tool-selection/claude.ts": "Asks a Claude model to pick tools, with usage and settings, for the tool-selection benchmark.",
   "bench/tool-selection/core-data.ts": "Derives the core tool set scores from the benchmark sources.",
@@ -14,6 +16,7 @@
   "bench/tool-selection/usage.ts": "Loads recorded real tool usage for the benchmark.",
   "bench/trees/compare.mjs": "Compares tree benchmark results.",
   "scripts/bridge-tests.mjs": "CLI of `npm run test:bridge`: runs bridge test files inside Blender.",
+  "scripts/build-native.mjs": "CLI of `npm run build:native`: builds the native terrain core with cargo.",
   "scripts/calibrate-natural.ts": "CLI that calibrates the natural asset limits from scans and procedural recipes.",
   "scripts/check-container.mjs": "CLI of the container check: runs a patch through the judge image.",
   "scripts/check-fast.mjs": "CLI of `npm run check:fast`: the checks related to the changed files.",
@@ -48,6 +51,7 @@
   "scripts/lib/locks.ts": "File locks with owners, liveness and wait observers.",
   "scripts/lib/memory-meter.ts": "Samples the peak memory of processes on Linux and Windows.",
   "scripts/lib/memory.ts": "The memory gate: recorded peaks, budget and when a file may start.",
+  "scripts/lib/native-build.ts": "Builds the native terrain core offline and decides between failing and the Python fallback.",
   "scripts/lib/natural-calibration-doc.ts": "Writes the natural calibration document.",
   "scripts/lib/natural-calibration-run.ts": "Measures calibration assets with the judge.",
   "scripts/lib/natural-calibration.ts": "Constants and scans of the natural calibration.",

@@ -1,0 +1,13 @@
+{
+  "machine": "Windows-11-10.0.26300-SP0",
+  "note": "kernel time / calibration workload time, smallest of three runs",
+  "ratios": {
+    "receivers": 0.3759,
+    "ordering": 0.6511,
+    "accumulation": 0.163,
+    "incision": 0.6231,
+    "lake routing": 0.7256,
+    "ADI diffusion": 0.4268,
+    "thermal slides": 0.2521
+  }
+}

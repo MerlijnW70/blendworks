@@ -55,7 +55,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `__init__`: Blender add-on entry point: preferences, and start and stop of the bridge server inside a desktop Blender. | fn: launch_options preferences + | test: addon
 - `server`: Threaded socket server of the desktop add-on: queues each client's requests and runs them on Blender's main thread. | fn: stopped_reply Job + | test: addon
 
-### bridge/blendworks_bridge/ (226)
+### bridge/blendworks_bridge/ (237)
 
 - `__init__`: Blendworks bridge package: the command registry and handlers that run inside Blender.
 - `abrasion`: Abrasion maths: refines a mesh and splits its faces into a worn, rounded pattern. | fn: mesh_triangles edge_table + | test: rocks-example
@@ -230,7 +230,18 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `stone_shape`: Stone shapes: hull, resampling and roundness. | fn: mesh_arrays volume + | test: shore_stones
 - `surfaces`: Engraving surfaces: plane, face region, cylinder, ring and path. | fn: default_up plane_frame + | test: early_counts engrave_cutters
 - `sweeping`: Sweep maths: rotation-minimising frames, miters and rings along a path. | fn: initial_normal orthogonal + | test: sweep
-- `terrain`: Terrain tile mesh: grid points, heights, rim and unfold. | fn: grid_points surface_heights + | test: noise-terrain-example
+- `terrain`: Terrain tile mesh: grid points, heights, rim and unfold. | fn: grid_points surface_heights + | test: terrain_kernels terrain_loader +5
+- `terrain_core`: Loader of the native terrain core: finds and loads the library through ctypes, describes numpy buffers, falls back with one stated reason. | fn: NativeError CoreMissing + | test: terrain_loader terrain_safety
+- `terrain_diffusion`: Python reference of hillslope diffusion: linear by ADI and non-linear critical-slope diffusion (Roering et al. 1999). | fn: check_settings cross_gradient + | test: terrain_kernels terrain_loader +4
+- `terrain_flood`: Python reference of Priority-Flood with epsilon (Barnes et al. 2014). | fn: ordered_key next_up + | test: terrain_kernels terrain_loader +4
+- `terrain_flow`: Python reference of flow receivers: D8 and multiple flow with exponent p, flats resolved (Barnes 2014). | fn: neighbour_heights steepest + | test: terrain_kernels terrain_loader +4
+- `terrain_grid`: Grid description shared by the terrain kernels: shape, spacing, outlet edges and cell status. | fn: TerrainGrid flat_heights | test: terrain_loader terrain_physics +1
+- `terrain_incision`: Python reference of implicit stream-power incision (Braun & Willett 2013), closed form for n = 1 and Newton for general n. | fn: check_law solve + | test: terrain_kernels terrain_loader +4
+- `terrain_kernels`: Dispatch of the terrain kernels to the native core or the Python references. | fn: default_threads chosen_core + | test: terrain_kernels terrain_loader +3
+- `terrain_lakes`: Python reference of lake routing by the basin graph and its minimum spanning tree (Cordonnier, Bovy & Braun 2019). | fn: Lakes ordered_bits + | test: terrain_kernels terrain_loader +4
+- `terrain_order`: Python reference of the breadth-first receiver queue with levels (Barnes 2019) and accumulation along it. | fn: Ordering check_table + | test: terrain_kernels terrain_loader +4
+- `terrain_pow`: Portable exp, ln and pow from basic arithmetic, so both engines give the same bits on every platform. | fn: atanh_coefficients exp_coefficients + | test: terrain_kernels terrain_loader +4
+- `terrain_thermal`: Python reference of thermal slides: slope-limited mass transfer with a critical angle per cell. | fn: check_settings slide | test: terrain_kernels terrain_loader +4
 - `texel`: Texel density: UV and world areas and scaling UVs to a density. | fn: uv_area world_area + | test: uv_texel
 - `textlayout`: Text layout: splitting runs and placing glyph loops. | fn: split_runs run_loops + | test: engrave engrave_cutters
 - `topology`: Mesh topology reports: manifold check, Euler characteristic and problems. | fn: manifold_report euler_characteristic + | test: clean_mesh tree_mesh
@@ -424,6 +435,11 @@ abrade@abrade add_camera@lights add_empty@hierarchy add_light@lights add_materia
 
 - `crash.ts`: Benchmark of autosave recovery after a crash of the headless session.
 
+### bench/terrain-kernels/ (2)
+
+- `run.ts`: Entry point of `npm run bench:terrain`: times the terrain kernels at 1 and 4 threads in Blender and can record the speed table.
+- `table.ts`: Reads the terrain benchmark results and writes the speed table into docs/terrain-core.md between its markers.
+
 ### bench/tool-selection/ (12)
 
 - `baseline-router.ts`: Baseline ranker the router is compared against.
@@ -443,9 +459,10 @@ abrade@abrade add_camera@lights add_empty@hierarchy add_light@lights add_materia
 
 - `compare.mjs`: Compares tree benchmark results.
 
-### scripts/ (16)
+### scripts/ (17)
 
 - `bridge-tests.mjs`: CLI of `npm run test:bridge`: runs bridge test files inside Blender.
+- `build-native.mjs`: CLI of `npm run build:native`: builds the native terrain core with cargo.
 - `calibrate-natural.ts`: CLI that calibrates the natural asset limits from scans and procedural recipes.
 - `check-container.mjs`: CLI of the container check: runs a patch through the judge image.
 - `check-fast.mjs`: CLI of `npm run check:fast`: the checks related to the changed files.
@@ -462,7 +479,7 @@ abrade@abrade add_camera@lights add_empty@hierarchy add_light@lights add_materia
 - `rules.mjs`: The rules check: file size, comments and other repository rules.
 - `tools.mjs`: CLI that lists the MCP tools.
 
-### scripts/lib/ (37)
+### scripts/lib/ (38)
 
 - `blender-check.ts`: Checks the Blender binary and its version.
 - `bridge-runner.ts`: Runs bridge test files in Blender: listing, selection and results.
@@ -485,6 +502,7 @@ abrade@abrade add_camera@lights add_empty@hierarchy add_light@lights add_materia
 - `locks.ts`: File locks with owners, liveness and wait observers.
 - `memory-meter.ts`: Samples the peak memory of processes on Linux and Windows.
 - `memory.ts`: The memory gate: recorded peaks, budget and when a file may start.
+- `native-build.ts`: Builds the native terrain core offline and decides between failing and the Python fallback.
 - `natural-calibration-doc.ts`: Writes the natural calibration document.
 - `natural-calibration-run.ts`: Measures calibration assets with the judge.
 - `natural-calibration.ts`: Constants and scans of the natural calibration.
@@ -675,10 +693,10 @@ abrade@abrade add_camera@lights add_empty@hierarchy add_light@lights add_materia
 
 ## Tests
 
-- `test/` (vitest, 90 files without Blender): cpu-quota judge/container-entry judge/device judge/diff judge/infrastructure judge/integrity-rules judge/judge-command judge/kernel-cache judge/motion-rules judge/natural-measures judge/natural-repetition judge/natural-rules judge/natural-sets-measures judge/natural-sets-rules judge/natural-templates-sets judge/natural-templates judge/onepass judge/reference judge/rules judge/silhouette judge/spec judge/texture-rules judge/untrusted judge/visual-anthropic judge/visual-claude-code judge/visual-eval judge/visual-math judge/visual-stage library-client library-download library-live library-mcp library-refusals library-search library-tolerant mcp-connection mcp-desktop mcp-ground-cover mcp-install mcp-liquids mcp-long-calls mcp-photography mcp-recovery-message mcp-robust mcp-routing-tiers mcp-routing mcp-stdio mcp-tools mcp-weather mcp-workspace package/equivalence package/gltfpack package/ktx2-native package/ktx2 package/memory package/native-install package/native-run package/native-select package/rules package/texture-check package/zip tooling/blender-path tooling/bridge-runner tooling/check-stream tooling/concurrency tooling/container-check tooling/doctor tooling/durations tooling/entry-cache tooling/entry-use tooling/equivalence-tolerance tooling/fair-queue tooling/fast-map tooling/fixture-binaries tooling/fixture-deps tooling/fixture-key tooling/lock-heartbeat tooling/machine-slots tooling/memory-gate tooling/natural-calibration tooling/nested-slots tooling/overlap tooling/phases tooling/process-slots tooling/scheduling tooling/session-threads tooling/slot-busy tooling/wall-clock-lint tooling/work-clock tree-realism-docs
+- `test/` (vitest, 91 files without Blender): cpu-quota judge/container-entry judge/device judge/diff judge/infrastructure judge/integrity-rules judge/judge-command judge/kernel-cache judge/motion-rules judge/natural-measures judge/natural-repetition judge/natural-rules judge/natural-sets-measures judge/natural-sets-rules judge/natural-templates-sets judge/natural-templates judge/onepass judge/reference judge/rules judge/silhouette judge/spec judge/texture-rules judge/untrusted judge/visual-anthropic judge/visual-claude-code judge/visual-eval judge/visual-math judge/visual-stage library-client library-download library-live library-mcp library-refusals library-search library-tolerant mcp-connection mcp-desktop mcp-ground-cover mcp-install mcp-liquids mcp-long-calls mcp-photography mcp-recovery-message mcp-robust mcp-routing-tiers mcp-routing mcp-stdio mcp-tools mcp-weather mcp-workspace package/equivalence package/gltfpack package/ktx2-native package/ktx2 package/memory package/native-install package/native-run package/native-select package/rules package/texture-check package/zip tooling/blender-path tooling/bridge-runner tooling/check-stream tooling/concurrency tooling/container-check tooling/doctor tooling/durations tooling/entry-cache tooling/entry-use tooling/equivalence-tolerance tooling/fair-queue tooling/fast-map tooling/fixture-binaries tooling/fixture-deps tooling/fixture-key tooling/lock-heartbeat tooling/machine-slots tooling/memory-gate tooling/native-core tooling/natural-calibration tooling/nested-slots tooling/overlap tooling/phases tooling/process-slots tooling/scheduling tooling/session-threads tooling/slot-busy tooling/wall-clock-lint tooling/work-clock tree-realism-docs
 
 - `test/` (vitest, 81 files that start Blender through `useBlenderSlot()`): autosave-crash blender characters-example eroded-terrain-example export-options horizon-views-example judge/broken judge/characters judge/closeups judge/container judge/delivery judge/equivalence judge/external-references judge/fixtures judge/floating judge/hardening judge/infrastructure-stages judge/integrity judge/isolation judge/kernel-seal judge/motion judge/natural-sets judge/natural judge/old-specs judge/one-process judge/path-policy judge/preview judge/render-profile judge/require-isolation judge/rocks judge/sandbox-mounts judge/sandbox judge/shared-access judge/silhouettes judge/stage-crash judge/stage-isolation judge/textures judge/tree-bark judge/tree-species judge/validator judge/verdict judge/vertex-colours judge/visibility-sampling judge/visual-judge judge/visual-live library-blender library-textures liquid-scenes-example lsystem-example mcp-bridge-extras mcp-e2e mcp-engraving mcp-modeling-kit mcp-polish-2 mcp-recovery mcp-routing-bench mcp-textures meadow-cover-example noise-terrain-example package/package phyllotaxis-example rocks-example scatter-example session-ready session shells-example thread-independence tooling/codemap tooling/guard tooling/natural-calibration-offline tooling/shared-blender tree-batch-speed tree-example tree-mesh-example tree-shape-example tree-skeleton-extras tree-species-example uv/uv-pack weather-scene-example world-scale-example world-scale-mcp
 
-- `bridge/tests/test_<name>.py` (139 files, run inside Blender): abrade addon animation atmosphere autosave autosave_bench autosave_recovery bake bake_failures bake_sizes boolean_cutters brass brass_ageing camera_setup checkpoints chip clean_mesh cloud_look clouds constraints cover_budget cover_contact cover_elements cover_masks cover_review crate default_shading describe distant_forest distant_land early_counts edge_order engrave engrave_cutters engrave_many engrave_overlap engraved_union erode example_plans export_hierarchy files floating_origin fracture geometry ground_cover ground_export heightfield hierarchy honey_classes images instances journal landscape_air lathe lights liquid_bodies liquid_fill liquid_optics liquid_scene liquid_state lods loft lsystem_grammar lsystem_turtle marble marble_finish material_nodes materials mesh_data mesh_edit modifier_kit modifiers natural_materials noise_displace noise_math objects outline_solids package_math pbr phyllotaxis plan_checks portable_math preview procedural remesh_blob render render_final render_views render_views_copies render_views_large render_views_match render_views_surfaces rig_export rigging rollback roller_chain run_python scales scatter scatter_options scene scene_info scratch_direction selection_kit shell shell_surface shell_wall shore_stones skinning sky smoke spill_rim sweep sweep_analytic sweep_closed textured_prop tree_batch tree_colonization tree_crown tree_crown_species tree_foliage tree_form tree_habit tree_leaf_shapes tree_leaves tree_levels tree_mesh tree_shape tree_skeleton tree_species tree_strands uv_coverage uv_texel valley_mist wear weather world_hdri world_scale world_switch
+- `bridge/tests/test_<name>.py` (145 files, run inside Blender): abrade addon animation atmosphere autosave autosave_bench autosave_recovery bake bake_failures bake_sizes boolean_cutters brass brass_ageing camera_setup checkpoints chip clean_mesh cloud_look clouds constraints cover_budget cover_contact cover_elements cover_masks cover_review crate default_shading describe distant_forest distant_land early_counts edge_order engrave engrave_cutters engrave_many engrave_overlap engraved_union erode example_plans export_hierarchy files floating_origin fracture geometry ground_cover ground_export heightfield hierarchy honey_classes images instances journal landscape_air lathe lights liquid_bodies liquid_fill liquid_optics liquid_scene liquid_state lods loft lsystem_grammar lsystem_turtle marble marble_finish material_nodes materials mesh_data mesh_edit modifier_kit modifiers natural_materials noise_displace noise_math objects outline_solids package_math pbr phyllotaxis plan_checks portable_math preview procedural remesh_blob render render_final render_views render_views_copies render_views_large render_views_match render_views_surfaces rig_export rigging rollback roller_chain run_python scales scatter scatter_options scene scene_info scratch_direction selection_kit shell shell_surface shell_wall shore_stones skinning sky smoke spill_rim sweep sweep_analytic sweep_closed terrain_kernels terrain_loader terrain_physics terrain_safety terrain_speed terrain_threads textured_prop tree_batch tree_colonization tree_crown tree_crown_species tree_foliage tree_form tree_habit tree_leaf_shapes tree_leaves tree_levels tree_mesh tree_shape tree_skeleton tree_species tree_strands uv_coverage uv_texel valley_mist wear weather world_hdri world_scale world_switch
 
-- `bridge/tests/` helpers, not tests: autosave_helpers.py cover_helpers.py drainage.py engrave_checks.py erode_helpers.py final_helpers.py fingerprint.py harness.py kit_helpers.py land_helpers.py limits_doc.py liquid_helpers.py lsystem_helpers.py marble_stats.py natural_stats.py noise_helpers.py record_plans.py rig_helpers.py rock_helpers.py scatter_helpers.py shared.py shell_helpers.py sky_helpers.py texture_helpers.py texture_stats.py tree_crown_helpers.py tree_helpers.py tree_mesh_helpers.py tree_shape_helpers.py view_helpers.py
+- `bridge/tests/` helpers, not tests: autosave_helpers.py cover_helpers.py drainage.py engrave_checks.py erode_helpers.py final_helpers.py fingerprint.py harness.py kit_helpers.py land_helpers.py limits_doc.py liquid_helpers.py lsystem_helpers.py marble_stats.py natural_stats.py noise_helpers.py record_plans.py rig_helpers.py rock_helpers.py scatter_helpers.py shared.py shell_helpers.py sky_helpers.py terrain_helpers.py terrain_speed.py texture_helpers.py texture_stats.py tree_crown_helpers.py tree_helpers.py tree_mesh_helpers.py tree_shape_helpers.py view_helpers.py

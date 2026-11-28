@@ -7,6 +7,7 @@ import { knownDurations } from "./durations.js";
 import { fileLimitMs, isExempt } from "./file-limits.js";
 import { fileNeedMb, knownPeaks } from "./memory.js";
 import { cacheRoot, ensureCacheRoot, repoRoot } from "./paths.js";
+import { buildNative, nativeRequired, nativeVerdict } from "./native-build.js";
 import { announceFile } from "./progress.js";
 import { runBlender, type RunOptions, type RunResult } from "./run.js";
 import { currentStage, recordTiming } from "./timings.js";
@@ -200,6 +201,12 @@ export async function bridgeMain(argv: string[], env: NodeJS.ProcessEnv = proces
     console.error(`no bridge test file matches ${filters.join(", ")}; the files are ${all.join(", ")}`);
     return 1;
   }
+  const native = nativeVerdict(buildNative(env), nativeRequired(env));
+  if (native.code !== 0) {
+    console.error(`the bridge tests cannot run: ${native.message}`);
+    return 1;
+  }
+  console.log(native.message.split(/\r?\n/)[0]);
   const root = ensureCacheRoot(cacheRoot(env));
   const blender = checkedBlender(root);
   const jobs = blenderJobs(env);
