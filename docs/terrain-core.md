@@ -39,6 +39,15 @@ Kernels use `std::thread::scope` with a fixed partition: contiguous spans of row
 
 `npm run build` runs `scripts/build-native.mjs` (cargo `build --release --offline --locked` into `native/target`) before the TypeScript build; `npm run build:native` runs it alone, and `npm run test:bridge` runs it before the bridge tests. The crate needs Rust 1.63 or newer, the rustc of Debian bookworm, and nothing else. The judge image installs rustc and cargo from the pinned Debian snapshot, checks the version and writes `/etc/blendworks/native-required`; there, and wherever `BLENDWORKS_NATIVE=require` is set, a missing toolchain or a core that does not load is an error. Elsewhere a missing cargo only means the bridge uses the Python references; a crate that fails to compile is always an error.
 
+The build is deterministic: the same sources give byte-identical libraries in any folder, which keeps the judge image's digest fixed (`test/judge/container.test.ts`). `scripts/lib/native-build.ts` owns the compiler flags and passes them as `CARGO_ENCODED_RUSTFLAGS`, so a `RUSTFLAGS` of the shell does not reach the build:
+- `--remap-path-prefix=<native folder>=/blendworks/native`, so no build folder ends up in the library or the rlib;
+- no build id: `-Wl,--build-id=none` on Linux and the BSDs, `/Brepro` for MSVC, whose linker otherwise stamps the time and a random PDB GUID into the DLL;
+- `SOURCE_DATE_EPOCH` from the environment, else 315532800;
+- `CARGO_INCREMENTAL=0`, and `CARGO_CACHE_RUSTC_INFO=0`, because cargo writes `target/.rustc_info.json` from a hash map whose order changes from run to run; this file was the one difference between two cache-free judge images;
+- one codegen unit, fat LTO and no debug info in `[profile.release]`.
+
+`test/tooling/native-repro.test.ts` builds the crate in two folders and requires identical cdylib and rlib bytes.
+
 ## Load
 
 `terrain_core.core()` loads the file `BLENDWORKS_NATIVE_LIB` names, else `native/target/release/<library>`, else the sha256-checked prebuilt core bundled for the platform (see `native-cores.md`), once per process; on Windows it loads a copy named by the file's hash, so a rebuild never meets a locked file. If the library is missing, does not load or has another ABI version, it prints one line, `blendworks: <reason>; using the Python reference kernels`, and `terrain_kernels` runs the references, unless the core is required. `terrain_core.status()` reports what happened.

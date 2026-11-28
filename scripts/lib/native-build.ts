@@ -7,6 +7,9 @@ export const NATIVE_DIR = join(repoRoot, "native");
 export const MINIMUM_RUST = "1.63";
 export const REQUIRED_MARKER = "/etc/blendworks/native-required";
 export const REQUIRE_VARIABLE = "BLENDWORKS_NATIVE";
+export const REMAPPED_NATIVE_DIR = "/blendworks/native";
+export const DEFAULT_SOURCE_DATE_EPOCH = "315532800";
+export const RUSTFLAGS_SEPARATOR = String.fromCharCode(0x1f);
 
 export type NativeBuild = { ok: boolean; missingToolchain: boolean; library: string; output: string };
 
@@ -16,22 +19,43 @@ export function libraryFile(platform: NodeJS.Platform = process.platform): strin
   return "libblendworks_core.so";
 }
 
-export function libraryPath(platform: NodeJS.Platform = process.platform): string {
-  return join(NATIVE_DIR, "target", "release", libraryFile(platform));
+export function libraryPath(platform: NodeJS.Platform = process.platform, nativeDir: string = NATIVE_DIR): string {
+  return join(nativeDir, "target", "release", libraryFile(platform));
 }
 
 export function nativeRequired(env: NodeJS.ProcessEnv = process.env, markerExists: (path: string) => boolean = existsSync): boolean {
   return (env[REQUIRE_VARIABLE] ?? "").trim().toLowerCase() === "require" || markerExists(REQUIRED_MARKER);
 }
 
-export function cargoArguments(): string[] {
-  return ["build", "--release", "--offline", "--locked", "--manifest-path", join(NATIVE_DIR, "Cargo.toml"), "--target-dir", join(NATIVE_DIR, "target")];
+export function cargoArguments(nativeDir: string = NATIVE_DIR): string[] {
+  return ["build", "--release", "--offline", "--locked", "--manifest-path", join(nativeDir, "Cargo.toml"), "--target-dir", join(nativeDir, "target")];
 }
 
-export function buildNative(env: NodeJS.ProcessEnv = process.env): NativeBuild {
+export function hostTriple(env: NodeJS.ProcessEnv = process.env): string {
+  const run = spawnSync(env["RUSTC"] ?? "rustc", ["-vV"], { env, encoding: "utf8" });
+  return /^host: (\S+)$/m.exec(run.stdout ?? "")?.[1] ?? "";
+}
+
+export function linkerFlags(triple: string): string[] {
+  if (triple.endsWith("-windows-msvc")) return ["-C", "link-arg=/Brepro"];
+  if (/-linux-|-freebsd|-netbsd|-openbsd/.test(triple)) return ["-C", "link-arg=-Wl,--build-id=none"];
+  return [];
+}
+
+export function deterministicRustflags(triple: string, nativeDir: string = NATIVE_DIR): string[] {
+  return [`--remap-path-prefix=${nativeDir}=${REMAPPED_NATIVE_DIR}`, ...linkerFlags(triple)];
+}
+
+export function nativeEnvironment(env: NodeJS.ProcessEnv = process.env, nativeDir: string = NATIVE_DIR, triple: string = hostTriple(env)): NodeJS.ProcessEnv {
+  const { RUSTFLAGS: _flags, CARGO_BUILD_RUSTFLAGS: _buildFlags, ...rest } = env;
+  const epoch = /^\d+$/.test(env["SOURCE_DATE_EPOCH"] ?? "") ? env["SOURCE_DATE_EPOCH"] : DEFAULT_SOURCE_DATE_EPOCH;
+  return { ...rest, CARGO_ENCODED_RUSTFLAGS: deterministicRustflags(triple, nativeDir).join(RUSTFLAGS_SEPARATOR), SOURCE_DATE_EPOCH: epoch, CARGO_INCREMENTAL: "0", CARGO_CACHE_RUSTC_INFO: "0" };
+}
+
+export function buildNative(env: NodeJS.ProcessEnv = process.env, nativeDir: string = NATIVE_DIR): NativeBuild {
   const cargo = env["CARGO"] ?? "cargo";
-  const run = spawnSync(cargo, cargoArguments(), { cwd: repoRoot, env, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
-  const library = libraryPath();
+  const run = spawnSync(cargo, cargoArguments(nativeDir), { cwd: nativeDir, env: nativeEnvironment(env, nativeDir), encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+  const library = libraryPath(process.platform, nativeDir);
   if (run.error) return { ok: false, missingToolchain: true, library, output: `cannot run ${cargo}: ${run.error.message}; install Rust ${MINIMUM_RUST} or newer (cargo and rustc) to build the native core` };
   const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
   if (run.status !== 0) return { ok: false, missingToolchain: false, library, output: `cargo build of the native core failed (exit ${run.status ?? "signal"}):\n${output.slice(-4000)}` };

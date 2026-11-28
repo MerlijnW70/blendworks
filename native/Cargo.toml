@@ -18,3 +18,4 @@ debug = false
 panic = "unwind"
 codegen-units = 1
 lto = true
+incremental = false
