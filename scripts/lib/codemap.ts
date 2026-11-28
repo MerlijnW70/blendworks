@@ -5,7 +5,11 @@ import { repoRoot } from "./paths.js";
 
 export const MAP_PATH = "docs/CODEMAP.md";
 export const DESCRIPTIONS_PATH = "docs/codemap-descriptions.json";
-export const MAX_MAP_BYTES = 85_000;
+export const AREAS_PATH = "docs/codemap-areas.json";
+export const INDEX_TEMPLATE_PATH = "docs/codemap-index.md";
+export const AREA_FOLDER = "docs/codemap";
+export const MAX_INDEX_BYTES = 12_000;
+export const MAX_AREA_BYTES = 20_000;
 
 const PUBLIC_LIMIT = 2;
 const TEST_LIMIT = 2;
@@ -146,17 +150,33 @@ function groupBy<T>(items: T[], key: (item: T) => string): [string, T[]][] {
   return [...groups.entries()].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
 }
 
-function bridgeSection(modules: PythonModule[]): string[] {
-  const out = ["## Bridge modules and commands", "", "One line per module: its docstring, its first public names (`fn`, `+` means more), the commands it registers (`cmd`) and its tests (`test`). Bridge tests are `bridge/tests/test_<name>.py`; vitest ones are `test/<name>.test.ts`. A module with no `test` is covered only by the core tests (" + CORE_TESTS.map(testLabel).join(", ") + ").", ""];
-  for (const [group, members] of groupBy(modules, (module) => module.group)) {
-    out.push(`### ${group}/ (${members.length})`, "", ...members.map(moduleLine), "");
-  }
-  return out;
+
+export type Area = { id: string; title: string; blurb: string; match: RegExp[] };
+
+export function readAreas(root: string = repoRoot): Area[] {
+  const parsed = JSON.parse(read(root, AREAS_PATH)) as { areas: { id: string; title: string; blurb: string; match: string[] }[] };
+  return parsed.areas.map((area) => ({ ...area, match: area.match.map((pattern) => new RegExp(pattern)) }));
 }
 
-function commandIndex(modules: PythonModule[]): string[] {
-  const pairs = modules.flatMap((module) => module.commands.map((name) => [name, module.name.replace(/\.py$/, "")] as const)).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-  return ["## Command index", "", `${pairs.length} commands, each as \`command@module\` (all in \`bridge/blendworks_bridge/commands/\`; \`npm run bench:tools\` lists the tools the MCP server derives from them):`, "", pairs.map(([name, module]) => `${name}@${module}`).join(" "), ""];
+export function areaKey(path: string): string {
+  const python = /^bridge\/blendworks_bridge\/(?:commands\/)?([^/]+)\.py$/.exec(path);
+  return python === null ? path : `py:${python[1] ?? ""}`;
+}
+
+export function areaOf(path: string, areas: Area[]): string | undefined {
+  const key = areaKey(path);
+  return areas.find((area) => area.match.some((pattern) => pattern.test(key)))?.id;
+}
+
+export function filesWithoutArea(tree: Tree, areas: Area[] = readAreas(tree.root)): string[] {
+  const paths = [...pythonPaths(tree.root), ...typeScriptPaths(tree.root)];
+  return paths.filter((path) => areaOf(path, areas) === undefined);
+}
+
+function bridgeSection(modules: PythonModule[]): string[] {
+  const out: string[] = [];
+  for (const [group, members] of groupBy(modules, (module) => module.group)) out.push(`### ${group}/ (${members.length})`, "", ...members.map(moduleLine), "");
+  return out;
 }
 
 function sourceLine(source: TypeScriptSource): string {
@@ -165,7 +185,7 @@ function sourceLine(source: TypeScriptSource): string {
 }
 
 function typeScriptSection(sources: TypeScriptSource[]): string[] {
-  const out = ["## TypeScript sources, scripts and benchmarks", ""];
+  const out: string[] = [];
   for (const [group, members] of groupBy(sources, (source) => source.group)) out.push(`### ${group}/ (${members.length})`, "", ...members.map(sourceLine), "");
   return out;
 }
@@ -175,7 +195,7 @@ function testsSection(tree: Tree): string[] {
   const stems = (names: string[], prefix: string): string => names.map((name) => name.replace(prefix, "").replace(/\.test\.ts$/, "").replace(/^test_/, "").replace(/\.py$/, "")).join(" ");
   const bridgeFolder = join(tree.root, "bridge", "tests");
   const helpers = existsSync(bridgeFolder) ? readdirSync(bridgeFolder).filter((name) => name.endsWith(".py") && !name.startsWith("test_")).sort() : [];
-  const out = ["## Tests", ""];
+  const out = ["### Tests", ""];
   out.push(`- \`test/\` (vitest, ${tests.plain.length} files without Blender): ${stems(tests.plain, "test/")}`, "");
   out.push(`- \`test/\` (vitest, ${tests.blender.length} files that start Blender through \`useBlenderSlot()\`): ${stems(tests.blender, "test/")}`, "");
   out.push(`- \`bridge/tests/test_<name>.py\` (${tests.bridge.length} files, run inside Blender): ${stems(tests.bridge, "")}`, "");
@@ -183,62 +203,61 @@ function testsSection(tree: Tree): string[] {
   return out;
 }
 
-const OVERVIEW = `# Code map
+const LINE_NOTE = "One line per module: its docstring, its first public names (`fn`, `+` means more), the commands it registers (`cmd`) and its tests (`test`). Bridge tests are `bridge/tests/test_<name>.py`; vitest ones are `test/<name>.test.ts`. A module with no `test` is covered only by the core tests (" + CORE_TESTS.map(testLabel).join(", ") + ").";
 
-Generated by \`npx tsx scripts/codemap.mjs\` from the source tree; do not edit it. \`test/tooling/codemap.test.ts\` fails when it is stale (a module, command, test or script was added, removed or renamed), when a bridge module has no docstring line, or when it grows past ${MAX_MAP_BYTES / 1000} KB. Details live in the files it names: \`docs/DESIGN.md\` is the contract, \`CONTRIBUTING.md\` the rules, \`docs/LIMITS.md\` every named limit.
+function areaMap(area: Area, modules: PythonModule[], sources: TypeScriptSource[], tree: Tree, areas: Area[]): string {
+  const own = modules.filter((module) => areaOf(module.path, areas) === area.id);
+  const scripts = sources.filter((source) => areaOf(source.path, areas) === area.id);
+  const out = [`# Code map: ${area.title}`, "", `${area.blurb} Part of [the code map index](../CODEMAP.md).`, "", LINE_NOTE, ""];
+  out.push(...bridgeSection(own), ...typeScriptSection(scripts));
+  if (area.id === "tooling") out.push(...testsSection(tree));
+  return `${out.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd()}\n`;
+}
 
-## Layers
+function sortedPairs(pairs: (readonly [string, string])[]): (readonly [string, string])[] {
+  return pairs.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+}
 
-- **MCP server** (\`src/mcp/\`): turns bridge commands into \`blender_<command>\` tools, routes and finds tools (\`routing/\`, \`blender_find_tools\`), runs the headless or desktop connection, installs into clients, and serves the Poly Haven library (\`src/mcp/library/\`). \`src/session.ts\` talks to the headless Blender session, \`src/blender.ts\` finds the Blender binary.
-- **Bridge** (\`bridge/blendworks_bridge/\`): Python inside Blender. \`handler.py\` reads a request, \`registry.py\` holds every command, \`schema.py\` builds argument schemas, \`limits*.py\` hold the named limits, and the rest are the maths and builders the commands use. \`bridge/session.py\` is the headless entry point, \`bridge/addon/\` the desktop add-on.
-- **Commands** (\`bridge/blendworks_bridge/commands/\`): one module per command family; each command is a function under \`@command(...)\`. \`bridge/blendworks_bridge/commands/__init__.py\` lists the modules that are imported.
-- **Judge** (\`src/judge/\`, \`bridge/judge/\`, \`schemas/\`): checks an asset against a spec (\`docs/DESIGN.md\` sections 3 and 4): TypeScript stages and rules in \`src/judge/\`, Blender-side measurement in \`bridge/judge/\`. \`bridge/package/\` and \`src/package/\` build LOD packages.
-- **Tests**: \`test/\` is vitest (some start Blender), \`bridge/tests/\` runs inside Blender through \`npm run test:bridge\`.
-- **Scripts and benchmarks**: \`scripts/\` is the check, the fast check, the container check and their libraries (\`scripts/lib/\`); \`bench/\` holds benchmarks; \`docs/examples/\` builds whole example scenes with commands only.
-`;
-
-const HOW_TO_WORK = `## How to work
-
-**Run one test.**
-- One bridge test file: \`npm run test:bridge -- <part of the file name>\`, for example \`npm run test:bridge -- scene\`. Each \`test_*\` function gets a \`bridge\` fixture (\`bridge.ok("add_primitive", type="cube")\`, \`bridge.refuse("describe", "bad_args")\`) from \`bridge/tests/harness.py\`.
-- One vitest file: \`npx vitest run test/judge/closeups.test.ts\`; add \`BLENDWORKS_FIXTURES=skip\` to skip judge fixture generation.
-- While iterating: \`npm run check:fast\` (rules, typecheck, tests that need no Blender, and the tests related to your changed files by \`scripts/lib/fast-map.ts\`). The full \`npm run check\` only once, at the end, at low priority.
-
-**Where things live.**
-- Examples: \`docs/examples/*.py\` (run with \`blender --background --factory-startup --python docs/examples/<name>.py -- <out>\`), described in \`docs/examples/README.md\`, each run by a \`test/<area>-example.test.ts\`.
-- Renders: tests and examples write only under the cache folder (\`.cache\`, or \`BLENDWORKS_CACHE\`; \`freshDir\` in \`test/judge/helpers.ts\`) or the OS temp folder; look at PNGs with the image reader. \`render_preview\` is for looking, \`render_final\` writes passes into the workspace.
-- Limits: every schema bound is a named limit in \`bridge/blendworks_bridge/limits.py\`, \`limits_land.py\`, \`limits_parts.py\` and \`limits_parts_more.py\`, created with \`limit(key, value, unit, kind, reason)\` from \`limit_base.py\`; \`docs/LIMITS.md\` lists them all.
-- Specs: \`jobs/<job>/SPEC.md\` (never edited); design contract \`docs/DESIGN.md\`; research notes \`docs/research/\`.
-
-**The shared Blender and the memory gate.**
-- At most \`BLENDWORKS_JOBS\` Blender processes run at once (default 2 on a desktop, from the CPU quota in a container); slots are a lock in the cache folder (\`scripts/lib/slots.ts\`). A vitest file that starts Blender calls \`useBlenderSlot()\` first.
-- Bridge test files share Blender processes: \`bridge/tests/shared.py\` runs several files in one process with a full reset between them and compares a fingerprint afterwards, so a test must leave no state behind.
-- The memory gate (\`scripts/lib/memory.ts\`, peaks in \`scripts/memory.json\`) starts a file only while the recorded peaks of the files holding slots plus its own fit 60 % of the memory limit (\`BLENDWORKS_MEMORY_BUDGET_MB\` overrides); a file with no record counts as at least 2 GB, and the first file always starts. Do not edit \`scripts/memory.json\` or \`scripts/durations.json\` in a job.
-
-**Add a command.**
-1. Create \`bridge/blendworks_bridge/commands/<name>.py\` with a docstring line and a function under \`@command("<name>", "<one short line>", properties, required, family=..., intents=[...], nearest=[...])\`; build the schema with \`schema.py\` and raise \`errors.py\` errors. Put the maths in a module beside it, not in the command.
-2. Add \`"<name>"\` to \`MODULES\` in \`bridge/blendworks_bridge/commands/__init__.py\`; add a \`BRIDGE_MODULES\` row in \`scripts/lib/fast-map.ts\` only if the test is not named after the module.
-3. Add \`bridge/tests/test_<name>.py\` and, for an MCP surface, the tool-selection entries in \`bench/tool-selection/\`; document it in \`docs/DESIGN.md\`.
-4. Regenerate this map and \`docs/LIMITS.md\` (see below).
-
-**Add a limit.** Define it with \`limit(...)\` in the limits module of its family, give it a kind (physical, memory, time, blender, protocol) and a reason, use it in the schema, then regenerate \`docs/LIMITS.md\` with \`blender -b --factory-startup --python bridge/tests/limits_doc.py\`; \`bridge/tests/test_world_scale.py\` fails when a bound has no named limit or the file is stale.
-
-**Add a test.** Bridge: a \`test_*\` function in \`bridge/tests/test_<module>.py\` taking \`bridge\`, ending with \`run(globals())\`-style registration like its neighbours. Vitest: \`test/<name>.test.ts\`, with \`useBlenderSlot()\` at the top when it starts Blender and budgets from \`test/setup/work-clock.ts\`; never assert wall-clock bounds. Keep every source and test file at most 400 lines and write no code comments.
-
-**Regenerate this map.** \`npx tsx scripts/codemap.mjs\` writes \`docs/CODEMAP.md\`; \`npx tsx scripts/codemap.mjs --check\` exits 1 when it is stale. Descriptions of TypeScript files are in \`docs/codemap-descriptions.json\`; descriptions of bridge modules are their docstring lines.
-`;
-
-export function buildMap(tree: Tree = repoTree()): string {
+export function buildMaps(tree: Tree = repoTree()): Record<string, string> {
+  const areas = readAreas(tree.root);
+  const orphans = filesWithoutArea(tree, areas);
+  if (orphans.length > 0) throw new Error(`no area in ${AREAS_PATH} takes: ${orphans.join(", ")}`);
   const modules = pythonModules(tree);
   const sources = typeScriptSources(tree.root);
-  const parts = [OVERVIEW, HOW_TO_WORK, ...[bridgeSection(modules), commandIndex(modules), typeScriptSection(sources), testsSection(tree)].map((lines) => lines.join("\n"))];
-  return `${parts.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd()}\n`;
+  const maps: Record<string, string> = {};
+  const lines: string[] = [];
+  for (const area of areas) {
+    const members = modules.filter((module) => areaOf(module.path, areas) === area.id).length;
+    const files = sources.filter((source) => areaOf(source.path, areas) === area.id).length;
+    if (members + files === 0) continue;
+    maps[`${AREA_FOLDER}/${area.id}.md`] = areaMap(area, modules, sources, tree, areas);
+    lines.push(`- [${area.title}](codemap/${area.id}.md): ${area.blurb}`);
+  }
+  const commands = sortedPairs(modules.flatMap((module) => module.commands.map((name) => [name, areaOf(module.path, areas) ?? ""] as const)));
+  const index = read(tree.root, INDEX_TEMPLATE_PATH).replace("{{AREAS}}", lines.join("\n")).replace("{{COMMANDS}}", `${commands.length} commands: ${commands.map(([name, id]) => `${name}@${id}`).join(" ")}`);
+  maps[MAP_PATH] = `${index.trimEnd()}\n`;
+  return maps;
 }
 
-export function tooLarge(map: string): boolean {
-  return Buffer.byteLength(map) > MAX_MAP_BYTES;
+export function currentMaps(root: string = repoRoot): Record<string, string> {
+  const found: Record<string, string> = {};
+  if (existsSync(join(root, MAP_PATH))) found[MAP_PATH] = read(root, MAP_PATH);
+  const folder = join(root, AREA_FOLDER);
+  if (existsSync(folder)) for (const name of readdirSync(folder).filter((entry) => entry.endsWith(".md")).sort()) found[`${AREA_FOLDER}/${name}`] = read(root, `${AREA_FOLDER}/${name}`);
+  return found;
 }
 
-export function currentMap(root: string = repoRoot): string | undefined {
-  return existsSync(join(root, MAP_PATH)) ? read(root, MAP_PATH) : undefined;
+export function staleMaps(built: Record<string, string>, current: Record<string, string>): string[] {
+  const paths = [...new Set([...Object.keys(built), ...Object.keys(current)])].sort();
+  return paths.filter((path) => built[path] !== current[path]);
+}
+
+export function sizeProblems(maps: Record<string, string>): string[] {
+  const problems: string[] = [];
+  for (const [path, text] of Object.entries(maps)) {
+    const bytes = Buffer.byteLength(text);
+    if (path === MAP_PATH && bytes > MAX_INDEX_BYTES) problems.push(`${path} is ${bytes} bytes, over ${MAX_INDEX_BYTES}: shorten the index template ${INDEX_TEMPLATE_PATH}`);
+    if (path !== MAP_PATH && bytes > MAX_AREA_BYTES) problems.push(`${path} is ${bytes} bytes, over ${MAX_AREA_BYTES}: split this area in ${AREAS_PATH} into two areas; do not trim descriptions`);
+  }
+  return problems;
 }

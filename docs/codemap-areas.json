@@ -1,0 +1,69 @@
+{
+  "keys": "A bridge module (bridge/blendworks_bridge and its commands folder) is matched as py:<file stem>, every other file by its repository path. The first area with a matching rule wins; a file that matches none fails test/tooling/codemap.test.ts.",
+  "areas": [
+    {
+      "id": "judge",
+      "title": "Judge",
+      "blurb": "src/judge and bridge/judge: spec, rules, measurement stages, visual judge, container entry.",
+      "match": ["^src/judge/", "^bridge/judge/"]
+    },
+    {
+      "id": "mcp-package",
+      "title": "MCP server and package build",
+      "blurb": "src/mcp (server, routing, library), src/package and bridge/package (LODs, gltfpack), src/session.ts, src/blender.ts.",
+      "match": ["^src/mcp/", "^src/package/", "^bridge/package/", "^src/session\\.ts$", "^src/blender\\.ts$"]
+    },
+    {
+      "id": "tooling",
+      "title": "Scripts, bench and tests",
+      "blurb": "scripts/, bench/ and the layout of test/ and bridge/tests/.",
+      "match": ["^scripts/", "^bench/"]
+    },
+    {
+      "id": "core",
+      "title": "Bridge core",
+      "blurb": "handler, registry, schema, policy, limits, util, workspace, plan, validate, autosave, scene, files, checkpoints, images, exports, session and add-on.",
+      "match": [
+        "^bridge/(session|build_addon)\\.py$",
+        "^bridge/addon/",
+        "^py:(__init__|handler|registry|schema|policy|errors|limit_base|limits.*|kit_limits|util|transport|transaction|workspace|plan|validate|autosave|journal|workers|blendfile|exr_read|image_header|images|meshdata|portable_math|scene|inspect_scene|checkpoints|files|run_python|selection|operators|device|exporting|gltf_extras)$"
+      ]
+    },
+    {
+      "id": "animation",
+      "title": "Animation and rigging",
+      "blurb": "animation, clips, gaits, posing, rigs, bones, constraints, skinning, weights, shape keys.",
+      "match": ["^py:(animation|clips|gaits|motion_presets|posing|rig_layouts|rigging|bones|constraints|constraint_bake|skinning|shape_keys|weights)$"]
+    },
+    {
+      "id": "sky-render",
+      "title": "Sky, weather, atmosphere and render",
+      "blurb": "sky, clouds, weather, atmosphere, mist, camera, lights, previews, final renders, floating origin.",
+      "match": ["^py:(sky.*|cloud.*|atmosphere.*|weather.*|valley_mist|mist_depth|camera_.*|lights|render.*|preview|rig|floating_.*|world_background|view_.*)$"]
+    },
+    {
+      "id": "vegetation",
+      "title": "Vegetation and ground cover",
+      "blurb": "tree_*, trees, meadow_*, lsystem*, cover_*, ground_cover, forest_*, distant_forest, impostors.",
+      "match": ["^py:(tree.*|trees|meadow.*|lsystem.*|cover_.*|ground_.*|forest_.*|distant_forest|impostors)$"]
+    },
+    {
+      "id": "terrain-liquids",
+      "title": "Terrain, rock and liquids",
+      "blurb": "heightfields, erosion, noise, land and distant land, liquid_*, stones, fracture, chip, abrade.",
+      "match": ["^py:(terrain.*|heightfield|heightgrid|erode|erosion_.*|noise.*|land_.*|distant_land|ground_level|liquid_.*|material_liquid|shore_stones|stone_.*|abrade|abrasion|chip|fracture|fracturing|fragments|blob|polyhedron)$"]
+    },
+    {
+      "id": "materials",
+      "title": "Materials and texturing",
+      "blurb": "materials, procedural presets, PBR, node graphs, masks, wear, baking, UVs, texel density.",
+      "match": ["^py:(material.*|procedural|presets|pbr|nodes|graph_.*|masks|marble|brass|natural|occlusion|wear|scratches|bake.*|baking|uv.*|texel|wire_edges)$"]
+    },
+    {
+      "id": "shapes",
+      "title": "Shapes and modelling",
+      "blurb": "sweep, lathe, loft, solids, shells, mesh edits, modifiers, objects, transforms, placement, scatter, engraving, text, cleaning, LODs.",
+      "match": ["^py:(shapes|builder|revolve|sweeping|lofting|skin|paths|analytic_paths|profiles|surfaces|gears|chain|roller_chain|solids|extrusion|outlines|shell.*|geometry|objects|transforms|hierarchy|copies|instancing|placement|scatter.*|poisson|phyllotaxis.*|engraving|engrave|glyph.*|text.*|cutters|cutmarks|cleaning|clean|slivers|flatfill|topology|normals|shading|mesh_.*|modifier.*|modifiers|edge_order|remesh|lods|scales)$"]
+    }
+  ]
+}

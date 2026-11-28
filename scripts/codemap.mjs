@@ -1,19 +1,27 @@
-import { writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { buildMap, currentMap, MAP_PATH, MAX_MAP_BYTES, tooLarge } from "./lib/codemap.js";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { buildMaps, currentMaps, sizeProblems, staleMaps } from "./lib/codemap.js";
 import { repoRoot } from "./lib/paths.js";
 
-const map = buildMap();
-if (tooLarge(map)) {
-  console.error(`${MAP_PATH} would be over ${MAX_MAP_BYTES} bytes`);
-  process.exit(1);
-}
+const maps = buildMaps();
+const problems = sizeProblems(maps);
+for (const problem of problems) console.error(problem);
+if (problems.length > 0) process.exit(1);
+const current = currentMaps();
+const stale = staleMaps(maps, current);
 if (process.argv.includes("--check")) {
-  if (currentMap() !== map) {
-    console.error(`${MAP_PATH} is stale: run npx tsx scripts/codemap.mjs`);
+  if (stale.length > 0) {
+    console.error(`stale maps (run npx tsx scripts/codemap.mjs): ${stale.join(", ")}`);
     process.exitCode = 1;
   }
 } else {
-  writeFileSync(join(repoRoot, MAP_PATH), map);
-  console.log(`${MAP_PATH}: ${Buffer.byteLength(map)} bytes`);
+  for (const path of stale) {
+    const file = join(repoRoot, path);
+    if (maps[path] === undefined) rmSync(file);
+    else {
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, maps[path]);
+    }
+  }
+  for (const [path, text] of Object.entries(maps)) console.log(`${path}: ${Buffer.byteLength(text)} bytes`);
 }
