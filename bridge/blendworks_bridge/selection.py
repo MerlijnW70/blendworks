@@ -1,3 +1,5 @@
+"""Face selection by selectors: islands, area, material and refine."""
+
 import math
 
 import bpy

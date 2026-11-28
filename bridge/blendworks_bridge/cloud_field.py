@@ -1,3 +1,5 @@
+"""Cloud field coordinates: seeds, wind frame, layer coordinates and column coverage."""
+
 import math
 
 from . import cloud_genera

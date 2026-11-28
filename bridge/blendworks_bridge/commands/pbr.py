@@ -1,3 +1,5 @@
+"""The material_pbr command: a Principled material built from PBR image maps."""
+
 import os
 
 import bpy

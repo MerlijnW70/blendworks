@@ -1,3 +1,5 @@
+"""The engrave_scale command: the tick marks of a dial cut or embossed in one boolean."""
+
 import math
 
 from .. import limits

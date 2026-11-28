@@ -1,3 +1,5 @@
+"""The measure stage: object tolerances, extras and measurement."""
+
 import hashlib
 import json
 import os

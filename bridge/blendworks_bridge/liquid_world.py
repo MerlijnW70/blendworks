@@ -1,3 +1,5 @@
+"""Liquid objects in the scene, wind and storm state."""
+
 import hashlib
 import math
 

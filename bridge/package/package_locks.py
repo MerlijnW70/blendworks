@@ -1,3 +1,5 @@
+"""Vertices and edges that LOD decimation must keep: borders, material and UV seams."""
+
 import numpy as np
 
 UV_TOLERANCE = 1e-6

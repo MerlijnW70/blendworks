@@ -1,3 +1,5 @@
+"""Measures the sky: sun irradiance, hemisphere and luminance with a probe scene."""
+
 import math
 import os
 import shutil

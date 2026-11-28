@@ -1,3 +1,5 @@
+"""Field specs and unit conversion for modifier settings."""
+
 import math
 
 import bpy

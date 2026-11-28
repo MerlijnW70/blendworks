@@ -1,3 +1,5 @@
+"""Posing maths: two-bone solves, bend directions and rotation channels."""
+
 import math
 
 from mathutils import Matrix, Quaternion, Vector

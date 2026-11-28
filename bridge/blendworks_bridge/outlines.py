@@ -1,3 +1,5 @@
+"""2D outline helpers: winding, repeated points, circle points and offset loops."""
+
 import math
 
 from mathutils import Vector

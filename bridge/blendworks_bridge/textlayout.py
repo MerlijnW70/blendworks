@@ -1,3 +1,5 @@
+"""Text layout: splitting runs and placing glyph loops."""
+
 import math
 import re
 

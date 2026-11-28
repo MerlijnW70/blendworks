@@ -1,3 +1,5 @@
+"""Geometry read helpers: world coordinates, faces and triangle areas."""
+
 from array import array
 from math import inf
 

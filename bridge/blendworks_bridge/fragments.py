@@ -1,3 +1,5 @@
+"""Fragments of a fractured or chipped solid: materials, slots and the solid read from an object."""
+
 import bmesh
 import bpy
 import numpy

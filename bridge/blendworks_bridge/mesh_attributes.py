@@ -1,3 +1,5 @@
+"""Mesh attributes in world space: normals, slopes, curvature and surface corners."""
+
 import numpy
 
 ATTRIBUTES = ("slope", "height", "curvature")

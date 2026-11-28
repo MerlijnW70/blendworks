@@ -1,3 +1,5 @@
+"""Outline graphs for silhouettes."""
+
 from math import e
 
 import bpy

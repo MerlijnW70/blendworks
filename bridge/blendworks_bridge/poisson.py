@@ -1,3 +1,5 @@
+"""Poisson disc spacing: disk grid, overlap tests and thinning."""
+
 import math
 
 import numpy

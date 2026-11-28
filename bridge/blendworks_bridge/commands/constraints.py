@@ -1,3 +1,5 @@
+"""The ik_chain and bone_constraint commands for posing rigs."""
+
 import math
 
 from mathutils import Vector

@@ -1,3 +1,5 @@
+"""Render output settings and passes, restored after a render."""
+
 import base64
 import json
 import os

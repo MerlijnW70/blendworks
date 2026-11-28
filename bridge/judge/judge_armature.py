@@ -1,3 +1,5 @@
+"""Measures armatures: bone depths and rig data."""
+
 MAX_ITEMS = 64
 MAX_BONE_NAMES = 2048
 NAME_LENGTH = 120

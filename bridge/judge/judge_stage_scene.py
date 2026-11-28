@@ -1,3 +1,5 @@
+"""Stages the scene for a measurement and removes what was created."""
+
 from contextlib import contextmanager
 
 import bpy

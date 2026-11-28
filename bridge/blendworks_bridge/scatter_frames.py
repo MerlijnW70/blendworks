@@ -1,3 +1,5 @@
+"""Scatter instance frames: axes, tilt and instance matrices."""
+
 import math
 
 import numpy

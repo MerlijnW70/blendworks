@@ -1,3 +1,5 @@
+"""Ground cover masks: obstacles, distance, noise and view masks per population."""
+
 import math
 
 import bpy

@@ -1,3 +1,5 @@
+"""Transform commands: transform, apply_transform and set_origin."""
+
 from mathutils import Matrix, Vector
 
 from ..errors import bad_args

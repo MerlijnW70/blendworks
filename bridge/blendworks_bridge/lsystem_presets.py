@@ -1,3 +1,5 @@
+"""L-system presets such as a bracketed plant and Honda trees."""
+
 STOCHASTIC_1_27 = ["F -> F[+F]F[-F]F : 0.33", "F -> F[+F]F : 0.33", "F -> F[-F]F : 0.34"]
 STOCHASTIC_LEAFY = ["F -> F[+FL]F[-FL]FL : 0.33", "F -> F[+FL]FL : 0.33", "F -> F[-FL]FL : 0.34"]
 HONDA_RULES = [

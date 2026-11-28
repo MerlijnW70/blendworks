@@ -1,3 +1,5 @@
+"""Mesh topology reports: manifold check, Euler characteristic and problems."""
+
 import bmesh
 
 

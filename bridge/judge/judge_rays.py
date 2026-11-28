@@ -1,3 +1,5 @@
+"""Portable random rotations and sine and cosine for ray casting."""
+
 import hashlib
 import random
 from math import sqrt

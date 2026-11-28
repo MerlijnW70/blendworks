@@ -1,3 +1,5 @@
+"""Twig cards for foliage."""
+
 import numpy
 
 from .tree_frames import first_normal, sample_tangents, transported_normals

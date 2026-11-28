@@ -1,3 +1,5 @@
+"""The clean_mesh command: repairs a mesh after booleans (welds, degenerate faces, slivers, normals)."""
+
 import math
 
 from ..cleaning import clean_bmesh

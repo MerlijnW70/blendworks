@@ -1,3 +1,5 @@
+"""Reads inverse bind matrices and node transforms of skins."""
+
 import math
 import os
 import struct

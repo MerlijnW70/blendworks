@@ -1,3 +1,5 @@
+"""Shared helpers of the natural material presets: scaling, tones and vectors."""
+
 from .procedural import AXES, Preset, preset_vector, stretched
 from . import tree_leaf_shader as leaf_shader
 from .limits import (FEWEST_NEEDLES, FEWEST_VEIN_PAIRS, FRACTION, MAX_LENGTH, MAX_RELIEF, NEEDLES,

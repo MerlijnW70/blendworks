@@ -1,3 +1,5 @@
+"""The shore_stones command: stones clustered along a water line."""
+
 import bpy
 import numpy
 

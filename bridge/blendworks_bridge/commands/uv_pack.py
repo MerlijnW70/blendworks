@@ -1,3 +1,5 @@
+"""The uv_pack command: packs the UV islands of several meshes into one atlas."""
+
 from .. import limits
 from ..errors import bad_args
 from ..registry import command

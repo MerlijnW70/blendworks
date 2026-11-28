@@ -1,3 +1,5 @@
+"""Object commands: add_primitive, duplicate, join, rename and parent."""
+
 import math
 import re
 

@@ -1,3 +1,5 @@
+"""Shared judge helpers: errors, quoting and argument splitting."""
+
 import json
 import math
 import os

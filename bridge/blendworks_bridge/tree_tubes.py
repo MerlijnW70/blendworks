@@ -1,3 +1,5 @@
+"""Tube settings: ring counts, radii, flare and predicted triangles."""
+
 import math
 
 import numpy

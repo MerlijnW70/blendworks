@@ -1,3 +1,5 @@
+"""The cavity of a container that liquid fills, as voxels and inner faces."""
+
 import heapq
 import math
 

@@ -1,3 +1,5 @@
+"""The mesh of one ground cover element and its rotation and segment helpers."""
+
 import math
 
 import bpy

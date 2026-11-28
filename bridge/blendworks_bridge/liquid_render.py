@@ -1,3 +1,5 @@
+"""Render settings for liquid scenes."""
+
 from .liquid_world import liquid_objects
 
 RAISED = {"transmission_bounces": 16, "transparent_max_bounces": 32, "max_bounces": 16, "glossy_bounces": 8}

@@ -1,3 +1,5 @@
+"""Flower geometry for ground cover: stems, heads, petals and centres."""
+
 import math
 
 import numpy

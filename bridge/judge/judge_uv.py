@@ -1,3 +1,5 @@
+"""UV measurement: areas, outside the unit square and grids."""
+
 import os
 from array import array
 from math import ceil, floor, isfinite

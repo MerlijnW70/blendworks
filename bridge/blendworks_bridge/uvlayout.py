@@ -1,3 +1,5 @@
+"""UV island layout: shelves and best layout packing."""
+
 import math
 
 GAP = 0.015

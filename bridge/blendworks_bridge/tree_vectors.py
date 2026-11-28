@@ -1,3 +1,5 @@
+"""Plain vector maths used by tree code."""
+
 import math
 
 IDENTITY = (1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0)

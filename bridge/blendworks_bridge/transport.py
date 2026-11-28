@@ -1,3 +1,5 @@
+"""Wire protocol helpers: reads a request and builds the too-long and quit replies."""
+
 import json
 
 from .errors import bad_args

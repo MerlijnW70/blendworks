@@ -1,3 +1,5 @@
+"""The grow_trees command: many trees (skeleton, mesh, leaves) built in parallel workers."""
+
 import time
 
 import bpy

@@ -1,3 +1,5 @@
+"""Weather assembly: calls the sky, clouds and rain commands for a weather state."""
+
 import math
 
 from . import cloud_forms, cloud_layers, sky_measure, sky_world, weather_continuum, weather_lightning, weather_objects, weather_rain, weather_wet

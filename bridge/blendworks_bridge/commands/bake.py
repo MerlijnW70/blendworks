@@ -1,3 +1,5 @@
+"""The bake command: bakes material channels into images, optionally from high-poly sources, and rewires the material."""
+
 import time
 
 import bpy

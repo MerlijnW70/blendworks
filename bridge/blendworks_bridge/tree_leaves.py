@@ -1,3 +1,5 @@
+"""Leaves along shoot chains: placement and counts."""
+
 import math
 
 import numpy

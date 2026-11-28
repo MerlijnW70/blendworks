@@ -1,3 +1,5 @@
+"""Haze maths: extinction, layered density, optical depth and transmittance."""
+
 import json
 import math
 

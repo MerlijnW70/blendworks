@@ -1,3 +1,5 @@
+"""Texel density: UV and world areas and scaling UVs to a density."""
+
 import contextlib
 import math
 

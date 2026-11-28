@@ -1,3 +1,5 @@
+"""Reads image dimensions from BMP, TGA, TIFF, EXR and HDR headers."""
+
 import os
 import struct
 

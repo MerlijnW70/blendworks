@@ -1,3 +1,5 @@
+"""Space colonisation growth of a tree skeleton."""
+
 import numpy
 
 from .errors import bad_args

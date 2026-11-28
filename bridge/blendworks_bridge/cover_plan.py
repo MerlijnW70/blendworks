@@ -1,3 +1,5 @@
+"""Ground cover planning: drawing candidates, budgets and populations of placed instances."""
+
 import math
 
 import numpy

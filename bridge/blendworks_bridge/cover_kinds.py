@@ -1,3 +1,5 @@
+"""Ground cover element kinds: parameters, budgets, geometry and materials."""
+
 import bpy
 import numpy
 

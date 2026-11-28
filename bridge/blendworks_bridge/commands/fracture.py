@@ -1,3 +1,5 @@
+"""The fracture command: breaks a closed convex solid into closed convex pieces."""
+
 import bpy
 import numpy
 

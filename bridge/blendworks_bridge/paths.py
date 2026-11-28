@@ -1,3 +1,5 @@
+"""3D path helpers: cleaning, lengths, turn angles and corner fillets."""
+
 import math
 
 import bpy

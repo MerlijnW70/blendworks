@@ -1,3 +1,5 @@
+"""Surface ray casting for the judge."""
+
 from array import array
 from math import sqrt
 

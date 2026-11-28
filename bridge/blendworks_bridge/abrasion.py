@@ -1,3 +1,5 @@
+"""Abrasion maths: refines a mesh and splits its faces into a worn, rounded pattern."""
+
 import bmesh
 import numpy
 

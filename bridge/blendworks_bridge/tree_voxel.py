@@ -1,3 +1,5 @@
+"""Transfers attributes from a bark skin to a voxel remeshed bark."""
+
 import math
 
 import numpy

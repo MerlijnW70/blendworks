@@ -1,3 +1,5 @@
+"""Leaf shader values: variants, envelope and toothed edges."""
+
 import math
 
 LEAF_SHAPES = ("pointed", "ovate", "deltoid", "lanceolate", "lobed", "palmate", "needle", "tuft", "brush")

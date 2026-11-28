@@ -1,3 +1,5 @@
+"""Sliver detection: triangle shapes, UV aspects and link conditions."""
+
 from dataclasses import dataclass
 
 import bmesh

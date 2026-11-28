@@ -1,3 +1,5 @@
+"""Bakes bone constraints into keys so exported clips play the constrained pose."""
+
 import contextlib
 import math
 

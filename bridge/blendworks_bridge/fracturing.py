@@ -1,3 +1,5 @@
+"""Fracture maths: random directions and cuts of a convex solid into pieces."""
+
 import math
 
 import numpy

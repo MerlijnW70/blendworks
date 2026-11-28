@@ -1,3 +1,5 @@
+"""Noise stacks: octaves, gains and domain warping evaluated in world metres."""
+
 import numpy
 
 from .limits import FRACTION, LACUNARITY, MAX_LENGTH, MAX_SEED, OCTAVES, SMALLEST_LACUNARITY

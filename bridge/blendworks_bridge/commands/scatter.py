@@ -1,3 +1,5 @@
+"""The scatter command: copies of meshes over a surface with Poisson-disc spacing."""
+
 import numpy
 from mathutils import Matrix
 

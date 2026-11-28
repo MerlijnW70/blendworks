@@ -1,3 +1,5 @@
+"""Rain: extinction, veil, shafts and streaks."""
+
 import math
 import random
 

@@ -1,3 +1,5 @@
+"""Wear maths: jitter, dents and site picking."""
+
 import math
 import random
 

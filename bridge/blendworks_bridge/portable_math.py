@@ -1,3 +1,5 @@
+"""Math functions with the same results on every platform."""
+
 import numpy
 
 PI = 3.14159265358979311600e00

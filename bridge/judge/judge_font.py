@@ -1,3 +1,5 @@
+"""Bitmap font text drawing for judge sheets."""
+
 GLYPH_WIDTH = 5
 GLYPH_HEIGHT = 7
 

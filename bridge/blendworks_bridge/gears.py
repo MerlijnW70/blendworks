@@ -1,3 +1,5 @@
+"""Gear and sprocket outlines: involute flanks, tooth angles and seats."""
+
 import math
 
 from .errors import bad_args

@@ -1,3 +1,5 @@
+"""Extrusion maths for outlines: loops, insets, caps and level tables."""
+
 import math
 
 from mathutils import Vector

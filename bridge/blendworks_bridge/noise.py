@@ -1,3 +1,5 @@
+"""Seeded noise functions: lattice hash, Perlin and feature points."""
+
 import numpy
 
 SALT = (numpy.uint64(0x9E3779B97F4A7C15), numpy.uint64(0xC2B2AE3D27D4EB4F), numpy.uint64(0x165667B19E3779F9), numpy.uint64(0x27D4EB2F165667C5))

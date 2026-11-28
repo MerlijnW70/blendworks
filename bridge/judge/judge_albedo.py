@@ -1,3 +1,5 @@
+"""Measures base colour images through triangle UVs by rasterizing them."""
+
 import numpy as np
 
 import bpy

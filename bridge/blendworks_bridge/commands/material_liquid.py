@@ -1,3 +1,5 @@
+"""The material_liquid command: physically based liquid material for water and other liquids."""
+
 from .. import liquid_light, liquid_presets, liquid_shader
 from ..errors import bad_args
 from ..limits import (ATTENUATION, CONCENTRATION, FRACTION, GLOW_TEMPERATURE, INDEX_OF_REFRACTION, MAX_NAMES,

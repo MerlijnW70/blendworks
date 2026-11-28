@@ -1,3 +1,5 @@
+"""Tree form: response to wind, gnarl and per-order settings."""
+
 import math
 
 import numpy

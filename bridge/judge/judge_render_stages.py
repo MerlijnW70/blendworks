@@ -1,3 +1,5 @@
+"""Render stages: views, silhouettes and cutouts."""
+
 import math
 import os
 

@@ -1,3 +1,5 @@
+"""Minimal OpenEXR header and part reader."""
+
 import mmap
 import struct
 import zlib

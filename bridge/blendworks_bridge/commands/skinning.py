@@ -1,3 +1,5 @@
+"""Skinning commands: vertex_group and skin_bind (automatic weights for an armature)."""
+
 import bpy
 
 from ..bones import deforming_armatures, get_armature

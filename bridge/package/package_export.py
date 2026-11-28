@@ -1,3 +1,5 @@
+"""Exports a LOD package as glb with its ancestors."""
+
 import bpy
 
 

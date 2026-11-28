@@ -1,3 +1,5 @@
+"""World background surface: reads, describes and replaces it."""
+
 import json
 
 import bpy

@@ -1,3 +1,5 @@
+"""Contexts for running Blender operators: window, selection and edit mode."""
+
 import contextlib
 
 import bpy

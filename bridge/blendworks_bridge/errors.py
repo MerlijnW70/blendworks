@@ -1,3 +1,5 @@
+"""The bridge's error class and the constructors for bad arguments, not found, failed and forbidden."""
+
 BAD_ARGS = "bad_args"
 NOT_FOUND = "not_found"
 FAILED = "failed"

@@ -1,3 +1,5 @@
+"""The object table of the scene being judged."""
+
 from math import inf
 
 from judge_common import distance, rounded

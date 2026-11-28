@@ -1,3 +1,5 @@
+"""Collects colours of an asset."""
+
 MAX_ITEMS = 64
 NAME_LENGTH = 120
 DOMAINS = {"POINT": "point", "CORNER": "corner"}

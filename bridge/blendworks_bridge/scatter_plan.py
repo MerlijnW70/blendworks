@@ -1,3 +1,5 @@
+"""Scatter planning: dart count, size checks and the resulting plan."""
+
 import math
 
 import numpy

@@ -1,3 +1,5 @@
+"""Gait planning: cycle frames, foot paths and the humanoid walk."""
+
 import math
 
 from mathutils import Matrix, Vector

@@ -1,3 +1,5 @@
+"""Threaded socket server of the desktop add-on: queues each client's requests and runs them on Blender's main thread."""
+
 import queue
 import socket
 import threading

@@ -1,3 +1,5 @@
+"""The checkpoint, restore_checkpoint and recover commands: named scene snapshots and autosave recovery."""
+
 import datetime
 import os
 import re

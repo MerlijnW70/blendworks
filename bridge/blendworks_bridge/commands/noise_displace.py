@@ -1,3 +1,5 @@
+"""The noise_displace command: displaces a mesh with a seeded noise stack in metres."""
+
 import bmesh
 import numpy
 

@@ -1,3 +1,5 @@
+"""Checks that meshes, curves and objects hold only finite numbers."""
+
 from math import isfinite
 
 import bpy

@@ -1,3 +1,5 @@
+"""Shader graph builder for liquid materials."""
+
 import math
 
 import bpy

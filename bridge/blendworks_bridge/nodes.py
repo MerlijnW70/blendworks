@@ -1,3 +1,5 @@
+"""Shader node graph helper with socket lookup."""
+
 import bpy
 
 COLUMN_WIDTH = 260.0

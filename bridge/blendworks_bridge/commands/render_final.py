@@ -1,3 +1,5 @@
+"""The render_final command: a final-quality render with passes written into the workspace."""
+
 import os
 import shutil
 import tempfile

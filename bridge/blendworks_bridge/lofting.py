@@ -1,3 +1,5 @@
+"""Loft maths: section matching, travel direction and ring skinning."""
+
 import math
 
 from mathutils import Euler, Matrix, Vector

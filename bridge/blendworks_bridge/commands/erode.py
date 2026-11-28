@@ -1,3 +1,5 @@
+"""The erode command: thermal and hydraulic erosion of heightfield terrain in metres."""
+
 import time
 
 import numpy

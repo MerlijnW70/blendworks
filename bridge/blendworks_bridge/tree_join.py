@@ -1,3 +1,5 @@
+"""Joins tree tubes into one mesh with a skin union."""
+
 import bpy
 import numpy
 

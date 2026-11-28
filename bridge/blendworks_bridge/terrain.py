@@ -1,3 +1,5 @@
+"""Terrain tile mesh: grid points, heights, rim and unfold."""
+
 import numpy
 
 from .edge_order import canonical_edges

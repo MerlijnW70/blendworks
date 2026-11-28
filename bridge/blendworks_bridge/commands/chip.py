@@ -1,3 +1,5 @@
+"""The chip command: knocks chips off the edges and corners of a closed convex solid."""
+
 import numpy
 
 from .. import kit_limits

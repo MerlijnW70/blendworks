@@ -1,3 +1,5 @@
+"""Loads an asset into a clean scene from glTF, FBX, OBJ or blend."""
+
 import json
 import os
 import struct

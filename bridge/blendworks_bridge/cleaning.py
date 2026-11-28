@@ -1,3 +1,5 @@
+"""Mesh cleaning maths: sliver triangles, altitudes and collinear vertex removal."""
+
 import math
 
 import bmesh

@@ -1,3 +1,5 @@
+"""Export option checks and preparation for glb, fbx and obj exports."""
+
 import contextlib
 
 import bpy

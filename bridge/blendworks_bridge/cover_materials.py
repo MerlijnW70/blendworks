@@ -1,3 +1,5 @@
+"""Ground cover shader helpers: per-instance randomness, UV parts and blade grass."""
+
 from .natural import leaf_shape, leaf_veins, tone
 from .procedural import Preset, preset_vector
 from .limits import FEWEST_VEIN_PAIRS, FRACTION, LEAST_CARD_BLADES, MAX_CARD_BLADES, VEIN_PAIRS

@@ -1,3 +1,5 @@
+"""The liquid_fill command: fills a container with a liquid, with a meniscus and glass interface."""
+
 import math
 
 import bpy

@@ -1,3 +1,5 @@
+"""Request handler: validates a request, runs a command in a context and encodes the reply."""
+
 import json
 import os
 import time

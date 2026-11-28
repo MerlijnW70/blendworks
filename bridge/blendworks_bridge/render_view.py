@@ -1,3 +1,5 @@
+"""A rendered view: the objects shown and the run of all views."""
+
 import bpy
 
 from . import view_materials, view_surfaces, wire_edges

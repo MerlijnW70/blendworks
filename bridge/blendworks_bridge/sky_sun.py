@@ -1,3 +1,5 @@
+"""Solar position from date, time and place."""
+
 import datetime
 import math
 import re

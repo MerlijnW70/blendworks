@@ -1,3 +1,5 @@
+"""Ripple detail tiles and slope statistics for liquid surfaces."""
+
 import math
 
 import bpy

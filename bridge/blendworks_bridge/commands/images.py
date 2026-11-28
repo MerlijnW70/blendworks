@@ -1,3 +1,5 @@
+"""Image commands: load, create, save and inspect images in the workspace."""
+
 import os
 
 import bpy

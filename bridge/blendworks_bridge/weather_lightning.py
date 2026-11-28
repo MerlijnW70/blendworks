@@ -1,3 +1,5 @@
+"""Lightning bolt paths and materials."""
+
 import math
 import random
 

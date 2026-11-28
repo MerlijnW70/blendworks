@@ -1,3 +1,5 @@
+"""Procedural material builder: preset definitions, seeds and the surface Principled node."""
+
 import random
 
 from .errors import bad_args

@@ -1,3 +1,5 @@
+"""Smooth and flat shading with hard corners."""
+
 import math
 
 SHADING = ("auto", "smooth", "flat")

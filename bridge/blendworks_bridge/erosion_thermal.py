@@ -1,3 +1,5 @@
+"""Thermal erosion: material slides downhill past the talus angle."""
+
 import math
 
 import numpy

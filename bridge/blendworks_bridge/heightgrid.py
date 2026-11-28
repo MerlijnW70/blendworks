@@ -1,3 +1,5 @@
+"""Height grid tiles and tile sets for terrain."""
+
 import math
 
 import numpy

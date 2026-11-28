@@ -1,3 +1,5 @@
+"""Glyph outlines from fonts and symbols: Bezier flattening and curve loops."""
+
 import bpy
 from mathutils import Vector
 

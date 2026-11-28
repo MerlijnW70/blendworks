@@ -1,3 +1,5 @@
+"""Reads a node graph back into the description format, listing only changed settings and inputs."""
+
 import bpy
 
 from .graph_build import settings_owner

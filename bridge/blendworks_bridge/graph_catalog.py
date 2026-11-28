@@ -1,3 +1,5 @@
+"""Catalog of the allowed shader node kinds."""
+
 class NodeKind:
     def __init__(self, idname, settings=(), owner=None, output_value=False, stops=False):
         self.idname = idname

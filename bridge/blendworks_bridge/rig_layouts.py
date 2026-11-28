@@ -1,3 +1,5 @@
+"""Rig layouts: landmarks and bone points for humanoid and quadruped rigs."""
+
 import math
 
 from mathutils import Vector

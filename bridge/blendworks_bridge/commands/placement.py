@@ -1,3 +1,5 @@
+"""Placement commands: instances (linked copies along points, paths and circles) and rivet_line."""
+
 import bpy
 from mathutils import Vector
 

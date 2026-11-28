@@ -1,3 +1,5 @@
+"""The generate_lods command: LOD copies of a mesh by decimation that keeps UVs and borders."""
+
 import os
 import sys
 

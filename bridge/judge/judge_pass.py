@@ -1,3 +1,5 @@
+"""The judge passes: chooses stages, runs each and digests the files."""
+
 import hashlib
 import json
 import os

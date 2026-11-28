@@ -1,3 +1,5 @@
+"""The mesh_query and transform_selection commands: find faces and move the selected faces."""
+
 import math
 
 import bmesh

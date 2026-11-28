@@ -1,3 +1,5 @@
+"""The MeshData container of vertices, faces and UVs."""
+
 from mathutils import Vector
 
 from .edge_order import canonical_edges

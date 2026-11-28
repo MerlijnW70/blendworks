@@ -1,3 +1,5 @@
+"""Phyllotaxis on cylinders, cones, spheres and surfaces of revolution."""
+
 import math
 
 from mathutils import Matrix

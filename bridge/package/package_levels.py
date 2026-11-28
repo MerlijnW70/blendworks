@@ -1,3 +1,5 @@
+"""LOD level checks and naming."""
+
 import re
 
 import bpy

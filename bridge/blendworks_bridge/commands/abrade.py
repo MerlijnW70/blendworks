@@ -1,3 +1,5 @@
+"""The abrade command: wears the edges and corners of a closed mesh into a rounded, worn form."""
+
 import bmesh
 import numpy
 from mathutils import Vector

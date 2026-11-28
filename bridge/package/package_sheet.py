@@ -1,3 +1,5 @@
+"""Composes a LOD comparison sheet."""
+
 from array import array
 
 import numpy as np

@@ -1,3 +1,5 @@
+"""The workspace folder: resolves and checks every file path."""
+
 import os
 
 from .errors import bad_args, forbidden, not_found

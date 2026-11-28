@@ -1,3 +1,5 @@
+"""Twig sprays: style, frames and points."""
+
 import math
 
 import numpy

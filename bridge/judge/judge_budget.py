@@ -1,3 +1,5 @@
+"""Predicts mesh size after modifiers to enforce budgets."""
+
 from array import array
 from math import ceil, pi
 

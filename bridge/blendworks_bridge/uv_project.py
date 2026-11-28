@@ -1,3 +1,5 @@
+"""UV projection onto nearest faces."""
+
 import math
 
 import numpy

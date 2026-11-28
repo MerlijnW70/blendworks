@@ -1,3 +1,5 @@
+"""Reads glTF files directly: accessors, triangles and instances."""
+
 import base64
 import os
 import struct

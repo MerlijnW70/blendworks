@@ -1,3 +1,5 @@
+"""Data table of ground cover presets."""
+
 PATCHES = {"scale": 9.0, "octaves": 3, "hurst": 0.6, "threshold": 0.42, "softness": 0.35, "seed": 11}
 GAPS = {"scale": 6.0, "octaves": 3, "hurst": 0.6, "threshold": 0.3, "softness": 0.4, "seed": 5}
 STONY = {"scale": 4.0, "octaves": 2, "hurst": 0.6, "threshold": 0.55, "softness": 0.3, "seed": 23}

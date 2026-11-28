@@ -1,3 +1,5 @@
+"""The material_nodes and material_info commands: build and read a material as a node graph."""
+
 import bpy
 
 from ..errors import not_found

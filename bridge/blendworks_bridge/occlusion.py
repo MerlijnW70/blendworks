@@ -1,3 +1,5 @@
+"""Ambient occlusion mask for procedural materials."""
+
 FULL_OCCLUSION = 0.25
 SAMPLES = 16
 

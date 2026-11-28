@@ -1,3 +1,5 @@
+"""Cutter geometry for booleans: folded loops, crossings and triangulation."""
+
 import bisect
 import math
 

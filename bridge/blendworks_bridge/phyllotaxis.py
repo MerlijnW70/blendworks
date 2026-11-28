@@ -1,3 +1,5 @@
+"""Phyllotaxis layout on a disc: sites, divergence and age curves."""
+
 import math
 import random
 from dataclasses import dataclass

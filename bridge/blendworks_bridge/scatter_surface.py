@@ -1,3 +1,5 @@
+"""The surface scatter reads: triangles, corner normals and weights."""
+
 import bpy
 import numpy
 

@@ -1,3 +1,5 @@
+"""Skeleton digest and radii measurement for tree assets."""
+
 import hashlib
 import math
 

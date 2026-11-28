@@ -1,3 +1,5 @@
+"""Starts the judge's Blender at low integrity on Windows through the process API."""
+
 import ctypes
 import subprocess
 import sys

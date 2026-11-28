@@ -1,3 +1,5 @@
+"""Tree skeleton commands: grow_tree (space colonisation or levels) and tree_skeleton."""
+
 import numpy
 
 from ..kit_limits import DEFAULT_QUERY_PAGE, MAX_QUERY_PAGE, MAX_TREE_NODES, MAX_TREE_POINTS

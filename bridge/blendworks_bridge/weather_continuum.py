@@ -1,3 +1,5 @@
+"""The weather continuum: presets and the state between them."""
+
 from .errors import bad_args
 
 TIMES = {

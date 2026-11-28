@@ -1,3 +1,5 @@
+"""Tree canopy: writes meshes with materials and reports leaf variation and area."""
+
 import math
 
 import bpy

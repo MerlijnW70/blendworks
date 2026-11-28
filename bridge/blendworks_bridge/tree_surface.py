@@ -1,3 +1,5 @@
+"""Tree surface data: corners, normals, creases and overlaps."""
+
 import math
 
 import bmesh

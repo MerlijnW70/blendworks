@@ -1,3 +1,5 @@
+"""Composes contact sheets from images, UV tiles and text."""
+
 from array import array
 
 import bpy

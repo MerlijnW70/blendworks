@@ -1,3 +1,5 @@
+"""The headless Blender session: reads requests from the protocol stream and serves them."""
+
 import argparse
 import os
 import sys

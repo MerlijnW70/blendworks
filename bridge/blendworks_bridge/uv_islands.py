@@ -1,3 +1,5 @@
+"""UV island graphs: edge axes, overlap and similarity."""
+
 import heapq
 
 import numpy

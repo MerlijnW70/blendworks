@@ -1,3 +1,5 @@
+"""The command registry: the command decorator, routing metadata and the COMMANDS table."""
+
 from .policy import Policy
 from .schema import obj
 

@@ -1,3 +1,5 @@
+"""Ground cover shading: preset materials, instance tint and ground darkening."""
+
 import bpy
 
 from .errors import bad_args

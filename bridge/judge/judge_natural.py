@@ -1,3 +1,5 @@
+"""Natural asset measurements: vertex samples and deviation angles."""
+
 import math
 
 import numpy as np

@@ -1,3 +1,5 @@
+"""Atomic saving of .blend files and the data blocks that are unused or unsaved."""
+
 import hashlib
 import json
 import os

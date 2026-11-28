@@ -1,3 +1,5 @@
+"""Parses a skeleton from an asset."""
+
 import json
 
 import numpy as np

@@ -1,3 +1,5 @@
+"""Ground contact shading for ground cover: triangle coverage and contact values."""
+
 import numpy
 
 from .cover_shading import darken_ground

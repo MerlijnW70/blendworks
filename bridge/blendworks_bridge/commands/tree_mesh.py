@@ -1,3 +1,5 @@
+"""The tree_mesh command: one closed, UV-mapped bark mesh from a tree skeleton."""
+
 import bpy
 
 from ..errors import bad_args

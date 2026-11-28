@@ -1,3 +1,5 @@
+"""Shell wall thickness: probes, measured walls and cavity start."""
+
 import math
 
 from mathutils import Vector

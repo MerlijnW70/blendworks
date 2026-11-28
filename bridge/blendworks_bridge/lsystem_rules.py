@@ -1,3 +1,5 @@
+"""L-system rule and axiom parsing."""
+
 from .errors import bad_args
 from .lsystem_expr import NAME, Scanner
 

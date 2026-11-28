@@ -1,3 +1,5 @@
+"""The validate command: checks a call or a plan of calls against the schemas without running it."""
+
 from ..limits import MAX_PLAN_CALLS
 from ..plan import PlanState, check_plan
 from ..registry import command

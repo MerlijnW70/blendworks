@@ -1,3 +1,5 @@
+"""Litter geometry for ground cover: twigs, leaf cards and tubes."""
+
 import math
 
 import bmesh

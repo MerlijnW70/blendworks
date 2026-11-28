@@ -1,3 +1,5 @@
+"""Scatter masks: slope, height and ramp masks over a surface."""
+
 import numpy
 
 from . import liquid_masks

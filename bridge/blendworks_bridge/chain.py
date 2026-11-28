@@ -1,3 +1,5 @@
+"""Geometry of roller chain parts: plates, rollers, pins and the wheel path."""
+
 import math
 
 from mathutils import Matrix, Vector

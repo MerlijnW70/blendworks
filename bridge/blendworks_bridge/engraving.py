@@ -1,3 +1,5 @@
+"""Engraving engine: samples the surface, chooses a solver and applies the cutter."""
+
 import bmesh
 import bpy
 from mathutils import Vector

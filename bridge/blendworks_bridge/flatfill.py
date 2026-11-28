@@ -1,3 +1,5 @@
+"""Flat polygon fill: dissolving flat faces and constrained Delaunay filling."""
+
 import bmesh
 from mathutils import Vector
 from mathutils.geometry import delaunay_2d_cdt

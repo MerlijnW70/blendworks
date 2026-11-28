@@ -1,3 +1,5 @@
+"""Animation commands: preset gait and motion clips, keyed clips, clip editing, inspection and poses."""
+
 import math
 
 import bpy

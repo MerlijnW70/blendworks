@@ -1,3 +1,5 @@
+"""The shape_key_add command: adds a morph target from offsets."""
+
 from mathutils import Vector
 
 from ..errors import bad_args, not_found

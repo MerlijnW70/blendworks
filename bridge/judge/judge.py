@@ -1,3 +1,5 @@
+"""Entry point of the judge's Blender process: runs the measurement stages on an asset."""
+
 import os
 import sys
 

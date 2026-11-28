@@ -1,3 +1,5 @@
+"""Tree axes and twigs built from a skeleton."""
+
 import numpy
 
 from .errors import bad_args

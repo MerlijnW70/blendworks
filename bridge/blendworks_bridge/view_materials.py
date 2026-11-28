@@ -1,3 +1,5 @@
+"""Temporary shaders for preview shadings (clay, normals and so on)."""
+
 import bpy
 
 from .rig import TEMPORARY_PREFIX

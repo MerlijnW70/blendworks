@@ -1,3 +1,5 @@
+"""Cloud sheet radiance: transmittance, phase function and sun terms for a layer."""
+
 import math
 
 import bpy

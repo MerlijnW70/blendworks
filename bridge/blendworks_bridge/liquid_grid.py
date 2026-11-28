@@ -1,3 +1,5 @@
+"""Flood fill of liquid over a ground grid."""
+
 import heapq
 import math
 

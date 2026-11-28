@@ -1,3 +1,5 @@
+"""The roller_chain command: a roller chain with alternating inner and outer links."""
+
 from mathutils import Vector
 
 from ..builder import SHAPE_FIELDS, finish_shape

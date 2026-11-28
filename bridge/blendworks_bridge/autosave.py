@@ -1,3 +1,5 @@
+"""Autosave of the headless session: interval from the environment and the journal of replayable commands."""
+
 import datetime
 import os
 import re

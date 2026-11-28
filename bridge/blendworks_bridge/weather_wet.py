@@ -1,3 +1,5 @@
+"""Wet surface look: darkening and shore wetness."""
+
 import bpy
 
 from . import sky_nodes, weather_objects

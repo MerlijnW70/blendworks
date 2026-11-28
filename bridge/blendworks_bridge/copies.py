@@ -1,3 +1,5 @@
+"""Linked and realized copies of objects with unique child names."""
+
 import bpy
 
 from .errors import bad_args, failed

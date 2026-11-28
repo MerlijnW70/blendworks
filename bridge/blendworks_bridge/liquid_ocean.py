@@ -1,3 +1,5 @@
+"""Ocean surface grid, skirt and beach heights."""
+
 import math
 
 import numpy

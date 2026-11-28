@@ -1,3 +1,5 @@
+"""Scatter size distributions: power law, lognormal and histograms."""
+
 import math
 
 import numpy

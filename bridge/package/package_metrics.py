@@ -1,3 +1,5 @@
+"""Image metrics for LOD comparison: silhouette IoU and SSIM."""
+
 import numpy as np
 
 ALPHA_THRESHOLD = 0.5

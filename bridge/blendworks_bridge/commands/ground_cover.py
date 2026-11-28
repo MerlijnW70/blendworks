@@ -1,3 +1,5 @@
+"""The ground_element and ground_cover commands: layered grass, flowers and litter over a surface."""
+
 import bpy
 import numpy
 

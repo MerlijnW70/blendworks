@@ -1,3 +1,5 @@
+"""Motion measurement: animation blocks, held poses and clip curves."""
+
 from array import array
 from collections import Counter
 from math import ceil, floor, inf

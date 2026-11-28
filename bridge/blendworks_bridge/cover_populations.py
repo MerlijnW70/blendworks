@@ -1,3 +1,5 @@
+"""Ground cover populations: merging presets with the caller's kind groups."""
+
 from .commands.scatter import NOISE
 from .cover_kinds import BLADE_KINDS, ELEMENT, KINDS, LITTER_KINDS, element_params
 from .cover_presets import PRESET_POPULATIONS

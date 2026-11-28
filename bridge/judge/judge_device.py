@@ -1,3 +1,5 @@
+"""Render device selection for the judge."""
+
 import os
 import tempfile
 from array import array

@@ -1,3 +1,5 @@
+"""Checks of references and paths inside asset files."""
+
 import re
 from urllib.parse import unquote_to_bytes
 

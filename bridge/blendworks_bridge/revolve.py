@@ -1,3 +1,5 @@
+"""Lathe maths: profile cleaning, axis splitting, rings and caps."""
+
 import math
 
 from mathutils import Vector

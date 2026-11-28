@@ -1,3 +1,5 @@
+"""Bark mesh: tubes skinned or voxel remeshed with density control."""
+
 import math
 
 import bpy

@@ -1,3 +1,5 @@
+"""Hardened loop normals for sharp edges."""
+
 from mathutils import Vector
 
 

@@ -1,3 +1,5 @@
+"""Wire edge node group builder."""
+
 import bpy
 
 from .rig import TEMPORARY_PREFIX

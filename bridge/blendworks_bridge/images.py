@@ -1,3 +1,5 @@
+"""Image helpers: colour space keys, size checks, lookup and loading."""
+
 import array
 import os
 

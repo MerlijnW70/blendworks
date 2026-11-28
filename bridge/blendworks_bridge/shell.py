@@ -1,3 +1,5 @@
+"""Shell builder: spiral rings, hardening and shell mesh data."""
+
 from mathutils import Matrix, Vector
 
 from .errors import bad_args

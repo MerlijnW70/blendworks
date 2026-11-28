@@ -1,3 +1,5 @@
+"""Extra liquid forms: puddles, edge profiles and spill rings."""
+
 import math
 
 import numpy

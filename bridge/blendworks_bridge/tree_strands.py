@@ -1,3 +1,5 @@
+"""Hanging strands of weeping trees."""
+
 import math
 
 import numpy

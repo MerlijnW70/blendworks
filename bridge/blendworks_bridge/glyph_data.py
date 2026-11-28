@@ -1,3 +1,5 @@
+"""Data table of symbol outlines used by engraving."""
+
 GLYPHS = {
     "aries": (
         512,

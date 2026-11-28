@@ -1,3 +1,5 @@
+"""Connected components and overlaps of an asset's parts."""
+
 from math import inf
 
 import bmesh

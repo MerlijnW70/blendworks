@@ -1,3 +1,5 @@
+"""Geometric masks for procedural materials (window, axis and height masks)."""
+
 from .errors import bad_args
 from .limits import FRACTION, HALF_TURN, MAX_RELIEF, QUARTER_TURN
 from .schema import array, number, string

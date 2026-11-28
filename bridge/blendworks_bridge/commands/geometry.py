@@ -1,3 +1,5 @@
+"""Commands that build geometry from data: mesh_from_data, curve_from_points and text_object."""
+
 import json
 import os
 

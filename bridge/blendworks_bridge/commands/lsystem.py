@@ -1,3 +1,5 @@
+"""The lsystem command: grows a plant from a parametric L-system with organs."""
+
 import bpy
 from mathutils import Matrix, Vector
 

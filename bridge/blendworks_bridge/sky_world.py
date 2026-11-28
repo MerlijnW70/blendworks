@@ -1,3 +1,5 @@
+"""Sky world nodes: build, store and place the sun lamp."""
+
 import json
 import math
 

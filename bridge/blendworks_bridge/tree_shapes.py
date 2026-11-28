@@ -1,3 +1,5 @@
+"""Crown envelopes (revolution and mesh) and rejection sampling."""
+
 import math
 
 import numpy

@@ -1,3 +1,5 @@
+"""Depth and band masks of liquid bodies."""
+
 import numpy
 
 from . import liquid_world

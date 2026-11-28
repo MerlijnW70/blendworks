@@ -1,3 +1,5 @@
+"""Container walls for liquid fills: tilt, wall offsets and boundary loops."""
+
 import math
 
 import numpy

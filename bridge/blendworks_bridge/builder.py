@@ -1,3 +1,5 @@
+"""Shared finishing step for shape builders."""
+
 import bmesh
 import bpy
 

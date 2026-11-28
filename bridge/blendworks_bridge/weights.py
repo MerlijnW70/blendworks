@@ -1,3 +1,5 @@
+"""Vertex weights: read, write, smoothing and limiting."""
+
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 from mathutils.geometry import intersect_point_line

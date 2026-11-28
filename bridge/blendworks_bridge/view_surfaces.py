@@ -1,3 +1,5 @@
+"""Swaps surface shaders of materials while a preview renders."""
+
 import bpy
 
 from .rig import TEMPORARY_PREFIX

@@ -1,3 +1,5 @@
+"""The engrave command: cuts or embosses text and symbols along a plane, cylinder, ring or curve."""
+
 import math
 
 import bpy

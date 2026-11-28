@@ -1,3 +1,5 @@
+"""Tree planning: presets, defaults, envelopes and the grown result."""
+
 import math
 
 import numpy

@@ -1,3 +1,5 @@
+"""Scene commands: describe, scene_info, new_scene, select and delete."""
+
 import bpy
 
 from .. import limits, world_background

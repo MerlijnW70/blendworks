@@ -1,3 +1,5 @@
+"""Frames along tree branches: splines, tangents and sampling."""
+
 import math
 
 import numpy

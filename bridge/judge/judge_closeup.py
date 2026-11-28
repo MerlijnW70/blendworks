@@ -1,3 +1,5 @@
+"""Close-up renders and their composition into a sheet."""
+
 import os
 from array import array
 from math import atan

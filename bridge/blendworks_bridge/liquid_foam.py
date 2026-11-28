@@ -1,3 +1,5 @@
+"""Foam and bubble materials for liquid surfaces."""
+
 import math
 
 import numpy

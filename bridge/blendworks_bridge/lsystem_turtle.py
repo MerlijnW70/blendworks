@@ -1,3 +1,5 @@
+"""L-system turtle: state, vector helpers and organs placed along the word."""
+
 import math
 
 from .errors import bad_args

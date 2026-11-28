@@ -1,3 +1,5 @@
+"""Edge collapse decimation for LODs with locked borders."""
+
 import bmesh
 import bpy
 import numpy as np

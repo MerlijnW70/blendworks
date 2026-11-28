@@ -1,3 +1,5 @@
+"""Tagging and removal of the objects a weather call creates."""
+
 import bpy
 
 FLAG = "blendworks_weather"

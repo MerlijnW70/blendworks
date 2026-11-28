@@ -1,3 +1,5 @@
+"""Shared helpers: rounding, vectors, degrees, object lookup and free-name checks."""
+
 import math
 
 import bmesh

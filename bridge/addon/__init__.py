@@ -1,3 +1,5 @@
+"""Blender add-on entry point: preferences, and start and stop of the bridge server inside a desktop Blender."""
+
 import os
 import sys
 

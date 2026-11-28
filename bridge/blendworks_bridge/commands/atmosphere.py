@@ -1,3 +1,5 @@
+"""The atmosphere command: aerial perspective and haze as a volume with a stated visibility."""
+
 import bpy
 from mathutils import Vector
 

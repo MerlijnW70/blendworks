@@ -1,3 +1,5 @@
+"""The liquid_body command: ocean, lake, river and beach water at world scale."""
+
 import math
 
 import bpy

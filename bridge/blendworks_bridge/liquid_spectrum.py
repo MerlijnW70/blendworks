@@ -1,3 +1,5 @@
+"""Sea state: wave spectrum, wavelengths, whitecaps and slope variance."""
+
 import math
 
 import numpy

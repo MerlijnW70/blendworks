@@ -1,3 +1,5 @@
+"""Imports every command module so each registers its commands in the registry."""
+
 import importlib
 
 MODULES = (

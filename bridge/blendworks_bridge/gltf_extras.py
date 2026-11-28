@@ -1,3 +1,5 @@
+"""Reads and writes glTF files to add skeleton extras."""
+
 import json
 import os
 import struct

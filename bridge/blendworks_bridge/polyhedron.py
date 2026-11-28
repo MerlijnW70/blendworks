@@ -1,3 +1,5 @@
+"""Convex solid data structure with box UVs, face splits and compaction."""
+
 import math
 
 import numpy

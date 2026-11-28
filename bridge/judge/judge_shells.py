@@ -1,3 +1,5 @@
+"""Mesh shell analysis: disjoint sets, edge defects and volume."""
+
 import bmesh
 
 FLAT_VOLUME_RATIO = 1e-9

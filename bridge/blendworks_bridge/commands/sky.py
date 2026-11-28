@@ -1,3 +1,5 @@
+"""The sky command: a physical procedural sky with the sun by angles or by date, time and place."""
+
 import math
 
 from .. import camera_exposure, cloud_forms, sky_sun, sky_world, world_background

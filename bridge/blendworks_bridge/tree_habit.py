@@ -1,3 +1,5 @@
+"""Tree habit statistics: first-order branches."""
+
 import numpy
 
 from .tree_strands import coefficient_of_variation

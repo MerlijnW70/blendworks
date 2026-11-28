@@ -1,3 +1,5 @@
+"""Instance detection: name patterns, welded parts and frames."""
+
 import math
 import re
 

@@ -1,3 +1,5 @@
+"""Scene inspection: totals, collections, matching objects and paged listings."""
+
 import fnmatch
 import json
 

@@ -1,3 +1,5 @@
+"""Procedural material presets (wood, worn metal, rust, stone)."""
+
 from .brass import brass, brass_schema
 from .cover_materials import cover_presets
 from .marble import MARBLE_VEIN_COLOR, finish_schema, marble, vein_mask, veins_schema

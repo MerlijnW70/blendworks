@@ -1,3 +1,5 @@
+"""Tree species data and materials."""
+
 SPECIES_PROPERTY = "blendworks_species"
 SPECIES_NAMES = ("oak", "birch", "pine", "willow", "maple", "olive")
 PRESET_SPECIES = {"weeping_willow": "willow", "gnarled_oak": "oak"}

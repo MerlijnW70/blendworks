@@ -1,3 +1,5 @@
+"""Liquid surface meshes: building, volume, area and closing sheets."""
+
 import math
 
 import bpy

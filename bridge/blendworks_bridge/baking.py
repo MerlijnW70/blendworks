@@ -1,3 +1,5 @@
+"""Bake machinery: scene settings, emission swaps and the Blender bake operator run."""
+
 import bpy
 
 from .errors import bad_args, failed

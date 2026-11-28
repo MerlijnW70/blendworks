@@ -1,3 +1,5 @@
+"""Geometric error between LOD levels from directed distances."""
+
 import numpy as np
 
 from package_surface import nearest_distances

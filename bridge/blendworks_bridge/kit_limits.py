@@ -1,3 +1,5 @@
+"""Data table of the limits of the modelling kit tools."""
+
 from .limits import MEMORY, PHYSICAL, PROTOCOL, TIME, limit
 
 MAX_PROFILE_POINTS = limit("profile_points", 512, "points", MEMORY,

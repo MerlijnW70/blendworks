@@ -1,3 +1,5 @@
+"""Preview helpers: framing, aiming, pixel size and the flat colour materials."""
+
 import colorsys
 import math
 

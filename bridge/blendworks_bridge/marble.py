@@ -1,3 +1,5 @@
+"""Marble material: finish and vein layers with capillaries and clouds."""
+
 from .procedural import preset_vector
 from .limits import FRACTION
 from .schema import color, number, obj, string

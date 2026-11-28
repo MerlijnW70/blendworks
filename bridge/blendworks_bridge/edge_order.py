@@ -1,3 +1,5 @@
+"""Canonical order of mesh edges so results do not depend on Blender's edge numbering."""
+
 import numpy
 
 EDGE_VERTS = ".edge_verts"

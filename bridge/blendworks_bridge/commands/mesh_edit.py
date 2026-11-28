@@ -1,3 +1,5 @@
+"""Mesh edit commands: extrude, inset, bevel, subdivide, shading, normals and merge by distance."""
+
 import math
 
 import bmesh

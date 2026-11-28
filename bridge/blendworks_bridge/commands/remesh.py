@@ -1,3 +1,5 @@
+"""The remesh command: rebuilds a mesh as one clean surface of even voxels."""
+
 import bmesh
 import numpy
 

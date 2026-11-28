@@ -1,3 +1,5 @@
+"""The export, save_blend, load_blend and import commands: scene files in the workspace."""
+
 import json
 import os
 

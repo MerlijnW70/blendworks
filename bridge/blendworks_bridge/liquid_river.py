@@ -1,3 +1,5 @@
+"""River paths: smoothing, a running minimum bed profile and carving."""
+
 import math
 
 import numpy

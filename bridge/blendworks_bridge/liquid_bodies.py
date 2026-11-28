@@ -1,3 +1,5 @@
+"""Liquid bodies: basins, fetch, levels and local bottoms."""
+
 import math
 
 import numpy

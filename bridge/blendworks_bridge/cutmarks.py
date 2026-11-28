@@ -1,3 +1,5 @@
+"""Marks the edges of a cut so later steps can find the engraved or booleaned faces."""
+
 import bmesh
 
 CUT_ATTRIBUTE = "blendworks_cut"

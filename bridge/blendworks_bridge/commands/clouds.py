@@ -1,3 +1,5 @@
+"""The clouds command: procedural cloud layers by genus, as sky settings and volume domains."""
+
 import json
 import math
 

@@ -1,3 +1,5 @@
+"""Rig commands: armature_create, bone_add, bone_edit, bone_mirror, rig_template and rig_info."""
+
 import bpy
 from mathutils import Vector
 

@@ -1,3 +1,5 @@
+"""Surface distance queries for LOD error."""
+
 import numpy as np
 from mathutils.bvhtree import BVHTree
 

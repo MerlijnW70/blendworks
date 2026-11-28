@@ -1,3 +1,5 @@
+"""Builds a node graph from a description: sockets, settings and input values."""
+
 from .errors import bad_args
 from .graph_catalog import INPUT_KEYS, KINDS, SETTING_KEYS
 from .limits import MAX_RAMP_STOPS

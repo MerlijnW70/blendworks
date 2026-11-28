@@ -1,3 +1,5 @@
+"""The tree_leaves command: foliage clusters or single leaves on a tree skeleton."""
+
 import bpy
 import numpy
 

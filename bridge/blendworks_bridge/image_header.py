@@ -1,3 +1,5 @@
+"""Reads image dimensions from PNG, JPEG, WebP and EXR headers without loading pixels."""
+
 import struct
 
 from .errors import bad_args

@@ -1,3 +1,5 @@
+"""Skeleton checks: edge samples and branching."""
+
 import numpy as np
 from mathutils import Vector
 from mathutils.kdtree import KDTree

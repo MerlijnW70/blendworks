@@ -1,3 +1,5 @@
+"""Renders LOD levels for comparison."""
+
 import json
 import os
 import re

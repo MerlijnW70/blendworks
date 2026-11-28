@@ -1,3 +1,5 @@
+"""Photographic exposure: EV100 to exposure, the view transform and a report of the look applied."""
+
 import math
 
 from .errors import bad_args

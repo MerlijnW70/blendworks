@@ -1,3 +1,5 @@
+"""Animation clip helpers: names, lookup, channels and F-curve access."""
+
 import contextlib
 import re
 

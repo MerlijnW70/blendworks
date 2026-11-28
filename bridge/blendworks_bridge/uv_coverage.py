@@ -1,3 +1,5 @@
+"""UV coverage packing: merging islands and searching a layout for a coverage target."""
+
 import time
 
 import numpy

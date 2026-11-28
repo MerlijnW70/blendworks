@@ -1,3 +1,5 @@
+"""The camera_setup command: lens, sensor, depth of field, clip range and exposure of a camera."""
+
 import math
 
 from mathutils import Vector

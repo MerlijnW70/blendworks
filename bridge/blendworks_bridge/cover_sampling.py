@@ -1,3 +1,5 @@
+"""Ground cover sampling: view, candidate points, usable areas and barycentric draws."""
+
 import math
 
 import numpy

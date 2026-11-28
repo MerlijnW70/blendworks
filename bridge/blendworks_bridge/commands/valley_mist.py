@@ -1,3 +1,5 @@
+"""The valley_mist command: a mist layer that lies in valleys and over water."""
+
 import json
 
 import bpy

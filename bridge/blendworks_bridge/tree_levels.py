@@ -1,3 +1,5 @@
+"""Weber-Penn style level growth of a tree."""
+
 import math
 
 import numpy

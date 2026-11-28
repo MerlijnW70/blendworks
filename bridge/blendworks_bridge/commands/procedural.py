@@ -1,3 +1,5 @@
+"""The material_procedural and material_layer commands: procedural presets and masked layers."""
+
 import bpy
 
 from ..errors import bad_args, not_found

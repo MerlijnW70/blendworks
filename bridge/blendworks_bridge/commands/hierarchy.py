@@ -1,3 +1,5 @@
+"""Scene structure commands: add_empty and collection create, link and unlink."""
+
 import bpy
 
 from ..errors import bad_args, not_found

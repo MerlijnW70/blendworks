@@ -1,3 +1,5 @@
+"""Parity checks between the original and the loaded asset (modifiers, particles, curves)."""
+
 import bpy
 
 LEVEL_MODIFIERS = {"SUBSURF", "MULTIRES"}

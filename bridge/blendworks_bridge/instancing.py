@@ -1,3 +1,5 @@
+"""Placement frames for instances along paths, edge chains, circles and points."""
+
 import math
 
 from mathutils import Euler, Matrix, Vector

@@ -1,3 +1,5 @@
+"""Reads a material's Principled node and summarises it."""
+
 from .util import rounded, vec
 
 PRINCIPLED_INPUTS = {

@@ -1,3 +1,5 @@
+"""Motion presets: role checks, sampling and idle poses for clips."""
+
 import math
 
 from mathutils import Matrix, Vector

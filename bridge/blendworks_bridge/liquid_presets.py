@@ -1,3 +1,5 @@
+"""Liquid presets: water, sediment, honey and their optical properties."""
+
 import copy
 
 from .errors import bad_args

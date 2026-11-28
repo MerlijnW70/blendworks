@@ -1,3 +1,5 @@
+"""Schema builders for command arguments: number, length, integer, string, vector3 and so on."""
+
 import copy
 import difflib
 import json

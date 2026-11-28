@@ -1,3 +1,5 @@
+"""Modifier commands: add_modifier, apply_modifier, boolean, mirror, array, solidify and decimate."""
+
 import bmesh
 import bpy
 

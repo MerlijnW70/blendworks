@@ -1,3 +1,5 @@
+"""Foliage sprays along branch chains."""
+
 import math
 
 import numpy

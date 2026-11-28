@@ -1,3 +1,5 @@
+"""Profile schemas and presets (circle, rectangle) for sweeps."""
+
 import math
 
 from .errors import bad_args

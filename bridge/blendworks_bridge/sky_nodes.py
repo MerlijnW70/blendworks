@@ -1,3 +1,5 @@
+"""Node graph helper for the sky shader."""
+
 class Graph:
     """Small helpers that build shader node graphs from sockets and constants."""
 

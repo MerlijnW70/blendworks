@@ -1,3 +1,5 @@
+"""Entry point that builds the LOD package inside Blender."""
+
 import json
 import os
 import sys

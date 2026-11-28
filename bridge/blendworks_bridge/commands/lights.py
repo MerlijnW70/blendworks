@@ -1,3 +1,5 @@
+"""Lighting and view commands: add_light, add_camera, look_at, set_world and set_world_hdri."""
+
 import math
 import os
 

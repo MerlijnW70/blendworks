@@ -1,3 +1,5 @@
+"""Data table of tree presets."""
+
 PRESETS = {
     "default": {},
     "weeping_willow": {

@@ -1,3 +1,5 @@
+"""Tree crown measurement: silhouette region, rows and coverage cells."""
+
 import os
 import tempfile
 import bpy

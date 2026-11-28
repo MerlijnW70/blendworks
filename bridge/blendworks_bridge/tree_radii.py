@@ -1,3 +1,5 @@
+"""Branch radii by pipe model, taper and branch order."""
+
 import numpy
 
 

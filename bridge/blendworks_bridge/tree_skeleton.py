@@ -1,3 +1,5 @@
+"""Tree skeleton data: checks, chains and preview curve."""
+
 import bpy
 import numpy
 

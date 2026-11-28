@@ -1,3 +1,5 @@
+"""Per-material and per-channel bake image size rules and the GPU memory they imply."""
+
 from . import baking, limits
 from .errors import bad_args
 from .schema import EXISTS, array, integer, names, obj, ref

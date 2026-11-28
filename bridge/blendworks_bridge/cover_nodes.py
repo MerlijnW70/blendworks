@@ -1,3 +1,5 @@
+"""Geometry node group that builds ground cover instances."""
+
 import bpy
 import numpy
 

@@ -1,3 +1,5 @@
+"""PBR material builder: colour spaces, maps, warnings and glTF group."""
+
 import math
 
 import bpy

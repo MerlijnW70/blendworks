@@ -1,3 +1,5 @@
+"""Journal files of the autosave: line encoding, hashes and change detection."""
+
 import hashlib
 import json
 import os

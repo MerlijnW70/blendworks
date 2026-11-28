@@ -1,3 +1,5 @@
+"""Builds the installable add-on zip from the add-on folder and the bridge package."""
+
 import os
 import sys
 import zipfile

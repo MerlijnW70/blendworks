@@ -1,3 +1,5 @@
+"""Armature helpers: bone name checks, mirrored names, lookup and local coordinates."""
+
 import json
 import math
 import re

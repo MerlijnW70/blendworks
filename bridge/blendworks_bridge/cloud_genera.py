@@ -1,3 +1,5 @@
+"""Cloud genus presets (cumulus to cumulonimbus) and their thresholds."""
+
 from bisect import bisect_left
 
 from .errors import bad_args

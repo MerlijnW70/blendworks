@@ -1,3 +1,5 @@
+"""Sweep maths: rotation-minimising frames, miters and rings along a path."""
+
 import math
 
 from mathutils import Quaternion, Vector

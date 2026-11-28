@@ -1,3 +1,5 @@
+"""Shell spiral rings."""
+
 import math
 
 from mathutils import Vector

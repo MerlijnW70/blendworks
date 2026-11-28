@@ -1,3 +1,5 @@
+"""LOD planning: screen error in pixels and switch distances."""
+
 import math
 
 REFERENCE_HEIGHT_PIXELS = 1080

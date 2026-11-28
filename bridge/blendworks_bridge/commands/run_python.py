@@ -1,3 +1,5 @@
+"""The run_python command: runs arbitrary Python inside Blender, a dangerous escape hatch."""
+
 import contextlib
 import io
 import json

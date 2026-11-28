@@ -1,3 +1,5 @@
+"""Exact circle, arc and helix paths for sweeps, with segment counts from a chord tolerance."""
+
 import math
 
 from mathutils import Vector

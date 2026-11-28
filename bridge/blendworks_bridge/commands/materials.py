@@ -1,3 +1,5 @@
+"""Material commands: add_material, assign_material and vertex_colors."""
+
 import bpy
 
 from ..errors import bad_args, not_found

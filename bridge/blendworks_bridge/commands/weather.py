@@ -1,3 +1,5 @@
+"""The weather command: whole weather (sky, clouds, rain, lightning, wetness) in one call from presets."""
+
 from .. import cloud_layers, weather_build, weather_continuum
 from ..errors import bad_args
 from ..limits import ATMOSPHERE_DENSITY, FRACTION, MAX_LENGTH, MAX_NAMES, MAX_SEED, RAIN_RATE

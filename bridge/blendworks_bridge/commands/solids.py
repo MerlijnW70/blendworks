@@ -1,3 +1,5 @@
+"""Solid commands: extrude_outline, gear and sprocket."""
+
 import math
 
 from ..builder import SHAPE_FIELDS, finish_shape

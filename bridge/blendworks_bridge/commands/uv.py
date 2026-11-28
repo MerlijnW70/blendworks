@@ -1,3 +1,5 @@
+"""UV commands: uv_smart_project, uv_unwrap and uv_info."""
+
 import math
 
 import bpy

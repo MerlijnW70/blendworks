@@ -1,3 +1,5 @@
+"""The Policy of a command: whether it mutates, is slow, snapshots or is internal."""
+
 DEFAULT_TIMEOUT = 120
 DEFAULT_MAX_TIMEOUT = 600
 SLOW_TIMEOUT = 300

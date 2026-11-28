@@ -1,3 +1,5 @@
+"""L-system derivation: rule tables, arithmetic checks and rule application."""
+
 import math
 
 import numpy

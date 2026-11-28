@@ -1,3 +1,5 @@
+"""Reads and writes .glb files and adds GPU instancing for ground cover export."""
+
 import json
 import struct
 

@@ -1,3 +1,5 @@
+"""Brass material schema and the ageing of brass surfaces."""
+
 from .occlusion import occlusion_mask
 from .procedural import preset_vector
 from .scratches import DIRECTIONS, SCRATCH_DIRECTION_HELP, scratch_axis_schema, scratch_lines

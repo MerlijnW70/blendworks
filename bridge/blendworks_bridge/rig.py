@@ -1,3 +1,5 @@
+"""Preview rig of camera and lights, and the render settings it sets."""
+
 import math
 
 import bpy

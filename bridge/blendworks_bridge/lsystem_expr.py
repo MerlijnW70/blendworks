@@ -1,3 +1,5 @@
+"""L-system expression scanner and evaluator."""
+
 import math
 import re
 

@@ -1,3 +1,5 @@
+"""Shape commands: lathe, sweep and loft build meshes from profiles and paths."""
+
 from mathutils import Vector
 
 from ..analytic_paths import ANALYTIC_PATHS, path_fields

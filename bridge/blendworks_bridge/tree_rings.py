@@ -1,3 +1,5 @@
+"""Tube rings for branches: strips, UVs and domes."""
+
 import math
 
 import numpy

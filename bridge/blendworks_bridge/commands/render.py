@@ -1,3 +1,5 @@
+"""The render_preview command: camera, turntable and close-up previews in several shadings."""
+
 import base64
 import os
 import shutil

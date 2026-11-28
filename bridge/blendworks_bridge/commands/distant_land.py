@@ -1,3 +1,5 @@
+"""The distant_land command: land that surrounds a region out to tens of kilometres and continues its terrain."""
+
 import json
 import math
 

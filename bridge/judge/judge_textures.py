@@ -1,3 +1,5 @@
+"""Texture measurement: colour spaces, mip chains and GPU bytes."""
+
 import os
 
 KINDS = ("baseColor", "metallicRoughness", "normal", "emissive", "occlusion")

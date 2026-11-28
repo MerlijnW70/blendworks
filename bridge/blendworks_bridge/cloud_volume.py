@@ -1,3 +1,5 @@
+"""Cloud volume domains: bounds, radial fade, scattering lobes and the domain material."""
+
 import bpy
 
 from . import atmosphere_haze, cloud_field, sky_nodes, weather_objects

@@ -1,3 +1,5 @@
+"""The displace_noise command: seeded, bounded wear (jitter and dents) on a mesh."""
+
 from ..errors import bad_args, not_found
 from ..kit_limits import MAX_DENTS
 from ..registry import command

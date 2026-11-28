@@ -1,3 +1,5 @@
+"""L-system planning: resolves a request into a checked word with organs."""
+
 import math
 
 from .errors import bad_args

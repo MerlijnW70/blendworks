@@ -1,3 +1,5 @@
+"""Skin measurement: rigs, weights and rest pose."""
+
 from array import array
 
 from judge_bind import BindUnreadable, blender_differences, gltf_differences, rest_pose_result

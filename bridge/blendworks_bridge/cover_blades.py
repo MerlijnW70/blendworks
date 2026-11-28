@@ -1,3 +1,5 @@
+"""Grass blade geometry for ground cover: triangles, widths, shapes and clumps."""
+
 import math
 
 import numpy

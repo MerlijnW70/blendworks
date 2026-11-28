@@ -1,3 +1,5 @@
+"""Hydraulic erosion by simulated water droplets on a height grid."""
+
 import numpy
 
 BATCH = 512

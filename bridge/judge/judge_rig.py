@@ -1,3 +1,5 @@
+"""The judge's studio rig: scene, world and orientation."""
+
 from math import radians, sin, tan
 
 import bpy

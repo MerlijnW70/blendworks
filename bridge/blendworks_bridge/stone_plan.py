@@ -1,3 +1,5 @@
+"""Stone placement plan: size bands, spacing and matrices."""
+
 import math
 
 import numpy

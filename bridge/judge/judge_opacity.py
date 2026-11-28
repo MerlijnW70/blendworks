@@ -1,3 +1,5 @@
+"""Reads opacity from materials."""
+
 import numpy as np
 
 from judge_textures import group_output, socket_by_identifier

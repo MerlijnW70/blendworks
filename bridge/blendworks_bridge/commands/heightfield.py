@@ -1,3 +1,5 @@
+"""The heightfield command: a terrain tile from the noise stack at world coordinates."""
+
 import bpy
 import numpy
 

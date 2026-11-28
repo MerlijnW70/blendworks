@@ -1,3 +1,5 @@
+"""Scratch direction schemas and mapping of scratch axes onto a surface."""
+
 import math
 
 from .errors import bad_args

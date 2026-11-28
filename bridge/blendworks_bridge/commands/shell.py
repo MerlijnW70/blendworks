@@ -1,3 +1,5 @@
+"""The shell command: a closed Raup shell grown from a generating curve along a spiral."""
+
 from ..builder import finish_shape
 from ..kit_limits import MAX_PROFILE_POINTS, MAX_SEGMENTS
 from ..limits import (ASPECT_RATIO, CURVE_DISTANCE, FEWEST_ROUND_STEPS, FEWEST_SIDES, FRACTION, LIP_FLARE,

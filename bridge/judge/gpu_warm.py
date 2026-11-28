@@ -1,3 +1,5 @@
+"""Warms the GPU kernel cache with a small scene before judging."""
+
 import os
 import sys
 

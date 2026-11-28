@@ -1,3 +1,5 @@
+"""The ground_cover_export command: writes a ground cover to a .glb with GPU instancing."""
+
 import contextlib
 import json
 import os

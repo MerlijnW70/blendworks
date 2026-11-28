@@ -1,3 +1,5 @@
+"""Shell generating curve profiles."""
+
 import math
 
 from .errors import bad_args

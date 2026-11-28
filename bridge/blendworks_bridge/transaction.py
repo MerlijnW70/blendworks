@@ -1,3 +1,5 @@
+"""Transactions: undo steps around a command so a failure rolls back."""
+
 import bpy
 import numpy
 

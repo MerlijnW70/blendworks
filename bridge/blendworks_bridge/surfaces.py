@@ -1,3 +1,5 @@
+"""Engraving surfaces: plane, face region, cylinder, ring and path."""
+
 import bisect
 import math
 

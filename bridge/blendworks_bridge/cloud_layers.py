@@ -1,3 +1,5 @@
+"""Cloud layers: observer, resolution against the sky and light at a layer."""
+
 import math
 
 import bpy

@@ -1,3 +1,5 @@
+"""Stone shapes: hull, resampling and roundness."""
+
 import math
 
 import bpy

@@ -1,3 +1,5 @@
+"""Photometry for liquids: blackbody, emission strength and diffuse reflectance."""
+
 import math
 
 import numpy

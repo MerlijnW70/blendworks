@@ -1,3 +1,5 @@
+"""Render device choice: GPU backend probing, mode selection and a scope that applies it."""
+
 import os
 
 import bpy

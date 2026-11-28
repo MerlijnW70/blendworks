@@ -1,3 +1,5 @@
+"""Skinning of ring sections into a surface with caps and planar UVs."""
+
 from mathutils import Vector
 
 

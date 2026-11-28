@@ -1,3 +1,5 @@
+"""The blob command: a smooth union of spheres built as metaballs and voxel remeshed into one closed mesh."""
+
 import math
 
 import bpy
