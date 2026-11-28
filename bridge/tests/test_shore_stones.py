@@ -20,7 +20,7 @@ GROUP = 0.4
 CLUSTERED = 0.75
 CONTROL_AT_LEAST = 0.9
 SPACING_VARIATION = 0.25
-ROUND_RANGE = (0.1, 0.6)
+ROUND_RANGE = (0.1, 0.85)
 ROUND_GAIN = 0.06
 SPHERE_AT_LEAST = 0.9
 BOX_AT_MOST = 0.2
@@ -167,8 +167,8 @@ def test_the_roundness_measure_reads_a_sphere_round_and_a_box_angular(bridge):
         points, _ = stone_shape.mesh_arrays(bpy.data.objects[name])
         value = stone_shape.roundness(points)
         assert (value > SPHERE_AT_LEAST) if expected == "round" else (value < BOX_AT_MOST), (name, value)
-    fresh, _ = stone_shape.build_stone(context, "Fresh", 0.0, 4)
-    worked, _ = stone_shape.build_stone(context, "Worked", 1.0, 4)
+    fresh, _, _ = stone_shape.build_stone(context, "Fresh", 0.0, 4)
+    worked, _, _ = stone_shape.build_stone(context, "Worked", 1.0, 4)
     fresh_value = stone_shape.roundness(stone_shape.mesh_arrays(fresh)[0])
     worked_value = stone_shape.roundness(stone_shape.mesh_arrays(worked)[0])
     assert worked_value - fresh_value > ROUND_GAIN, (fresh_value, worked_value)
@@ -180,8 +180,8 @@ def test_the_roundness_measure_reads_a_sphere_round_and_a_box_angular(bridge):
 def test_stones_are_not_eggs_their_shapes_differ_in_proportion(bridge):
     context = Context(bridge.handler, None)
     flatness = []
-    for seed in range(6):
-        stone, _ = stone_shape.build_stone(context, f"Stone{seed}", 0.5, seed)
+    for seed in range(8):
+        stone, _, _ = stone_shape.build_stone(context, f"Stone{seed}", 0.5, seed)
         flatness.append(sorted(float(value) for value in stone.dimensions))
     ratios = np.array([[row[0] / row[2], row[1] / row[2]] for row in flatness])
     assert np.ptp(ratios[:, 0]) > 0.15 and np.ptp(ratios[:, 1]) > 0.08, ratios

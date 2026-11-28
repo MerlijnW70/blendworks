@@ -16,7 +16,7 @@ from ..schema import CREATES, EXISTS, array, integer, length, number, ref, strin
 from ..util import get_mesh_object, mesh_counts, require_free_name
 
 DISTRIBUTIONS_HERE = tuple(name for name in DISTRIBUTIONS if name != "uniform")
-STONE_MATERIAL = {"color": [0.2, 0.19, 0.175], "secondary_color": [0.1, 0.095, 0.088], "cell_scale": 2.5, "cracks": False, "roughness": 0.8}
+STONE_MATERIAL = {"lithology": "granite"}
 MAX_STONES_LISTED = 500
 
 
@@ -26,10 +26,11 @@ def pair(description, low, high, default):
 
 def plan_shore_stones(args, state):
     """The stones are realized into one object per shape variant, name_0 and so on: how many hold stones follows from the
-    shore. The default granite is the material name_stone."""
+    shore. The default granite is the material name_stone, and the fresh fracture faces of angular stones name_stone_fresh."""
     state.unknown(("object",))
     if "material" not in args:
         state.add("material", f"{args.get('name', 'ShoreStones')}_stone")
+        state.add("material", f"{args.get('name', 'ShoreStones')}_stone_fresh")
 
 
 def stone_material(ctx, name, given):
@@ -64,7 +65,7 @@ def stone_material(ctx, name, given):
         "worked_distance": length("Height above the water line over which waves still rework stones; the share of worked stones falls as exp(-height / this).", 0.8),
         "classes": integer("Shape classes from angular (a fresh fragment) to round (long worked); one class is of middling wear.", 1, MAX_STONE_CLASSES, 4),
         "variants": integer("Meshes built for each class; stones of a class share them.", 1, MAX_STONE_VARIANTS, 2),
-        "material": ref(string("Existing material for the stones. Default: a granite built with material_procedural."), "material", EXISTS),
+        "material": ref(string("Existing material for the stones; a stone material with a lithology also gives their fresh faces its fresh variant. Default: granite (material_procedural stone with lithology granite)."), "material", EXISTS),
         "shore_wet": number("Darken and gloss the stones up to this many metres above the water line, as the shore is (0 leaves them dry).", 0.0, MAX_RELIEF, 0.5),
         "max_count": integer("Most stones to place.", 1, MAX_INSTANCES, 400),
         "seed": integer("Random seed; the same seed, ground and water give the same stones.", 0, MAX_SEED, 0),
@@ -100,15 +101,15 @@ def shore_stones(ctx, args):
     rng = numpy.random.default_rng([args["seed"], 0x570F])
     layout = stone_plan.plan(surface, ground, water, corners, args, classes, rng)
     material = stone_material(ctx, name, args.get("material"))
-    shapes, heights, rounds = [], [], []
+    shapes, heights, rounds, histories = [], [], [], []
     try:
         for index in range(classes * variants):
             transport = (index // variants) / max(classes - 1, 1) if classes > 1 else 0.5
-            stone, height = stone_shape.build_stone(ctx, f"{name}_variant_{index}", transport, args["seed"] * 1000 + index, material)
-            points, _ = stone_shape.mesh_arrays(stone)
+            stone, height, shape = stone_shape.build_stone(ctx, f"{name}_variant_{index}", transport, args["seed"] * 1000 + index, material)
             shapes.append(stone)
             heights.append(height)
-            rounds.append(stone_shape.roundness(points))
+            rounds.append(shape["roundness"])
+            histories.append(shape)
         heights = numpy.array(heights)
         picks = layout["class"] * variants + rng.integers(0, variants, len(layout["class"]))
         placed = stone_plan.matrices(layout, heights, picks)
@@ -125,6 +126,7 @@ def shore_stones(ctx, args):
                 bpy.data.meshes.remove(mesh)
     ctx.view_layer.update()
     result = report(layout, picks, variants, rounds, objects, args)
+    result["shapes"] = [{key: (round(value, 4) if isinstance(value, float) else value) for key, value in shape.items() if key != "axes"} for shape in histories]
     if args["shore_wet"] > 0.0:
         result["wet"] = liquid_world.wet_shores(ctx, args["shore_wet"], [item.name for item in objects])
     return result

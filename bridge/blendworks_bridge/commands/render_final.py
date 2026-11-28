@@ -7,7 +7,7 @@ import tempfile
 import bpy
 
 from .. import (atmosphere_haze, camera_exposure, camera_reach, cloud_forms, device, exr_read, liquid_render, render_outputs, render_view,
-               sky_world, view_materials)
+               rock_relief, sky_world, view_materials)
 from ..errors import bad_args
 from ..limits import (FINAL_RESOLUTION, FINAL_SAMPLES, FRACTION, LEAST_BIT_DEPTH, MAX_BIT_DEPTH, MAX_FRAME, MAX_SEED,
                       PATH_LENGTH, RENDER_SECONDS, SHORTEST_RENDER_SECONDS, SHORTEST_SHUTTER_FRAMES, SHUTTER_FRAMES,
@@ -145,11 +145,13 @@ def render_final(ctx, args):
 
         with render_view.RenderView(scene, ctx.view_layer, shading, camera, args["wire_width"], args["wire_triangles"]) as view:
             with cloud_forms.FinalForm(scene) as cloud_form, camera_reach.ClipCovers(scene, ctx.view_layer, camera) as clip:
-                (layers_path, passes_path), choice = render_outputs.on_device(scene, choice, args.get("device"), work)
+                with rock_relief.RenderDetail(scene, ctx.view_layer, camera, shading == "shaded") as detail:
+                    (layers_path, passes_path), choice = render_outputs.on_device(scene, choice, args.get("device"), work)
             result = write_outputs(ctx, scene, camera, args, outputs, passes, haze, (layers_path, passes_path), folder, counter.most)
         result["shading"] = shading
         result.update(clip.report)
         result.update(view.report)
+        result.update(detail.report)
         result["overwritten"] = [ctx.workspace.relative(name) for name in taken]
         result["device"] = choice.report()
         result["device_label"] = choice.label()
@@ -257,7 +259,8 @@ def configure(scope, scene, view_layer, camera, args):
                "film_transparent", "use_border", "use_compositing", "use_sequencer", "use_motion_blur", "motion_blur_shutter",
                "motion_blur_position", *stamp_fields(render))
     scope.keep(cycles, "samples", "seed", "use_animated_seed", "use_denoising", "denoiser", "denoising_input_passes",
-               "denoising_prefilter", "use_adaptive_sampling", "adaptive_threshold", "adaptive_min_samples", "time_limit")
+               "denoising_prefilter", "use_adaptive_sampling", "adaptive_threshold", "adaptive_min_samples", "time_limit",
+               "offscreen_dicing_scale")
     scope.keep(view_layer.cycles, "use_denoising")
     render.engine = "CYCLES"
     render.resolution_x = args["width"]

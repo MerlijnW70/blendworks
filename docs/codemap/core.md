@@ -22,7 +22,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `device`: Render device choice: GPU backend probing, mode selection and a scope that applies it. | fn: requested_mode cycles_preferences + | test: render
 - `errors`: The bridge's error class and the constructors for bad arguments, not found, failed and forbidden. | fn: BridgeError bad_args + | test: bake_failures engrave +1
 - `exporting`: Export option checks and preparation for glb, fbx and obj exports. | fn: option_fields check_options + | test: autosave checkpoints +2
-- `exr_read`: Minimal OpenEXR header and part reader. | fn: ExrError Part + | test: air_and_light camera_photography +7
+- `exr_read`: Minimal OpenEXR header and part reader. | fn: ExrError Part + | test: air_and_light camera_photography +8
 - `gltf_extras`: Reads and writes glTF files to add skeleton extras. | fn: skeleton_extras read_glb + | test: autosave checkpoints +2
 - `handler`: Request handler: validates a request, runs a command in a context and encodes the reply. | fn: Context Handler + | test: crate describe +2
 - `image_header`: Reads image dimensions from PNG, JPEG, WebP and EXR headers without loading pixels. | fn: image_dimensions dimensions_of + | test: images

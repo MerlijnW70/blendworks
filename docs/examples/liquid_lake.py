@@ -129,10 +129,9 @@ def rocks():
     """Stones along the water line of the lake and the river banks, laid by `shore_stones`: in groups of alike size with bare
     shore between them, partly sunk and some standing in the shallows, angular on the bank and round where the water works
     them, granite grey with lichen on top and wet where the water reaches."""
-    cmd("material_procedural", name="rock", stone={"color": [0.2, 0.19, 0.175], "secondary_color": [0.1, 0.095, 0.088], "cell_scale": 2.5, "cracks": False, "roughness": 0.8})
-    cmd("material_layer", material="rock", mask="up_facing", moss={}, amount=0.2, softness=0.5, seed=4)
+    cmd("material_procedural", name="rock", stone={"lithology": "granite", "lichen": 0.3, "moss": 0.25})
     return cmd("shore_stones", target="land", name="shore_rocks", material="rock", shore_width=2.5, shore_depth=0.3, cluster_density=0.03, per_cluster=9.0,
-               cluster_radius=0.7, size_range=[0.12, 1.4], burial=[0.2, 0.55], worked_distance=0.9, shore_wet=0.6, seed=4, max_count=700)
+               cluster_radius=0.7, size_range=[0.12, 1.4], burial=[0.2, 0.55], worked_distance=0.9, shore_wet=0.3, seed=4, max_count=700)
 
 
 def ground_at(heights, x, y):

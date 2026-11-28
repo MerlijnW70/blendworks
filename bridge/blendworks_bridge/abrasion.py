@@ -11,7 +11,9 @@ STEP = 0.6
 EDGE_DIVISOR = 32
 MAX_REFINED_VERTICES = 400_000
 REFINE_ROUNDS = 12
-WEAR_SPREAD = 0.5
+WEAR_GAIN = 2.0
+WEAR_FLOOR = 0.1
+WEAR_CELLS = 5.0
 WEAR_OCTAVES = 2
 CURVATURE_PERCENTILE = 99.0
 IDLE_MOVE = 1e-9
@@ -163,8 +165,8 @@ def vertex_normals(points, triangles):
 
 
 def wear_factor(points, seed, extent):
-    params = {"seed": seed, "basis": "perlin", "scale": max(extent / 2.5, 1e-6), "octaves": WEAR_OCTAVES, "lacunarity": 2.0, "hurst": 0.7, "mode": "fbm", "ridge_offset": 1.0, "warp": 0.0, "warp_octaves": 1}
-    return 1.0 + WEAR_SPREAD * stack_field(points, params)
+    params = {"seed": seed, "basis": "perlin", "scale": max(extent / WEAR_CELLS, 1e-6), "octaves": WEAR_OCTAVES, "lacunarity": 2.0, "hurst": 0.7, "mode": "fbm", "ridge_offset": 1.0, "warp": 0.0, "warp_octaves": 1}
+    return numpy.maximum(1.0 + WEAR_GAIN * stack_field(points, params), WEAR_FLOOR)
 
 
 def flow_step(points, triangles, edges, degree, modulation):
@@ -182,6 +184,8 @@ def flow_step(points, triangles, edges, degree, modulation):
 
 
 def abrade_points(points, triangles, edges, amount, target_convexity, iterations, seed, extent):
+    if amount is not None and amount <= 0.0:
+        return points, 0, 0.0, "amount"
     degree = numpy.maximum(numpy.bincount(edges.ravel(), minlength=len(points)).astype(numpy.float64), 1.0)
     modulation = wear_factor(points, seed, extent)
     start = volume_of(points, triangles)

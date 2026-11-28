@@ -34,7 +34,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `weather_lightning`: Lightning bolt paths and materials. | fn: zigzag bolt_paths + | test: weather
 - `weather_objects`: Tagging and removal of the objects a weather call creates. | fn: tag kind_of + | test: weather
 - `weather_rain`: Rain: extinction, veil, shafts and streaks. | fn: extinction mask + | test: weather
-- `weather_wet`: Wet surface look: darkening and shore wetness. | fn: principled clear + | test: liquid_scene
+- `weather_wet`: Wet surface look: darkening and shore wetness. | fn: principled clear + | test: liquid_scene rock_material
 - `world_background`: World background surface: reads, describes and replaces it. | fn: output_node upstream + | test: world_hdri world_scale +1
 
 ### bridge/blendworks_bridge/commands/ (9)

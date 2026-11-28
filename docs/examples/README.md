@@ -163,6 +163,16 @@ It runs these steps in order, and stops at the first failing command:
 
 `BLENDWORKS_TREE_DETAIL` (a factor on the point and branch counts), `BLENDWORKS_SHOT_SIZE` and `BLENDWORKS_SHOT_SAMPLES` make a smaller, faster run.
 
+## Rock realism
+
+`rock_realism.py` is the acceptance build of the `rock-realism` job: a granite boulder seen from about a metre, a ledge of sandstone beds and a bar of river cobbles (granite, basalt and sandstone, scattered with `scatter`), each built with commands only from the `stone` preset with a `lithology` and rendered with `render_final` at its default settings, so the relief is displaced near the camera. The lake example's shore close-up (`liquid_lake.py`, shot `rocks`) shows the shore stones in granite.
+
+```
+blender --background --factory-startup --python docs/examples/rock_realism.py -- out
+```
+
+It writes `boulder.png`, `ledge.png`, `cobbles.png` and `summary.json` (each render's `rock_detail`). `BLENDWORKS_SCENES` picks scenes; `BLENDWORKS_SHOT_WIDTH`, `_HEIGHT` and `_SAMPLES` make a faster preview.
+
 ## Rocks
 
 `rocks.py` builds a fractured boulder with its fragments, a chipped block and three worn stones with commands only, renders them and exports each stone. It is the acceptance build of the `rocks` job.

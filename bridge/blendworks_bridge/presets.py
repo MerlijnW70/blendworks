@@ -6,6 +6,7 @@ from .marble import MARBLE_VEIN_COLOR, finish_schema, marble, vein_mask, veins_s
 from .limits import (FEWEST_GROWTH_RINGS, FEWEST_STONE_CELLS, FEWEST_THREADS, FRACTION, LEAST_SCRATCH_DENSITY,
                      MAX_SCRATCH_DENSITY, TEXTURE_FREQUENCY, WAVE_DISTORTION)
 from .natural import natural_presets
+from .rock_material import rock, rock_schema
 from .procedural import AXES, Preset, preset_vector, stretched
 from .scratches import DIRECTIONS, SCRATCH_DIRECTION_HELP, scratch_axis_schema, scratch_lines
 from .schema import boolean, color, number, string
@@ -86,6 +87,8 @@ def stone_patches(graph, vector, p):
 
 
 def stone(graph, p):
+    if p["lithology"] != "none":
+        return rock(graph, p)
     vector = preset_vector(graph, p)
     cracks = 1.0
     if p["cracks"]:
@@ -187,7 +190,7 @@ PRESETS = {
             "coverage": amount("Share of the surface covered by rust.", 0.5),
             "metal_roughness": amount("Roughness of the bare metal.", 0.4),
         }, rust),
-        Preset("stone", "Stone with soft colour patches, fine grain, optional hard cells and cracks, and optional veins.", 2.0, {
+        Preset("stone", "Stone with soft colour patches, fine grain, optional cracks and veins; or, with lithology, natural rock with grains, pits, cracks, rind, lichen, moss and water marks.", 2.0, {
             "color": color("Main stone colour, linear RGB.", [0.33, 0.31, 0.28], False),
             "secondary_color": color("Second stone colour, linear RGB.", [0.2, 0.19, 0.18], False),
             "cell_scale": number("Colour patches (and, with cracks or hard_cells, stone cells) per metre.", FEWEST_STONE_CELLS, TEXTURE_FREQUENCY, 4.0),
@@ -196,6 +199,7 @@ PRESETS = {
             "crack_width": amount("Width of the cracks between cells.", 0.05),
             "veins": veins_schema(),
             "roughness": amount("Average roughness.", 0.8),
+            **rock_schema(),
         }, stone),
         Preset("marble", "Polished white marble: layered soft-edged veins that branch, faint drifts and clouds, sized in metres like Carrara slabs.", 0.3, {
             "color": color("Base stone colour, linear RGB.", [0.8, 0.78, 0.73], False),

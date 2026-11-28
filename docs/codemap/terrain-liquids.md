@@ -1,16 +1,16 @@
 # Code map: Terrain, rock and liquids
 
-heightfields, erosion, noise, land and distant land, liquid_*, stones, fracture, chip, abrade. Part of [the code map index](../CODEMAP.md).
+heightfields, erosion, noise, land and distant land, liquid_*, stones and rock (shape, lithology, weathering, relief), fracture, chip, abrade. Part of [the code map index](../CODEMAP.md).
 
 One line per module: its docstring, its first public names (`fn`, `+` means more), the commands it registers (`cmd`) and its tests (`test`). Bridge tests are `bridge/tests/test_<name>.py`; vitest ones are `test/<name>.test.ts`. A module with no `test` is covered only by the core tests (smoke, describe, crate, scene).
 
-### bridge/blendworks_bridge/ (47)
+### bridge/blendworks_bridge/ (53)
 
-- `abrasion`: Abrasion maths: refines a mesh and splits its faces into a worn, rounded pattern. | fn: mesh_triangles edge_table + | test: rocks-example
+- `abrasion`: Abrasion maths: refines a mesh and splits its faces into a worn, rounded pattern. | fn: mesh_triangles edge_table + | test: rock_shape rocks-example
 - `erosion_droplets`: Hydraulic erosion by simulated water droplets on a height grid. | fn: locate height_and_gradient + | test: erode eroded-terrain-example
 - `erosion_thermal`: Thermal erosion: material slides downhill past the talus angle. | fn: neighbour_slices distances + | test: eroded-terrain-example
 - `fracturing`: Fracture maths: random directions and cuts of a convex solid into pieces. | fn: random_direction binary_pieces + | test: rocks-example
-- `fragments`: Fragments of a fractured or chipped solid: materials, slots and the solid read from an object. | fn: fresh_material plan_fresh_material + | test: rocks-example
+- `fragments`: Fragments of a fractured or chipped solid: materials, slots and the solid read from an object. | fn: fresh_material plan_fresh_material + | test: rock_integration rocks-example
 - `heightgrid`: Height grid tiles and tile sets for terrain. | fn: grid_resolution Tile + | test: eroded-terrain-example
 - `land_border`: How distant land meets the region: at each border point the land takes the region's height and outward slope, and the | fn: fade smooth_periodic + | test: landscape_air
 - `land_field`: The height field of distant land: octaves of gradient noise whose amplitudes are calibrated until the land measures as | fn: noise_moments smoothstep + | test: landscape_air
@@ -34,12 +34,18 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `liquid_river`: River paths: smoothing, a running minimum bed profile and carving. | fn: Path chaikin + | test: liquid_bodies
 - `liquid_shader`: Shader graph builder for liquid materials. | fn: LiquidGraph fresh_material + | test: liquid_optics
 - `liquid_spectrum`: Sea state: wave spectrum, wavelengths, whitecaps and slope variance. | fn: sea_state peak_wavelength + | test: liquid_bodies
-- `liquid_world`: Liquid objects in the scene, wind and storm state. | fn: piecewise storm_of + | test: liquid_bodies liquid_scene +2
+- `liquid_world`: Liquid objects in the scene, wind and storm state. | fn: piecewise storm_of + | test: liquid_bodies liquid_scene +3
 - `noise`: Seeded noise functions: lattice hash, Perlin and feature points. | fn: finalize lattice_hash + | test: noise_displace noise_math +1
 - `noise_stack`: Noise stacks: octaves, gains and domain warping evaluated in world metres. | fn: octave_frame octave_point + | test: heightfield noise_displace +2
 - `polyhedron`: Convex solid data structure with box UVs, face splits and compaction. | fn: Solid box_uv + | test: chip fracture
+- `rock_fresh`: The fresh fracture variant of a rock material, which fracture and chip give their cut faces. | fn: rock_params fresh_variant + | test: rock_integration rock_material +2
+- `rock_lithology`: What each rock type looks like at the scale of its grains, and where every number comes from. | fn: lithology mixed + | test: rock_material
+- `rock_material`: The stone preset's natural rock: lithology grains, pits, cracks and colour, with weathering and relief on top. | fn: shifted_vector warped + | test: rock_material
+- `rock_relief`: Surface relief of rock: true displacement near the camera, bump beyond, within a triangle budget. | fn: near_share finish + | test: rock_relief rock_integration
+- `rock_shape`: Shape statistics of stones and the three transport histories; sources in docs/research/rock-realism.md. | fn: history_of target_roundness + | test: rock_shape
+- `rock_weathering`: Weathering of a rock surface: a rind, lichen, moss, worn edges and the marks of water; docs/research/rock-realism.md. | fn: attribute facing_up + | test: rock_integration rock_material +2
 - `stone_plan`: Stone placement plan: size bands, spacing and matrices. | fn: clark_evans normal_cdf + | test: shore_stones
-- `stone_shape`: Stone shapes: hull, resampling and roundness. | fn: mesh_arrays volume + | test: shore_stones
+- `stone_shape`: Shapes of stones by how far water has moved them (rock_shape holds the measures, classes and sources). | fn: mesh_arrays volume + | test: rock_shape shore_stones
 - `terrain`: Terrain tile mesh: grid points, heights, rim and unfold. | fn: grid_points surface_heights + | test: terrain_kernels terrain_loader +5
 - `terrain_bundle`: Selects the prebuilt native terrain core for the running platform and checks its sha256 against the release manifest. | fn: platform_key bundled_roots + | test: native_dist
 - `terrain_core`: Loader of the native terrain core: finds and loads the library through ctypes, describes numpy buffers, falls back with one stated reason. | fn: NativeError CoreMissing + | test: native_dist terrain_loader +1

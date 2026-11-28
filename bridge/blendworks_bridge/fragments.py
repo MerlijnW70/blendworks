@@ -8,10 +8,10 @@ from mathutils import Vector
 from .errors import bad_args, not_found
 from .meshdata import MeshData
 from .polyhedron import Solid, box_uv, merged_counts
+from .rock_fresh import FRESH_FLAG, first_rock, fresh_variant
 from .topology import describe_problems, manifold_report
 
 FRESH_MATERIAL = "FreshBreak"
-FRESH_FLAG = "blendworks_fresh"
 CONVEX_TOLERANCE = 1e-6
 UV_NAME = "UVMap"
 
@@ -42,11 +42,17 @@ def named_fresh_material(name):
 
 
 def slot_layout(mesh, name=None):
+    """The mesh's slots and the index of its fresh slot, added when missing: the named material, else the fresh variant of
+    the mesh's rock material (stone with a lithology), else FreshBreak."""
     materials = list(mesh.materials) or [None]
     wanted = bpy.data.materials.get(name) if name is not None else None
     for index, material in enumerate(materials):
         if material is not None and (material is wanted if wanted is not None else material.get(FRESH_FLAG)):
             return materials, index
+    if name is None:
+        rock = first_rock(mesh)
+        if rock is not None:
+            return materials + [fresh_variant(rock)], len(materials)
     return materials + [named_fresh_material(name)], len(materials)
 
 
