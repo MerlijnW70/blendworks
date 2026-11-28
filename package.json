@@ -6,9 +6,21 @@
   "bin": {
     "blendworks": "src/judge/bin.js"
   },
+  "files": [
+    "dist",
+    "src",
+    "bridge",
+    "!bridge/tests",
+    "!bridge/**/__pycache__",
+    "native/dist"
+  ],
   "scripts": {
     "build": "tsx scripts/build-native.mjs && tsc -p tsconfig.build.json",
     "build:native": "tsx scripts/build-native.mjs",
+    "native:stage": "tsx scripts/native-dist.mjs stage",
+    "native:manifest": "tsx scripts/native-dist.mjs manifest",
+    "native:verify": "tsx scripts/native-dist.mjs verify",
+    "prepack": "tsx scripts/native-dist.mjs verify",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:bridge": "tsx scripts/bridge-tests.mjs",

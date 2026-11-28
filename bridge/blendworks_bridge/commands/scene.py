@@ -2,7 +2,7 @@
 
 import bpy
 
-from .. import limits, world_background
+from .. import limits, terrain_core, world_background
 from ..inspect_scene import DETAILS, scene_report
 from ..registry import command
 from ..schema import integer, names, ref, string
@@ -60,7 +60,9 @@ def describe(ctx, args):
     nearest=(("mesh_query", "for single faces of one mesh"),),
 )
 def scene_info(ctx, args):
-    return scene_report(ctx, args["detail"], args.get("names"), args["limit"], args["offset"], list_checkpoints(ctx.workspace))
+    report = scene_report(ctx, args["detail"], args.get("names"), args["limit"], args["offset"], list_checkpoints(ctx.workspace))
+    report["native_core"] = terrain_core.report()
+    return report
 
 
 @command(

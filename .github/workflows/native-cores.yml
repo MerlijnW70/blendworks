@@ -1,0 +1,93 @@
+name: native-cores
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+env:
+  RUST_VERSION: "1.98.1"
+  CARGO_TERM_COLOR: never
+
+jobs:
+  build:
+    name: core ${{ matrix.key }}
+    runs-on: ${{ matrix.runner }}
+    container: ${{ matrix.container }}
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - key: win32-x64
+            runner: windows-2022
+            target: x86_64-pc-windows-msvc
+            library: blendworks_core.dll
+          - key: linux-x64
+            runner: ubuntu-22.04
+            container: debian:bullseye-20260105-slim
+            target: x86_64-unknown-linux-gnu
+            library: libblendworks_core.so
+          - key: darwin-arm64
+            runner: macos-14
+            target: aarch64-apple-darwin
+            library: libblendworks_core.dylib
+          - key: darwin-x64
+            runner: macos-13
+            target: x86_64-apple-darwin
+            library: libblendworks_core.dylib
+    steps:
+      - name: Install build tools in the glibc 2.31 container
+        if: matrix.container
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates curl gcc libc6-dev git
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - uses: actions/checkout@v4
+      - name: Pin the Rust toolchain
+        shell: bash
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal --target ${{ matrix.target }}
+          rustup default "$RUST_VERSION"
+      - name: Build offline from the checked-in sources
+        shell: bash
+        run: cargo build --release --offline --locked --target ${{ matrix.target }} --manifest-path native/Cargo.toml --target-dir native/target
+      - name: Stage the core
+        shell: bash
+        run: |
+          mkdir -p "cores/${{ matrix.key }}"
+          cp "native/target/${{ matrix.target }}/release/${{ matrix.library }}" "cores/${{ matrix.key }}/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: core-${{ matrix.key }}
+          path: cores/${{ matrix.key }}
+          if-no-files-found: error
+
+  manifest:
+    name: manifest
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: core-*
+          path: cores
+      - name: Rename downloaded folders to platform keys
+        run: |
+          for folder in cores/core-*; do mv "$folder" "cores/${folder#cores/core-}"; done
+      - name: Write and verify the manifest in release mode
+        run: npx tsx scripts/native-dist.mjs manifest cores --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-cores
+          path: cores
+          if-no-files-found: error

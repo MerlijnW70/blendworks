@@ -41,7 +41,7 @@ Kernels use `std::thread::scope` with a fixed partition: contiguous spans of row
 
 ## Load
 
-`terrain_core.core()` loads `native/target/release/<library>` (or the file `BLENDWORKS_NATIVE_LIB` names) once per process; on Windows it loads a copy named by the file's hash, so a rebuild never meets a locked file. If the library is missing, does not load or has another ABI version, it prints one line, `blendworks: <reason>; using the Python reference kernels`, and `terrain_kernels` runs the references, unless the core is required. `terrain_core.status()` reports what happened.
+`terrain_core.core()` loads the file `BLENDWORKS_NATIVE_LIB` names, else `native/target/release/<library>`, else the sha256-checked prebuilt core bundled for the platform (see `native-cores.md`), once per process; on Windows it loads a copy named by the file's hash, so a rebuild never meets a locked file. If the library is missing, does not load or has another ABI version, it prints one line, `blendworks: <reason>; using the Python reference kernels`, and `terrain_kernels` runs the references, unless the core is required. `terrain_core.status()` reports what happened.
 
 ## Add a kernel
 

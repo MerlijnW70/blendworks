@@ -8,12 +8,16 @@ BRIDGE = os.path.dirname(os.path.abspath(__file__))
 ADDON = os.path.join(BRIDGE, "addon")
 PACKAGE = os.path.join(BRIDGE, "blendworks_bridge")
 LOD_CORE = os.path.join(BRIDGE, "package")
+NATIVE_DIST = os.path.join(os.path.dirname(BRIDGE), "native", "dist")
+BINARY_SUFFIXES = (".dll", ".so", ".dylib")
 FIXED_TIME = (2026, 1, 1, 0, 0, 0)
 
 
 def addon_files():
     files = []
-    for folder, prefix in ((ADDON, ""), (PACKAGE, "blendworks_bridge/"), (LOD_CORE, "package/")):
+    for folder, prefix in ((ADDON, ""), (PACKAGE, "blendworks_bridge/"), (LOD_CORE, "package/"), (NATIVE_DIST, "blendworks_bridge/native/")):
+        if not os.path.isdir(folder):
+            continue
         for root, directories, names in os.walk(folder):
             directories[:] = sorted(name for name in directories if name != "__pycache__")
             for name in sorted(names):
@@ -34,7 +38,8 @@ def build(output):
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o644 << 16
             with open(path, "rb") as handle:
-                archive.writestr(info, handle.read().replace(b"\r\n", b"\n"))
+                content = handle.read()
+            archive.writestr(info, content if name.endswith(BINARY_SUFFIXES) else content.replace(bytes([13, 10]), bytes([10])))
     return output
 
 

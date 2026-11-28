@@ -9,6 +9,8 @@ from pathlib import Path
 
 import numpy
 
+from . import terrain_bundle
+
 LIBRARY_VARIABLE = "BLENDWORKS_NATIVE_LIB"
 REQUIRE_VARIABLE = "BLENDWORKS_NATIVE"
 REQUIRED_MARKER = Path("/etc/blendworks/native-required")
@@ -90,10 +92,10 @@ def required(environ=None, marker=None):
     return environ.get(REQUIRE_VARIABLE, "").strip().lower() == "require" or marker.is_file()
 
 
-def loadable_copy(path):
+def loadable_copy(path, data=None):
     if os.name != "nt":
         return path
-    data = path.read_bytes()
+    data = path.read_bytes() if data is None else data
     folder = Path(tempfile.gettempdir()) / "blendworks-native"
     target = folder / f"{path.stem}-{hashlib.sha256(data).hexdigest()[:20]}{path.suffix}"
     if not target.is_file():
@@ -130,12 +132,12 @@ class Core:
             raise NativeError(code, self.last_error())
 
 
-def load(path=None):
+def load(path=None, data=None):
     path = Path(path) if path is not None else configured_path()
     if not path.is_file():
         return None, f"no native core at {path}; build it with npm run build"
     try:
-        handle = ctypes.CDLL(str(loadable_copy(path)))
+        handle = ctypes.CDLL(str(loadable_copy(path, data)))
     except OSError as error:
         return None, f"the native core at {path} failed to load: {error}"
     try:
@@ -152,12 +154,26 @@ STATE = {}
 MARKER = {"path": REQUIRED_MARKER}
 
 
+def locate(environ=None):
+    environ = os.environ if environ is None else environ
+    if environ.get(LIBRARY_VARIABLE, "").strip():
+        return "environment", terrain_bundle.verdict("loaded", None, environ[LIBRARY_VARIABLE].strip())
+    if default_path().is_file():
+        return "developer", terrain_bundle.verdict("loaded", None, str(default_path()))
+    chosen = terrain_bundle.select()
+    if chosen["check"] != "loaded":
+        chosen["reason"] = f"{chosen['reason']}; a developer build with npm run build needs Rust"
+    return "bundled", chosen
+
+
 def core():
     if "core" not in STATE:
-        found, reason = load()
-        STATE["core"], STATE["reason"] = found, reason
+        source, chosen = locate()
+        found, reason = (None, chosen["reason"]) if chosen["check"] != "loaded" else load(chosen["path"], chosen["data"])
+        check = "loaded" if found else "mismatched" if chosen["check"] == "mismatched" else "missing"
+        STATE.update(core=found, reason=reason, source=source, check=check, expected=chosen["expected"], actual=chosen["actual"])
         if reason:
-            print(f"blendworks: {reason}; using the Python reference kernels", file=sys.stderr, flush=True)
+            print(f"blendworks: {reason}; using the Python reference kernels ({terrain_bundle.SLOWDOWN})", file=sys.stderr, flush=True)
     return STATE["core"]
 
 
@@ -170,4 +186,11 @@ def require():
 
 def status():
     found = core()
-    return {"loaded": found is not None, "path": str(found.path if found else configured_path()), "reason": STATE["reason"], "required": required()}
+    return {"loaded": found is not None, "path": str(found.path if found else configured_path()), "reason": STATE["reason"], "required": required(), "source": STATE["source"] if found else None, "check": STATE["check"], "platform": terrain_bundle.platform_key()}
+
+
+def report():
+    found = core()
+    if found is not None:
+        return {"engine": "native", "source": STATE["source"], "check": "loaded", "path": str(found.path)}
+    return {"engine": "python", "check": STATE["check"], "reason": STATE["reason"], "slowdown": terrain_bundle.SLOWDOWN}

@@ -4,6 +4,7 @@ import time
 
 import numpy
 
+from .. import terrain_core
 from ..erosion_droplets import hydraulic_erode
 from ..erosion_thermal import max_slope_degrees, thermal_erode
 from ..errors import bad_args
@@ -119,5 +120,6 @@ def erode(ctx, args):
     result["height_range"] = [rounded(float(heights.min()), 9), rounded(float(heights.max()), 9)]
     ctx.view_layer.update()
     result["attributes"] = {tile.obj.name: refresh_attributes(tile) for tile in tiles.tiles if any(name in tile.obj.data.attributes for name in ATTRIBUTES)}
+    result["native_core"] = terrain_core.report()
     result["seconds"] = rounded(time.perf_counter() - started, 3)
     return result

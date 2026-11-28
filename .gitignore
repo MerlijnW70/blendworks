@@ -10,3 +10,4 @@ logs/
 coverage/
 .sota/
 .nyc_output/
+native/dist/
