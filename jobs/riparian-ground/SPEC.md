@@ -5,7 +5,7 @@ Close to the camera at a river or lake, Blendworks ground reads empty and "very 
 - stones that sit on top of the ground, with a clean cut and a bare ring of cover around them;
 - no sediment, no litter, no zonation.
 
-In a test the meadow preset thins near water to scattered tall reeds even with a three times larger budget. The owner's reference for the density and richness to reach is F:/blendworks-kit/references/owner-liked-grass.jpg, a dry hill meadow from an earlier render. The waterside should be as full as that, with waterside plants instead.
+In a test the meadow preset thins near water to scattered tall reeds even with a three times larger budget. The owner's reference for the density and richness to reach is the job workspace, a dry hill meadow from an earlier render. The waterside should be as full as that, with waterside plants instead.
 
 ## Base
 
@@ -63,7 +63,7 @@ One negative test per required item: a test that fails when the behaviour the it
 
 1. `npm run check` passes on Windows with the patch applied to `main`.
 2. Every required item has a test that fails when its behaviour stops holding.
-3. The judge renders the river close-up (C:/Users/gamin/AppData/Local/Temp/claude/593e9b201b91d336/017cc69f-4ee8-4ad1-bd45-d18820bb4468/scratchpad/river/river_close.py, copied into the job) and the lake shore, with `render_final` at default settings. Compared with CC0 photographs of small river banks, the waterside reads full, natural and lived-in, with stones embedded in the ground.
+3. The judge renders the river close-up (`docs/examples/river_closeup.py`) and the lake shore, with `render_final` at default settings. Compared with CC0 photographs of small river banks, the waterside reads full, natural and lived-in, with stones embedded in the ground.
 
 ## Deliver
 

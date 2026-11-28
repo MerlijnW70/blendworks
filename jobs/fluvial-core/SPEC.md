@@ -2,7 +2,7 @@
 
 The terrain kernels (`native/`, `terrain_kernels`) are on `main`. Build the first terrain stage on them: an uplifted range eroded by implicit stream power, with lake routing and hillslope diffusion, at 30–60 m cells over tens of kilometres. It should give dendritic drainage, a ridge hierarchy and valleys that obey the published scaling laws.
 
-The research is in F:/blendworks-kit/terrain-research/REPORT.md (copied into the repo as `docs/research/terrain-core.md` if missing).
+The research is in the job workspace (copied into the repo as `docs/research/terrain-core.md` if missing).
 
 ## Base
 

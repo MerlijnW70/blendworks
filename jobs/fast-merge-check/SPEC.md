@@ -1,6 +1,6 @@
 # Job: Fast merge check — test what a change touches, keep the full check running behind
 
-Every change runs all of the check: about 280 test files and about 700 Blender processes, 20 minutes on Windows and 28 in the judge, even when it touches three files. Blender starts again for nearly every test-side call, at 1.2–1.6 s each, which is 26–35 % of all Blender work (F:/blendworks-kit/throughput/REPORT.md). Development waits on this.
+Every change runs all of the check: about 280 test files and about 700 Blender processes, 20 minutes on Windows and 28 in the judge, even when it touches three files. Blender starts again for nearly every test-side call, at 1.2–1.6 s each, which is 26–35 % of all Blender work (the job workspace). Development waits on this.
 
 Make merging fast and keep full coverage:
 - a selective check that runs exactly the tests a change can affect;

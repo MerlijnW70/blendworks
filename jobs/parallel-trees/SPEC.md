@@ -1,6 +1,6 @@
 # Job: Parallel trees — the same output at any thread count, and trees built in parallel
 
-Two measured facts (F:/blendworks-kit/throughput/REPORT.md):
+Two measured facts (the job workspace):
 1. **Output depends on Blender's thread count.** A scene built at 32 threads and at 4 threads differs in the `EDGE:sharp_edge` attribute of every terrain tile, the lake, the river and every tree bark. Between 1 and 25 % of edges flip; coordinates and topology are identical. Hash proofs therefore only hold at equal thread counts, and the judge (4 CPUs) and a desktop disagree.
 2. **Trees are about half of a landscape build and run on about one core.** Building them in two worker processes on 4 CPUs was 1.77× faster (65.9 → 37.2 s plus 2.4 s to merge) and bit-identical at equal thread counts.
 

@@ -35,7 +35,7 @@ One negative test per required item: a test that fails when the behaviour the it
 
 1. `npm run check` passes on Windows with the patch applied to `main`.
 2. Every required item has a test that fails when its behaviour stops holding.
-3. With meadow-structure's patch (F:/blendworks-kit/meadow-structure/delivery.patch) applied on top and the maps regenerated, the map tests pass.
+3. With meadow-structure's patch (the job workspace) applied on top and the maps regenerated, the map tests pass.
 
 ## Deliver
 

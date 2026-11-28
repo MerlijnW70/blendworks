@@ -1,11 +1,11 @@
 # Job: Terrain kernels — the compiled core for landscape evolution
 
-The terrain research (F:/blendworks-kit/terrain-research/REPORT.md) found the best known way to mountains that pass for photographs. It is an uplift field cut by implicit stream power with lake routing and hillslope diffusion at 30–60 m, then multi-scale amplification to a few metres. The earlier landforms attempt spent 1.2–2.1 ms of CPU per cell. Published serial code needs about 0.25 µs per cell per step. Build the compiled kernels this engine stands on, so that the next jobs (fluvial core, glacial stage, amplification) can run 1–4 million cells within the judge's minutes.
+The terrain research (the job workspace) found the best known way to mountains that pass for photographs. It is an uplift field cut by implicit stream power with lake routing and hillslope diffusion at 30–60 m, then multi-scale amplification to a few metres. The earlier landforms attempt spent 1.2–2.1 ms of CPU per cell. Published serial code needs about 0.25 µs per cell per step. Build the compiled kernels this engine stands on, so that the next jobs (fluvial core, glacial stage, amplification) can run 1–4 million cells within the judge's minutes.
 
 ## Base
 
 - **Base commit:** the `main` commit this spec is added in. Rebase onto the latest `main` before delivering.
-- **Earlier work.** A cancelled job left a dependency-free Rust crate on branch `rust-core` in F:/blendworks-kit/rust-core/repo: a ctypes loader, a Python fallback, a Dockerfile toolchain and nine kernels. Reuse what fits, and measure everything against this spec.
+- **Earlier work.** A cancelled job left a dependency-free Rust crate on branch `rust-core` in the job workspace: a ctypes loader, a Python fallback, a Dockerfile toolchain and nine kernels. Reuse what fits, and measure everything against this spec.
 
 ## Required
 

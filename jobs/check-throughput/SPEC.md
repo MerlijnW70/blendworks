@@ -1,6 +1,6 @@
 # Job: Check throughput — use the judge's CPUs and memory, safely
 
-`npm run check` takes 28 minutes in the judge sandbox and 20 minutes on Windows. Measured (F:/blendworks-kit/throughput/REPORT.md):
+`npm run check` takes 28 minutes in the judge sandbox and 20 minutes on Windows. Measured (the job workspace):
 - 703 Blender processes run through 2 slots, which are busy 95 % of the time;
 - each test process uses only 1 to 2 cores, so on the judge's 4 CPUs a third to a half of the CPU sits idle;
 - Blender startup is 1.2–1.6 s per process, or 26–35 % of all Blender work;

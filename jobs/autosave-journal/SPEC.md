@@ -1,6 +1,6 @@
 # Job: Autosave off the request path — a journal and budgeted snapshots
 
-The bridge saves the whole scene to a .blend before every slow command, so it can recover after a crash. Measured on a landscape build (F:/blendworks-kit/throughput/REPORT.md):
+The bridge saves the whole scene to a .blend before every slow command, so it can recover after a crash. Measured on a landscape build (the job workspace):
 - autosave is 22–25 % of build wall time at medium size and 48 % at full size (891 of 1841 s for a 2.15 GB scene);
 - on the judge it costs about 1 s of CPU per GB per save, and keeps two copies of the scene in the 8 GB sandbox's tmpfs;
 - the cost grows with the number of calls times the scene size.

@@ -1,6 +1,6 @@
 # Job: Grass light — sunlit grass is bright, as in a photograph
 
-With camera-like exposure on `main`, dense grass under a high sun renders near-black. The measurements are in F:/blendworks-kit/photographic-light/HANDOVER.md:
+With camera-like exposure on `main`, dense grass under a high sun renders near-black. The measurements are in the job workspace:
 - the sun adds 0.009 luminance on grass, against 0.24 on bare ground;
 - clay shading is 5× darker on grass than on open ground;
 - the grass reads about 0.02 under both morning and noon sun.

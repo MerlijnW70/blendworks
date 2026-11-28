@@ -7,7 +7,7 @@ The owner sees the bottoms of the clouds as too straight and unnatural. Real cum
 - it is darker and shaded from above;
 - perspective makes far bases converge into thin, overlapping slivers, not stacked flat cards.
 
-In Blendworks renders (for example F:/blendworks-kit/photographic-light/renders/full/*.png and the river renders in the scratchpad), the clouds near the horizon read as flat cut-off sheets with ruler-straight undersides. A known follow-up already says "flat 2D clouds in horizon_views".
+In Blendworks renders (for example the photographic-light renders and the river renders in the scratchpad), the clouds near the horizon read as flat cut-off sheets with ruler-straight undersides. A known follow-up already says "flat 2D clouds in horizon_views".
 
 ## Base
 
