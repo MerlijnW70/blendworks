@@ -206,8 +206,9 @@ def tree_digest(tree, seen):
 def image_digest(image):
     digest = hashlib.sha256(properties_digest(image, set()).encode("utf-8"))
     digest.update(repr(tuple(image.size)).encode("ascii"))
-    for packed in image.packed_files:
-        digest.update(bytes(packed.data))
+    for packed in sorted(image.packed_files, key=lambda item: (item.tile_number, item.view)):
+        digest.update(f"{packed.tile_number}:{packed.view}:".encode("ascii"))
+        digest.update(bytes(packed.packed_file.data))
     if image.has_data and (image.is_dirty or image.source == "GENERATED"):
         pixels = numpy.empty(len(image.pixels), dtype=numpy.float32)
         image.pixels.foreach_get(pixels)

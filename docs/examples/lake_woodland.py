@@ -12,6 +12,7 @@ from mathutils.kdtree import KDTree
 VARIANTS = int(os.environ.get("BLENDWORKS_TREE_VARIANTS", "2"))
 DETAIL = float(os.environ.get("BLENDWORKS_TREE_DETAIL", "1.0"))
 PARALLEL = os.environ.get("BLENDWORKS_TREE_PARALLEL", "1") != "0"
+WORKERS = int(os.environ.get("BLENDWORKS_TREE_WORKERS", "0"))
 FOREST_RIM = 30.0
 FOREST_DEPTH = 300.0
 FOREST_HALF = 130.0
@@ -63,7 +64,7 @@ def stands(eye, mouth, centre, field):
 def grow(cmd, tiles, eye, mouth, centre, field=None, seed=7):
     return cmd("woodland", name="Woodland", ground=list(tiles), stands=stands(eye, mouth, centre, field), variants=VARIANTS,
                points_share=min(1.0, DETAIL), detail="full" if DETAIL >= 1.0 else "low", rim_wander=RIM_WANDER, rim_wavelength=RIM_WAVELENGTH,
-               parallel=PARALLEL, seed=seed)
+               parallel=PARALLEL, seed=seed, **({"workers": WORKERS} if WORKERS else {}))
 
 
 def canopy_points(name="land"):
