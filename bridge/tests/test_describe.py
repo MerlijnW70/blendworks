@@ -15,7 +15,7 @@ DESIGN_COMMANDS = {
     "shade_smooth", "shade_flat", "recalc_normals", "merge_by_distance", "apply_modifier",
     "mesh_from_data", "curve_from_points", "text_object",
     "lathe", "sweep", "loft", "extrude_outline", "gear", "sprocket", "roller_chain",
-    "instances", "rivet_line", "generate_lods", "add_modifier", "mesh_query", "transform_selection", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell",
+    "instances", "rivet_line", "generate_lods", "add_modifier", "mesh_query", "transform_selection", "displace_noise", "noise_displace", "heightfield", "fluvial_terrain", "scatter", "erode", "shell",
     "grow_tree", "tree_skeleton", "lsystem", "tree_mesh", "tree_leaves", "grow_trees", "woodland",
     "fracture", "chip", "abrade", "remesh", "blob",
     "add_material", "assign_material", "vertex_colors",
@@ -43,6 +43,7 @@ DECLARED_METADATA = {
     **{name: SLOW for name in ("decimate", "import", "uv_pack", "set_world_hdri", "apply_modifier", "sweep", "loft", "instances",
                                "rivet_line", "roller_chain", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell", "grow_tree", "tree_mesh", "tree_leaves", "lsystem", "fracture", "chip", "abrade", "remesh", "blob", "mesh_from_data", "generate_lods", "clean_mesh", "engrave", "skin_bind", "ground_element", "ground_cover", "meadow_fields", "clouds", "weather", "liquid_body", "liquid_fill", "distant_land", "distant_forest", "valley_mist")},
     "ground_cover_export": dict(SLOW, writes_files=True, destructive=True, destructive_when="the file already exists"),
+    "fluvial_terrain": dict(SLOW, writes_files=True, destructive=True, destructive_when="path names an existing file"),
 }
 SCHEMA_KEYS = {"x-limits", "x-ref", "type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",
                "maximum", "exclusiveMinimum", "minItems", "maxItems", "minLength", "maxLength", "default"}

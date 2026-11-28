@@ -1,14 +1,21 @@
 # Code map: Terrain, rock and liquids
 
-heightfields, erosion, noise, land and distant land, liquid_*, stones and rock (shape, lithology, weathering, relief), fracture, chip, abrade. Part of [the code map index](../CODEMAP.md).
+heightfields, fluvial terrain, erosion, noise, land and distant land, liquid_*, stones and rock (shape, lithology, weathering, relief), fracture, chip, abrade. Part of [the code map index](../CODEMAP.md).
 
 One line per module: its docstring, its first public names (`fn`, `+` means more), the commands it registers (`cmd`) and its tests (`test`). Bridge tests are `bridge/tests/test_<name>.py`; vitest ones are `test/<name>.test.ts`. A module with no `test` is covered only by the core tests (smoke, describe, crate, scene).
 
-### bridge/blendworks_bridge/ (53)
+### bridge/blendworks_bridge/ (62)
 
 - `abrasion`: Abrasion maths: refines a mesh and splits its faces into a worn, rounded pattern. | fn: mesh_triangles edge_table + | test: rock_shape rocks-example
 - `erosion_droplets`: Hydraulic erosion by simulated water droplets on a height grid. | fn: locate height_and_gradient + | test: erode eroded-terrain-example
 - `erosion_thermal`: Thermal erosion: material slides downhill past the talus angle. | fn: neighbour_slices distances + | test: eroded-terrain-example
+- `fluvial_fields`: Uplift fields and lithology bands for the fluvial model. | fn: cell_centres resample + | test: fluvial_fields fluvial_physics
+- `fluvial_measure`: Measures of a fluvial surface: Strahler, Hack, pits, aspect. | fn: level_donors strahler + | test: fluvial_fields fluvial_physics
+- `fluvial_mesh`: Terrain tiles of a fluvial run with drainage attributes. | fn: tile_bounds attribute_values + | test: fluvial_fields fluvial_network +3
+- `fluvial_model`: One step of the fluvial model on the terrain kernels. | fn: edge_mask outlet_cells + | test: fluvial_fields fluvial_physics
+- `fluvial_presets`: Fluvial terrain presets with cited parameter ranges. | fn: preset out_of_range | test: fluvial_fields fluvial_network
+- `fluvial_run`: A fluvial terrain run from settings to grids, rivers and lakes. | fn: settings_of belts_of + | test: fluvial_network
+- `fluvial_spinup`: Coarse-to-fine spin-up of the fluvial model. | fn: Schedule default_schedule + | test: fluvial_fields fluvial_physics
 - `fracturing`: Fracture maths: random directions and cuts of a convex solid into pieces. | fn: random_direction binary_pieces + | test: rocks-example
 - `fragments`: Fragments of a fractured or chipped solid: materials, slots and the solid read from an object. | fn: fresh_material plan_fresh_material + | test: rock_integration rocks-example
 - `heightgrid`: Height grid tiles and tile sets for terrain. | fn: grid_resolution Tile + | test: eroded-terrain-example
@@ -50,23 +57,26 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `terrain_bundle`: Selects the prebuilt native terrain core for the running platform and checks its sha256 against the release manifest. | fn: platform_key bundled_roots + | test: native_dist
 - `terrain_core`: Loader of the native terrain core: finds and loads the library through ctypes, describes numpy buffers, falls back with one stated reason. | fn: NativeError CoreMissing + | test: native_dist terrain_loader +1
 - `terrain_diffusion`: Python reference of hillslope diffusion: linear by ADI and non-linear critical-slope diffusion (Roering et al. 1999). | fn: check_settings cross_gradient + | test: terrain_kernels terrain_loader +4
+- `terrain_dinf`: Python reference of D-infinity flow directions (Tarboton 1997) and implicit incision over several receivers. | fn: atan_series atan_positive + | test: terrain_kernels terrain_loader +4
 - `terrain_flood`: Python reference of Priority-Flood with epsilon (Barnes et al. 2014). | fn: ordered_key next_up + | test: terrain_kernels terrain_loader +4
 - `terrain_flow`: Python reference of flow receivers: D8 and multiple flow with exponent p, flats resolved (Barnes 2014). | fn: neighbour_heights steepest + | test: terrain_kernels terrain_loader +4
-- `terrain_grid`: Grid description shared by the terrain kernels: shape, spacing, outlet edges and cell status. | fn: TerrainGrid flat_heights | test: terrain_loader terrain_physics +1
+- `terrain_grid`: Grid description shared by the terrain kernels: shape, spacing, outlet edges and cell status. | fn: TerrainGrid flat_heights | test: fluvial_fields terrain_loader +2
 - `terrain_incision`: Python reference of implicit stream-power incision (Braun & Willett 2013), closed form for n = 1 and Newton for general n. | fn: check_law solve + | test: terrain_kernels terrain_loader +4
-- `terrain_kernels`: Dispatch of the terrain kernels to the native core or the Python references. | fn: default_threads chosen_core + | test: terrain_kernels terrain_loader +3
+- `terrain_kernels`: Dispatch of the terrain kernels to the native core or the Python references. | fn: default_threads chosen_core + | test: terrain_kernels fluvial_fields +4
 - `terrain_lakes`: Python reference of lake routing by the basin graph and its minimum spanning tree (Cordonnier, Bovy & Braun 2019). | fn: Lakes ordered_bits + | test: terrain_kernels terrain_loader +4
 - `terrain_order`: Python reference of the breadth-first receiver queue with levels (Barnes 2019) and accumulation along it. | fn: Ordering check_table + | test: terrain_kernels terrain_loader +4
 - `terrain_pow`: Portable exp, ln and pow from basic arithmetic, so both engines give the same bits on every platform. | fn: atanh_coefficients exp_coefficients + | test: terrain_kernels terrain_loader +4
 - `terrain_thermal`: Python reference of thermal slides: slope-limited mass transfer with a critical angle per cell. | fn: check_settings slide | test: terrain_kernels terrain_loader +4
+- `terrain_threshold`: Python reference of threshold hillslopes: the eikonal surface of critical slopes by fast marching. | fn: upwind threshold | test: terrain_kernels terrain_loader +4
 
-### bridge/blendworks_bridge/commands/ (12)
+### bridge/blendworks_bridge/commands/ (13)
 
 - `abrade`: The abrade command: wears the edges and corners of a closed mesh into a rounded, worn form. | fn: require_closed write_back | cmd: abrade | test: abrade rocks-example
 - `blob`: The blob command: a smooth union of spheres built as metaballs and voxel remeshed into one closed mesh. | fn: stiffness_for refuse_oversize + | cmd: blob | test: remesh_blob rocks-example
 - `chip`: The chip command: knocks chips off the edges and corners of a closed convex solid. | cmd: chip | test: chip rocks-example
 - `distant_land`: The distant_land command: land that surrounds a region out to tens of kilometres and continues its terrain. | fn: plan_distant_land measured_region + | cmd: distant_land | test: distant_land
 - `erode`: The erode command: thermal and hydraulic erosion of heightfield terrain in metres. | fn: tile_objects hydraulic_settings + | cmd: erode | test: erode eroded-terrain-example
+- `fluvial_terrain`: The fluvial_terrain command: a range carved by rivers, as tiles. | fn: grid_side fluvial_rules | cmd: fluvial_terrain | test: fluvial_terrain
 - `fracture`: The fracture command: breaks a closed convex solid into closed convex pieces. | fn: piece_name make_piece + | cmd: fracture | test: fracture rocks-example
 - `heightfield`: The heightfield command: a terrain tile from the noise stack at world coordinates. | fn: positive_pair tile_inside_world | cmd: heightfield | test: heightfield eroded-terrain-example
 - `liquid_body`: The liquid_body command: ocean, lake, river and beach water at world scale. | fn: plan_liquid_body sample_depth + | cmd: liquid_body | test: liquid_bodies liquid_fill +3

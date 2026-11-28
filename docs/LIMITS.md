@@ -83,6 +83,7 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `anisotropy` | 0.95 | - | physical | Henyey-Greenstein g: at 1 light scatters only straight on; haze and cloud droplets reach about 0.9. | - | `atmosphere.anisotropy`, `valley_mist.anisotropy` |
 | `aperture_blades` | 16 | blades | blender | Blender draws bokeh with at most 16 blades. | - | `camera_setup.aperture_blades` |
 | `aperture_ratio` | 10 | - | physical | Anamorphic lenses squeeze bokeh by about 2; 10 leaves room for stylised looks and its inverse 0.1 for the other axis. | - | `camera_setup.aperture_ratio` |
+| `area_exponent` | 1 | - | physical | Above 1 the stream-power law makes profiles more concave than any river. | - | `fluvial_terrain.area_exponent` |
 | `armature_bones` | 512 | bones | time | Bones of one armature; skinning weighs every vertex against every deforming bone, and a detailed character rig with fingers and face has a few hundred. | - | `armature_create.bones`, `bone_add.bones`, `bone_edit.bones` |
 | `aspect_ratio` | 20 | - | physical | An ellipse more than 20 times longer than wide reads as a slit. | - | `grow_trees.trees[].mesh.bark_noise.grain`, `grow_trees.trees[].leaves.card.width`, `shell.aspect`, `tree_leaves.card.width`, `tree_mesh.bark_noise.grain` |
 | `atlas_rules` | 64 | rules | protocol | Image size rules of one bake sent inline as JSON. | - | `bake.atlas_sizes` |
@@ -114,6 +115,7 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `cavity_voxels` | 160 | voxels | memory | The cavity is found on a cube of voxels; 160 a side is 4.1 million cells. | - | `liquid_fill.voxels` |
 | `chain_links` | 2,000 | links | time | Each link adds its plates, rollers and pins to the chain mesh one by one. | - | (internal) |
 | `chain_wheels` | 16 | wheels | protocol | Wheels of one chain drive listed inline; real drives have two to a handful. | - | `roller_chain.wheels` |
+| `channel_area` | 1e+08 | m^2 | physical | Channels begin at source areas of 1e2 to 1e5 m^2 (Montgomery and Dietrich 1988); a head of 100 km^2 would leave no network. | - | `fluvial_terrain.channel_area` |
 | `checkpoint_name_length` | 64 | characters | protocol | A checkpoint name becomes its file name in the workspace; 64 characters keep the path short on every file system. | - | `checkpoint.name`, `restore_checkpoint.name` |
 | `checkpoints` | 64 | checkpoints | memory | Saved checkpoints kept on disk per session. | - | (internal) |
 | `chips` | 500 | chips | time | Each chip is an exact plane cut of the whole solid. | - | `chip.count` |
@@ -158,6 +160,7 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `ellenberg_moisture` | 12 | - | physical | Ellenberg's moisture scale ends at 12, plants under water. | - | `ground_cover.populations[].drift.moisture` |
 | `ellenberg_moisture_min` | 1 | - | physical | Ellenberg's moisture scale starts at 1, extreme dryness. | - | `ground_cover.populations[].drift.moisture` |
 | `emission_strength` | 1000 | - | physical | Emission strength of a surface; 1000 outshines any lamp a scene shows beside daylight (a sun of strength 3 to 10). | - | `add_material.emission_strength`, `material_pbr.emission_strength` |
+| `erodibility` | 0.001 | m^(1-2m)/yr | physical | Stream-power erodibility spans about 1e-7 to 1e-4 over rock types (Stock and Montgomery 1999); 1e-3 leaves room for very weak rock. | - | `fluvial_terrain.erodibility` |
 | `erosion_brush` | 1000 | m | memory | The brush lists every grid cell within its radius for each droplet of a batch, (radius / grid spacing) squared cells. 1000 m was the cap before and stays: the schema cannot see the grid spacing, so a spacing-aware check belongs in erode itself (known gap, owned by the landforms job). | - | `erode.radius` |
 | `erosion_tiles` | 64 | tiles | memory | Tiles eroded together are held as one float64 grid with copies for the change and the mask; 64 tiles of the largest resolution take about 1 GB per copy. | - | `erode.names` |
 | `exposure_stops` | 32 | stops | blender | Blender's scene exposure runs from -32 to 32 stops. | - | `camera_setup.exposure`, `camera_setup.exposure_compensation` |
@@ -184,12 +187,17 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `final_resolution` | 4,096 | px | memory | A 4096 px square frame with its float passes and denoiser buffers takes about 1 GB, the pixel guard. | - | `render_final.width`, `render_final.height` |
 | `final_samples` | 65,536 | samples | time | Cycles stops converging visibly long before 65 536 samples a pixel; the time limit ends a render first. | - | `render_final.samples`, `render_final.min_samples` |
 | `flank_samples` | 24 | points | physical | 24 points draw an involute flank or a roller seat smoother than any render resolves. | - | `gear.tooth_samples`, `sprocket.seat_samples` |
+| `fluvial_cell` | 1000 | m | physical | Past 1 km a cell holds whole valleys, and its channel stands for a network the grid cannot show. | - | `fluvial_terrain.cell` |
+| `fluvial_lods` | 4 | levels | time | Every level of detail decimates every tile again; four halvings take a tile to a sixteenth of its triangles. | - | `fluvial_terrain.lods` |
+| `fluvial_side` | 4,096 | cells | memory | The model keeps about thirty grids of the full size; at 4096 cells a side that is 17 million cells and about 4 GB, half the judge's memory. | a larger cell size for a larger domain | (internal) |
+| `fluvial_size` | 4095 | km | physical | The widest grid, 4096 cells of the largest cell size, 1 km; a range wider than that is a continent. | - | `fluvial_terrain.size`, `fluvial_terrain.band_width` |
+| `fluvial_tiles` | 16 | tiles per side | memory | Each tile is one mesh object; 16 x 16 tiles of a 4096-cell grid are 256 objects of 66 000 vertices. | - | `fluvial_terrain.tiles` |
 | `focal_length` | 5000 | mm | physical | The longest camera lenses made reach about 5 000 mm, the end of Blender's lens slider. | - | `add_camera.lens`, `camera_setup.focal_length` |
 | `forest_band` | 0.5 | - | physical | A switch band of half its distance each way already spans a factor of three in distance. | - | `distant_forest.band` |
 | `forest_species` | 6 | species | protocol | Blendworks grows six tree species: oak, birch, pine, willow, maple and olive. | - | (internal) |
 | `forest_trees` | 200,000 | trees | memory | Near trees are linked instances (about 300 bytes each) and impostor cards four vertices each; 200 000 of them stay under 100 MB. | - | `distant_forest.budget` |
 | `forest_variants` | 12 | trees | time | Each variant is a whole tree that is grown, meshed, leafed and baked into an atlas, several seconds each. | - | `distant_forest.variants`, `distant_forest.sources` |
-| `fraction` | 1 | - | physical | A share, weight, mix or colour channel runs from 0 to 1. | - | `abrade.amount`, `abrade.target_convexity`, `add_light.color[]`, `add_material.base_color[]`, `add_material.metallic`, `add_material.roughness` and 352 more |
+| `fraction` | 1 | - | physical | A share, weight, mix or colour channel runs from 0 to 1. | - | `abrade.amount`, `abrade.target_convexity`, `add_light.color[]`, `add_material.base_color[]`, `add_material.metallic`, `add_material.roughness` and 355 more |
 | `fracture_pieces` | 1,000 | pieces | time | Each piece is cut by exact planes and becomes its own object. | - | `fracture.pieces` |
 | `frame` | 1,048,574 | frames | blender | Blender's frame range ends at 1 048 574 (MAXFRAME). | - | `animation_preset.start`, `clip_edit.frame_start`, `clip_edit.frame_end`, `clip_keys.keys[].frame`, `clip_pose.frame`, `render_final.frame` |
 | `gear_teeth` | 400 | teeth | physical | Teeth of one gear or sprocket; at 400 a tooth spans under one degree of the pitch circle and reads as a knurl. | - | `gear.teeth`, `sprocket.teeth` |
@@ -205,6 +213,8 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `half_turn` | 180 | deg | physical | Angles between two directions run from 0 to 180 degrees. | - | `add_light.spot_angle`, `add_modifier.bevel.angle`, `bevel.angle`, `bevel.normal_angle`, `camera_setup.aperture_rotation`, `displace_noise.normal_angle` and 48 more |
 | `height_band` | 1e+06 | m | physical | A height mask only selects points; callers write far ends up to 1000 km to mean no bound, past any height the world holds. | - | `ground_cover.populations[].height_range[]`, `scatter.height_range[]` |
 | `helix_turns` | 1000 | turns | physical | Coil springs and screw threads have up to a few hundred turns; the segment count is checked against path_points as well. | - | `sweep.helix.turns` |
+| `hillslope_diffusivity` | 1 | m^2/yr | physical | Measured hillslope diffusivities are about 0.001 to 0.02 m^2/yr (Roering et al. 1999, Hurst et al. 2012); 1 m^2/yr is already far beyond soil creep. | - | `fluvial_terrain.diffusivity` |
+| `hillslope_gradient` | 3 | m/m | physical | A gradient of 3 is 72 degrees; soil and rubble do not stand on steeper hillslopes. | - | `fluvial_terrain.critical_slope`, `fluvial_terrain.threshold_slope` |
 | `hue_shift` | 0.2 | - | physical | Leaves of one tree vary in hue by at most a fifth of the colour circle either way; more turns green leaves blue or red. | - | `grow_trees.trees[].leaves.variation.hue`, `tree_leaves.variation.hue` |
 | `ico_subdivisions` | 7 | levels | memory | Each level quadruples the faces of an icosphere; level 7 has 327 680 faces, rounder than any sphere needs. | - | `add_primitive.subdivisions` |
 | `ik_chain_bones` | 16 | bones | physical | Limbs chain 2 or 3 bones; 16 covers spines, tails and tentacles. | - | `ik_chain.chain_length` |
@@ -226,13 +236,14 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `land_border_tolerance` | 0.01 | m | physical | Border heights of distant land are taken from the region's own surface; 1 cm covers the ray casts a millimetre inside the border on slopes up to 85 degrees. | - | (internal) |
 | `land_detail` | 512 | vertices | memory | At 512 vertices across a ring's inner half size every ring holds about two million triangles, the whole land budget. | - | `distant_land.detail` |
 | `land_detail_min` | 8 | vertices | physical | Eight vertices across a ring's inner half size is the coarsest ring that still shows a hill. | - | `distant_land.detail` |
-| `land_distance_min` | 80000 | m | physical | Distant land reaches at least 80 km: from a 500 m hill the horizon lies 80 km away, so land that ends sooner shows its edge. | - | `distant_land.distance` |
+| `land_distance_min` | 80000 | m | physical | Distant land reaches at least 80 km: from a 500 m hill the horizon lies 80 km away, so land that ends sooner shows its edge. | - | `distant_land.distance`, `fluvial_terrain.horizon` |
 | `land_memory` | 720,000,000 | bytes | memory | The triangle budget times the bytes per triangle: what the largest land may hold. | - | (internal) |
 | `land_triangle_bytes` | 240 | bytes | memory | Per triangle of land: the mesh in Blender (positions, corners, edges, normals, UVs and three attributes, about 110 bytes) and in Cycles (vertices, triangles, normals and BVH nodes, about 130 bytes). | - | (internal) |
 | `land_triangles` | 3,000,000 | triangles | memory | Three million triangles take about 1.5 million vertices, under the mesh vertex limit, and about 0.7 GB with the renderer's BVH (land_triangle_bytes), well inside an 8 GB machine. | - | `distant_land.budget` |
 | `leaf_aspect` | 1.5 | - | physical | Kidney-shaped leaves such as ginkgo grow up to about 1.5 times wider than long. | - | `ground_cover.populations[].params.aspect`, `ground_element.params.aspect` |
 | `leaf_shapes` | 6 | shapes | physical | The leaf preset draws a species' outline in at most six variants. | - | `grow_trees.trees[].leaves.shapes`, `tree_leaves.shapes` |
 | `least_aperture_ratio` | 0.01 | - | blender | Blender's anamorphic aperture ratio starts at 0.01. | - | `camera_setup.aperture_ratio` |
+| `least_area_exponent` | 0.2 | - | physical | River concavity m/n lies between about 0.35 and 0.65 (Kirby and Whipple 2012); below 0.2 profiles are almost straight. | - | `fluvial_terrain.area_exponent` |
 | `least_bake_seconds` | 1 | s | time | Setting up a bake alone takes about a second; a shorter time limit always fails. | - | `bake.time_limit` |
 | `least_bake_size` | 16 | px | physical | A baked map smaller than 16 px holds less than the default 16 px margin around one island. | - | `bake.size`, `bake.atlas_sizes[].size` |
 | `least_bark_grain` | 1 | - | physical | Bark relief runs along the branch (fissures, ridges, plates) and at 1 it is round; bands around the trunk, such as cherry lenticels, come from the bark material. | - | `grow_trees.trees[].mesh.bark_noise.grain`, `tree_mesh.bark_noise.grain` |
@@ -250,6 +261,8 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `least_exposure_value` | -10 | EV | physical | EV100 of a moonless, overcast night landscape, the darkest scene a camera records. | - | `camera_setup.physical.reference_ev` |
 | `least_extinction_scale` | 0.01 | - | physical | A hundredth of a genus's extinction leaves a faint veil; less draws nothing. | - | `clouds.layers[].density` |
 | `least_f_number` | 0.5 | - | physical | f/0.5 is the widest aperture a lens in air can have; the fastest lenses made are about f/0.7. | - | `camera_setup.fstop`, `camera_setup.physical.aperture` |
+| `least_fluvial_cell` | 5 | m | physical | Below about 5 m the hillslope processes, not stream power, shape the ground; the detail belongs to the amplification stage. | - | `fluvial_terrain.cell` |
+| `least_fluvial_side` | 65 | cells | physical | Below 65 cells a side no drainage network has room to branch, so Strahler orders and Hack's law say nothing. | - | (internal) |
 | `least_iso` | 1 | - | physical | The ISO arithmetic speed scale starts at 1; the slowest films and sensors are near ISO 6 to 50. | - | `camera_setup.physical.iso` |
 | `least_letter_spacing` | 0.1 | - | physical | At a tenth of the font's spacing letters already overlap into one blot. | - | `engrave.spacing` |
 | `least_manning_n` | 0.01 | s/m^(1/3) | physical | Manning's n of the smoothest channels (glass, finished concrete) is about 0.01. | - | `liquid_body.roughness` |
@@ -263,7 +276,7 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `least_wave_cells` | 16 | cells | physical | With fewer than 16 cells a side a wave mesh cannot show crests and troughs. | - | `liquid_body.cells` |
 | `least_widening` | 1 | - | physical | A widening factor of 1 leaves an element as it is; below 1 it would narrow it. | - | `ground_cover.populations[].max_widen` |
 | `least_width_ratio` | 0.05 | - | physical | A branch thinner than a twentieth of its parent is lost beside it. | - | `lsystem.width_ratio` |
-| `length` | 1e+06 | m | physical | Any distance inside the world (its diagonal is 566 km) and beyond it the longest views and visibilities on Earth (near 500 km), with room; cloud fields drift and fade over such distances. | - | `abrade.edge_length`, `add_camera.orthographic_scale`, `add_empty.size`, `add_light.size`, `add_modifier.displace.texture.size`, `add_modifier.weld.distance` and 249 more |
+| `length` | 1e+06 | m | physical | Any distance inside the world (its diagonal is 566 km) and beyond it the longest views and visibilities on Earth (near 500 km), with room; cloud fields drift and fade over such distances. | - | `abrade.edge_length`, `add_camera.orthographic_scale`, `add_empty.size`, `add_light.size`, `add_modifier.displace.texture.size`, `add_modifier.weld.distance` and 250 more |
 | `length_ratio` | 2 | - | physical | A child more than twice as long as its parent no longer reads as a branch of it. | - | `grow_tree.length_ratio[]`, `grow_trees.trees[].grow.length_ratio[]`, `grow_trees.trees[].leaves.clusters.fork_length`, `tree_leaves.clusters.fork_length` |
 | `letter_spacing` | 10 | - | blender | Blender's character spacing runs up to 10. | - | `engrave.spacing` |
 | `light_power` | 1e+06 | W | physical | A million watts of light, past any searchlight or stadium mast, where Blender's power slider ends. | - | `add_light.energy` |
@@ -277,6 +290,8 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `listed_indices` | 200,000 | indices | protocol | Face, edge or vertex indices sent inline as JSON; larger selections go by facing, box or material, or take the whole mesh. | - | `assign_material.faces`, `bevel.faces`, `bevel.edges`, `displace_noise.faces`, `engrave.faces.faces`, `extrude.faces` and 10 more |
 | `listed_names` | 100 | names | protocol | Names one reply lists before it summarises. | - | (internal) |
 | `listed_sources` | 64 | meshes | protocol | Source meshes listed inline in one scatter; each is placed in its own pass. | - | `scatter.sources` |
+| `lithology_bands` | 16 | bands | physical | Sixteen kinds of rock in repeating bands is more than any mapped range shows at this scale. | - | `fluvial_terrain.lithology` |
+| `lithology_factor` | 100 | - | physical | Erodibility varies about a hundredfold between strong and weak rock in one range. | - | `fluvial_terrain.lithology[]` |
 | `lod_levels` | 8 | levels | memory | Each level of detail is a decimated copy of the mesh; game engines use up to 8 (Unreal Engine's import limit). | - | `generate_lods.count`, `generate_lods.ratios`, `generate_lods.distances`, `ground_cover_export.levels` |
 | `lod_ratio` | 0.99 | - | physical | A level of detail keeps a share of the triangles of LOD0 and must drop at least 1 % of them, or it is LOD0 again. | - | `generate_lods.ratios[]` |
 | `loft_sections` | 256 | sections | protocol | Cross-sections of one loft sent inline as JSON. | - | `loft.sections` |
@@ -295,7 +310,7 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `metaball_level` | 4 | - | blender | Each sphere's stiffness is the field level over 0.42, so that a lone sphere keeps its radius; Blender caps stiffness at 10. | - | `blob.threshold` |
 | `mist_cells` | 1,024 | cells | memory | The low-ground map is a float image of at most 1024 by 1024 cells (4 MB) and as many ray casts. | - | `valley_mist.cells` |
 | `mist_cells_min` | 16 | cells | physical | Fewer than 16 cells across cannot hold a valley. | - | `valley_mist.cells` |
-| `name_length` | 255 | bytes | blender | Blender 5.2 keeps datablock names (objects, materials, images, collections, actions) up to 255 bytes and cuts longer ones, which would then no longer match. | - | `abrade.name`, `add_camera.name`, `add_empty.name`, `add_empty.parent`, `add_empty.collection`, `add_light.name` and 253 more |
+| `name_length` | 255 | bytes | blender | Blender 5.2 keeps datablock names (objects, materials, images, collections, actions) up to 255 bytes and cuts longer ones, which would then no longer match. | - | `abrade.name`, `add_camera.name`, `add_empty.name`, `add_empty.parent`, `add_empty.collection`, `add_light.name` and 254 more |
 | `names` | 1,000 | names | protocol | Names one call may list; bigger sets go by collection. | collection (where the tool takes one) | `bake.names`, `bake.atlas_sizes[].materials`, `bake.source`, `bone_mirror.bones`, `boolean.cutters`, `collection_create.objects` and 28 more |
 | `needles` | 64 | needles | physical | More than 64 needles on one card blur into a solid blade at the size a card is seen. | - | `material_layer.leaf.needles`, `material_procedural.leaf.needles` |
 | `node_inputs` | 64 | inputs | protocol | Input values set inline on one node. | - | `material_nodes.nodes[].inputs` |
@@ -309,7 +324,7 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `outline_points` | 4,096 | points | protocol | Points of one flat outline sent inline as JSON. | - | `extrude_outline.outline`, `extrude_outline.holes[]` |
 | `pack_margin` | 0.5 | - | physical | uv_pack keeps its margin around every island, so a margin of half the UV square leaves no room for any island. Blender's unwrap and smart project take up to 1 (uv_margin). | - | `uv_pack.margin` |
 | `pair` | 2 | items | physical | A path, a sequence or a set to combine needs a start and an end: at least two points, sections, wheels, copies, steps or objects. | - | `add_modifier.screw.steps`, `add_modifier.screw.render_steps`, `array.count`, `curve_from_points.points`, `engrave.curve.waypoints`, `engrave.repeat.count` and 16 more |
-| `path_length` | 1,024 | characters | protocol | A file path in a request, relative to the workspace; 1024 characters hold any folder depth a project uses. | - | `export.path`, `ground_cover_export.path`, `image_load.path`, `image_save.path`, `import.path`, `load_blend.path` and 13 more |
+| `path_length` | 1,024 | characters | protocol | A file path in a request, relative to the workspace; 1024 characters hold any folder depth a project uses. | - | `export.path`, `fluvial_terrain.uplift_file`, `fluvial_terrain.path`, `ground_cover_export.path`, `image_load.path`, `image_save.path` and 15 more |
 | `path_points` | 4,096 | points | memory | Points of one path, sent inline or sampled from an exact circle or helix; with 512 profile points a sweep along it stays near the mesh_vertices limit. | - | `engrave.curve.waypoints`, `instances.waypoints`, `liquid_body.path`, `roller_chain.waypoints`, `sweep.waypoints` |
 | `pebble_elongation` | 2 | - | physical | Pebbles up to three times as long as wide, as long river pebbles. | - | `ground_cover.populations[].params.elongation`, `ground_element.params.elongation` |
 | `pebble_flatness` | 0.9 | - | physical | At 1 a pebble would be a disc with no thickness; 0.9 is a flat skimming stone. | - | `ground_cover.populations[].params.flatness`, `ground_element.params.flatness` |
@@ -355,7 +370,7 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `screw_steps` | 10,000 | steps | blender | Blender's screw modifier takes at most 10 000 steps per turn and 10 000 turns. | - | `add_modifier.screw.steps`, `add_modifier.screw.render_steps`, `add_modifier.screw.iterations` |
 | `search_seconds` | 300 | s | time | A packing or fitting search stops after this many seconds, well inside the longest call the MCP server waits for. | - | `uv_pack.time_limit` |
 | `sediment_capacity` | 1000 | - | physical | The capacity factor Kc of droplet erosion is about 1 to 30 in practice; 1000 already strips a slope in one pass. | - | `erode.capacity` |
-| `seed` | 2,147,483,647 | - | blender | Blender's random seeds are signed 32-bit integers. | - | `abrade.seed`, `chip.seed`, `clouds.layers[].seed`, `displace_noise.seed`, `distant_forest.seed`, `distant_land.seed` and 61 more |
+| `seed` | 2,147,483,647 | - | blender | Blender's random seeds are signed 32-bit integers. | - | `abrade.seed`, `chip.seed`, `clouds.layers[].seed`, `displace_noise.seed`, `distant_forest.seed`, `distant_land.seed` and 62 more |
 | `sensor_size` | 200 | mm | physical | Film and sensors up to large format: 8x10 inch sheet film exposes about 200 by 250 mm. | - | `camera_setup.sensor_width`, `camera_setup.sensor_height` |
 | `shortest_droplet_step` | 0.001 | m | physical | At 1 mm a step a droplet travels at most 10 m in its longest life (droplet_lifetime), and each step erodes only a step-sized patch; shorter steps carve nothing. | - | `erode.step` |
 | `shortest_leaf` | 0.002 | m | physical | The smallest leaves and twigs of forest-floor litter, such as conifer scale leaves, are about 2 mm long. | - | `ground_cover.populations[].params.length[]`, `ground_element.params.length[]` |
@@ -439,10 +454,11 @@ These keep a 10 km figure in code this job may not change; they are left to the 
 | `triangle_budget` | 2,000,000 | triangles | memory | 2 million triangles hold about 1 million vertices, half the mesh_vertices limit, leaving room for the junction work. | - | `grow_trees.trees[].mesh.lod`, `tree_mesh.lod` |
 | `tropism_bend` | 100 | - | physical | The turtle turns by e /H x T/ radians after each step; at 100 it already turns fully towards T in one step, so a larger e or T changes nothing. | - | `lsystem.tropism.vector[]`, `lsystem.tropism.strength` |
 | `tropism_weight` | 4 | - | physical | A tropism vector of length 4 already outweighs the unit growth direction fourfold; longer ones point every step straight along it. | - | `grow_tree.tropism[]`, `grow_tree.phototropism.direction[]`, `grow_tree.roots.tropism[]`, `grow_trees.trees[].grow.tropism[]`, `grow_trees.trees[].grow.phototropism.direction[]`, `grow_trees.trees[].grow.roots.tropism[]` |
-| `turn` | 360 | deg | physical | One full turn; more repeats the same orientation. | - | `armature_create.bones[].roll`, `bone_add.bones[].roll`, `bone_constraint.min[]`, `bone_constraint.max[]`, `bone_edit.bones[].roll`, `clouds.layers[].wind_direction` and 26 more |
+| `turn` | 360 | deg | physical | One full turn; more repeats the same orientation. | - | `armature_create.bones[].roll`, `bone_add.bones[].roll`, `bone_constraint.min[]`, `bone_constraint.max[]`, `bone_edit.bones[].roll`, `clouds.layers[].wind_direction` and 27 more |
 | `turn_segments` | 512 | segments | physical | Steps around a turned part; at 512 steps a chord leaves the true circle by less than 0.002 % of the radius, so more steps add no visible roundness. | - | `add_primitive.segments`, `add_primitive.rings`, `grow_trees.trees[].mesh.ring_segments.min`, `grow_trees.trees[].mesh.ring_segments.max`, `lathe.segments`, `shell.steps` and 2 more |
 | `twilight_depth` | 20 | deg | physical | Twilight ends when the sun is 18 degrees below the horizon; 20 covers all of it. | - | `sky.sun.elevation`, `valley_mist.conditions.sun_elevation`, `weather.sun.elevation` |
 | `understorey_variants` | 32 | plants | time | Ferns and herbs are built in code in well under a second each; 32 per kind is more than the eye separates. | - | `woodland.understorey_variants` |
+| `uplift_rate` | 0.02 | m/yr | physical | The fastest measured rock uplift, in the Himalayan syntaxes and Taiwan, is about 10 mm/yr; 20 mm/yr leaves room. | - | `fluvial_terrain.uplift_rate` |
 | `utc_offset` | 14 | h | physical | Time zones run from UTC-12 to UTC+14. | - | `sky.sun.utc_offset`, `weather.sun.utc_offset` |
 | `uv_coordinate` | 1000 | - | physical | UVs a thousand tiles out still place a texel of an 8192 px texture within half a texel in float32. | - | `material_pbr.offset[]`, `mesh_from_data.uvs[][]`, `mesh_from_data.vertex_uvs[][]` |
 | `uv_margin` | 1 | - | blender | Space between islands as a share of the UV square; Blender's unwrap, smart project and pack take margins up to 1. | - | `uv_smart_project.island_margin`, `uv_unwrap.margin` |

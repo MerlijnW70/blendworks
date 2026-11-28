@@ -6,12 +6,14 @@ use crate::accumulate::accumulate;
 use crate::diffusion::{diffuse, Critical};
 use crate::error::{check, KernelError};
 use crate::flood::priority_flood;
-use crate::incision::{incise, Law};
+use crate::dinf::dinf;
+use crate::incision::{incise, incise_many, Law};
 use crate::lakes::{route, LakeOutputs, Mode};
 use crate::levels::Levels;
 use crate::order::order;
 use crate::receivers::{d8, mfd};
 use crate::thermal::slide;
+use crate::threshold::threshold;
 
 type Buffer = *const BwBuffer;
 
@@ -173,5 +175,52 @@ pub extern "C" fn bw_slide(grid: *const BwGrid, threads: i64, heights: Buffer, t
         let out = buffers.f64s_mut("out", out)?;
         let iterations = usize::try_from(iterations).map_err(|_| KernelError::invalid(format!("iterations must be at least 0, got {}", iterations)))?;
         slide(&grid, heights, tangent, rate, iterations, threads, out)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn bw_threshold(grid: *const BwGrid, heights: Buffer, tangent: Buffer, out: Buffer, lowered: *mut i64) -> i32 {
+    guarded(|| unsafe {
+        let (grid, _) = grid_of(grid, 1)?;
+        let mut buffers = Buffers::new();
+        let heights = buffers.f64s("heights", heights)?;
+        let tangent = buffers.f64s("critical tangent", tangent)?;
+        let out = buffers.f64s_mut("out", out)?;
+        let lowered = buffers.scalar("lowered", lowered)?;
+        *lowered = threshold(&grid, heights, tangent, out)? as i64;
+        Ok(())
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn bw_dinf(grid: *const BwGrid, threads: i64, heights: Buffer, table: Buffer, shares: Buffer) -> i32 {
+    guarded(|| unsafe {
+        let (grid, threads) = grid_of(grid, threads)?;
+        let mut buffers = Buffers::new();
+        let heights = buffers.f64s("heights", heights)?;
+        let table = buffers.i32s_mut("receiver table", table)?;
+        let shares = buffers.f64s_mut("shares", shares)?;
+        dinf(&grid, heights, threads, table, shares)
+    })
+}
+
+#[no_mangle]
+pub extern "C" fn bw_incise_many(grid: *const BwGrid, threads: i64, heights: Buffer, table: Buffer, shares: Buffer, width: i64, order_in: Buffer, level_start: Buffer, area: Buffer, erodibility: Buffer, area_exponent: f64, dt: f64, solved: Buffer) -> i32 {
+    guarded(|| unsafe {
+        let (grid, threads) = grid_of(grid, threads)?;
+        if !(1..=8).contains(&width) {
+            return Err(KernelError::invalid(format!("a receiver table has 1 to 8 slots per cell, got {}", width)));
+        }
+        let mut buffers = Buffers::new();
+        let heights = buffers.f64s("heights", heights)?;
+        let table = buffers.i32s("receiver table", table)?;
+        let shares = buffers.f64s("shares", shares)?;
+        let order_in = buffers.i32s("order", order_in)?;
+        let level_start = buffers.i32s("level offsets", level_start)?;
+        let area = buffers.f64s("area", area)?;
+        let erodibility = buffers.f64s("erodibility", erodibility)?;
+        let solved = buffers.f64s_mut("solved", solved)?;
+        let levels = Levels::new(order_in, level_start, grid.count(), threads)?;
+        incise_many(&grid, heights, table, shares, width as usize, &levels, area, erodibility, area_exponent, dt, threads, solved)
     })
 }

@@ -24,6 +24,7 @@ MODULES = (
     "wear",
     "noise_displace",
     "heightfield",
+    "fluvial_terrain",
     "distant_land",
     "distant_forest",
     "erode",

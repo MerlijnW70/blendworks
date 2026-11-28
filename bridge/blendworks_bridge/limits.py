@@ -193,6 +193,6 @@ def _gather(*modules):
         globals().update({name: value for name, value in vars(module).items() if name.isupper()})
 
 
-from . import limits_land, limits_meadow, limits_parts, limits_parts_more, limits_woodland
+from . import limits_fluvial, limits_land, limits_meadow, limits_parts, limits_parts_more, limits_woodland
 
-_gather(limits_parts, limits_parts_more, limits_land, limits_meadow, limits_woodland)
+_gather(limits_parts, limits_parts_more, limits_land, limits_meadow, limits_woodland, limits_fluvial)

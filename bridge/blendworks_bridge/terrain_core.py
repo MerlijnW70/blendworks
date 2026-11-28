@@ -55,6 +55,9 @@ SIGNATURES = {
     "bw_priority_flood": [GRID, BUFFER, I64, BUFFER, OUT],
     "bw_diffuse": [GRID, I64, BUFFER, BUFFER, F64, F64, F64, I64, BUFFER],
     "bw_slide": [GRID, I64, BUFFER, BUFFER, F64, I64, BUFFER],
+    "bw_threshold": [GRID, BUFFER, BUFFER, BUFFER, OUT],
+    "bw_dinf": [GRID, I64, BUFFER, BUFFER, BUFFER],
+    "bw_incise_many": [GRID, I64, BUFFER, BUFFER, BUFFER, I64, BUFFER, BUFFER, BUFFER, BUFFER, F64, F64, BUFFER],
 }
 
 

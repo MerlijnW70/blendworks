@@ -107,6 +107,34 @@ def test_priority_flood_equals_the_reference(bridge):
             assert core[1] == python[1]
 
 
+def test_threshold_hillslopes_equal_the_reference(bridge):
+    if not core_ready():
+        return
+    for name, (heights, spacing, edges) in grid_cases().items():
+        tangent = 0.3 + (numpy.arange(heights.size).reshape(heights.shape) % 5) / 7.0
+        core = kernels.threshold(heights, tangent, spacing, edges, "core")
+        python = kernels.threshold(heights, tangent, spacing, edges, "python")
+        same_bits(core[0], python[0], f"{name} threshold")
+        assert core[1] == python[1], name
+        valid = numpy.isfinite(heights)
+        assert (core[0][valid] <= heights[valid]).all(), name
+
+
+def test_dinf_and_incision_over_two_receivers_equal_the_reference(bridge):
+    if not core_ready():
+        return
+    for name, (heights, spacing, edges) in grid_cases().items():
+        core = kernels.dinf(heights, spacing, edges, THREADS, "core")
+        python = kernels.dinf(heights, spacing, edges, THREADS, "python")
+        assert (core[0] == python[0]).all(), f"{name} dinf receivers"
+        same_bits(core[1], python[1], f"{name} dinf shares")
+        assert (numpy.count_nonzero(core[0].reshape(-1, 8) >= 0, axis=1) <= 2).all(), name
+        ordering = kernels.order(core[0], heights.shape, 8, THREADS, "core")
+        area = kernels.accumulate(ordering, numpy.full(heights.size, spacing[0] * spacing[1]), core[1], THREADS, "core")
+        erodibility = 1e-3 * (1.0 + numpy.arange(heights.size) % 3)
+        solved = [kernels.incise_many(heights, core[0], core[1], ordering, area, erodibility, 0.5, 10.0, spacing, THREADS, engine) for engine in ("core", "python")]
+        same_bits(solved[0], solved[1], f"{name} incise over two receivers")
+
 def test_incision_equals_the_reference_for_n_one_and_newton(bridge):
     if not core_ready():
         return

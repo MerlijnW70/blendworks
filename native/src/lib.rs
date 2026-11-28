@@ -7,6 +7,7 @@
 pub mod accumulate;
 pub mod basin_tree;
 pub mod diffusion;
+pub mod dinf;
 pub mod donors;
 pub mod error;
 #[allow(unsafe_code)]
@@ -24,3 +25,4 @@ pub mod receivers;
 pub mod shared;
 pub mod team;
 pub mod thermal;
+pub mod threshold;

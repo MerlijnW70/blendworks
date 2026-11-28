@@ -10,6 +10,9 @@ The compiled kernels that landscape evolution stands on: flow receivers, the bre
 | Accumulation | `bw_accumulate` | `terrain_order.accumulate` | every cell pulls its donors' totals, level by level from the top |
 | Lake routing, filling and carving | `bw_route_lakes` | `terrain_lakes.route` | basin graph and its minimum spanning tree (Cordonnier, Bovy & Braun 2019), built by Boruvka's algorithm; lake labels, water level and spill points |
 | Priority-Flood+epsilon | `bw_priority_flood` | `terrain_flood.priority_flood` | Barnes, Lehman & Mulla 2014, Algorithms 2 and 3 |
+| D-infinity receivers | `bw_dinf` | `terrain_dinf.dinf` | Tarboton 1997: the steepest of eight facets, flow shared by angle between two neighbours; arctangent from arithmetic |
+| Incision over several receivers | `bw_incise_many` | `terrain_dinf.incise_many` | Braun & Willett 2013 implicit scheme for n = 1 with a factor per receiver and share |
+| Threshold hillslopes | `bw_threshold` | `terrain_threshold.threshold` | the lower envelope of critical slopes by a priority queue (Burbank et al. 1996; Montgomery 2001), one thread |
 | Implicit stream-power incision | `bw_incise` | `terrain_incision.incise` | Braun & Willett 2013; closed form for n = 1, bracketed Newton for any other n |
 | Linear and non-linear diffusion | `bw_diffuse` | `terrain_diffusion.diffuse` | alternating-direction implicit in locally one-dimensional form; Roering, Kirchner & Dietrich 1999 by Picard iteration |
 | Thermal slides | `bw_slide` | `terrain_thermal.slide` | slope-limited mass transfer with a critical tangent per cell |

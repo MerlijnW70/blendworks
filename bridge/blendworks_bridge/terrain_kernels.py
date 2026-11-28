@@ -4,7 +4,7 @@ import os
 
 import numpy
 
-from . import terrain_core, terrain_diffusion, terrain_flood, terrain_flow, terrain_incision, terrain_lakes, terrain_order, terrain_thermal
+from . import terrain_core, terrain_diffusion, terrain_flood, terrain_flow, terrain_incision, terrain_lakes, terrain_order, terrain_thermal, terrain_threshold, terrain_dinf
 from .terrain_grid import EDGE_ALL, TerrainGrid
 from .terrain_lakes import Lakes
 from .terrain_order import Ordering
@@ -145,6 +145,51 @@ def priority_flood(heights, epsilon=True, edges=EDGE_ALL, engine="auto"):
     raised = terrain_core.I64(0)
     found.call("bw_priority_flood", terrain_core.grid_spec(grid), terrain_core.describe(heights), int(bool(epsilon)), terrain_core.describe(filled), raised)
     return filled, raised.value
+
+
+def dinf(heights, spacing=(1.0, 1.0), edges=EDGE_ALL, threads=None, engine="auto"):
+    """D-infinity receivers (Tarboton 1997): a table of eight slots per cell with at most two receivers, and shares."""
+    heights = heights_of(heights)
+    grid = TerrainGrid.of(heights, spacing, edges)
+    found = chosen_core(engine)
+    if found is None:
+        return terrain_dinf.dinf(grid, heights)
+    receivers = numpy.empty(grid.count * WIDTH_MFD, dtype=numpy.int32)
+    shares = numpy.empty(grid.count * WIDTH_MFD)
+    found.call("bw_dinf", terrain_core.grid_spec(grid), threads_of(threads), terrain_core.describe(heights), terrain_core.describe(receivers), terrain_core.describe(shares))
+    return receivers, shares
+
+
+def incise_many(heights, table, shares, ordering, area, erodibility, area_exponent, dt, spacing=(1.0, 1.0), threads=None, engine="auto"):
+    """Implicit incision for n = 1 over several receivers per cell (the table's width comes from the ordering)."""
+    heights = heights_of(heights)
+    grid = TerrainGrid.of(heights, spacing)
+    area = field(area, grid)
+    erodibility = field(erodibility, grid)
+    width = ordering.width
+    found = chosen_core(engine)
+    if found is None:
+        return terrain_dinf.incise_many(grid, heights, table, shares, width, ordering, area, erodibility, area_exponent, dt)
+    table = numpy.ascontiguousarray(table, dtype=numpy.int32).ravel()
+    shares = numpy.ascontiguousarray(shares, dtype=numpy.float64).ravel()
+    solved = numpy.empty(grid.shape)
+    found.call("bw_incise_many", terrain_core.grid_spec(grid), threads_of(threads), terrain_core.describe(heights), terrain_core.describe(table), terrain_core.describe(shares), int(width), terrain_core.describe(ordering.order), terrain_core.describe(ordering.padded_level_start()), terrain_core.describe(area), terrain_core.describe(erodibility), float(area_exponent), float(dt), terrain_core.describe(solved))
+    return solved
+
+
+def threshold(heights, tangent, spacing=(1.0, 1.0), edges=EDGE_ALL, engine="auto"):
+    """Threshold hillslopes: the surface lowered until no cell stands above a neighbour by more than its critical
+    tangent times their distance. Returns the surface and the number of cells lowered."""
+    heights = heights_of(heights)
+    grid = TerrainGrid.of(heights, spacing, edges)
+    tangent = field(tangent, grid)
+    found = chosen_core(engine)
+    if found is None:
+        return terrain_threshold.threshold(grid, heights, tangent)
+    out = numpy.empty(grid.shape)
+    lowered = terrain_core.I64(0)
+    found.call("bw_threshold", terrain_core.grid_spec(grid), terrain_core.describe(heights), terrain_core.describe(tangent), terrain_core.describe(out), lowered)
+    return out, lowered.value
 
 
 def diffuse(heights, diffusivity, dt, spacing=(1.0, 1.0), edges=EDGE_ALL, critical_slope=None, max_ratio=DEFAULT_MAX_RATIO, iterations=DEFAULT_PICARD, threads=None, engine="auto"):

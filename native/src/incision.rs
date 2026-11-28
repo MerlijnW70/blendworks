@@ -123,3 +123,65 @@ pub fn incise(grid: &Grid, heights: &[f64], receivers: &[i32], levels: &Levels, 
     })?;
     Ok(())
 }
+
+/// Implicit incision for n = 1 on a graph of several receivers per cell (`width` slots, -1 when
+/// unused, with flow shares w_j): h = (h* + sum F_j h_j) / (1 + sum F_j), F_j = K dt A^m w_j / d_j,
+/// summed in slot order over the receivers already below h*. Each cell is solved after all its
+/// receivers (the queue's levels), so the result does not depend on the thread count. A cell with
+/// no receiver below it keeps its height.
+#[allow(clippy::too_many_arguments)]
+pub fn incise_many(grid: &Grid, heights: &[f64], table: &[i32], shares: &[f64], width: usize, levels: &Levels, area: &[f64], erodibility: &[f64], area_exponent: f64, dt: f64, threads: usize, solved: &mut [f64]) -> KernelResult<()> {
+    grid.expect_len("heights", heights.len(), 1)?;
+    grid.expect_len("receiver table", table.len(), width)?;
+    grid.expect_len("shares", shares.len(), width)?;
+    grid.expect_len("area", area.len(), 1)?;
+    grid.expect_len("erodibility", erodibility.len(), 1)?;
+    grid.expect_len("solved", solved.len(), 1)?;
+    Law { area_exponent, slope_exponent: 1.0, dt }.check()?;
+    let count = grid.count();
+    let found = spans(count, threads, |_, cells| {
+        for cell in cells {
+            for slot in 0..width {
+                let receiver = table[cell * width + slot];
+                if receiver < -1 || receiver >= count as i32 || receiver == cell as i32 {
+                    return Err(KernelError::invalid(format!("cell {} has receiver {}, outside 0..{} and not -1", cell, receiver, count)));
+                }
+                if receiver >= 0 && !(shares[cell * width + slot].is_finite() && shares[cell * width + slot] >= 0.0) {
+                    return Err(KernelError::invalid(format!("share {} of cell {} must be finite and at least 0", slot, cell)));
+                }
+            }
+            if heights[cell].is_finite() && !(erodibility[cell].is_finite() && erodibility[cell] >= 0.0 && area[cell].is_finite() && area[cell] >= 0.0) {
+                return Err(KernelError::invalid(format!("erodibility and area of cell {} must be finite and at least 0", cell)));
+            }
+        }
+        Ok(())
+    });
+    found.into_iter().collect::<KernelResult<()>>()?;
+    let heights_out = F64View(atomic_f64(solved)?);
+    heights_out.fill_from(heights, threads);
+    levels.sweep(threads, false, |cell| {
+        let start = heights[cell];
+        if !start.is_finite() {
+            return;
+        }
+        let base = erodibility[cell] * dt * pow(area[cell], area_exponent);
+        let mut weight = 0.0;
+        let mut pulled = 0.0;
+        for slot in 0..width {
+            let receiver = table[cell * width + slot];
+            if receiver < 0 {
+                continue;
+            }
+            let below = heights_out.get(receiver as usize);
+            if below.is_finite() && below < start {
+                let factor = base * shares[cell * width + slot] / grid.distance(cell, receiver as usize);
+                weight += factor;
+                pulled += factor * below;
+            }
+        }
+        if weight > 0.0 {
+            heights_out.set(cell, (start + pulled) / (1.0 + weight));
+        }
+    })?;
+    Ok(())
+}
