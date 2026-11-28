@@ -1,12 +1,17 @@
-"""Weather assembly: calls the sky, clouds and rain commands for a weather state."""
+"""Weather assembly: calls the sky, clouds and rain commands for a weather state, and keeps the weather's air for the commands after it."""
 
+import json
 import math
 
-from . import cloud_forms, cloud_layers, sky_measure, sky_world, weather_continuum, weather_lightning, weather_objects, weather_rain, weather_wet
+from . import (cloud_forms, cloud_layers, sky_measure, sky_world, weather_continuum, weather_lightning, weather_objects, weather_rain, weather_wet,
+               world_background)
+from .commands.sky import auto_camera
+from .liquid_light import scene_unit
 from .registry import COMMANDS
 from .schema import validate
 
 EXTRA_KINDS = ("rain_veil", "rain_streaks", "lightning", "flash")
+AIR_PROPERTY = "blendworks_weather_air"
 HAZE_TINT = {"clear": [0.92, 0.96, 1.0], "cloudy": [0.97, 0.98, 1.0]}
 BOLT_DISTANCE = 3000.0
 COOL_TINT = (0.8, 0.88, 1.0)
@@ -16,6 +21,34 @@ DECK_GENERA = ("nimbostratus", "stratus", "cumulonimbus")
 def call(ctx, name, args):
     entry = COMMANDS[name]
     return entry.run(ctx, validate(entry.schema, args))
+
+
+def store_air(scene, state, sky_result, cloud_result):
+    """The weather's air for the commands that follow it: atmosphere takes its visibility, valley_mist its wind, cover and sun."""
+    air = {
+        "visibility": state["visibility"],
+        "condition": weather_continuum.condition_of(state["visibility"]),
+        "wind": state["wind"],
+        "rain": state["rain"],
+        "cover": cloud_result["cover"] if cloud_result else 0.0,
+        "sun": {"elevation": sky_result["sun"]["elevation"], "azimuth": sky_result["sun"]["azimuth"]},
+    }
+    scene.world[AIR_PROPERTY] = json.dumps(air, sort_keys=True)
+    return air
+
+
+def stored_air(scene):
+    """The air of the weather on the scene's world, while its sky stands; a new world or background has none."""
+    world = scene.world
+    if world is None or world.get(world_background.SKY_PROPERTY) is None:
+        return None
+    saved = world.get(AIR_PROPERTY)
+    return json.loads(saved) if isinstance(saved, str) else None
+
+
+def forget_air(scene):
+    if scene.world is not None and AIR_PROPERTY in scene.world:
+        del scene.world[AIR_PROPERTY]
 
 
 def clear_extras(scene):
@@ -144,22 +177,15 @@ def haze(ctx, args, state, cloud_result):
 
 
 def exposure(ctx, args, state, cloud_result):
+    """The incident meter's exposure for the light under the cover: the sun through it, the sky through it and the sun light
+    it passes on; render_final then meters the frame like a camera."""
     settings = sky_world.stored(ctx.scene.world)
     sun = cloud_result["sun_share"] if cloud_result else 1.0
     diffuse = cloud_result["diffuse_share"] if cloud_result else 1.0
     light = sky_world.illuminance(settings, sun, diffuse) + overcast_light(settings, cloud_result)
-    value = sky_world.exposure_for(light, state["compensation"])
-    if cloud_result is not None:
-        clear = sky_measure.luminance(settings["sky_mean"])
-        cover = cloud_result["cover"]
-        sky_light = clear * (1.0 - cover) + cloud_result["cloud_radiance"] * cover
-        if sky_light > 1e-9:
-            keyed = math.log2(state["sky_key"] / sky_light)
-            value = min(value, keyed) * (1.0 - cover) + keyed * cover
-    report = {"mode": args["exposure"], "recommended": round(value, 4), "illuminance": round(light, 6)}
-    if args["exposure"] == "auto":
-        ctx.scene.view_settings.exposure = value
-    report["scene"] = round(float(ctx.scene.view_settings.exposure), 6)
+    report = auto_camera(ctx.scene, args["exposure"], sky_world.exposure_for(light))
+    report["illuminance"] = round(light, 6)
+    report["lux"] = round(light * scene_unit(), 1)
     return report
 
 

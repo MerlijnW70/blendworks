@@ -33,7 +33,7 @@ SKY_FIELDS = {
     "sun_intensity": number("Brightness of the sun disc; the lamp follows it.", 0.0, SUN_INTENSITY, 1.0),
     "strength": number(f"Sky brightness; 1 lights a clear noon at exposure 0 (the sky's own units times {sky_world.SKY_SCALE:g}).", 0.0, MAX_WORLD_STRENGTH, 1.0),
     "lamp": ref(string("Sun lamp to create or update.", default=sky_world.LAMP_DEFAULT), "object", ENSURES),
-    "exposure": string("auto sets the scene exposure for this light; keep leaves it.", EXPOSURE_MODES, "auto"),
+    "exposure": string("auto: the scene exposure an incident meter gives this light, render_final then meters the frame like a camera, and the camera's view, look and white balance; keep leaves them.", EXPOSURE_MODES, "auto"),
 }
 
 
@@ -69,10 +69,7 @@ def sky(ctx, args):
 def report(ctx, settings, sun, lamp, created, replaced, exposure_mode, cloud_factor=1.0, diffuse_factor=1.0):
     light = lamp.data
     illuminance = sky_world.illuminance(settings, cloud_factor, diffuse_factor)
-    exposure = {"mode": exposure_mode, "recommended": round(sky_world.exposure_for(illuminance), 4)}
-    if exposure_mode == "auto":
-        camera_exposure.apply_view(ctx.scene.view_settings, exposure=exposure["recommended"])
-    exposure["scene"] = round(float(ctx.scene.view_settings.exposure), 6)
+    exposure = auto_camera(ctx.scene, exposure_mode, sky_world.exposure_for(illuminance))
     placed = {key: round(value, 6) for key, value in sun.items() if isinstance(value, float)}
     placed.update({key: value for key, value in sun.items() if isinstance(value, str)})
     placed["elevation"] = settings["elevation"]
@@ -100,3 +97,16 @@ def report(ctx, settings, sun, lamp, created, replaced, exposure_mode, cloud_fac
         "exposure": exposure,
         "replaced": replaced,
     }
+
+
+def auto_camera(scene, exposure_mode, recommended):
+    """Exposure auto: the incident meter's exposure for previews, render_final meters the frame itself; the camera's
+    view, look and white balance follow unless they were chosen."""
+    exposure = {"mode": exposure_mode, "recommended": round(recommended, 4), "ev100": round(camera_exposure.REFERENCE_EV - recommended, 4)}
+    if exposure_mode == "auto":
+        camera_exposure.apply_view(scene.view_settings, exposure=exposure["recommended"])
+        camera_exposure.set_exposure_mode(scene, "auto", applied=scene.view_settings.exposure)
+        exposure["colour"] = camera_exposure.apply_camera_colour(scene)
+        exposure["white_balance"] = camera_exposure.apply_white_balance(scene, sky_world.illuminant(scene))
+    exposure["scene"] = round(float(scene.view_settings.exposure), 6)
+    return exposure

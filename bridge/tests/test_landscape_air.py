@@ -9,7 +9,7 @@ from harness import run
 import bpy
 import numpy as np
 
-from blendworks_bridge import atmosphere_haze, exr_read
+from blendworks_bridge import atmosphere_haze, exr_read, sky_world
 from final_helpers import EXACT, card, emissive
 from land_helpers import region
 
@@ -91,12 +91,13 @@ def test_far_land_fades_towards_the_sky_by_the_extinction(bridge):
     clear = frame(bridge, "clear.exr", ["depth"])
     depth = exr_read.read_exr(os.path.join(bridge.workspace, "clear.passes.exr")).channel("ViewLayer.Depth.Z")
     result = bridge.ok("atmosphere", visibility=12_000.0, method="depth", tint=[0.9, 0.95, 1.0])
-    airlight = np.asarray(result["airlight"])
     hazed = frame(bridge, "hazed.exr")
     settings = atmosphere_haze.stored(bpy.context.scene)
     camera = bpy.data.objects["Cam"]
     rays = atmosphere_haze.pixel_rays(bpy.context.scene, camera, 64, 36)
     distance = depth * np.linalg.norm(rays, axis=-1)
+    airlight = sky_world.directional_airlight(bpy.context.scene.world, settings, rays / np.linalg.norm(rays, axis=-1)[..., None])
+    assert result["airlight_source"] == "sky" and airlight.shape == rays.shape
     land = distance < 1e6
     sigma = 3.912 / 12_000.0
     through = np.exp(-sigma * distance[..., None] * np.asarray(settings["tint"]))
@@ -106,8 +107,8 @@ def test_far_land_fades_towards_the_sky_by_the_extinction(bridge):
     far = land & (distance > 10_000.0)
     near = land & (distance < 1_500.0)
     assert far.any() and near.any(), (np.nanmin(distance), np.nanmax(distance[land]), depth.min(), depth.max())
-    assert np.abs(hazed[far] - airlight).mean() < 0.25 * np.abs(clear[far] - airlight).mean()
-    assert np.abs(hazed[near] - airlight).mean() > 0.6 * np.abs(clear[near] - airlight).mean()
+    assert np.abs(hazed[far] - airlight[far]).mean() < 0.25 * np.abs(clear[far] - airlight[far]).mean()
+    assert np.abs(hazed[near] - airlight[near]).mean() > 0.6 * np.abs(clear[near] - airlight[near]).mean()
     assert distance[land].max() > 12_000.0, distance[land].max()
     assert math.isclose(settings["visibility"], 12_000.0)
 

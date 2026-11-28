@@ -247,7 +247,7 @@ def test_the_sky_estimate_reads_the_upper_hemisphere_without_copying_the_image(b
 
 def test_atmosphere_refuses_bad_settings(bridge):
     card_at(bridge, 10.0)
-    bridge.refuse("atmosphere", "bad_args")
+    bridge.refuse("atmosphere", "bad_args", condition="smog")
     bridge.refuse("atmosphere", "bad_args", visibility=100.0, domain="world", height_falloff=10.0)
     bridge.refuse("atmosphere", "bad_args", visibility=100.0, bounds={"min": [0.0, 0.0, 0.0], "max": [1.0, -1.0, 1.0]})
     bridge.refuse("atmosphere", "bad_args", visibility=100.0, airlight=[1.0, 1.0, 1.0], preview="volume")

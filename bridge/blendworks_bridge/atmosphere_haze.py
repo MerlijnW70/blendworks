@@ -125,7 +125,9 @@ def depth_haze(scene, camera, rgb, depth, settings):
     directions = rays / lengths[..., None]
     distance = depth * lengths
     from . import mist_depth
-    rgb = mist_depth.apply(rgb, origin, directions, distance, settings["airlight"], scene, box_span)
+    from . import sky_world
+    airlight = sky_world.directional_airlight(scene.world, settings, directions)
+    rgb = mist_depth.apply(rgb, origin, directions, distance, airlight, scene, box_span)
     start = np.zeros_like(distance)
     if settings["domain"] == "box":
         low, high = settings["bounds"]
@@ -135,7 +137,6 @@ def depth_haze(scene, camera, rgb, depth, settings):
     start_z = origin[2] + directions[..., 2] * start
     end_z = origin[2] + directions[..., 2] * distance
     through = transmittance(settings, start_z, end_z, distance - start).astype(np.float32)
-    airlight = np.asarray(settings["airlight"], dtype=np.float32)
     return rgb * through + airlight * (1.0 - through)
 
 
@@ -174,9 +175,8 @@ def sky_airlight(world):
     colour = np.asarray(settings["sky_mean"], dtype=np.float64)
     clouds = world.get(CLOUDS_PROPERTY)
     if isinstance(clouds, str):
-        cover = float(json.loads(clouds).get("cover", 0.0))
-        grey = float(np.dot(colour, (0.2126, 0.7152, 0.0722))) * 1.6
-        colour = colour * (1.0 - cover) + grey * cover
+        from . import sky_world
+        colour = sky_world.clouded(colour, float(json.loads(clouds).get("cover", 0.0)))
     return [round(float(value), 6) for value in colour]
 
 

@@ -2,7 +2,7 @@
 
 from .. import cloud_layers, weather_build, weather_continuum
 from ..errors import bad_args
-from ..limits import ATMOSPHERE_DENSITY, FRACTION, MAX_LENGTH, MAX_NAMES, MAX_SEED, RAIN_RATE
+from ..limits import ATMOSPHERE_DENSITY, FRACTION, MAX_LENGTH, MAX_NAMES, MAX_SEED, MAX_WIND_SPEED, RAIN_RATE
 from ..registry import command
 from ..schema import boolean, integer, length, names, number, ref, string
 from .sky import SUN
@@ -15,7 +15,9 @@ WEATHER_FIELDS = {
     "seed": integer("Seed of the clouds, rain and lightning.", 0, MAX_SEED, 0),
     "form": string("Cloud form: auto (sheet in previews, volumes in render_final), volume or sheet.", list(cloud_layers.FORMS), "auto"),
     "dust": number("Override the continuum's dust (aerosol density).", 0.0, ATMOSPHERE_DENSITY),
-    "visibility": length("Override the continuum's visibility in metres.", None, MAX_LENGTH),
+    "visibility": length("Override the continuum's visibility in metres (clear 20-50 km, hazy 5-10 km, mist 1-5 km, fog under 1 km).", None, MAX_LENGTH),
+    "wind": number("Override the wind at 10 m in m/s; the continuum's follows the Beaufort scale (2.5 fair, 5.5 overcast, 12 in a thunderstorm). "
+                   "Valley mist forms only in light wind.", 0.0, MAX_WIND_SPEED),
     "rain": number("Override the rain rate in mm/h (0 none, 2 light, 15 heavy, 40 cloudburst).", 0.0, RAIN_RATE),
     "rain_foreground": boolean("Falling streaks in front of the active camera. Default: on in heavy rain and thunderstorms."),
     "wet": number("Override how wet the ground is, 0 to 1: darker base colour, glossier, puddles on flat ground.", 0.0, FRACTION),
@@ -59,6 +61,7 @@ def weather(ctx, args):
         extra = [key for key in args if key in WEATHER_FIELDS and key not in ("remove", "seed", "form", "haze", "exposure")]
         if extra:
             raise bad_args(f"remove takes no other settings ({', '.join(sorted(extra))})")
+        weather_build.forget_air(scene)
         return {"removed": weather_build.remove(ctx)}
     state, source = resolve(args)
     weather_build.clear_extras(scene)
@@ -67,6 +70,7 @@ def weather(ctx, args):
     rain = weather_build.rain(ctx, args, state, cloud_result)
     lightning = weather_build.lightning(ctx, args, state, cloud_result)
     wetted, skipped = weather_build.wet(ctx, args, state)
+    air = weather_build.store_air(scene, state, sky_result, cloud_result)
     haze = weather_build.haze(ctx, args, state, cloud_result)
     exposure = weather_build.exposure(ctx, args, state, cloud_result)
     return {
@@ -79,6 +83,7 @@ def weather(ctx, args):
         "cover": cloud_result["cover"] if cloud_result else 0.0,
         "dust": state["dust"],
         "visibility": state["visibility"],
+        "air": air,
         "rain": rain,
         "lightning": lightning,
         "wet": {"wetness": round(state["wet"], 6), "materials": wetted, "skipped": skipped},

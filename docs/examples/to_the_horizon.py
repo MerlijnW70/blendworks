@@ -13,7 +13,7 @@ def enabled():
     return OPTION in ("rolling", "ranges")
 
 
-def surround(cmd, terrain, camera, water=(), species=("pine", "oak", "birch"), visibility=25_000.0, mist=None, forest=True, cover=0.45, seed=0, haze=True, fields=False):
+def surround(cmd, terrain, camera, water=(), species=("pine", "oak", "birch"), visibility=None, mist=None, forest=True, cover=0.45, seed=0, haze=True, fields=False):
     """Land, forest, mist and haze to the horizon around terrain, built for camera. With fields the distant land gets the
     meadow fields too, so its ground carries on the meadow's colour structure."""
     land = cmd("distant_land", terrain=list(terrain), style=OPTION, camera=camera, detail=LAND_DETAIL, seed=seed)
@@ -27,8 +27,8 @@ def surround(cmd, terrain, camera, water=(), species=("pine", "oak", "birch"), v
         report["forest"] = {key: grown[key] for key in ("counts", "cover", "switches", "calibration")}
     if mist is not None:
         made = cmd("valley_mist", ground=list(terrain) + [land["name"]] + list(water), **mist)
-        report["mist"] = {key: made[key] for key in ("coverage", "low_ground", "extinction_per_metre")}
+        report["mist"] = {key: made.get(key) for key in ("coverage", "low_ground", "extinction_per_metre", "formed")}
     if haze:
-        made = cmd("atmosphere", visibility=visibility, height_falloff=1200.0, method="depth")
+        made = cmd("atmosphere", height_falloff=1200.0, method="depth", **({} if visibility is None else {"visibility": visibility}))
         report["haze"] = {"visibility": made["visibility"], "method": made["method"]}
     return report

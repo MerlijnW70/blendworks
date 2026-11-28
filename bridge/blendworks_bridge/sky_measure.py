@@ -15,9 +15,11 @@ from .errors import failed
 DISC_PIXELS = 48
 DISC_FIELD = 2.0
 DISC_SAMPLES = 4
-PANORAMA_WIDTH = 64
-PANORAMA_HEIGHT = 32
+PANORAMA_WIDTH = 128
+PANORAMA_HEIGHT = 128
 PANORAMA_SAMPLES = 4
+DOME_COLUMNS = 16
+DOME_AZIMUTH_START = 180.0
 SKY_FIELDS = ("sky_type", "sun_size", "sun_intensity", "sun_elevation", "sun_rotation", "altitude", "air_density", "aerosol_density", "ozone_density")
 LUMINANCE = np.array([0.2126, 0.7152, 0.0722])
 
@@ -116,7 +118,9 @@ def sun_irradiance(probe, sun_vector):
 
 
 def hemisphere(probe):
-    """Horizontal irradiance, mean radiance and the horizon radiance of the sky without its sun disc."""
+    """Horizontal irradiance, mean radiance, the horizon radiance of the sky without its sun disc, and its upper half as a
+    coarse dome: rows from the zenith down to the horizon, columns from azimuth 180 degrees eastwards round (see
+    dome_azimuth)."""
     data = probe.camera.data
     data.type = "PANO"
     data.panorama_type = "EQUIRECTANGULAR"
@@ -137,14 +141,35 @@ def hemisphere(probe):
     horizon_rows = upper & (latitude < math.radians(12.0))
     horizon = row_means[horizon_rows].mean(axis=0)
     zenith = row_means[0]
-    return irradiance, mean, horizon, zenith
+    dome = pixels[upper].reshape(int(upper.sum()), DOME_COLUMNS, -1, 3).mean(axis=2)
+    return irradiance, mean, horizon, zenith, dome
 
 
 def measure(sky, sun_vector):
     with ProbeScene(sky) as probe:
         sun = sun_irradiance(probe, sun_vector)
-        irradiance, mean, horizon, zenith = hemisphere(probe)
-    return {"sun_rgb": sun, "sky_irradiance": irradiance, "sky_mean": mean, "horizon": horizon, "zenith": zenith}
+        irradiance, mean, horizon, zenith, dome = hemisphere(probe)
+    return {"sun_rgb": sun, "sky_irradiance": irradiance, "sky_mean": mean, "horizon": horizon, "zenith": zenith, "dome": dome.ravel()}
+
+
+def dome_radiance(dome, rows, directions):
+    """Sky radiance of a stored dome (flat list, rows from the zenith to the horizon) along world directions, bilinear;
+    directions below the horizon read the horizon row."""
+    dome = np.asarray(dome, dtype=np.float64).reshape(rows, DOME_COLUMNS, 3)
+    directions = np.asarray(directions, dtype=np.float64)
+    elevation = np.degrees(np.arcsin(np.clip(directions[..., 2], 0.0, 1.0)))
+    azimuth = np.degrees(np.arctan2(directions[..., 0], directions[..., 1]))
+    row = np.clip((90.0 - elevation) / 90.0 * rows - 0.5, 0.0, rows - 1.0)
+    column = (((azimuth - DOME_AZIMUTH_START) / 360.0) % 1.0) * DOME_COLUMNS - 0.5
+    r0 = np.floor(row).astype(int)
+    r1 = np.minimum(r0 + 1, rows - 1)
+    c0 = np.floor(column).astype(int) % DOME_COLUMNS
+    c1 = (c0 + 1) % DOME_COLUMNS
+    fr = (row - np.floor(row))[..., None]
+    fc = (column - np.floor(column))[..., None]
+    top = dome[r0, c0] * (1.0 - fc) + dome[r0, c1] * fc
+    bottom = dome[r1, c0] * (1.0 - fc) + dome[r1, c1] * fc
+    return top * (1.0 - fr) + bottom * fr
 
 
 def luminance(rgb):

@@ -4,6 +4,7 @@ import bpy
 from mathutils import Vector
 
 from .. import atmosphere_haze as haze
+from .. import weather_build, weather_continuum
 from ..ground_level import low_ground
 from ..errors import bad_args
 from ..limits import MAX_ANISOTROPY, MAX_COORDINATE, MAX_RELIEF
@@ -42,7 +43,14 @@ def plan_atmosphere(args, state):
     "atmosphere",
     "Add aerial perspective and haze as a volume: visibility in metres, density falling with height, sun-scatter tint, ground fog.",
     {
-        "visibility": length("Meteorological visibility at base_height in metres: where contrast falls to 2 %."),
+        "visibility": length("Meteorological visibility at base_height in metres: where contrast falls to 2 %. Default: the weather's, "
+                             "else clear air."),
+        "condition": string(
+            "Air by condition when visibility is not given: the geometric centre of the International "
+            "Visibility Code's range (" + ", ".join(f"{name} {low / 1000:g}-{high / 1000:g} km" for name, (low, high) in
+                                                   weather_continuum.VISIBILITY_CLASSES.items()) + ").",
+            weather_continuum.CONDITIONS,
+        ),
         "height_falloff": length("Height in metres over which the density falls to 1/e. Default: uniform."),
         "base_height": number("Height in metres where the density equals the visibility.", -MAX_RELIEF, MAX_RELIEF, 0.0),
         "tint": color("Scatter colour: tints the sunlit haze; extinction per channel follows it.", [0.9, 0.95, 1.0], allow_alpha=False),
@@ -52,7 +60,8 @@ def plan_atmosphere(args, state):
         "bounds": BOUNDS,
         "method": string("volume: path-traced haze in render_final; depth: a cheap per-pixel haze from the depth pass.", METHODS, "volume"),
         "preview": string("How render_preview shows the haze: depth (fast) or volume.", PREVIEWS, "depth"),
-        "airlight": color("Linear colour of the haze for the depth method. Default: the world's mean sky radiance.", allow_alpha=False),
+        "airlight": color("Linear colour of the haze for the depth method. Default: the sky's own radiance along each ray (the horizon's below "
+              "it), so distant land fades into the sky behind it; without a procedural sky the world's mean radiance.", allow_alpha=False),
         "remove": boolean("Remove the atmosphere instead.", False),
     },
     plan=plan_atmosphere,
@@ -66,8 +75,8 @@ def atmosphere(ctx, args):
         if any(key in args for key in SETTINGS):
             raise bad_args("remove takes no other settings")
         return {"removed": remove(scene)}
-    if "visibility" not in args:
-        raise bad_args("visibility is required")
+    args = dict(args)
+    args["visibility"], source = default_visibility(ctx.scene, args)
     check_arguments(args)
     remove(scene)
     settings = settings_from(ctx, args)
@@ -86,10 +95,24 @@ def atmosphere(ctx, args):
             raise bad_args("the world volume needs a world with nodes; set one with set_world or set_world_hdri")
         haze.add_world_volume(scene.world, settings)
     haze.store(scene, settings)
-    return report(settings)
+    result = report(settings)
+    result["visibility_source"] = source
+    result["condition"] = weather_continuum.condition_of(settings["visibility"])
+    return result
 
 
-SETTINGS = ("visibility", "height_falloff", "ground_fog", "bounds", "airlight")
+SETTINGS = ("visibility", "height_falloff", "ground_fog", "bounds", "airlight", "condition")
+
+
+def default_visibility(scene, args):
+    """The visibility given, else the condition's, else the weather's, else clear air's."""
+    if "visibility" in args:
+        return args["visibility"], "given"
+    air = weather_build.stored_air(scene)
+    if air is not None and "condition" not in args:
+        return air["visibility"], "weather"
+    condition = args.get("condition", "clear")
+    return weather_continuum.condition_visibility(condition), f"condition {condition}"
 
 
 def check_arguments(args):
@@ -157,6 +180,7 @@ def settings_from(ctx, args):
         bounds = args.get("bounds")
         settings["bounds"] = [list(bounds["min"]), list(bounds["max"])] if bounds is not None else default_bounds(ctx)
     settings["airlight"] = list(args["airlight"]) if "airlight" in args else haze.estimated_airlight(ctx.scene.world)
+    settings["airlight_source"] = "given" if "airlight" in args else "sky"
     return settings
 
 

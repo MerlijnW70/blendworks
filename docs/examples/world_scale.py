@@ -115,7 +115,7 @@ def main():
     target_xy = (x + ahead * math.cos(heading), y + ahead * math.sin(heading))
     target = [target_xy[0], target_xy[1], eye[2] - 600.0]
     cmd("add_camera", name="view", location=eye, target=target, lens=35.0)
-    cmd("camera_setup", name="view", clip_start=0.5, clip_end=300_000.0, view_transform="AgX", look="base_contrast")
+    cmd("camera_setup", name="view", clip_start=0.5, clip_end=300_000.0)
     horizon = None
     if to_the_horizon.enabled():
         terrain = [o.name for o in bpy.data.objects if o.name.startswith("land_")]

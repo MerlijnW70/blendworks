@@ -4,7 +4,7 @@ import math
 
 from mathutils import Vector
 
-from .. import camera_exposure, camera_reach
+from .. import camera_exposure, camera_reach, sky_world
 from ..errors import bad_args
 from ..limits import (HALF_TURN, LEAST_APERTURE_RATIO, LEAST_CAMERA_MILLIMETRES, LEAST_DISPLAY_GAMMA,
                       LEAST_EXPOSURE_VALUE, LEAST_F_NUMBER, LEAST_ISO, LEAST_SHUTTER, MAX_APERTURE_BLADES,
@@ -36,7 +36,7 @@ PHYSICAL["description"] = "Exposure from a real camera: EV100 = log2(N^2 / t) - 
 
 @command(
     "camera_setup",
-    "Set a camera's lens, sensor, depth of field (f-stop, focus distance or object), shift and the scene exposure and AgX look.",
+    "Set a camera's lens, sensor, depth of field (f-stop, focus distance or object), shift, exposure or metering, view, look and white balance.",
     {
         "name": ref(string("Camera object to set up."), "object", EXISTS),
         "focal_length": number("Focal length in millimetres.", LEAST_CAMERA_MILLIMETRES, MAX_FOCAL_LENGTH),
@@ -66,6 +66,19 @@ PHYSICAL["description"] = "Exposure from a real camera: EV100 = log2(N^2 / t) - 
             camera_exposure.LOOKS,
         ),
         "gamma": number("Display gamma; 1 is neutral.", LEAST_DISPLAY_GAMMA, MAX_DISPLAY_GAMMA),
+        "metering": string(
+            "Automatic exposure: render_final meters each frame with this pattern and puts the scene's key at 18 % grey "
+            "(centre_weighted: 75 % of the weight in the central circle; average; spot). The sky and weather commands turn "
+            "it on with centre_weighted; exposure or physical turn it off.",
+            camera_exposure.METERING_MODES,
+        ),
+        "exposure_compensation": number("Stops added to the metered exposure, as a camera's exposure compensation; turns metering on.",
+                                        -MAX_EXPOSURE_STOPS, MAX_EXPOSURE_STOPS),
+        "white_balance": string(
+            "auto: neutral under the sky's light (sun, sky or overcast) by its colour temperature; a preset sets the temperature "
+            f"({', '.join(f'{name} {kelvin:g} K' for name, kelvin in camera_exposure.WHITE_BALANCE_PRESETS.items())}); off.",
+            camera_exposure.WHITE_BALANCE_MODES,
+        ),
     },
     ["name"],
     family="photography",
@@ -87,10 +100,15 @@ def camera_setup(ctx, args):
     set_far_clip(ctx, camera, args)
     set_depth_of_field(data, args)
     exposure = choose_exposure(args, data)
-    camera_exposure.apply_view(ctx.scene.view_settings, args.get("view_transform"), args.get("look"), exposure, args.get("gamma"))
+    look = args.get("look")
+    if look is None and "view_transform" in args and camera_exposure.state(ctx.scene)["colour"].get("mode") == "camera":
+        look = "none"
+    camera_exposure.apply_view(ctx.scene.view_settings, args.get("view_transform"), look, exposure, args.get("gamma"))
+    modes = record_modes(ctx.scene, args)
     ctx.view_layer.update()
     result = camera_report(camera)
     result["view"] = camera_exposure.view_report(ctx.scene.view_settings)
+    result.update(modes)
     if "physical" in args:
         result["physical"] = camera_exposure.physical_exposure(args["physical"], data.dof.aperture_fstop)
     return result
@@ -103,6 +121,8 @@ def check_arguments(args):
         raise bad_args("give focus_distance or focus_object, not both")
     if "exposure" in args and "physical" in args:
         raise bad_args("give exposure or physical, not both")
+    if ("exposure" in args or "physical" in args) and ("metering" in args or "exposure_compensation" in args):
+        raise bad_args("a fixed exposure or physical exposure cannot meter; give one or the other")
     if args.get("depth_of_field") is False and any(key in args for key in ("fstop", "focus_distance", "focus_object")):
         raise bad_args("depth_of_field false cannot take fstop or a focus")
     if "clip_end" in args and args.get("clip_to_scene"):
@@ -162,6 +182,26 @@ def set_depth_of_field(data, args):
         dof.aperture_rotation = math.radians(args["aperture_rotation"])
     if "aperture_ratio" in args:
         dof.aperture_ratio = args["aperture_ratio"]
+
+
+def record_modes(scene, args):
+    """What the call chose stays chosen: an exposure turns metering off, metering turns it on, a view, look or gamma
+    keeps the camera's colour away and a white balance replaces the automatic one."""
+    report = {}
+    if "exposure" in args or "physical" in args:
+        camera_exposure.set_exposure_mode(scene, "manual")
+    elif "metering" in args or "exposure_compensation" in args:
+        mode, compensation = camera_exposure.auto_metering(scene)
+        camera_exposure.set_exposure_mode(scene, "auto", metering=args.get("metering", mode),
+                                          compensation=args.get("exposure_compensation", compensation))
+    if any(key in args for key in ("view_transform", "look", "gamma")):
+        camera_exposure.set_explicit(scene, colour=True)
+    if "white_balance" in args:
+        camera_exposure.set_explicit(scene, white_balance={"mode": args["white_balance"]})
+        report["white_balance"] = camera_exposure.apply_white_balance(scene, sky_world.illuminant(scene))
+    entry = camera_exposure.state(scene)["exposure"]
+    report["exposure_mode"] = {key: entry.get(key) for key in ("mode", "metering", "compensation") if key in entry}
+    return report
 
 
 def choose_exposure(args, data):

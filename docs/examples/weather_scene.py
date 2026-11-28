@@ -145,7 +145,6 @@ def build():
 def shoot(weather, time_of_day):
     cmd("load_blend", path="weather-scene.blend")
     report = cmd("weather", preset=weather, time_of_day=time_of_day, form=FORM, seed=2)
-    cmd("camera_setup", name="eye", view_transform="AgX", look="base_contrast")
     final = cmd("render_final", path=f"{weather}-{time_of_day}.png", camera="eye", width=WIDTH, height=HEIGHT, samples=SAMPLES, time_limit=SECONDS, device=DEVICE, preview=False)
     return {"weather": {key: report[key] for key in ("storm", "sun", "lamp", "cover", "rain", "lightning", "exposure", "cost")},
             "samples": final["samples"], "time": final["time_budget"], "clouds": final["clouds"]}

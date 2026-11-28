@@ -4,15 +4,13 @@ import json
 import math
 
 import bpy
+import numpy
 
-from . import sky_measure, sky_sun, weather_objects, world_background
+from . import camera_exposure, sky_measure, sky_sun, weather_objects, world_background
 from .errors import bad_args
 
 MODELS = {"multiple_scattering": "MULTIPLE_SCATTERING", "single_scattering": "SINGLE_SCATTERING"}
 SKY_SCALE = 1.0 / 32.0
-REFERENCE_ILLUMINANCE = 4.27
-EXPOSURE_COMPENSATION = 0.8
-EXPOSURE_RANGE = (-3.0, 10.0)
 LAMP_DEFAULT = "Sun"
 DISC_NODE = "Sky Sun Disc"
 CLEAR_NODE = "Sky Clear"
@@ -20,6 +18,7 @@ DISC_TERM = "Sky Disc Term"
 BACKGROUND = "Sky Background"
 CAMERA_RAY = "Sky Camera Ray"
 COMPOSITE_INPUT = "Sky Composite Input"
+CLOUD_GREY = 1.6
 
 
 def node_settings(sky, settings):
@@ -126,16 +125,35 @@ def place_lamp(ctx, name, settings, irradiance):
     return obj, created
 
 
-def exposure_for(illuminance, compensation=EXPOSURE_COMPENSATION):
-    if illuminance <= 1e-9:
-        return EXPOSURE_RANGE[1]
-    value = compensation * math.log2(REFERENCE_ILLUMINANCE / illuminance)
-    return min(max(value, EXPOSURE_RANGE[0]), EXPOSURE_RANGE[1])
+def exposure_for(illuminance):
+    """The incident meter's exposure for the light on a horizontal card, in the sky's scene units."""
+    return camera_exposure.incident_exposure(illuminance)
 
 
 def illuminance(settings, cloud_factor=1.0, diffuse_factor=1.0):
     sun = sky_measure.luminance(settings["sun_rgb"]) * max(math.sin(math.radians(settings["elevation"])), 0.0)
     return sun * cloud_factor + sky_measure.luminance(settings["sky_irradiance"]) * diffuse_factor
+
+
+def light_rgb(settings, cloud_settings=None):
+    """Colour and parts of the light on a horizontal grey card: the direct sun through the cloud cover, the sky through it
+    and the sun light the cover passes on as diffuse light."""
+    sun_share = 1.0 if cloud_settings is None else cloud_settings["sun_share"]
+    diffuse_share = 1.0 if cloud_settings is None else cloud_settings["diffuse_share"]
+    sun = numpy.asarray(settings["sun_rgb"], dtype=numpy.float64) * max(math.sin(math.radians(settings["elevation"])), 0.0)
+    sky = numpy.asarray(settings["sky_irradiance"], dtype=numpy.float64)
+    parts = {"sun": sun * sun_share, "sky": sky * diffuse_share, "overcast": sun * (1.0 - sun_share) * diffuse_share}
+    return sum(parts.values()), {key: sky_measure.luminance(value) for key, value in parts.items()}
+
+
+def illuminant(scene):
+    """The light that dominates the scene for the camera's white balance, or None without a procedural sky."""
+    settings = stored(scene.world)
+    if settings is None or "sun_rgb" not in settings:
+        return None
+    clouds = scene.world.get(world_background.CLOUDS_PROPERTY)
+    rgb, parts = light_rgb(settings, json.loads(clouds) if clouds else None)
+    return {"rgb": [float(value) for value in rgb], "source": max(parts, key=parts.get), "illuminance": sky_measure.luminance(rgb)}
 
 
 def measured(settings):
@@ -147,7 +165,9 @@ def measured(settings):
     finally:
         bpy.data.worlds.remove(probe_world)
     scale = SKY_SCALE * settings["strength"]
-    return {key: [round(float(value) * scale, 6) for value in found[key]] for key in found}
+    result = {key: [round(float(value) * scale, 6) for value in found[key]] for key in found}
+    result["dome_rows"] = sky_measure.PANORAMA_HEIGHT // 2
+    return result
 
 
 def settings_from(args):
@@ -167,3 +187,27 @@ def settings_from(args):
         "strength": args["strength"],
     }
     return settings, sun
+
+
+def directional_airlight(world, settings, directions):
+    """Light the haze adds along each ray. Haze deep enough to hide what lies behind it shows the sky's own colour in
+    that direction, the horizon's for rays below it, as aerial perspective does: distant land fades into the sky behind
+    it and the sky itself is left as the sky model made it. A given airlight, a sky without a stored dome or another
+    background keep the one colour."""
+    constant = numpy.asarray(settings["airlight"], dtype=numpy.float32)
+    if settings.get("airlight_source") != "sky" or world is None or not isinstance(world.get(world_background.SKY_PROPERTY), str):
+        return constant
+    sky = json.loads(world[world_background.SKY_PROPERTY])
+    if "dome" not in sky:
+        return constant
+    colour = sky_measure.dome_radiance(sky["dome"], sky["dome_rows"], directions)
+    clouds = world.get(world_background.CLOUDS_PROPERTY)
+    if isinstance(clouds, str):
+        colour = clouded(colour, float(json.loads(clouds).get("cover", 0.0)))
+    return colour.astype(numpy.float32)
+
+
+def clouded(colour, cover):
+    """A sky colour greyed by its cloud cover, as cloud bases seen from below are grey."""
+    grey = (colour @ numpy.array([0.2126, 0.7152, 0.0722]))[..., None] * CLOUD_GREY
+    return colour * (1.0 - cover) + grey * cover

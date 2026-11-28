@@ -25,7 +25,7 @@ def top_grid(obj):
     width, height = image.size
     pixels = numpy.empty(width * height * 4, dtype=numpy.float32)
     image.pixels.foreach_get(pixels)
-    return pixels.reshape(height, width, 4)[..., 0].astype(numpy.float64)
+    return pixels.reshape(height, width, 4)[..., :2].astype(numpy.float64)
 
 
 def box_of(obj):

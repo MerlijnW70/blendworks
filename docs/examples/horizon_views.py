@@ -64,12 +64,11 @@ def valley():
     meadow("floor", [1400.0, 6000.0], 6.0, 220.0, 4)
     z = ground_at("floor", 0.0, -2700.0)
     cmd("add_camera", name="eye", location=[0.0, -2700.0, z + 6.0], target=[0.0, 4000.0, z + 120.0], lens=30.0)
-    cmd("camera_setup", name="eye", view_transform="AgX", look="base_contrast")
     cmd("weather", preset="fair_cumulus", time_of_day="morning", form="sheet", seed=3, haze=False)
     land = cmd("distant_land", terrain=["floor"], style="ranges", range_height=1600.0, camera="eye", detail=LAND_DETAIL, seed=7)
     forest = cmd("distant_forest", land=land["name"], species=["pine", "birch"], tree_detail=TREES, cover=0.55, max_slope=38.0, seed=7, frames=FRAMES, frame_pixels=FRAME_PIXELS)
-    mist = cmd("valley_mist", ground=["floor", land["name"]], radius=4000.0, thickness=12.0, fade=10.0, visibility=600.0, valley_width=400.0)
-    haze = cmd("atmosphere", visibility=30_000.0, height_falloff=1500.0, method="depth")
+    mist = cmd("valley_mist", ground=["floor", land["name"]], radius=4000.0, fade=10.0, valley_width=400.0)
+    haze = cmd("atmosphere", height_falloff=1500.0, method="depth")
     return {"land": land, "forest": forest, "mist": mist, "haze": haze}
 
 
@@ -93,11 +92,10 @@ def hill():
     z = ground_at("hill", x, y)
     heading = math.radians(-60.0)
     cmd("add_camera", name="eye", location=[x, y, z + 3.0], target=[x + 3000.0 * math.cos(heading), y + 3000.0 * math.sin(heading), z - 330.0], lens=28.0)
-    cmd("camera_setup", name="eye", view_transform="AgX", look="base_contrast")
     cmd("weather", preset="fair_cumulus", time_of_day="afternoon", form="sheet", seed=5, haze=False)
     land = cmd("distant_land", terrain=["hill"], style="rolling", camera="eye", detail=LAND_DETAIL, seed=3)
     forest = cmd("distant_forest", land=land["name"], species=["oak", "maple", "birch"], tree_detail=TREES, cover=0.4, seed=3, frames=FRAMES, frame_pixels=FRAME_PIXELS)
-    haze = cmd("atmosphere", visibility=35_000.0, height_falloff=1500.0, method="depth")
+    haze = cmd("atmosphere", height_falloff=1500.0, method="depth")
     return {"land": land, "forest": forest, "haze": haze}
 
 

@@ -6,7 +6,8 @@ import tempfile
 
 import bpy
 
-from .. import atmosphere_haze, camera_exposure, camera_reach, cloud_forms, device, exr_read, liquid_render, render_outputs, render_view, view_materials
+from .. import (atmosphere_haze, camera_exposure, camera_reach, cloud_forms, device, exr_read, liquid_render, render_outputs, render_view,
+               sky_world, view_materials)
 from ..errors import bad_args
 from ..limits import (FINAL_RESOLUTION, FINAL_SAMPLES, FRACTION, LEAST_BIT_DEPTH, MAX_BIT_DEPTH, MAX_FRAME, MAX_SEED,
                       PATH_LENGTH, RENDER_SECONDS, SHORTEST_RENDER_SECONDS, SHORTEST_SHUTTER_FRAMES, SHUTTER_FRAMES,
@@ -28,6 +29,10 @@ DEFAULT_FINAL_SECONDS = 300.0
 MIN_FINAL_SECONDS = SHORTEST_RENDER_SECONDS
 OUTPUTS = {".png": "PNG", ".exr": "OPEN_EXR"}
 MOTION_POSITIONS = {"start": "START", "center": "CENTER", "end": "END"}
+METER_WIDTH = 160
+METER_SAMPLES = 16
+METER_SECONDS = 60.0
+VIEW_FIELDS = ("view_transform", "look", "exposure", "gamma", "use_white_balance", "white_balance_temperature", "white_balance_tint")
 MOTION = obj(
     {
         "shutter": number("Shutter in frames: how long the shutter is open (0.5 is a 180 degree shutter).", SHORTEST_SHUTTER_FRAMES, SHUTTER_FRAMES, 0.5),
@@ -117,15 +122,20 @@ def render_final(ctx, args):
     choice = device.choose_device(device.requested_mode(args.get("device")))
     scope = render_outputs.SettingsScope()
     folder = tempfile.mkdtemp(prefix="blendworks-final-")
+    camera_state = scene.get(camera_exposure.STATE_PROPERTY)
     try:
         configure(scope, scene, ctx.view_layer, camera, args)
         liquids = liquid_render.configure(scope, scene)
+        photograph = camera_settings(scope, scene)
         needed = [] if surface_passes else passes + (["depth"] if depth_haze and "depth" not in passes else [])
         taken = [name for name in outputs.values() if os.path.exists(name)]
 
         counter = render_outputs.SampleCounter()
 
         def work():
+            if photograph["auto"]:
+                with atmosphere_haze.VolumeHidden(scene, haze if depth_haze else None):
+                    photograph["exposure"] = meter_frame(scene, ctx.view_layer, camera, folder, haze if depth_haze else None, args["transparent"])
             with atmosphere_haze.VolumeHidden(scene, haze if depth_haze else None), counter:
                 main = render_outputs.render_layers(scene, ctx.view_layer, folder, needed, counting=True)
             if not surface_passes:
@@ -143,21 +153,74 @@ def render_final(ctx, args):
         result["overwritten"] = [ctx.workspace.relative(name) for name in taken]
         result["device"] = choice.report()
         result["device_label"] = choice.label()
+        result["view"] = camera_exposure.view_report(scene.view_settings)
+        result["exposure"] = photograph["exposure"] or camera_exposure.manual_report(float(scene.view_settings.exposure))
+        result["colour"] = photograph["colour"]
+        result["white_balance"] = photograph["white_balance"]
     finally:
         frame = scene.frame_current
         scope.restore()
+        restore_camera_state(scene, camera_state)
         if scene.frame_current != frame:
             scene.frame_set(scene.frame_current)
         shutil.rmtree(folder, ignore_errors=True)
     result["deterministic"], result["nondeterministic_because"] = determinism(choice, result["time_budget"])
     result["camera"] = camera_report(camera)
-    result["view"] = camera_exposure.view_report(scene.view_settings)
     result["atmosphere"] = None if haze is None else {"method": haze["method"], "visibility": haze["visibility"]}
     result["clouds"] = cloud_forms.cloud_report(scene)
     result["liquids"] = liquids
     if result["clouds"] is not None and cloud_form.active:
         result["clouds"]["rendered_as"] = cloud_form.report()
     return result
+
+
+def camera_settings(scope, scene):
+    """The camera's colour, white balance and exposure mode for this render, restored afterwards."""
+    scope.keep(scene.view_settings, *VIEW_FIELDS)
+    auto = camera_exposure.exposure_is_auto(scene)
+    colour = camera_exposure.apply_camera_colour(scene)
+    white = camera_exposure.apply_white_balance(scene, sky_world.illuminant(scene))
+    if auto:
+        scope.keep(scene.render, "use_persistent_data")
+        scene.render.use_persistent_data = True
+    return {"auto": auto, "exposure": None, "colour": colour, "white_balance": white}
+
+
+def restore_camera_state(scene, saved):
+    if saved is None:
+        if camera_exposure.STATE_PROPERTY in scene:
+            del scene[camera_exposure.STATE_PROPERTY]
+    else:
+        scene[camera_exposure.STATE_PROPERTY] = saved
+
+
+def meter_frame(scene, view_layer, camera, folder, haze, transparent):
+    """The camera's reflected meter: a small, quick render of the same frame, its weighted log-average luminance put at
+    18 % grey. Persistent data lets the full render reuse the scene this one built."""
+    mode, compensation = camera_exposure.auto_metering(scene)
+    render = scene.render
+    cycles = scene.cycles
+    scope = render_outputs.SettingsScope()
+    scope.keep(render, "resolution_x", "resolution_y")
+    scope.keep(cycles, "samples", "use_adaptive_sampling", "use_denoising", "time_limit")
+    try:
+        width, height = render.resolution_x * render.pixel_aspect_x, render.resolution_y * render.pixel_aspect_y
+        render.resolution_x = METER_WIDTH
+        render.resolution_y = max(1, round(METER_WIDTH * height / width))
+        cycles.samples = METER_SAMPLES
+        cycles.use_adaptive_sampling = False
+        cycles.use_denoising = False
+        cycles.time_limit = METER_SECONDS
+        path = render_outputs.render_layers(scene, view_layer, folder, ["depth"] if haze is not None else [], "meter.exr")
+        layers = exr_read.read_exr(path, render_outputs.beauty_channels(view_layer.name, haze is not None))
+        rgba = render_outputs.beauty_pixels(scene, camera, layers, view_layer.name, haze)
+    finally:
+        scope.restore()
+    key = camera_exposure.meter(rgba[..., :3], mode, rgba[..., 3] if transparent else None)
+    report = camera_exposure.metered(key, mode, compensation)
+    report["meter"] = {"width": METER_WIDTH, "samples": METER_SAMPLES}
+    scene.view_settings.exposure = report["exposure"]
+    return report
 
 
 def chosen_camera(scene, args):

@@ -201,7 +201,6 @@ def cameras(heights, lake_report, mouth, placed):
     location = [float(spot[0]), float(spot[1]), ground_at(heights, *spot) + 12.0]
     target = [float(0.5 * (mouth[0] + centre[0])), float(0.5 * (mouth[1] + centre[1])), level]
     cmd("add_camera", name="eye", location=location, target=target, lens=26.0)
-    cmd("camera_setup", name="eye", view_transform="AgX", look="base_contrast")
     rocks = rock_points(placed)
     shore = rocks[numpy.abs(rocks[:, 2] - level) < 0.8]
     shore = shore[:: max(1, len(shore) // 1500)]
@@ -211,7 +210,6 @@ def cameras(heights, lake_report, mouth, placed):
     stand = rock[:2] + outward * 4.5
     look = [float(rock[0]), float(rock[1]), level + 0.2]
     cmd("add_camera", name="shore", location=[float(stand[0]), float(stand[1]), ground_at(heights, *stand) + 1.1], target=look, lens=32.0)
-    cmd("camera_setup", name="shore", view_transform="AgX", look="base_contrast")
     return ["eye", "shore"]
 
 
@@ -251,7 +249,6 @@ def meadow_camera(lake_report, heights):
     location = [float(spot[0]), float(spot[1]), ground_at(heights, *spot) + MEADOW_EYE]
     look = stand[:2] + MEADOW_AHEAD * toward
     cmd("add_camera", name="meadow", location=location, target=[float(look[0]), float(look[1]), level + 0.3], lens=30.0)
-    cmd("camera_setup", name="meadow", view_transform="AgX", look="base_contrast")
     return "meadow"
 
 
@@ -292,11 +289,11 @@ def build():
     shots.append(meadow_camera(report, heights))
     reeds = [{"name": "reeds", "element": "sedge", "density": 25.0, "liquid": "shore", "shore": 1.2, "clumping": {"radius": 0.6, "per_clump": 12.0}}]
     cover = cmd("ground_cover", target="land", preset="meadow", cameras=shots, near=COVER_NEAR, view_only=True, budget=BUDGET, obstacles=obstacles + planted, trees=planted, seed=5, populations=reeds)
-    cmd("atmosphere", visibility=10000.0, height_falloff=300.0)
+    cmd("atmosphere")
     horizon = None
     if to_the_horizon.enabled():
         tiles = [obj.name for obj in bpy.data.objects if obj.type == "MESH" and (obj.name == "land" or obj.name.startswith("ground_"))]
-        mist = {"radius": 2500.0, "thickness": 6.0, "fade": 6.0, "visibility": 300.0, "valley_width": 250.0}
+        mist = {"radius": 2500.0, "fade": 6.0, "valley_width": 250.0}
         horizon = to_the_horizon.surround(cmd, tiles, "eye", water=["lake", "river"], species=("birch", "pine", "oak"), mist=mist, fields=True)
     cmd("save_blend", path="liquid-lake.blend")
     meadow = {"fields": {key: fields[key] for key in ("moisture", "soil", "disturbance", "shade", "grazing", "paths", "path_length")},

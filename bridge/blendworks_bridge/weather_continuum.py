@@ -1,12 +1,24 @@
-"""The weather continuum: presets and the state between them."""
+"""The weather continuum: one storm value from clear to thunderstorm sets cloud layers, air, rain and wind.
+
+Air: visibility by condition from the International Visibility Code of synoptic reports (WMO): fog under 1 km (codes 0
+to 3, dense fog from 50 m), mist 1 to 5 km (WMO: mist from 1 km, in moist air), haze 5 to 10 km (light haze, code 6 runs
+4 to 10 km), clear from 10 km and very clear 20 to 50 km (codes 7 and 8). Each condition's default is the geometric
+centre of its range. Wind at 10 m follows the Beaufort scale's descriptions of the weather: light breeze (force 2,
+1.6-3.3 m/s) in fair weather, gentle to moderate breeze under broken cloud and overcast, fresh to strong breeze in rain
+and squalls (forces 5 and 6)."""
+import math
 
 from .errors import bad_args
 
+VISIBILITY_CLASSES = {"fog": (50.0, 1000.0), "mist": (1000.0, 5000.0), "hazy": (5000.0, 10000.0), "clear": (20000.0, 50000.0)}
+CONDITIONS = tuple(VISIBILITY_CLASSES)
 TIMES = {
+    "dawn": {"elevation": 3.0, "azimuth": 85.0},
     "morning": {"elevation": 25.0, "azimuth": 110.0},
     "noon": {"elevation": 55.0, "azimuth": 180.0},
     "afternoon": {"elevation": 32.0, "azimuth": 235.0},
     "golden_hour": {"elevation": 6.0, "azimuth": 265.0},
+    "evening": {"elevation": 12.0, "azimuth": 255.0},
     "sunset": {"elevation": 1.0, "azimuth": 275.0},
     "dusk": {"elevation": -3.5, "azimuth": 280.0},
 }
@@ -23,13 +35,12 @@ CURVES = {
     "deck_thickness": ((0.0, 500.0), (0.6, 900.0), (0.72, 1800.0), (0.86, 3000.0), (1.0, 4500.0)),
     "deck_density": ((0.0, 1.0), (0.6, 1.0), (0.72, 1.1), (0.86, 1.3), (1.0, 1.7)),
     "dust": ((0.0, 1.0), (0.3, 1.4), (0.6, 2.2), (1.0, 3.0)),
-    "visibility": ((0.0, 40000.0), (0.3, 25000.0), (0.6, 15000.0), (0.72, 9000.0), (0.86, 6000.0), (1.0, 5000.0)),
+    "visibility": ((0.0, 31623.0), (0.3, 25000.0), (0.6, 15000.0), (0.72, 9000.0), (0.86, 6000.0), (1.0, 5000.0)),
+    "wind": ((0.0, 2.5), (0.32, 3.3), (0.46, 4.4), (0.6, 5.5), (0.72, 6.7), (0.86, 9.4), (1.0, 12.3)),
     "rain": ((0.0, 0.0), (0.64, 0.0), (0.72, 2.0), (0.86, 15.0), (1.0, 40.0)),
     "wet": ((0.0, 0.0), (0.64, 0.0), (0.72, 0.55), (0.86, 1.0), (1.0, 1.0)),
     "cool": ((0.0, 0.0), (0.46, 0.3), (0.6, 0.6), (1.0, 1.0)),
     "darken": ((0.0, 1.0), (0.6, 0.9), (0.72, 0.75), (0.86, 0.6), (1.0, 0.4)),
-    "sky_key": ((0.0, 0.7), (0.46, 0.6), (0.6, 0.5), (0.72, 0.42), (0.86, 0.34), (1.0, 0.14)),
-    "compensation": ((0.0, 0.8), (0.6, 0.8), (0.86, 0.8), (1.0, 0.65)),
 }
 PRESETS = {
     "clear": {"storm": 0.0, "note": "no clouds, clean air"},
@@ -47,7 +58,7 @@ PRESETS = {
     "scattered_dusk": {"storm": 0.32, "time_of_day": "sunset", "note": "scattered cumulus lit from below at sunset"},
     "stormy_golden_hour": {"storm": 1.0, "lightning": True, "time_of_day": "golden_hour", "note": "thunderstorm at golden hour: the low sun reaches only the horizon"},
 }
-OVERRIDES = ("dust", "visibility", "rain", "wet", "lightning")
+OVERRIDES = ("dust", "visibility", "rain", "wet", "lightning", "wind")
 
 
 def curve(name, storm):
@@ -92,10 +103,9 @@ def state(storm, seed=0):
         "visibility": curve("visibility", storm),
         "rain": curve("rain", storm),
         "wet": curve("wet", storm),
+        "wind": curve("wind", storm),
         "cool": curve("cool", storm),
         "darken": curve("darken", storm),
-        "compensation": curve("compensation", storm),
-        "sky_key": curve("sky_key", storm),
         "lightning": False,
     }
 
@@ -110,3 +120,22 @@ def sun_for(time_of_day):
     if time_of_day not in TIMES:
         raise bad_args(f"unknown time_of_day {time_of_day}; choose one of {', '.join(TIMES)}")
     return dict(TIMES[time_of_day])
+
+
+def condition_visibility(condition):
+    """Default visibility of a condition: the geometric centre of its range."""
+    if condition not in VISIBILITY_CLASSES:
+        raise bad_args(f"unknown condition {condition}; choose one of {', '.join(CONDITIONS)}")
+    low, high = VISIBILITY_CLASSES[condition]
+    return math.sqrt(low * high)
+
+
+def condition_of(visibility):
+    """The condition a visibility falls in; from 10 km on it is clear."""
+    if visibility < VISIBILITY_CLASSES["mist"][0]:
+        return "fog"
+    if visibility < VISIBILITY_CLASSES["hazy"][0]:
+        return "mist"
+    if visibility < VISIBILITY_CLASSES["hazy"][1]:
+        return "hazy"
+    return "clear"
