@@ -10,6 +10,7 @@ from .limits import (BASE_NAME_LENGTH, FRACTION, HALF_TURN, HEIGHT_BAND, LEAST_C
                      MAX_SCALE_FACTOR, MAX_WIDENING, QUARTER_TURN, SMALLEST_COVER_PATCH,
                      SMALLEST_INSTANCE_SCALE)
 from .liquid_masks import MODES as LIQUID_MODES
+from .meadow_rules import FIELD_PROPERTIES, check_responses
 from .schema import EXISTS, array, boolean, described, integer, names, number, obj, ref, string, validate
 
 FORM_CHOICES = ("auto", "geometry", "cards")
@@ -65,6 +66,7 @@ POPULATION = described(
             "embed": number("Depth in metres, times the scale, the base sinks below the surface; tilted bases sink further so no edge floats.", 0.0, MAX_RELIEF),
             "widen": boolean("Widen sparse far elements across by the inverse square root of the falloff, so the ground stays covered."),
             "max_widen": number("Largest widening factor.", LEAST_WIDENING, MAX_WIDENING, 2.0),
+            **FIELD_PROPERTIES,
         },
         ["name"],
     ),
@@ -96,6 +98,7 @@ def complete(entry):
     for spec in filled.get("distance", []):
         if "min" not in spec and "max" not in spec:
             raise bad_args(f"population {filled['name']}: a distance mask needs min or max")
+    check_responses(filled, bad_args)
     return filled
 
 

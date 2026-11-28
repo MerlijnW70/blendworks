@@ -30,7 +30,7 @@ DESIGN_COMMANDS = {
     "armature_create", "bone_add", "bone_edit", "bone_mirror", "rig_template", "rig_info", "vertex_group", "skin_bind",
     "ik_chain", "bone_constraint", "animation_preset", "clip_keys", "clip_edit", "clip_info", "clip_pose", "shape_key_add",
     "camera_setup", "atmosphere", "render_final",
-    "ground_element", "ground_cover", "ground_cover_export",
+    "ground_element", "ground_cover", "ground_cover_export", "meadow_fields",
     "sky", "clouds", "weather", "distant_land", "distant_forest", "valley_mist",
     "material_liquid", "liquid_body", "liquid_fill", "shore_stones",
 }
@@ -41,7 +41,7 @@ DECLARED_METADATA = {
     "boolean": dict(SLOW, destructive=True, destructive_when="cutter_action is delete"),
     "image_save": {"writes_files": True, "destructive": True, "destructive_when": "the file already exists", "slow": False},
     **{name: SLOW for name in ("decimate", "import", "uv_pack", "set_world_hdri", "apply_modifier", "sweep", "loft", "instances",
-                               "rivet_line", "roller_chain", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell", "grow_tree", "tree_mesh", "tree_leaves", "lsystem", "fracture", "chip", "abrade", "remesh", "blob", "mesh_from_data", "generate_lods", "clean_mesh", "engrave", "skin_bind", "ground_element", "ground_cover", "clouds", "weather", "liquid_body", "liquid_fill", "distant_land", "distant_forest", "valley_mist")},
+                               "rivet_line", "roller_chain", "displace_noise", "noise_displace", "heightfield", "scatter", "erode", "shell", "grow_tree", "tree_mesh", "tree_leaves", "lsystem", "fracture", "chip", "abrade", "remesh", "blob", "mesh_from_data", "generate_lods", "clean_mesh", "engrave", "skin_bind", "ground_element", "ground_cover", "meadow_fields", "clouds", "weather", "liquid_body", "liquid_fill", "distant_land", "distant_forest", "valley_mist")},
     "ground_cover_export": dict(SLOW, writes_files=True, destructive=True, destructive_when="the file already exists"),
 }
 SCHEMA_KEYS = {"x-limits", "x-ref", "type", "description", "properties", "required", "additionalProperties", "items", "enum", "minimum",

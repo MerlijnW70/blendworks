@@ -9,6 +9,7 @@ from mathutils.bvhtree import BVHTree
 
 from . import liquid_masks
 from .errors import bad_args
+from .meadow_rules import effect, uses_fields
 from .noise_stack import stack_bounds, stack_field
 from .scatter_masks import ramp, slope_degrees
 from .util import get_object
@@ -143,6 +144,10 @@ def population_masks(surface, population, candidates, context):
         spec = population["attribute"]
         attribute = context["attributes"][spec["name"]]
         values *= ramp(surface.interpolate(attribute, candidates.triangle, candidates.weights), spec["range"][0], spec["range"][1])
+    if context.get("fields") is not None and uses_fields(population) and len(points):
+        values *= numpy.clip(effect(population, context["fields"].at(candidates), "density"), 0.0, 1.0)
+        if "drift" in population:
+            values *= context["drifts"].mask(population["name"], points)
     return values
 
 

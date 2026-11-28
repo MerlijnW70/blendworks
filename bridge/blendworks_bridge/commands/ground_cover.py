@@ -13,6 +13,8 @@ from ..cover_populations import KIND_POPULATION, MAX_POPULATIONS, POPULATION, ki
 from ..cover_presets import PRESET_POPULATIONS
 from ..cover_sampling import View, surface_tree
 from ..cover_shading import CONTACT_DEFAULT
+from ..cover_structure import PROPERTIES as STRUCTURE_PROPERTIES, Structure, wanted
+from ..meadow_rules import has_effect, ladder_params
 from ..errors import bad_args
 from ..limits import (BASE_NAME_LENGTH, MAX_CONTACT_DARKENING, MAX_COVER_INSTANCES, MAX_DENSITY_SCALE, MAX_MESH_VERTICES,
                       MAX_SEED, MAX_VIEW_CAMERAS, MAX_VIEW_MARGIN)
@@ -92,11 +94,13 @@ def build_elements(ctx, population, holder, prefix, seed, wind, cache):
     objects, meshes = [], []
     for form in forms:
         budget = element_budget(population["element"], form, population.get("triangles"))
+        ladder = has_effect(population, "maturity")
         for variant in range(population["variants"]):
             index = len(objects)
             name = f"{prefix}_e{index:03d}"
             require_free_name(name)
-            data, mesh, _ = make_element(name, population["element"], form, population["params"], seed * 7919 + variant, budget, wind, prefix, cache)
+            params = ladder_params(population["params"], variant, population["variants"]) if ladder else population["params"]
+            data, mesh, _ = make_element(name, population["element"], form, params, seed * 7919 + variant, budget, wind, prefix, cache)
             obj = bpy.data.objects.new(name, data)
             collection.objects.link(obj)
             objects.append(obj)
@@ -184,6 +188,7 @@ def plan_ground_cover(args, state):
         "contact_attribute": string("Point attribute written on the target: the share of ground the cover hides around each vertex, 0 to 1.", default="cover_density"),
         "darken": number("Darken the target's base colour by up to this share where the cover is full, through contact_attribute: the colour is multiplied by 1 - darken * cover, never below 0.64 (the darkest soil of the CC0 forest-ground photo against its median).", 0.0, MAX_CONTACT_DARKENING, CONTACT_DEFAULT),
         "realize": boolean("Realize the instances in the modifier instead of keeping them as instances.", False),
+        **STRUCTURE_PROPERTIES,
     },
     ["target"],
     slow=True,
@@ -211,7 +216,9 @@ def ground_cover(ctx, args):
         populations = [population for population in populations if population["liquid"] != "shore"]
         if not populations:
             raise bad_args("every population was skipped: shore populations need water from liquid_body or liquid_fill")
-    context = {"liquid": liquid, "depsgraph": depsgraph, "obstacles": {}, "attributes": attributes_needed(target, depsgraph, populations), "cameras": cameras, "view_only": args["view_only"], "view_margin": args["view_margin"], "scene": ctx.scene}
+    structure = Structure(args, target, surface, populations, depsgraph, ctx.scene) if wanted(args, populations) else None
+    context = {"liquid": liquid, "depsgraph": depsgraph, "obstacles": {}, "attributes": attributes_needed(target, depsgraph, populations), "cameras": cameras, "view_only": args["view_only"], "view_margin": args["view_margin"], "scene": ctx.scene,
+               "fields": structure.sampler if structure else None, "drifts": structure.drifts if structure else None}
     holder = element_holder(ctx, args["name"])
     cache, elements = {}, {}
     for population in populations:
@@ -234,6 +241,7 @@ def ground_cover(ctx, args):
     evaluated_count = len(target.evaluated_get(depsgraph).data.vertices)
     values = write_contact(target, surface, placed, args["contact_attribute"], evaluated_count)
     darkened, unchanged = contact_shading(target, args["contact_attribute"], args["darken"]) if values is not None and args["darken"] > 0.0 else ([], [])
+    structure_report = structure.finish(target, depsgraph) if structure else None
     ctx.view_layer.update()
     if any(item.cards.any() for item in placed):
         ctx.scene.cycles.transparent_max_bounces = max(ctx.scene.cycles.transparent_max_bounces, CARD_BOUNCES)
@@ -253,6 +261,8 @@ def ground_cover(ctx, args):
         result["falloff"] = {"centres": [vec(origin) for origin in view.origins], "near": round(factor * view.near, 6), "asked_near": view.near, "far": view.far}
     if skipped:
         result["skipped"] = skipped
+    if structure_report is not None:
+        result["structure"] = structure_report
     if values is None:
         result["contact"] = {"attribute": None, "note": "the target's modifiers change its vertex count, so no contact attribute was written"}
     else:

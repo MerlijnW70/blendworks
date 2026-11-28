@@ -14,6 +14,7 @@ type Summary = {
   river?: { length: number; joins: string | null };
   rocks?: { count: number; highest_above_water: number; deepest_under_water: number; wet: { objects: string[] } };
   cameras?: string[];
+  meadow?: { fields: { moisture: { min: number; max: number }; paths: number }; cover: Record<string, number>; structure: { materials: string[] } };
   render: { liquids: { objects: string[]; caustics: boolean } | null };
   commands: { cmd: string }[];
 };
@@ -41,7 +42,7 @@ describe("the liquid scene examples", workBudget(900_000), () => {
   it("builds the lake scene by commands only: a river into a lake with stones at the water line, cover, trees, hills and fair cumulus", () => {
     const { out, summary } = run("docs/examples/liquid_lake.py", "liquid-lake-example");
     const used = new Set(summary.commands.map((entry) => entry.cmd));
-    for (const command of ["heightfield", "noise_displace", "weather", "liquid_body", "shore_stones", "grow_tree", "tree_mesh", "tree_leaves", "ground_cover", "atmosphere", "render_final"]) expect(used.has(command), command).toBe(true);
+    for (const command of ["heightfield", "noise_displace", "weather", "liquid_body", "shore_stones", "grow_tree", "tree_mesh", "tree_leaves", "meadow_fields", "ground_cover", "atmosphere", "render_final"]) expect(used.has(command), command).toBe(true);
     for (const command of ["set_world_hdri", "library_apply", "import", "run_python"]) expect(used.has(command), command).toBe(false);
     expect(summary.lake!.area).toBeGreaterThan(1000);
     expect(summary.lake!.max_depth).toBeGreaterThan(1);
@@ -53,7 +54,12 @@ describe("the liquid scene examples", workBudget(900_000), () => {
     expect(summary.rocks!.highest_above_water).toBeLessThan(5);
     expect(summary.rocks!.deepest_under_water).toBeLessThan(1.5);
     expect(summary.rocks!.wet.objects.length).toBeGreaterThan(0);
-    expect(summary.cameras).toEqual(["eye", "shore"]);
+    expect(summary.cameras).toEqual(["eye", "shore", "meadow"]);
+    expect(summary.meadow!.fields.moisture.max).toBeGreaterThan(summary.meadow!.fields.moisture.min + 0.3);
+    expect(summary.meadow!.fields.paths).toBeGreaterThan(0);
+    expect(summary.meadow!.cover.short_grass).toBeGreaterThan(0);
+    expect(summary.meadow!.structure.materials).toContain("ground");
+    expect(statSync(join(out, "meadow.png")).size).toBeGreaterThan(500);
     expect(statSync(join(out, "rocks.png")).size).toBeGreaterThan(500);
     expect(summary.render.liquids!.caustics).toBe(false);
     expect(summary.render.liquids!.objects).toEqual(expect.arrayContaining(["lake", "river"]));

@@ -10,6 +10,7 @@ CARD = "gc_card"
 TRANSFORM = "gc_transform"
 TINT = "gc_tint"
 KEY = "gc_key"
+STRAW = "gc_straw"
 CARDS_PROPERTY = "gc_has_cards"
 INPUTS = (
     ("Geometry", "NodeSocketGeometry", None),
@@ -105,6 +106,8 @@ def write_attribute(mesh, name, data_type, values, field="value"):
 
 
 def points_object(ctx, name, placed, elements, parent, realize, cards):
+    """The instance points of a ground-cover population or of distant_forest's placements; only the cover's carry the
+    straw share gc_straw."""
     mesh = bpy.data.meshes.new(name)
     mesh.vertices.add(len(placed))
     mesh.vertices.foreach_set("co", placed.positions.astype(numpy.float32).ravel())
@@ -112,6 +115,9 @@ def points_object(ctx, name, placed, elements, parent, realize, cards):
     write_attribute(mesh, CARD, "INT", placed.card)
     write_attribute(mesh, TINT, "FLOAT", placed.tint.astype(numpy.float32))
     write_attribute(mesh, KEY, "FLOAT", placed.key.astype(numpy.float32))
+    straw = getattr(placed, "straw", None)
+    if straw is not None:
+        write_attribute(mesh, STRAW, "FLOAT", straw.astype(numpy.float32))
     write_attribute(mesh, TRANSFORM, "FLOAT4X4", placed.matrices.transpose(0, 2, 1))
     mesh.update()
     obj = bpy.data.objects.new(name, mesh)

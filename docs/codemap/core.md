@@ -14,7 +14,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `__init__`: Blender add-on entry point: preferences, and start and stop of the bridge server inside a desktop Blender. | fn: launch_options preferences + | test: addon
 - `server`: Threaded socket server of the desktop add-on: queues each client's requests and runs them on Blender's main thread. | fn: stopped_reply Job + | test: addon
 
-### bridge/blendworks_bridge/ (32)
+### bridge/blendworks_bridge/ (33)
 
 - `__init__`: Blendworks bridge package: the command registry and handlers that run inside Blender.
 - `autosave`: Autosave of the headless session: interval from the environment and the journal of replayable commands. | fn: interval_from_environment now_text + | test: autosave autosave_bench +1
@@ -33,6 +33,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `limit_base`: The named limit type: a number that knows its name, unit, kind of reason and reason. | fn: FloatLimit IntLimit + | test: world_scale
 - `limits`: Every limit a tool schema uses, each with the reason for its value. | fn: parse_cgroup_limit physical_memory + | test: autosave cover_review +5
 - `limits_land`: Limits of the distant land, forest, impostor and valley mist tools. | test: distant_land
+- `limits_meadow`: Limits of the meadow fields. | test: meadow_cover
 - `limits_parts`: Named limits of the shape, terrain, tree, scatter and liquid tools (commands a to l). | test: world_scale
 - `limits_parts_more`: Named limits of the material, mesh, render, rig and weather tools (commands m to z). | test: world_scale
 - `meshdata`: The MeshData container of vertices, faces and UVs. | fn: MeshData | test: engrave_cutters

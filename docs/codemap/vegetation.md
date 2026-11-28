@@ -4,12 +4,13 @@ tree_*, trees, meadow_*, lsystem*, cover_*, ground_cover, forest_*, distant_fore
 
 One line per module: its docstring, its first public names (`fn`, `+` means more), the commands it registers (`cmd`) and its tests (`test`). Bridge tests are `bridge/tests/test_<name>.py`; vitest ones are `test/<name>.test.ts`. A module with no `test` is covered only by the core tests (smoke, describe, crate, scene).
 
-### bridge/blendworks_bridge/ (55)
+### bridge/blendworks_bridge/ (63)
 
 - `cover_blades`: Grass blade geometry for ground cover: triangles, widths, shapes and clumps. | fn: blade_triangles blade_plan + | test: cover_budget cover_contact +3
 - `cover_contact`: Ground contact shading for ground cover: triangle coverage and contact values. | fn: triangle_coverage vertex_values + | test: cover_contact
 - `cover_flowers`: Flower geometry for ground cover: stems, heads, petals and centres. | fn: flower_frame stem_points + | test: cover_budget cover_contact +3
 - `cover_gltf`: Reads and writes .glb files and adds GPU instancing for ground cover export. | fn: read_glb padded + | test: cover_budget cover_contact +3
+- `cover_ground`: Meadow ground layer in the materials. | fn: principled field + | test: cover_budget cover_contact +3
 - `cover_kinds`: Ground cover element kinds: parameters, budgets, geometry and materials. | fn: pair element_params + | test: cover_review
 - `cover_litter`: Litter geometry for ground cover: twigs, leaf cards and tubes. | fn: twig_axes axis_nodes + | test: cover_budget cover_contact +3
 - `cover_masks`: Ground cover masks: obstacles, distance, noise and view masks per population. | fn: soft_band Obstacles + | test: cover_masks
@@ -18,9 +19,10 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `cover_nodes`: Geometry node group that builds ground cover instances. | fn: named switch + | test: cover_budget cover_contact +3
 - `cover_plan`: Ground cover planning: drawing candidates, budgets and populations of placed instances. | fn: Draw candidate_limit + | test: cover_budget cover_contact +3
 - `cover_populations`: Ground cover populations: merging presets with the caller's kind groups. | fn: pair kind_group + | test: cover_budget cover_contact +3
-- `cover_presets`: Data table of ground cover presets. | test: cover_budget cover_contact +3
+- `cover_presets`: Data table of ground cover presets. | fn: respond | test: meadow_cover
 - `cover_sampling`: Ground cover sampling: view, candidate points, usable areas and barycentric draws. | fn: View Candidates + | test: cover_budget cover_contact +3
 - `cover_shading`: Ground cover shading: preset materials, instance tint and ground darkening. | fn: preset_material instance_tint + | test: cover_budget cover_contact +3
+- `cover_structure`: Ground cover side of the meadow fields. | fn: wanted settings_of + | test: cover_budget cover_contact +3
 - `forest_canopy`: The canopy surface of distant forest: past the cards the land itself rises by the canopy height times the forest | fn: canopy_surface crown_colour | test: distant_forest
 - `forest_cards`: Impostor cards, their material, the canopy surface far out, and the calibration that makes a card as bright as the tree | fn: card_mesh blended + | test: distant_forest
 - `forest_grove`: Calibration of impostor brightness in a grove: a small stand of trees on a ground, seen from the camera's direction | fn: Grove compare | test: distant_forest
@@ -34,6 +36,12 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `lsystem_presets`: L-system presets such as a bracketed plant and Honda trees. | fn: bracketed honda + | test: lsystem_grammar lsystem-example
 - `lsystem_rules`: L-system rule and axiom parsing. | fn: refuse_symbol read_modules + | test: lsystem_grammar lsystem_turtle +1
 - `lsystem_turtle`: L-system turtle: state, vector helpers and organs placed along the word. | fn: cosine_sine combine + | test: lsystem_turtle lsystem-example
+- `meadow_drifts`: Single-species flower drifts. | fn: ellenberg affinity + | test: meadow_cover
+- `meadow_fields`: The meadow structure fields. | fn: noise smoothstep + | test: meadow_fields
+- `meadow_grid`: Height grid and terrain measures for meadow fields. | fn: Grid filled + | test: meadow_cover meadow_fields +1
+- `meadow_inputs`: Sun, water and shade on the field grid. | fn: sun_direction water_measures + | test: meadow_cover meadow_fields +1
+- `meadow_paths`: Worn paths as least-time routes. | fn: walking_time PathGrid + | test: meadow_cover meadow_fields
+- `meadow_rules`: Cover responses to the meadow fields. | fn: pair check_responses + | test: meadow_cover
 - `tree_axes`: Tree axes and twigs built from a skeleton. | fn: Axis Twig + | test: tree_batch tree_colonization +14
 - `tree_bark`: Bark mesh: tubes skinned or voxel remeshed with density control. | fn: Built build_tubes + | test: tree_batch tree_colonization +14
 - `tree_canopy`: Tree canopy: writes meshes with materials and reports leaf variation and area. | fn: write_mesh with_materials + | test: tree_batch tree_colonization +14
@@ -62,12 +70,13 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `tree_vectors`: Plain vector maths used by tree code. | fn: add scaled + | test: tree_batch tree_colonization +14
 - `tree_voxel`: Transfers attributes from a bark skin to a voxel remeshed bark. | fn: Source barycentric + | test: tree_batch tree_colonization +14
 
-### bridge/blendworks_bridge/commands/ (8)
+### bridge/blendworks_bridge/commands/ (9)
 
 - `distant_forest`: The distant_forest command: forest on distant land from the tree species, as grown variants, cards and canopy. | fn: Placed plan_forest + | cmd: distant_forest | test: distant_forest
 - `ground_cover`: The ground_element and ground_cover commands: layered grass, flowers and litter over a surface. | fn: padded ElementSet + | cmd: ground_element ground_cover | test: ground_cover
 - `ground_export`: The ground_cover_export command: writes a ground cover to a .glb with GPU instancing. | fn: cover_objects instance_count + | cmd: ground_cover_export | test: ground_export cover_review
 - `lsystem`: The lsystem command: grows a plant from a parametric L-system with organs. | fn: organ_placements place_organs + | cmd: lsystem | test: lsystem_grammar lsystem_turtle +1
+- `meadow_fields`: Command meadow_fields. | cmd: meadow_fields | test: meadow_fields
 - `tree_batch`: The grow_trees command: many trees (skeleton, mesh, leaves) built in parallel workers. | fn: tree_steps made_names + | cmd: grow_trees | test: tree_batch tree-example
 - `tree_leaves`: The tree_leaves command: foliage clusters or single leaves on a tree skeleton. | fn: leaf_material twig_material + | cmd: tree_leaves | test: tree_leaves early_counts +2
 - `tree_mesh`: The tree_mesh command: one closed, UV-mapped bark mesh from a tree skeleton. | fn: material_for check_args + | cmd: tree_mesh | test: tree_mesh tree-example

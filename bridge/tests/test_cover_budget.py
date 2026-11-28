@@ -18,7 +18,8 @@ def meadow_field(bridge, **extra):
     make_plane(bridge, size=100.0, cuts=4)
     bridge.ok("add_camera", name="Eye", location=[0.0, -50.0, 1.6])
     bridge.ok("look_at", name="Eye", point=[0.0, 0.0, 0.0])
-    return bridge.ok("ground_cover", target="Ground", preset="meadow", camera="Eye", near=12.0, budget=BUDGET, seed=5, **extra)
+    even = [{"name": "short_grass", "responses": []}]
+    return bridge.ok("ground_cover", target="Ground", preset="meadow", populations=even, camera="Eye", near=12.0, budget=BUDGET, seed=5, **extra)
 
 
 def test_a_100_m_meadow_stays_within_its_instance_budget_and_keeps_full_density_near_the_camera(bridge):
@@ -58,7 +59,7 @@ def test_the_same_seed_repeats_the_cover_and_another_seed_changes_it(bridge):
     bridge.ok("ground_cover", name="A", seed=3, **settings)
     bridge.ok("ground_cover", name="B", seed=3, **settings)
     bridge.ok("ground_cover", name="C", seed=4, **settings)
-    for population in ("short_grass", "tall_grass", "daisies", "pebbles"):
+    for population in ("short_grass", "tall_grass", "thatch", "pebbles"):
         first, again, other = (points_of(f"{name}_{population}") for name in ("A", "B", "C"))
         assert numpy.array_equal(first, again), population
         assert numpy.array_equal(attribute_of(f"A_{population}", "gc_pick"), attribute_of(f"B_{population}", "gc_pick"))

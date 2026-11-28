@@ -14,10 +14,10 @@ from .limits import (FRACTION, HALF_TURN, LEAST_PETALS, MAX_BASE_LEAVES, MAX_CLU
                      SMALLEST_PLANT_PART)
 from .schema import array, color, integer, number, obj
 
-KINDS = ("grass", "tuft", "sedge", "flower", "twig", "leaf", "pebble")
+KINDS = ("grass", "tuft", "sedge", "flower", "twig", "leaf", "pebble", "mound")
 FORMS = ("geometry", "cards")
 BLADE_KINDS = ("grass", "tuft", "sedge")
-LITTER_KINDS = ("twig", "leaf", "pebble")
+LITTER_KINDS = ("twig", "leaf", "pebble", "mound")
 MAX_ELEMENT_TRIANGLES = ELEMENT_TRIANGLES
 CARD_BLADE_SHARE = 0.45
 BLADE_BUMP = 0.6
@@ -40,6 +40,7 @@ ELEMENT_FIELDS = {
     "fold": number("grass, tuft, sedge: V fold along the midrib as a share of the half width (sedges are folded).", 0.0, FRACTION),
     "dry_tips": number("grass, tuft, sedge: share of blades with a dry tip, 0 to 1.", 0.0, FRACTION),
     "dry_length": pair("grass, tuft, sedge: shortest and longest dry tip as a share of the blade.", 0.0, FRACTION),
+    "seed_heads": number("grass, tuft, sedge: share of the blades that are flowering stems with a seed head, taller, narrow and dry towards the top; geometry only.", 0.0, FRACTION),
     "petals": integer("flower: petals, placed at the golden angle.", LEAST_PETALS, MAX_PETALS),
     "petal_length": number("flower: petal length in metres.", SMALLEST_ELEMENT_SIZE, MAX_LENGTH),
     "petal_width": number("flower: petal width in metres.", SMALLEST_PLANT_PART, MAX_LENGTH),
@@ -55,18 +56,18 @@ ELEMENT_FIELDS = {
     "aspect": number("leaf: width over length.", SMALLEST_ASPECT_RATIO, MAX_LEAF_ASPECT),
     "curl": number("leaf: how far the edges curl up, 0 to 1.", 0.0, FRACTION),
     "arch": number("leaf: how far the midrib arches, 0 to 1.", 0.0, FRACTION),
-    "size": pair("pebble: smallest and largest radius in metres.", SMALLEST_ELEMENT_SIZE, MAX_LENGTH),
-    "flatness": number("pebble: how flat, 0 round to 0.9 flat.", 0.0, MAX_PEBBLE_FLATNESS),
-    "elongation": number("pebble: how long, 0 round to 2.", 0.0, MAX_PEBBLE_ELONGATION),
-    "roughness": number("pebble: lumpiness of the outline, 0 to 1.", 0.0, FRACTION),
-    "color": color("Main colour, linear RGB: the blade body, the twig bark, the leaf or the pebble.", None, False),
+    "size": pair("pebble, mound: smallest and largest radius in metres.", SMALLEST_ELEMENT_SIZE, MAX_LENGTH),
+    "flatness": number("pebble, mound: how flat, 0 round to 0.9 flat.", 0.0, MAX_PEBBLE_FLATNESS),
+    "elongation": number("pebble, mound: how long, 0 round to 2.", 0.0, MAX_PEBBLE_ELONGATION),
+    "roughness": number("pebble, mound: lumpiness of the outline, 0 to 1.", 0.0, FRACTION),
+    "color": color("Main colour, linear RGB: the blade body, the twig bark, the leaf, the pebble or the soil of a mound.", None, False),
     "dry_color": color("grass, tuft, sedge: colour of the dry tips, linear RGB.", None, False),
     "petal_color": color("flower: petal colour, linear RGB.", None, False),
     "centre_color": color("flower: disc colour, linear RGB.", None, False),
 }
 ELEMENT = obj(ELEMENT_FIELDS)
 
-BLADE_FIELDS = ("blades", "height", "width", "taper", "curvature", "lean", "spread", "twist", "fold", "dry_tips", "dry_length", "color", "dry_color")
+BLADE_FIELDS = ("blades", "height", "width", "taper", "curvature", "lean", "spread", "twist", "fold", "dry_tips", "dry_length", "seed_heads", "color", "dry_color")
 KIND_FIELDS = {
     "grass": BLADE_FIELDS,
     "tuft": BLADE_FIELDS,
@@ -75,19 +76,21 @@ KIND_FIELDS = {
     "twig": ("length", "thickness", "branches", "color"),
     "leaf": ("length", "aspect", "curl", "arch", "color"),
     "pebble": ("size", "flatness", "elongation", "roughness", "color"),
+    "mound": ("size", "flatness", "elongation", "roughness", "color"),
 }
 KIND_DEFAULTS = {
-    "grass": {"blades": 24, "height": [0.25, 0.5], "width": 0.004, "taper": 0.92, "curvature": 0.55, "lean": 22.0, "spread": 0.05, "twist": 40.0, "fold": 0.0, "dry_tips": 0.2, "dry_length": [0.15, 0.4], "color": [0.05, 0.125, 0.018], "dry_color": [0.36, 0.28, 0.12]},
-    "tuft": {"blades": 40, "height": [0.06, 0.16], "width": 0.003, "taper": 0.9, "curvature": 0.6, "lean": 40.0, "spread": 0.02, "twist": 60.0, "fold": 0.0, "dry_tips": 0.15, "dry_length": [0.1, 0.3], "color": [0.045, 0.125, 0.022], "dry_color": [0.36, 0.28, 0.12]},
-    "sedge": {"blades": 14, "height": [0.3, 0.6], "width": 0.008, "taper": 0.95, "curvature": 0.2, "lean": 14.0, "spread": 0.03, "twist": 15.0, "fold": 0.45, "dry_tips": 0.35, "dry_length": [0.1, 0.35], "color": [0.06, 0.12, 0.04], "dry_color": [0.33, 0.27, 0.14]},
+    "grass": {"seed_heads": 0.0, "blades": 24, "height": [0.25, 0.5], "width": 0.004, "taper": 0.92, "curvature": 0.55, "lean": 22.0, "spread": 0.05, "twist": 40.0, "fold": 0.0, "dry_tips": 0.2, "dry_length": [0.15, 0.4], "color": [0.05, 0.125, 0.018], "dry_color": [0.36, 0.28, 0.12]},
+    "tuft": {"seed_heads": 0.0, "blades": 40, "height": [0.06, 0.16], "width": 0.003, "taper": 0.9, "curvature": 0.6, "lean": 40.0, "spread": 0.02, "twist": 60.0, "fold": 0.0, "dry_tips": 0.15, "dry_length": [0.1, 0.3], "color": [0.045, 0.125, 0.022], "dry_color": [0.36, 0.28, 0.12]},
+    "sedge": {"seed_heads": 0.0, "blades": 14, "height": [0.3, 0.6], "width": 0.008, "taper": 0.95, "curvature": 0.2, "lean": 14.0, "spread": 0.03, "twist": 15.0, "fold": 0.45, "dry_tips": 0.35, "dry_length": [0.1, 0.35], "color": [0.06, 0.12, 0.04], "dry_color": [0.33, 0.27, 0.14]},
     "flower": {"height": [0.2, 0.45], "petals": 13, "petal_length": 0.012, "petal_width": 0.006, "centre_radius": 0.005, "cup": 20.0, "head_tilt": 45.0, "stem_width": 0.0025, "leaves": 3, "leaf_width": 0.006, "color": [0.06, 0.14, 0.03], "petal_color": [0.82, 0.82, 0.76], "centre_color": [0.62, 0.4, 0.02]},
     "twig": {"length": [0.08, 0.3], "thickness": 0.003, "branches": 2, "color": [0.12, 0.085, 0.055]},
     "leaf": {"length": [0.04, 0.09], "aspect": 0.6, "curl": 0.6, "arch": 0.5, "color": [0.2, 0.1, 0.035]},
     "pebble": {"size": [0.008, 0.03], "flatness": 0.4, "elongation": 0.4, "roughness": 0.5, "color": [0.3, 0.28, 0.25]},
+    "mound": {"size": [0.15, 0.3], "flatness": 0.6, "elongation": 0.3, "roughness": 0.7, "color": [0.085, 0.058, 0.038]},
 }
-DEFAULT_TRIANGLES = {"grass": 400, "tuft": 400, "sedge": 300, "flower": 300, "twig": 200, "leaf": 48, "pebble": 320}
-CARD_TRIANGLES = {"grass": 12, "tuft": 12, "sedge": 12, "flower": 32, "twig": 6, "leaf": 2, "pebble": 2}
-MIN_TRIANGLES = {"geometry": {"flower": 14, "twig": 12, "leaf": 8, "pebble": 20}, "cards": {"flower": 12}}
+DEFAULT_TRIANGLES = {"grass": 400, "tuft": 400, "sedge": 300, "flower": 300, "twig": 200, "leaf": 48, "pebble": 320, "mound": 320}
+CARD_TRIANGLES = {"grass": 12, "tuft": 12, "sedge": 12, "flower": 32, "twig": 6, "leaf": 2, "pebble": 2, "mound": 2}
+MIN_TRIANGLES = {"geometry": {"flower": 14, "twig": 12, "leaf": 8, "pebble": 20, "mound": 20}, "cards": {"flower": 12}}
 
 
 def element_params(kind, given):
@@ -118,6 +121,7 @@ def build_geometry(kind, form, params, rng, budget):
         "twig": (twig_geometry, twig_cards),
         "leaf": (leaf_geometry, leaf_cards),
         "pebble": (pebble_geometry, pebble_cards),
+        "mound": (pebble_geometry, pebble_cards),
     }[kind]
     return builders[0 if form == "geometry" else 1](params, rng, budget)
 
@@ -156,6 +160,8 @@ def material_specs(kind, form, params, report):
         return [litter_material("leaf" if cards else "none", params["color"])]
     if cards:
         return [litter_material("pebble", params["color"])]
+    if kind == "mound":
+        return [("soil", {"color": params["color"], "moisture": 0.35, "pebbles": 0.15, "clod_size": 0.012, "coordinates": "object", "bump": 0.6})]
     return [("stone", {"color": params["color"], "secondary_color": scaled(params["color"], 0.7), "cracks": False, "cell_scale": 60.0, "coordinates": "object", "bump": 0.3})]
 
 

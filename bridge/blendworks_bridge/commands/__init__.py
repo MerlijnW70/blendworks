@@ -17,6 +17,7 @@ MODULES = (
     "placement",
     "scatter",
     "ground_cover",
+    "meadow_fields",
     "ground_export",
     "roller_chain",
     "mesh_query",

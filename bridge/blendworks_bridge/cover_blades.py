@@ -9,6 +9,13 @@ from .cover_mesh import NEVER_DRY, ElementMesh, rotate_about, segments_for, unit
 MAX_BLADE_SEGMENTS = 8
 BASE_ROUNDING = 0.08
 BEND_POWER = 1.7
+CULM_HEIGHT = (1.15, 1.5)
+CULM_WIDTH = 0.35
+CULM_LEAN = 0.4
+CULM_BEND = 0.25
+HEAD_SHARE = 0.2
+HEAD_WIDTH = 2.6
+HEAD_DRY_FROM = 0.45
 
 
 def blade_triangles(segments, folded):
@@ -96,12 +103,63 @@ def add_blade(mesh, p, rng, segments, folded):
         mesh.quad_strip(left, right, (0.0, 1.0), fractions)
 
 
+def culm_shape(p, rng):
+    """A flowering stem: taller and narrower than the leaves, nearly straight, dry from below the seed head up."""
+    root, heading, lean, bend, height, twist, phase, _ = blade_shape(p, rng)
+    height = min(height * rng.uniform(*CULM_HEIGHT), 1.5 * p["height"][1])
+    return root, heading, lean * CULM_LEAN, bend * CULM_BEND, height, twist, phase, HEAD_DRY_FROM
+
+
+def head_width(p, fraction):
+    if fraction < 1.0 - HEAD_SHARE:
+        return p["width"] * CULM_WIDTH
+    along = (fraction - (1.0 - HEAD_SHARE)) / HEAD_SHARE
+    return p["width"] * CULM_WIDTH * HEAD_WIDTH * math.sin(math.pi * min(0.999, 0.15 + 0.85 * along))
+
+
+def add_culm(mesh, p, rng, segments):
+    """A seed head on its stem: a narrow strip whose top HEAD_SHARE swells into the spikelets, crossed there by a second
+    strip so the head reads from every side."""
+    root, heading, lean, bend, height, twist, phase, dry = culm_shape(p, rng)
+    points, tangents = centreline(root, heading, lean, bend, height, segments)
+    across = numpy.array([-math.sin(heading), math.cos(heading), 0.0])
+    for turn, first in ((0.0, 0), (0.5 * math.pi, max(1, int(round(segments * (1.0 - HEAD_SHARE)))))):
+        left, right, fractions = [], [], []
+        for index in range(first, segments + 1):
+            fraction = index / segments
+            fractions.append(fraction)
+            wind = (fraction, phase, fraction * fraction, fraction)
+            if index == segments:
+                tip = mesh.vertex(points[index], wind, phase, dry)
+                left.append(tip)
+                right.append(tip)
+                continue
+            side = rotate_about(across, tangents[index], turn)
+            side = unit(side - tangents[index] * numpy.dot(side, tangents[index]))
+            half = 0.5 * head_width(p, fraction)
+            left.append(mesh.vertex(points[index] - side * half, wind, phase, dry))
+            right.append(mesh.vertex(points[index] + side * half, wind, phase, dry))
+        mesh.quad_strip(left, right, (0.0, 1.0), [(value - fractions[0]) / max(1e-9, 1.0 - fractions[0]) for value in fractions])
+
+
+def culm_triangles(segments):
+    return blade_triangles(segments, False) + blade_triangles(max(1, segments - max(1, int(round(segments * (1.0 - HEAD_SHARE))))), False)
+
+
 def blade_clump(p, rng, budget):
     blades, segments, folded = blade_plan(p, budget)
     mesh = ElementMesh()
+    spare = budget - blades * blade_triangles(segments, folded)
+    extra = culm_triangles(segments) - blade_triangles(segments, folded)
+    culms = 0
     for _ in range(blades):
-        add_blade(mesh, p, rng, segments, folded)
-    return mesh, {"blades": blades, "segments": segments, "folded": folded}
+        if p.get("seed_heads", 0.0) > 0.0 and rng.uniform() < p["seed_heads"] and spare >= extra:
+            add_culm(mesh, p, rng, segments)
+            spare -= extra
+            culms += 1
+        else:
+            add_blade(mesh, p, rng, segments, folded)
+    return mesh, {"blades": blades, "segments": segments, "folded": folded, "seed_heads": culms}
 
 
 def card_plan(budget):

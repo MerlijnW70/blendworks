@@ -12,8 +12,8 @@ import numpy
 from cover_helpers import attribute_of, evaluated_instances, make_plane, points_of
 
 PRESETS = {
-    "meadow": {"short_grass", "tall_grass", "sedges", "daisies", "buttercups", "knapweed", "fallen_leaves", "twigs", "pebbles", "base_tufts", "base_pebbles", "thatch", "dead_leaves", "dead_twigs"},
-    "forest_floor": {"leaf_litter", "twigs", "pebbles", "grass_tufts", "sedges", "base_tufts"},
+    "meadow": {"short_grass", "tall_grass", "sedges", "daisies", "buttercups", "knapweed", "ragged_robin", "fallen_leaves", "twigs", "pebbles", "base_tufts", "base_pebbles", "thatch", "moss", "molehills"},
+    "forest_floor": {"leaf_litter", "twigs", "pebbles", "grass_tufts", "sedges", "base_tufts", "moss"},
     "dry_steppe": {"bunch_grass", "dry_tufts", "pebbles", "twigs", "base_pebbles", "yellow_flowers"},
     "lawn": {"lawn_grass", "daisies"},
 }

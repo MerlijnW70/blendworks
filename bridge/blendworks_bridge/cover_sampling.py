@@ -62,8 +62,13 @@ def usable_areas(surface):
     return numpy.where(surface.areas > DEGENERATE_AREA, surface.areas, 0.0)
 
 
-def expected_count(surface, view, factor, density, margin=0.0):
-    return float(density * numpy.sum(usable_areas(surface) * triangle_reach(surface, view, factor, margin)))
+def expected_count(surface, view, factor, density, margin=0.0, share=None):
+    """Elements expected at the bound: density times area times the falloff, and times share, an upper bound of the
+    population's masks per triangle, when one is known."""
+    weights = usable_areas(surface) * triangle_reach(surface, view, factor, margin)
+    if share is not None:
+        weights = weights * share
+    return float(density * numpy.sum(weights))
 
 
 def barycentric_draws(rng, count):
@@ -78,8 +83,10 @@ def weighted_triangles(rng, weights, count):
     return numpy.minimum(picks, len(weights) - 1)
 
 
-def uniform_candidates(surface, rng, density, view, factor):
+def uniform_candidates(surface, rng, density, view, factor, share=None):
     reach = triangle_reach(surface, view, factor)
+    if share is not None:
+        reach = reach * share
     expected = density * usable_areas(surface) * reach
     total = float(expected.sum())
     count = int(rng.poisson(total)) if total > 0 else 0

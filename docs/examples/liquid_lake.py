@@ -30,7 +30,7 @@ TREES = int(os.environ.get("BLENDWORKS_TREES", "6"))
 FORM = os.environ.get("BLENDWORKS_CLOUD_FORM", "auto")
 SEED = int(os.environ.get("BLENDWORKS_TERRAIN_SEED", "3"))
 LAND_RESOLUTION = int(os.environ.get("BLENDWORKS_LAND_RESOLUTION", "301"))
-SHOTS = os.environ.get("BLENDWORKS_SHOTS", "lake,rocks").split(",")
+SHOTS = os.environ.get("BLENDWORKS_SHOTS", "lake,rocks,meadow").split(",")
 TIME_OF_DAY = os.environ.get("BLENDWORKS_TIME", "afternoon")
 TILE = 300.0
 SHIFT = 4.5 * TILE
@@ -39,6 +39,12 @@ HILLS = {"amplitude": 100.0, "seed": 260, "scale": 2500.0, "octaves": 3, "hurst"
 RIVER_WIDTH = 4.0
 RIVER_DEPTH = 0.6
 RIVER_TRIALS = int(os.environ.get("BLENDWORKS_RIVER_TRIALS", "6"))
+MEADOW_EYE = 1.0
+MEADOW_NEAR = 18.0
+MEADOW_FAR = 70.0
+MEADOW_RISE = 5.0
+MEADOW_AHEAD = 30.0
+MEADOW_ASIDE = 1.2
 RINGS = ((TILE, range(3, 6), 101, 4.0), (3.0 * TILE, range(0, 3), 91, 10.0), (9.0 * TILE, range(-1, 2), 55, 40.0))
 HANDLER = None
 LOG = []
@@ -152,6 +158,11 @@ def trees(heights, level, mouth):
     return planted
 
 
+def crowns(planted):
+    """The trees' bark and leaves, which shade the ground."""
+    return [name for bark in planted for name in (bark, bark.replace("_bark", "_leaves")) if name in bpy.data.objects]
+
+
 def ground_at(heights, x, y):
     return float(heights[numpy.argmin(numpy.hypot(heights[:, 0] - x, heights[:, 1] - y)), 2])
 
@@ -204,6 +215,53 @@ def cameras(heights, lake_report, mouth, placed):
     return ["eye", "shore"]
 
 
+def meadow_camera(lake_report, heights):
+    """A low camera in the meadow, at the eye height of someone sitting in the grass: of the points along the worn paths
+    that lie MEADOW_NEAR to MEADOW_FAR metres from the water inside the land tile and MEADOW_RISE metres above it (over
+    the valley mist), the one where the path heads most straight for the lake, looking along it over the meadow to the
+    lake. Without paths there, the dry point at that
+    distance nearest the lake's centre, facing it."""
+    from blendworks_bridge import liquid_world
+
+    level = lake_report["level"]
+    centre = numpy.array(lake_report["centre"])
+    water = liquid_world.Water(liquid_world.liquid_objects(bpy.context.scene))
+    best = None
+    for line in json.loads(bpy.data.objects["land"].data.get("meadow_paths", "[]")):
+        points = numpy.asarray(line, dtype=float)
+        inside = numpy.abs(points[:, :2]).max(axis=1) < TILE / 2.0 - 10.0
+        if inside.sum() < 3:
+            continue
+        dry = -water.signed_depth(points, MEADOW_FAR + 10.0)
+        for index in numpy.nonzero(inside & (dry > MEADOW_NEAR) & (dry < MEADOW_FAR) & (points[:, 2] > level + MEADOW_RISE))[0][1:-1].tolist():
+            heading = points[index + 1, :2] - points[index - 1, :2]
+            toward = centre - points[index, :2]
+            score = abs(float(numpy.dot(heading, toward))) / max(float(numpy.linalg.norm(heading) * numpy.linalg.norm(toward)), 1e-9)
+            if best is None or score > best[0]:
+                best = (score, points[index])
+    if best is None:
+        candidates = heights[(numpy.abs(heights[:, 0]) < TILE / 2.0 - 10.0) & (numpy.abs(heights[:, 1]) < TILE / 2.0 - 10.0)]
+        dry = -water.signed_depth(candidates, MEADOW_FAR + 10.0)
+        candidates = candidates[(dry > MEADOW_NEAR) & (dry < MEADOW_FAR) & (candidates[:, 2] > level + MEADOW_RISE)]
+        stand = candidates[numpy.argmin(numpy.hypot(candidates[:, 0] - centre[0], candidates[:, 1] - centre[1]))]
+    else:
+        stand = best[1]
+    toward = (centre - stand[:2]) / max(float(numpy.linalg.norm(centre - stand[:2])), 1e-9)
+    spot = stand[:2] + MEADOW_ASIDE * numpy.array([-toward[1], toward[0]])
+    location = [float(spot[0]), float(spot[1]), ground_at(heights, *spot) + MEADOW_EYE]
+    look = stand[:2] + MEADOW_AHEAD * toward
+    cmd("add_camera", name="meadow", location=location, target=[float(look[0]), float(look[1]), level + 0.3], lens=30.0)
+    cmd("camera_setup", name="meadow", view_transform="AgX", look="base_contrast")
+    return "meadow"
+
+
+def meadow_tiles():
+    """The land and the ring of tiles around it share one field grid; coarser rings further out get their own."""
+    tiles = [obj.name for obj in bpy.data.objects if obj.type == "MESH" and (obj.name == "land" or obj.name.startswith("ground_"))]
+    inner = [name for name in tiles if name == "land" or name.startswith(f"ground_{int(TILE)}_")]
+    return inner, [name for name in tiles if name not in inner]
+
+
 def water_line_distances(placed):
     """How far rock vertices lie from the water: positive above the water line, negative under it."""
     from blendworks_bridge import liquid_world
@@ -227,26 +285,33 @@ def build():
     planted = trees(heights, report["level"], mouth)
     shots = cameras(heights, report, mouth, placed)
     obstacles = placed.get("objects") or [placed["name"]]
+    inner, outer = meadow_tiles()
+    fields = cmd("meadow_fields", targets=inner, seed=5, shade=crowns(planted) + obstacles, obstacles=obstacles)
+    if outer:
+        cmd("meadow_fields", targets=outer, seed=5, paths="none")
+    shots.append(meadow_camera(report, heights))
     reeds = [{"name": "reeds", "element": "sedge", "density": 25.0, "liquid": "shore", "shore": 1.2, "clumping": {"radius": 0.6, "per_clump": 12.0}}]
-    cmd("ground_cover", target="land", preset="meadow", cameras=shots, near=COVER_NEAR, view_only=True, budget=BUDGET, obstacles=obstacles + planted, trees=planted, seed=5, populations=reeds)
+    cover = cmd("ground_cover", target="land", preset="meadow", cameras=shots, near=COVER_NEAR, view_only=True, budget=BUDGET, obstacles=obstacles + planted, trees=planted, seed=5, populations=reeds)
     cmd("atmosphere", visibility=10000.0, height_falloff=300.0)
     horizon = None
     if to_the_horizon.enabled():
         tiles = [obj.name for obj in bpy.data.objects if obj.type == "MESH" and (obj.name == "land" or obj.name.startswith("ground_"))]
         mist = {"radius": 2500.0, "thickness": 6.0, "fade": 6.0, "visibility": 300.0, "valley_width": 250.0}
-        horizon = to_the_horizon.surround(cmd, tiles, "eye", water=["lake", "river"], species=("birch", "pine", "oak"), mist=mist)
+        horizon = to_the_horizon.surround(cmd, tiles, "eye", water=["lake", "river"], species=("birch", "pine", "oak"), mist=mist, fields=True)
     cmd("save_blend", path="liquid-lake.blend")
-    return report, flow, placed, shots, horizon
+    meadow = {"fields": {key: fields[key] for key in ("moisture", "soil", "disturbance", "shade", "grazing", "paths", "path_length")},
+              "cover": {entry["name"]: entry["count"] for entry in cover["populations"]}, "structure": cover.get("structure")}
+    return report, flow, placed, shots, horizon, meadow
 
 
 def main():
     global HANDLER
     os.makedirs(OUT, exist_ok=True)
     HANDLER = Handler(OUT, allow_python=False, desktop=False)
-    lake_report, river_report, placed, shots, horizon = build()
+    lake_report, river_report, placed, shots, horizon, meadow = build()
     distances = water_line_distances(placed)
     renders = {}
-    for shot, path, key in (("eye", "lake.png", "lake"), ("shore", "rocks.png", "rocks")):
+    for shot, path, key in (("eye", "lake.png", "lake"), ("shore", "rocks.png", "rocks"), ("meadow", "meadow.png", "meadow")):
         if key in SHOTS:
             renders[shot] = cmd("render_final", path=path, camera=shot, width=WIDTH, height=HEIGHT, samples=SAMPLES, time_limit=SECONDS, device=DEVICE, preview=False)
     final = renders.get("eye") or next(iter(renders.values()))
@@ -258,6 +323,7 @@ def main():
         "cameras": shots,
         "render": {key: final[key] for key in ("samples", "time_budget", "liquids", "clouds", "atmosphere")},
         "horizon": horizon,
+        "meadow": meadow,
         "commands": LOG,
     }
     with open(os.path.join(OUT, "summary.json"), "w", encoding="utf-8") as handle:

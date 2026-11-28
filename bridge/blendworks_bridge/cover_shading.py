@@ -13,6 +13,8 @@ TINT_ATTRIBUTE = "gc_tint"
 TINT_HUE = 0.05
 TINT_SATURATION = 0.25
 TINT_VALUE = 0.35
+STRAW_ATTRIBUTE = "gc_straw"
+STRAW_SHADE = 0.8
 CONTACT_MIX = "gc_contact_mix"
 CONTACT_ATTRIBUTE = "gc_contact_attribute"
 CONTACT_STRENGTH = "gc_contact_strength"
@@ -36,13 +38,15 @@ def preset_material(name, preset_name, overrides):
     graph.links.new(shader.outputs["BSDF"], output.inputs["Surface"])
     channels = preset.build(graph, params)
     wire_channels(graph, material, output, shader, channels, params["bump"])
-    instance_tint(graph, shader)
+    instance_tint(graph, shader, params.get("dry_color") if preset_name == "grass_blade" else None)
     material.diffuse_color = list(params.get("color", (0.2, 0.3, 0.1))[:3]) + [1.0]
     graph.layout()
     return material
 
 
-def instance_tint(graph, shader):
+def instance_tint(graph, shader, straw_color=None):
+    """Vary the colour per instance through gc_tint, and turn it towards straw_color (darkened, as a whole dry blade is
+    darker than its sunlit tip) by the instance's gc_straw share."""
     socket = shader.inputs["Base Color"]
     source = socket.links[0].from_socket if socket.is_linked else list(socket.default_value)
     tint = graph.node("ShaderNodeAttribute", attribute_type="INSTANCER", attribute_name=TINT_ATTRIBUTE).outputs["Fac"]
@@ -52,7 +56,11 @@ def instance_tint(graph, shader):
         "Value": graph.math("MULTIPLY_ADD", tint, TINT_VALUE, 1.0),
         "Color": source,
     })
-    graph.links.new(adjusted.outputs["Color"], socket)
+    tinted = adjusted.outputs["Color"]
+    if straw_color is not None:
+        straw = graph.node("ShaderNodeAttribute", attribute_type="INSTANCER", attribute_name=STRAW_ATTRIBUTE).outputs["Fac"]
+        tinted = graph.mix(straw, tinted, [value * STRAW_SHADE for value in list(straw_color)[:3]])
+    graph.links.new(tinted, socket)
 
 
 def darken_ground(material, attribute, strength):

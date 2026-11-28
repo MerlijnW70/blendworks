@@ -13,10 +13,14 @@ def enabled():
     return OPTION in ("rolling", "ranges")
 
 
-def surround(cmd, terrain, camera, water=(), species=("pine", "oak", "birch"), visibility=25_000.0, mist=None, forest=True, cover=0.45, seed=0, haze=True):
-    """Land, forest, mist and haze to the horizon around terrain, built for camera."""
+def surround(cmd, terrain, camera, water=(), species=("pine", "oak", "birch"), visibility=25_000.0, mist=None, forest=True, cover=0.45, seed=0, haze=True, fields=False):
+    """Land, forest, mist and haze to the horizon around terrain, built for camera. With fields the distant land gets the
+    meadow fields too, so its ground carries on the meadow's colour structure."""
     land = cmd("distant_land", terrain=list(terrain), style=OPTION, camera=camera, detail=LAND_DETAIL, seed=seed)
     report = {"land": {key: land[key] for key in ("triangles", "rings", "border", "statistics", "curvature")}}
+    if fields:
+        made = cmd("meadow_fields", targets=[land["name"]], seed=seed, paths="none")
+        report["fields"] = {key: made[key] for key in ("grid", "moisture", "grazing")}
     if forest:
         grown = cmd("distant_forest", land=land["name"], camera=camera, species=list(species), tree_detail=FOREST_DETAIL,
                     frames=FRAMES, cover=cover, seed=seed)

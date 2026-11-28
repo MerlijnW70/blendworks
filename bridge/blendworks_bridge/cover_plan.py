@@ -7,6 +7,7 @@ from mathutils import Vector
 
 from .cover_masks import expensive_masks, population_masks, view_mask
 from .cover_sampling import clumped_candidates, expected_count, uniform_candidates
+from .meadow_rules import has_effect, instance_shares, ladder_pick, uses_fields
 from .scatter_frames import instance_rotations
 
 CANDIDATE_FLOOR = 200_000
@@ -33,9 +34,9 @@ def candidate_limit(budget):
     return min(CANDIDATE_CEILING, max(3 * budget, CANDIDATE_FLOOR))
 
 
-def drawing_factor(surface, populations, view, budget):
+def drawing_factor(surface, populations, view, budget, shares):
     def expected(factor):
-        return sum(expected_count(surface, view, factor, population["density"]) for population in populations)
+        return sum(expected_count(surface, view, factor, population["density"], share=share) for population, share in zip(populations, shares))
 
     limit = candidate_limit(budget)
     if expected(1.0) <= limit:
@@ -50,12 +51,20 @@ def drawing_factor(surface, populations, view, budget):
     return low
 
 
-def draw_population(surface, tree, population, index, view, factor, seed, context):
+def density_share(population, context):
+    """Per triangle, an upper bound of the population's field density response, so candidates are drawn where it can
+    grow; None for clumped populations, whose children land beyond their parent's triangle."""
+    if context.get("fields") is None or "clumping" in population or not uses_fields(population):
+        return None
+    return context["fields"].triangle_bound(population)
+
+
+def draw_population(surface, tree, population, index, view, factor, seed, context, share):
     rng = numpy.random.default_rng([seed, index, 0x6C0E7])
     if "clumping" in population:
         candidates = clumped_candidates(surface, tree, rng, population["density"], population["clumping"], view, factor)
     else:
-        candidates = uniform_candidates(surface, rng, population["density"], view, factor)
+        candidates = uniform_candidates(surface, rng, population["density"], view, factor, share)
     drawn = len(candidates)
     uniforms = rng.uniform(size=drawn)
     distances = view.distances(candidates.points)
@@ -88,7 +97,7 @@ def budget_factor(draws, view, start, budget):
 
 
 class Placed:
-    def __init__(self, positions, matrices, pick, card, tint, key, footprint, triangle, distances, cards):
+    def __init__(self, positions, matrices, pick, card, tint, key, footprint, triangle, distances, cards, straw=None):
         self.positions = positions
         self.matrices = matrices
         self.pick = pick
@@ -99,6 +108,7 @@ class Placed:
         self.triangle = triangle
         self.distances = distances
         self.cards = cards
+        self.straw = numpy.zeros(len(positions)) if straw is None else straw
 
     def __len__(self):
         return len(self.positions)
@@ -162,7 +172,15 @@ def chosen_forms(population, distances, view):
     return distances > population["card_distance"]
 
 
-def place_population(surface, tree, draw, population, index, view, factor, seed, elements):
+def field_shares(population, candidates, context, rng):
+    count = len(candidates)
+    if context.get("fields") is None or not uses_fields(population) or count == 0:
+        return numpy.ones(count), numpy.zeros(count), None
+    height, dryness, maturity = instance_shares(population, context["fields"].at(candidates), rng)
+    return height, dryness, maturity if has_effect(population, "maturity") else None
+
+
+def place_population(surface, tree, draw, population, index, view, factor, seed, elements, context):
     rng = numpy.random.default_rng([seed, index, 0x91ACE])
     accepted = numpy.nonzero(draw.accepted(view, factor))[0]
     candidates = draw.candidates.subset(accepted)
@@ -176,6 +194,9 @@ def place_population(surface, tree, draw, population, index, view, factor, seed,
     widen = numpy.minimum(population["max_widen"], falloff ** -0.5) if population["widen"] else numpy.ones(count)
     variants = elements.variants
     variant = rng.integers(0, variants, count)
+    height, straw, maturity = field_shares(population, candidates, context, numpy.random.default_rng([seed, index, 0xF1E1D]))
+    if maturity is not None:
+        variant = ladder_pick(maturity, variants)
     cards = chosen_forms(population, distances, view)
     card_index = variant + (variants if elements.has_both else 0)
     pick = numpy.where(cards & elements.has_both, card_index, variant)
@@ -193,13 +214,13 @@ def place_population(surface, tree, draw, population, index, view, factor, seed,
         sink[curved] = embed[curved] + lift
     positions = candidates.points - axes * sink[:, None]
     matrices = numpy.zeros((count, 4, 4), dtype=numpy.float32)
-    matrices[:, :3, :3] = rotations * numpy.stack([scales * widen, scales * widen, scales], axis=1)[:, None, :]
+    matrices[:, :3, :3] = rotations * numpy.stack([scales * widen, scales * widen, scales * height], axis=1)[:, None, :]
     matrices[:, :3, 3] = positions
     matrices[:, 3, 3] = 1.0
     tint = rng.uniform(-1.0, 1.0, count) * population["color_variation"]
     key = rng.uniform(size=count)
     footprint = elements.footprint[pick] * scales**2 / falloff
-    return Placed(positions, matrices, pick.astype(numpy.int32), card_index.astype(numpy.int32), tint, key, footprint, candidates.triangle, distances, cards)
+    return Placed(positions, matrices, pick.astype(numpy.int32), card_index.astype(numpy.int32), tint, key, footprint, candidates.triangle, distances, cards, straw)
 
 
 def population_report(population, draw, placed, view, factor, surface_area):
@@ -219,10 +240,11 @@ def population_report(population, draw, placed, view, factor, surface_area):
 
 
 def plan_cover(surface, tree, populations, view, budget, seed, context, elements):
-    start = drawing_factor(surface, populations, view, budget)
-    draws = [draw_population(surface, tree, population, index, view, start, seed, context) for index, population in enumerate(populations)]
+    shares = [density_share(population, context) for population in populations]
+    start = drawing_factor(surface, populations, view, budget, shares)
+    draws = [draw_population(surface, tree, population, index, view, start, seed, context, share) for index, (population, share) in enumerate(zip(populations, shares))]
     factor = budget_factor(draws, view, start, budget)
-    placed = [place_population(surface, tree, draw, population, index, view, factor, seed, elements[population["name"]]) for index, (draw, population) in enumerate(zip(draws, populations))]
+    placed = [place_population(surface, tree, draw, population, index, view, factor, seed, elements[population["name"]], context) for index, (draw, population) in enumerate(zip(draws, populations))]
     reports = [population_report(population, draw, item, view, factor, surface.area) for population, draw, item in zip(populations, draws, placed)]
     return placed, reports, factor, start
 
