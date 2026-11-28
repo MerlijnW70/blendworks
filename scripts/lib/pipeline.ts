@@ -10,7 +10,7 @@ export type StepResult = { name: string; passed: boolean; seconds: number; outpu
 
 export type StepHooks = { onFile?: (event: FileEvent) => void; onReady?: (stop: (reason: string) => void) => void };
 
-export type PhaseOptions = { heartbeatMs?: number; checkMs?: number; waitLog?: string; limitMs?: number; exempt?: Record<string, string>; print?: (line: string) => void; now?: () => number };
+export type PhaseOptions = { keepGoing?: boolean; onFile?: (step: string, event: FileEvent) => void; heartbeatMs?: number; checkMs?: number; waitLog?: string; limitMs?: number; exempt?: Record<string, string>; print?: (line: string) => void; now?: () => number };
 
 const TAIL_LINES = 4;
 const FAILURE_LINES = 200;
@@ -115,12 +115,15 @@ export async function runPhases(phases: Step[][], options: PhaseOptions = {}): P
         phase.map(async (step) => {
           progress.stepStarted(step.name);
           const result = await runStep({ ...step, env: { ...step.env, [PROGRESS_VARIABLE]: "1" } }, failFast.signal, {
-            onFile: (event) => progress.event(step.name, event),
+            onFile: (event) => {
+              progress.event(step.name, event);
+              options.onFile?.(step.name, event);
+            },
             onReady: (stop) => stops.set(step.name, stop),
           });
           stops.delete(step.name);
           progress.stepEnded(step.name);
-          if (!result.passed && result.cancelled !== true) failFast.abort();
+          if (!result.passed && result.cancelled !== true && options.keepGoing !== true) failFast.abort();
           report(result);
           return result;
         }),

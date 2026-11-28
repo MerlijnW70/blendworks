@@ -18,7 +18,7 @@ Blender is heavy, and the owner's PC froze once under parallel load. At most `BL
 
 | Command | Use |
 |---|---|
-| `npm run check:fast` | While iterating. Runs the rules, the typecheck, every unit test that needs no Blender, and the Blender and bridge tests related to your changed files. |
+| `npm run check:affected` | While iterating and before merging. Runs the rules, the typecheck, the builds, every unit test that needs no Blender, a core set, and the Blender and bridge tests your changes can affect (`check:fast` is the same). |
 | `npm run check` | Once, at the end. The full gate: rules, typecheck, build, all tests, all bridge tests and the add-on build, run side by side; the first failure stops the others. No test reads the build output. It ends with the slowest files, the time each spent waiting for a Blender slot, and how busy the slots were; the full log is in `.cache/timings`. |
 | `npm run check:stress` | The full check three times in a row while a CPU and Blender load runs beside it (below). |
 | `npm run durations` | Saves the file times of your last check to `scripts/durations.json`, which orders the heaviest test files first on a fresh clone. A file without an entry is scheduled first and fails nothing. `npm run check` refreshes the file by itself when it passes on a clean `main`, and prints which files had no entry; the refresh also drops entries of deleted files. Do not edit it in a job. |
@@ -27,19 +27,19 @@ Blender is heavy, and the owner's PC froze once under parallel load. At most `BL
 | `npm run doctor` | Checks Node, Blender, GPU devices, sandbox tools and the cache. |
 | `npm run clean` | Empties the cache folder (`.cache`, or `BLENDWORKS_CACHE`). `-- --all` also removes `dist`. |
 
-`check:fast` compares your tree with the merge base on `main` and picks tests by this mapping:
+`check:affected` (and its alias `check:fast`) compares your tree, untracked files included, with the merge base on `main` (`-- --base <ref>` for another), prints each changed file with the tests it selects and why, and runs the rules, the typecheck, both builds and the selected tests; `-- --dry-run` only prints the selection. It picks tests by a dependency graph of the repository, not a table:
 
 | Changed | Runs |
 |---|---|
-| Any change | Rules, typecheck and every test file that does not call `useBlenderSlot()` |
-| `src/judge/<name>.ts` | `test/judge/<name>.test.ts`; with no such test, every `test/judge` test |
-| `src/mcp/library/<name>.ts`, `src/mcp/<name>.ts` | `test/library-<name>.test.ts`, `test/mcp-<name>.test.ts`; with no such test, the whole family |
-| `src/session.ts` | `test/session.test.ts` and `test/mcp-e2e.test.ts` |
-| `src/blender.ts`, `scripts/`, `test/setup/`, `package.json` | The tests under `test/tooling` |
-| `bridge/blendworks_bridge/**/<stem>.py` | The table in `scripts/lib/fast-map.ts` if it has an entry for the module (an override); else `bridge/tests/test_<stem>*.py`, then `test_<first word of stem>*.py`, then the bridge tests that import the module. The example test (`test/<area>-example.test.ts`) of the module's area also runs. A test fails when a module has none of these |
-| `bridge/judge/**`, `schemas/` | Every Blender judge test; the spec test |
-| `bridge/tests/test_*.py`, a bridge test helper | That test; the tests that import the helper |
-| A test helper under `test/` | The tests that import it |
+| Any change | Rules, typecheck, builds, every test file that does not call `useBlenderSlot()`, and the core set: `test/mcp-e2e.test.ts`, `test/session.test.ts`, `test/tooling/codemap.test.ts` (it reads the whole tree), `bridge/tests/test_smoke.py`, `test_describe.py`, `test_crate.py` |
+| A TypeScript file | Every test that imports it, directly or through other modules |
+| A bridge module, only inside bodies of functions that do not run while modules load | The tests that call one of its commands, directly or through modules that import it, or import it themselves |
+| A bridge module at module level (or a function the module code reaches) | Every test that loads the bridge handler, since the handler loads every command module |
+| Native code under `native/` | The tests that call the modules that load its library (`terrain_core.py`): the terrain kernel tests |
+| An example script, a doc, a data file, a judge or package script | The tests that name it by path or file name, or run it |
+| Shared infrastructure: `package.json` and the lock file, `tsconfig*.json`, `vitest.config.ts`, `docker/`, `test/setup/`, the bridge harness, the runner in `scripts/`, `src/blender.ts`, the bridge handler, registry, schema, limits and command package, `schemas/`; a deleted or renamed file; a data file no test names | Everything |
+
+A change inside one module selects little: a body change in `bridge/blendworks_bridge/stone_shape.py` selects 4 Blender vitest files and 5 bridge test files (about 25 s of Blender work), one in `tree_bark.py` about 160 s, one in `src/mcp/results.ts` about 70 s, besides the unit tests that need no Blender (about 44 s). A change that touches shared infrastructure runs everything, as long as the full check. `npm run study:mutation` proves the selection safe (see section 5 of `docs/DESIGN.md`), and `npm run check:watch` keeps running the full check on each new `main` commit in the background.
 
 ### Writing tests
 

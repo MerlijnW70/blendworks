@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { blenderJobs, thisMachine } from "../../src/blender.js";
 import { execFileSync } from "node:child_process";
 import { describeChange, rememberDurations, saveBaseline } from "./durations.js";
-import { changedFiles, discoverTests, selectRelated } from "./fast-map.js";
+import { affectedPhases, chooseAffected, parseAffectedArgs, selectionLines } from "./affected-check.js";
 import { cgroupCpuSeconds, cgroupPeakMb, gateBudgetMb, memoryLimit, rememberPeaks, saveBaselinePeaks, type Peaks } from "./memory.js";
 import { startMemoryMeter } from "./memory-meter.js";
 import { cacheRoot, ensureCacheRoot, repoRoot } from "./paths.js";
@@ -17,12 +17,6 @@ export function vitestReporters(report?: string): string[] {
 
 export function fullPhases(report?: string): Step[][] {
   return [[npmStep("rules"), npmStep("typecheck"), npmStep("build"), npmStep("build:addon"), npmStep("test", [], {}, vitestReporters(report)), npmStep("test:bridge")]];
-}
-
-export function fastPhases(vitest: string[], bridge: string[], needsFixtures: boolean, report?: string): Step[][] {
-  const phase: Step[] = [npmStep("rules"), npmStep("typecheck"), npmStep("test", vitest, needsFixtures ? {} : { BLENDWORKS_FIXTURES: "skip" }, vitestReporters(report))];
-  if (bridge.length > 0) phase.push(npmStep("test:bridge", bridge));
-  return [phase];
 }
 
 export function timingLogPath(name: string, env: NodeJS.ProcessEnv = process.env): string {
@@ -83,14 +77,16 @@ export async function checkMain(): Promise<number> {
   return (await timedPhases("check", (report) => fullPhases(report), onCleanMain())) ? 0 : 1;
 }
 
-export async function fastMain(): Promise<number> {
-  const tests = discoverTests();
-  const changed = changedFiles();
-  const selection = selectRelated(changed, tests);
-  console.log(`changed files: ${changed.length === 0 ? "none" : changed.length}`);
-  for (const reason of selection.reasons) console.log(`  ${reason}`);
-  const needsFixtures = selection.vitest.some((file) => tests.blender.includes(file));
-  const blender = selection.vitest.filter((file) => tests.blender.includes(file));
-  console.log(`unit tests: ${selection.vitest.length - blender.length}; Blender tests: ${blender.length}; bridge test files: ${selection.bridge.length}`);
-  return (await timedPhases("check-fast", (report) => fastPhases(selection.vitest, selection.bridge, needsFixtures, report))) ? 0 : 1;
+export async function affectedMain(argv: string[] = process.argv.slice(2)): Promise<number> {
+  const args = parseAffectedArgs(argv);
+  if (typeof args === "string") {
+    console.error(args);
+    return 2;
+  }
+  const started = performance.now();
+  const { base, selection, blender } = chooseAffected(args);
+  for (const line of selectionLines(base, selection, blender)) console.log(line);
+  console.log(`selected in ${((performance.now() - started) / 1000).toFixed(1)} s`);
+  if (args.dryRun) return 0;
+  return (await timedPhases("check-affected", (report) => affectedPhases(selection, vitestReporters(report)))) ? 0 : 1;
 }

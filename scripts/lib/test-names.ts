@@ -1,4 +1,3 @@
-import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { repoRoot } from "./paths.js";
@@ -6,8 +5,6 @@ import { repoRoot } from "./paths.js";
 export const BLENDER_MARKER = "useBlenderSlot(";
 
 export type TestSet = { plain: string[]; blender: string[]; bridge: string[] };
-
-export type Selection = { vitest: string[]; bridge: string[]; reasons: string[] };
 
 const CORE_BRIDGE = ["test_smoke.py", "test_describe.py", "test_crate.py", "test_scene.py"];
 
@@ -76,19 +73,6 @@ export function discoverTests(): TestSet {
   return { plain: all.filter((file) => !blender.includes(file)), blender, bridge };
 }
 
-function importers(helper: string, files: string[]): string[] {
-  const stem = basename(helper).replace(/\.(ts|py)$/, "");
-  return files.filter((file) => {
-    const text = readFileSync(join(repoRoot, file), "utf8");
-    return text.includes(`/${stem}.js"`) || text.includes(`./${stem}.js"`);
-  });
-}
-
-function bridgeImporters(helper: string, tests: string[]): string[] {
-  const stem = basename(helper).replace(/\.py$/, "");
-  return tests.filter((name) => new RegExp(`^(from|import) ${stem}\\b`, "m").test(readFileSync(join(repoRoot, "bridge", "tests", name), "utf8")));
-}
-
 export type BridgeMapping = { tests: string[]; how: "table" | "convention" | "family" | "claimed" | "example" | "none" };
 
 function claimingTests(stem: string, tests: string[], folder: string): string[] {
@@ -119,80 +103,4 @@ function exampleAreas(file: string): string[] {
 export function exampleTests(file: string, all: string[]): string[] {
   const areas = exampleAreas(file);
   return all.filter((test) => areas.includes(test));
-}
-
-function ownTests(file: string, all: string[]): string[] {
-  const match = /^src\/(.+)\.ts$/.exec(file);
-  if (match === null) return [];
-  const path = match[1] ?? "";
-  const name = basename(path);
-  const area = path.split("/")[0] ?? "";
-  if (path === "session") return all.filter((test) => /test\/(session|mcp-e2e)\.test\.ts$/.test(test));
-  if (path === "blender") return all.filter((test) => /test\/(blender|tooling\/blender-path)\.test\.ts$/.test(test));
-  if (area === "package") return all.filter((test) => test.startsWith("test/package/"));
-  if (area === "judge") {
-    const direct = all.filter((test) => test === `test/judge/${name}.test.ts`);
-    return direct.length > 0 ? direct : all.filter((test) => test.startsWith("test/judge/"));
-  }
-  if (path.startsWith("mcp/library/")) {
-    const direct = all.filter((test) => test === `test/library-${name}.test.ts`);
-    return direct.length > 0 ? direct : all.filter((test) => /^test\/library-/.test(test));
-  }
-  if (area === "mcp") {
-    const direct = all.filter((test) => test === `test/mcp-${name}.test.ts`);
-    return direct.length > 0 ? direct : all.filter((test) => /^test\/(mcp|library)-/.test(test));
-  }
-  return [];
-}
-
-function sourceTests(file: string, all: string[]): string[] {
-  return [...new Set([...ownTests(file, all), ...exampleTests(file, all)])];
-}
-
-export function selectRelated(changed: string[], tests: TestSet): Selection {
-  const everyVitest = [...tests.plain, ...tests.blender];
-  const picked = new Set<string>();
-  const bridge = new Set<string>();
-  const reasons: string[] = [];
-  const add = (files: string[], why: string, into: Set<string> = picked): void => {
-    const fresh = files.filter((file) => !into.has(file));
-    for (const file of fresh) into.add(file);
-    if (fresh.length > 0) reasons.push(`${why} -> ${fresh.join(", ")}`);
-  };
-  for (const file of changed) {
-    if (/^test\/.*\.test\.ts$/.test(file)) add(everyVitest.filter((test) => test === file), file);
-    else if (/^test\/setup\//.test(file) || /^(scripts\/|vitest\.config\.ts$|package\.json$)/.test(file)) add(everyVitest.filter((test) => test.startsWith("test/tooling/")), file);
-    else if (/^test\/.*\.ts$/.test(file)) add(importers(file, everyVitest), file);
-    else if (/^src\/.*\.ts$/.test(file)) add(sourceTests(file, everyVitest), file);
-    else if (/^bridge\/package\//.test(file) || file === "bridge/blendworks_bridge/commands/lods.py") add(tests.blender.filter((test) => test.startsWith("test/package/")), file);
-    else if (/^bridge\/judge\//.test(file)) add(tests.blender.filter((test) => test.startsWith("test/judge/")), file);
-    else if (/^schemas\//.test(file)) add(everyVitest.filter((test) => test === "test/judge/spec.test.ts"), file);
-    if (/^scripts\/lib\/(bridge|fast)/.test(file) || /^scripts\/bridge-tests/.test(file)) add(tests.bridge.filter((test) => test === "test_smoke.py"), file, bridge);
-    if (/^bridge\/tests\/test_.*\.py$/.test(file)) add(tests.bridge.filter((test) => test === basename(file)), file, bridge);
-    else if (/^bridge\/tests\/.*\.py$/.test(file)) add(bridgeImporters(file, tests.bridge), file, bridge);
-    else if (/^bridge\//.test(file) && !/^bridge\/judge\//.test(file)) {
-      if (file.endsWith(".py")) add(bridgeModuleTests(file, tests.bridge).tests, file, bridge);
-      add(exampleTests(file, everyVitest), file);
-    }
-  }
-  return { vitest: [...new Set([...tests.plain, ...picked])].sort(), bridge: [...bridge].sort(), reasons };
-}
-
-function git(args: string[]): string {
-  return execFileSync("git", args, { cwd: repoRoot, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
-}
-
-export function changedFiles(): string[] {
-  let base = "HEAD";
-  for (const candidate of ["origin/main", "main"]) {
-    try {
-      base = git(["merge-base", "HEAD", candidate]).trim();
-      break;
-    } catch {
-      continue;
-    }
-  }
-  const tracked = git(["diff", "--name-only", base]).split("\n");
-  const untracked = git(["ls-files", "--others", "--exclude-standard"]).split("\n");
-  return [...new Set([...tracked, ...untracked].map((file) => file.trim()).filter((file) => file !== ""))].sort();
 }

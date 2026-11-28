@@ -1,7 +1,8 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { fastPhases, fullPhases } from "../../scripts/lib/checks.js";
+import { affectedPhases } from "../../scripts/lib/affected-check.js";
+import { fullPhases } from "../../scripts/lib/checks.js";
 import { runPhases, type Step } from "../../scripts/lib/pipeline.js";
 import { repoRoot } from "../../scripts/lib/paths.js";
 import { waitFor } from "../setup/wait-for.js";
@@ -24,10 +25,10 @@ describe("the phases of the full check", () => {
     expect((phases[0] ?? []).map((step) => step.name).sort()).toEqual(["build", "build:addon", "rules", "test", "test:bridge", "typecheck"]);
   });
 
-  it("run the quick checks of check:fast beside its tests, in one phase", () => {
-    const phases = fastPhases(["test/a.test.ts"], ["test_a.py"], true);
+  it("run the quick checks of check:affected beside its selected tests, in one phase", () => {
+    const phases = affectedPhases({ vitest: ["test/a.test.ts"], bridge: ["bridge/tests/test_a.py"], everything: false, fixtures: true, reasons: [], byChange: new Map() }, []);
     expect(phases).toHaveLength(1);
-    expect((phases[0] ?? []).map((step) => step.name)).toEqual(["rules", "typecheck", "test test/a.test.ts", "test:bridge test_a.py"]);
+    expect((phases[0] ?? []).map((step) => step.name)).toEqual(["rules", "typecheck", "build", "build:addon", "test test/a.test.ts", "test:bridge test_a.py"]);
   });
 
   it("need no build output: no test reads dist, and the add-on test builds its own archive", () => {

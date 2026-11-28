@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import { bridgeModuleTests, discoverTests, exampleTests, type TestSet } from "./fast-map.js";
+import { bridgeModuleTests, discoverTests, exampleTests, type TestSet } from "./test-names.js";
 import { repoRoot } from "./paths.js";
 
 export const MAP_PATH = "docs/CODEMAP.md";

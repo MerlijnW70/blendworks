@@ -181,7 +181,6 @@
   "test/tooling/entry-cache.test.ts": 0.8,
   "test/tooling/entry-use.test.ts": 0.1,
   "test/tooling/fair-queue.test.ts": 0.7,
-  "test/tooling/fast-map.test.ts": 0.4,
   "test/tooling/fixture-binaries.test.ts": 0,
   "test/tooling/fixture-deps.test.ts": 0,
   "test/tooling/fixture-key.test.ts": 0,
