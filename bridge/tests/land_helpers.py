@@ -11,7 +11,7 @@ REGION = 300.0
 
 
 def region(bridge, name="land", size=REGION, resolution=61, height=14.0, seed=3, scale=120.0, location=None):
-    bridge.ok("heightfield", name=name, size=[size, size], resolution=resolution, height=height, seed=seed, scale=scale, octaves=4, hurst=0.7)
+    bridge.ok("heightfield", name=name, size=[size, size], resolution=resolution, height=height, seed=seed, scale=scale, octaves=4, hurst=0.7, form="none")
     where = location if location is not None else [-size / 2.0, -size / 2.0, 0.0]
     bridge.ok("transform", name=name, location=where)
     return name

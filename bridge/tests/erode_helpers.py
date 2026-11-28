@@ -4,7 +4,7 @@ import bpy
 import numpy
 
 NOISE = {"seed": 5, "scale": 32.0, "octaves": 4, "hurst": 0.8, "mode": "ridged", "ridge_offset": 1.0}
-TILE = {"size": [64.0, 64.0], "resolution": 33, "height": 30.0, "base_height": 40.0, **NOISE}
+TILE = {"size": [64.0, 64.0], "resolution": 33, "height": 30.0, "base_height": 40.0, "form": "none", **NOISE}
 NEIGHBOUR_STEPS = ((0, 1), (1, 0), (1, 1), (1, -1))
 
 

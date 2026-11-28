@@ -1,12 +1,13 @@
 """River paths: smoothing, a running minimum bed profile and carving."""
 
+import json
 import math
 
 import numpy
 from mathutils import Vector
 from mathutils.kdtree import KDTree
 
-from . import liquid_grid
+from . import bank_form, liquid_grid
 from .errors import bad_args
 
 MANNING_NATURAL = 0.035
@@ -16,8 +17,10 @@ RAPIDS = (0.02, 0.08)
 RIVER_NODES = 400
 END_TAPER = 1.5
 MOUTH_REACH = 6
-FREEBOARD = 0.15
+BANKFULL_SHARE = 0.45
+FREEBOARD = 1.0 / BANKFULL_SHARE - 1.0
 MOUTH_TUCK = 0.003
+BANKS_PROPERTY = "blendworks_banks"
 
 
 class Path:
@@ -43,6 +46,7 @@ class Path:
         self.level = None
         self.depth = None
         self.ground = None
+        self.banks = None
 
     @property
     def length(self):
@@ -98,8 +102,9 @@ def smooth_profile(values, window):
 
 def levels(path, ground, depth, mouth_level, taper, carved=False):
     """Water level along the path, never rising downstream, easing into the level of the water it ends in. A river that
-    carves its channel runs in it, FREEBOARD of its depth below the ground of its line (the banks stand above the water,
-    as in a channel at normal flow); one that does not stands depth above that ground, so it can only fill a hollow line
+    carves its channel runs in it, FREEBOARD of its depth below the ground of its line: at mean flow a river fills about
+    BANKFULL_SHARE of its bankfull depth (Leopold and Maddock 1953; Williams 1978), so its banks stand that much above it;
+    one that does not stands depth above that ground, so it can only fill a hollow line
     and spills over flat ground beside it. The depth tapers to nothing over the first metres from the source."""
     profile = numpy.array([ground.height_at(x, y) for x, y in path.xy.tolist()])
     if numpy.isnan(profile).all():
@@ -119,10 +124,14 @@ def levels(path, ground, depth, mouth_level, taper, carved=False):
     return level
 
 
-def carve(objects, path, width, depth):
-    """Lower the ground into a parabolic bed under the river and banks of slope 1:2 up to the old ground."""
+def carve(objects, path, width, depth, seed=0):
+    """Lower the ground into the river's channel and banks, shaped by its bends (bank_form): pools and steep cut banks on
+    the outside, point bars on the inside, benches on the other banks, slumps on the cut banks; the ground keeps its
+    micro-relief class per vertex and the cut stretches get an undercut lip mesh. Returns the vertices lowered; the
+    report of the forms is kept as path.banks and on each ground object (blendworks_banks)."""
     half = width / 2.0
     carved = 0
+    report = {"slumps": 0, "lips": []}
     for obj in objects:
         mesh = obj.data
         matrix = obj.matrix_world
@@ -135,16 +144,31 @@ def carve(objects, path, width, depth):
         near = numpy.nonzero(numpy.all((points[:, :2] >= low) & (points[:, :2] <= high), axis=1))[0]
         if not len(near):
             continue
-        index, distance, _ = path.nearest(points[near])
-        here = path.depth[index] if path.depth is not None else depth
-        bed = path.level[index] - here
-        target = numpy.where(distance <= half, bed + here * (distance / half) ** 2, path.level[index] + (distance - half) * BANK_SLOPE)
-        lower = target < points[near, 2]
-        for row in near[lower].tolist():
-            world[row].z = float(target[numpy.searchsorted(near, row)])
+        target, amplitude, fields, formed = bank_form.shape(points[near], path, width, depth, seed)
+        report["slumps"] += formed["slumps"]
+        report.update({key: value for key, value in formed.items() if key != "slumps"})
+        lower = target < points[near, 2] - 1e-9
+        for row, value in zip(near[lower].tolist(), target[lower].tolist()):
+            world[row].z = float(value)
             mesh.vertices[row].co = inverse @ world[row]
             carved += 1
         mesh.update()
+        bank_form.mark_relief(obj, near, amplitude, target < points[near, 2] + 0.5)
+        shaped = numpy.array([point[:] for point in world])
+        tree = KDTree(len(shaped))
+        for index, point in enumerate(shaped.tolist()):
+            tree.insert((point[0], point[1], 0.0), index)
+        tree.balance()
+
+        def sample_height(x, y, tree=tree, shaped=shaped):
+            _, found, gap = tree.find((float(x), float(y), 0.0))
+            return float(shaped[found, 2]) if gap < 2.0 * half else None
+
+        made = bank_form.lip(objects, path, width, fields["kappa"], fields["bend"], sample_height, f"{obj.name}_bank_lip", seed)
+        if made is not None:
+            report["lips"].append(made.name)
+        obj[BANKS_PROPERTY] = json.dumps(report)
+    path.banks = report
     return carved
 
 

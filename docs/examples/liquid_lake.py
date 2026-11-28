@@ -30,6 +30,7 @@ FORM = os.environ.get("BLENDWORKS_CLOUD_FORM", "auto")
 SEED = int(os.environ.get("BLENDWORKS_TERRAIN_SEED", "3"))
 LAND_RESOLUTION = int(os.environ.get("BLENDWORKS_LAND_RESOLUTION", "301"))
 SHOTS = os.environ.get("BLENDWORKS_SHOTS", "lake,rocks,meadow,edge").split(",")
+SHADINGS = os.environ.get("BLENDWORKS_SHADINGS", "shaded").split(",")
 TIME_OF_DAY = os.environ.get("BLENDWORKS_TIME", "afternoon")
 TILE = 300.0
 SHIFT = 4.5 * TILE
@@ -65,11 +66,11 @@ def attempt(name, /, **args):
     return reply["result"] if reply["ok"] else None
 
 
-def tile(name, size, index, resolution, skirt):
+def tile(name, size, index, resolution, skirt, form="none"):
     """One heightfield tile of the shared noise, raised by the shared hills; both sample the same world points in every
     tile, so tiles of any size meet."""
     extra = {"skirt": True, "skirt_depth": skirt} if skirt else {}
-    cmd("heightfield", name=name, size=[size, size], tile=list(index), resolution=resolution, seed=SEED, **ROLLING, **extra)
+    cmd("heightfield", name=name, size=[size, size], tile=list(index), resolution=resolution, seed=SEED, form=form, **ROLLING, **extra)
     cmd("transform", name=name, location=[index[0] * size - SHIFT, index[1] * size - SHIFT, 0.0])
     cmd("noise_displace", name=name, direction="z", **HILLS)
     cmd("assign_material", name=name, material="ground")
@@ -80,7 +81,7 @@ def terrain():
     of coarser tiles out to 4 km (with the horizon option one ring, out to 450 m, and distant land beyond). Each ring's tiles are three times the size of the last, so with the shift of 1350 m every
     ring stays centred on the land; skirts close the small steps where a coarse tile meets a finer one."""
     cmd("material_procedural", name="ground", grass_ground={"density": 0.75, "dryness": 0.2})
-    tile("land", TILE, (4, 4), LAND_RESOLUTION, None)
+    tile("land", TILE, (4, 4), LAND_RESOLUTION, None, form="worn")
     rings = RINGS[:1] if to_the_horizon.enabled() else RINGS
     for size, indices, resolution, skirt in rings:
         centre = (indices.start + indices.stop - 1) // 2
@@ -284,7 +285,9 @@ def main():
     renders = {}
     for shot, path, key in (("eye", "lake.png", "lake"), ("shore", "rocks.png", "rocks"), ("meadow", "meadow.png", "meadow"), ("edge", "edge.png", "edge")):
         if key in SHOTS:
-            renders[shot] = cmd("render_final", path=path, camera=shot, width=WIDTH, height=HEIGHT, samples=SAMPLES, time_limit=SECONDS, device=DEVICE, preview=False)
+            for shading in SHADINGS:
+                named = path if shading == "shaded" else path.replace(".png", f"-{shading}.png")
+                renders[shot] = cmd("render_final", path=named, camera=shot, width=WIDTH, height=HEIGHT, samples=SAMPLES, time_limit=SECONDS, device=DEVICE, preview=False, shading=shading)
     final = renders.get("eye") or next(iter(renders.values()))
     summary = {
         "lake": {key: lake_report[key] for key in ("level", "area", "volume", "max_depth", "wind", "waves", "shore")},

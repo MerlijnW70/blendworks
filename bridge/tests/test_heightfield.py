@@ -16,7 +16,7 @@ from blendworks_bridge.noise_stack import stack_field
 from noise_helpers import grid_plane, world_points
 
 FIELD = {"seed": 7, "scale": 40.0, "octaves": 5, "hurst": 0.7, "mode": "ridged", "ridge_offset": 0.9, "warp": 6.0, "warp_octaves": 2}
-TILE = {"size": [50.0, 30.0], "resolution": 41, "height": 12.0, **FIELD}
+TILE = {"size": [50.0, 30.0], "resolution": 41, "height": 12.0, "form": "none", **FIELD}
 
 
 def edge(name, along_x, at_far_side):

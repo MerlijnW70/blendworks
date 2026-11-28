@@ -4,7 +4,7 @@ tree_*, trees, woodland*, meadow_*, lsystem*, cover_*, ground_cover, forest_*, d
 
 One line per module: its docstring, its first public names (`fn`, `+` means more), the commands it registers (`cmd`) and its tests (`test`). Bridge tests are `bridge/tests/test_<name>.py`; vitest ones are `test/<name>.test.ts`. A module with no `test` is covered only by the core tests (smoke, describe, crate, scene).
 
-### bridge/blendworks_bridge/ (75)
+### bridge/blendworks_bridge/ (77)
 
 - `cover_blades`: Grass blade geometry for ground cover: triangles, widths, shapes and clumps. | fn: blade_triangles blade_plan + | test: grass_light
 - `cover_contact`: Ground contact shading for ground cover: triangle coverage and contact values. | fn: triangle_coverage vertex_values + | test: cover_contact
@@ -28,7 +28,9 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `forest_grove`: Calibration of impostor brightness in a grove: a small stand of trees on a ground, seen from the camera's direction | fn: Grove compare | test: distant_forest
 - `forest_inplace`: Calibration of impostor brightness in the scene itself. The trees nearest beyond the switch are rendered from the | fn: render InScene + | test: distant_forest
 - `forest_place`: Where distant forest grows, and how each tree is drawn. The land's vertices get a forest share from rules (slope, | fn: vertex_areas patch_noise + | test: distant_forest woodland_field
-- `ground_level`: The low ground around the camera, where ground fog lies. | fn: low_ground | test: ground_cover ground_export
+- `ground_form`: Worn hillslopes on a heightfield grid: slope failures, rills along the flow, and tussock hummocks. | fn: edge_fade slope_of + | test: bank_form ground_relief
+- `ground_level`: The low ground around the camera, where ground fog lies. | fn: low_ground | test: ground_cover ground_export +1
+- `ground_relief`: Near-camera micro-relief of formed ground: centimetre relief displaced by Cycles adaptive subdivision, bump beyond. | fn: terrain_objects patch_floor + | test: ground_relief bank_form
 - `impostors`: Octahedral impostors of trees. A tree is drawn into an atlas of frames x frames views over the upper hemisphere, laid out | fn: decode encode + | test: distant_forest
 - `leaf_optics`: Two-sided leaves: cited reflectance and transmittance per leaf type, a canopy's reflectance from them. | fn: ratio mix_factor + | test: grass_light natural_materials +3
 - `lsystem_derive`: L-system derivation: rule tables, arithmetic checks and rule application. | fn: Derivation RuleTable + | test: lsystem_grammar lsystem_turtle +1

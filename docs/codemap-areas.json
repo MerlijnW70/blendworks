@@ -51,7 +51,7 @@
       "id": "terrain-liquids",
       "title": "Terrain, rock and liquids",
       "blurb": "heightfields, fluvial terrain, erosion, noise, land and distant land, liquid_*, stones and rock (shape, lithology, weathering, relief), fracture, chip, abrade.",
-      "match": ["^py:(terrain.*|fluvial_.*|heightfield|heightgrid|erode|erosion_.*|noise.*|land_.*|distant_land|ground_level|liquid_.*|material_liquid|shore_stones|stone_.*|rock_.*|abrade|abrasion|chip|fracture|fracturing|fragments|blob|polyhedron)$"]
+      "match": ["^py:(terrain.*|fluvial_.*|heightfield|heightgrid|erode|erosion_.*|noise.*|land_.*|distant_land|ground_level|liquid_.*|material_liquid|shore_stones|stone_.*|rock_.*|bank_form|ground_form|ground_relief|abrade|abrasion|chip|fracture|fracturing|fragments|blob|polyhedron)$"]
     },
     {
       "id": "materials",

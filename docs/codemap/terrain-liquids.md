@@ -4,9 +4,10 @@ heightfields, fluvial terrain, erosion, noise, land and distant land, liquid_*, 
 
 One line per module: its docstring, its first public names (`fn`, `+` means more), the commands it registers (`cmd`) and its tests (`test`). Bridge tests are `bridge/tests/test_<name>.py`; vitest ones are `test/<name>.test.ts`. A module with no `test` is covered only by the core tests (smoke, describe, crate, scene).
 
-### bridge/blendworks_bridge/ (62)
+### bridge/blendworks_bridge/ (63)
 
 - `abrasion`: Abrasion maths: refines a mesh and splits its faces into a worn, rounded pattern. | fn: mesh_triangles edge_table + | test: rock_shape rocks-example
+- `bank_form`: River banks shaped by their bends: cut banks and point bars, slumps, stage steps and undercut lips. | fn: curvature bend_intensity + | test: bank_form
 - `erosion_droplets`: Hydraulic erosion by simulated water droplets on a height grid. | fn: locate height_and_gradient + | test: erode eroded-terrain-example
 - `erosion_thermal`: Thermal erosion: material slides downhill past the talus angle. | fn: neighbour_slices distances + | test: eroded-terrain-example
 - `fluvial_fields`: Uplift fields and lithology bands for the fluvial model. | fn: cell_centres resample + | test: fluvial_fields fluvial_physics
@@ -38,10 +39,10 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `liquid_presets`: Liquid presets: water, sediment, honey and their optical properties. | fn: sediment water + | test: honey_classes liquid_fill +1
 - `liquid_render`: Render settings for liquid scenes. | fn: configure | test: liquid_scene
 - `liquid_ripples`: Ripple detail tiles and slope statistics for liquid surfaces. | fn: mesh_cutoff detail_tile + | test: liquid_bodies liquid_fill +3
-- `liquid_river`: River paths: smoothing, a running minimum bed profile and carving. | fn: Path chaikin + | test: liquid_bodies
+- `liquid_river`: River paths: smoothing, a running minimum bed profile and carving. | fn: Path chaikin + | test: bank_form liquid_bodies
 - `liquid_shader`: Shader graph builder for liquid materials. | fn: LiquidGraph fresh_material + | test: liquid_optics
 - `liquid_spectrum`: Sea state: wave spectrum, wavelengths, whitecaps and slope variance. | fn: sea_state peak_wavelength + | test: liquid_bodies
-- `liquid_world`: Liquid objects in the scene, wind and storm state. | fn: piecewise storm_of + | test: liquid_bodies liquid_scene +3
+- `liquid_world`: Liquid objects in the scene, wind and storm state. | fn: piecewise storm_of + | test: bank_form liquid_bodies +4
 - `noise`: Seeded noise functions: lattice hash, Perlin and feature points. | fn: finalize lattice_hash + | test: noise_displace noise_math +1
 - `noise_stack`: Noise stacks: octaves, gains and domain warping evaluated in world metres. | fn: octave_frame octave_point + | test: heightfield noise_displace +2
 - `polyhedron`: Convex solid data structure with box UVs, face splits and compaction. | fn: Solid box_uv + | test: chip fracture
@@ -53,7 +54,7 @@ One line per module: its docstring, its first public names (`fn`, `+` means more
 - `rock_weathering`: Weathering of a rock surface: a rind, lichen, moss, worn edges and the marks of water; docs/research/rock-realism.md. | fn: attribute facing_up + | test: rock_integration rock_material +2
 - `stone_plan`: Stone placement plan: size bands, spacing and matrices. | fn: clark_evans normal_cdf + | test: shore_stones
 - `stone_shape`: Shapes of stones by how far water has moved them (rock_shape holds the measures, classes and sources). | fn: mesh_arrays volume + | test: rock_shape shore_stones
-- `terrain`: Terrain tile mesh: grid points, heights, rim and unfold. | fn: grid_points surface_heights + | test: terrain_kernels terrain_loader +5
+- `terrain`: Terrain tile mesh: grid points, heights, rim and unfold. | fn: grid_points surface_heights + | test: terrain_kernels terrain_loader +6
 - `terrain_bundle`: Selects the prebuilt native terrain core for the running platform and checks its sha256 against the release manifest. | fn: platform_key bundled_roots + | test: native_dist
 - `terrain_core`: Loader of the native terrain core: finds and loads the library through ctypes, describes numpy buffers, falls back with one stated reason. | fn: NativeError CoreMissing + | test: native_dist terrain_loader +1
 - `terrain_diffusion`: Python reference of hillslope diffusion: linear by ADI and non-linear critical-slope diffusion (Roering et al. 1999). | fn: check_settings cross_gradient + | test: terrain_kernels terrain_loader +4

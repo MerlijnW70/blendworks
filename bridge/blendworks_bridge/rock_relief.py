@@ -22,6 +22,8 @@ DICING_PIXELS = 1.0
 TRIANGLE_BUDGET = 6_000_000
 MEMORY_PER_TRIANGLE = 180
 OFFSCREEN_SCALE = 4.0
+OVERDRAW = 3.0
+AROUND = 6.0
 MODIFIER = "Blendworks Rock Detail"
 HEADROOM = 8.0
 PATCHES_PER_TRIANGLE = 3
@@ -118,8 +120,18 @@ def covered_pixels(obj, depsgraph, frame):
     area = 0.5 * numpy.linalg.norm(numpy.cross(corners[:, 1] - corners[:, 0], corners[:, 2] - corners[:, 0]), axis=1)
     pixels = area * (focal / depth) ** 2
     seen = (-centre[:, 2] > 0.0) & (numpy.abs(centre[:, 0] / depth * focal) <= half_width) & (numpy.abs(centre[:, 1] / depth * focal) <= half_height)
-    pixels = numpy.where(seen, pixels, pixels / OFFSCREEN_SCALE**2)
-    return float(pixels[distance < FAR].sum()), float(least), float(distance.min())
+    return capped(pixels, seen, distance < FAR, half_width, half_height), float(least), float(distance.min())
+
+
+def capped(pixels, seen, counted, half_width, half_height):
+    """Covered pixels of triangles within reach: no triangle covers more than the frame (one at the camera would count
+    millions), the visible ones together at most OVERDRAW frames (surfaces seen behind one another), the hidden ones at the
+    offscreen dicing scale, together at most AROUND frames (the whole sphere around the camera)."""
+    frame = 4.0 * half_width * half_height
+    pixels = numpy.minimum(pixels, frame)
+    visible = min(float(pixels[seen & counted].sum()), OVERDRAW * frame)
+    hidden = min(float(pixels[~seen & counted].sum()), AROUND * frame)
+    return visible + hidden / OFFSCREEN_SCALE**2
 
 
 def fine_enough(corners):

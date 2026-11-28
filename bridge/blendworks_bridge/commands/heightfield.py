@@ -4,6 +4,7 @@ import bpy
 import numpy
 
 from ..limits import MAX_COORDINATE, MAX_GRID_SIDE, MAX_RELIEF, MAX_TILE_INDEX as TILE_INDEX_LIMIT, PAIR
+from .. import ground_form
 from ..mesh_attributes import write_attributes
 from ..noise_stack import STACK_FIELDS, finest_wavelength, stack_bounds
 from ..registry import command
@@ -50,6 +51,7 @@ def tile_inside_world(args):
         "skirt": boolean("Close the tile into a solid: walls down to a flat underside, so it passes the manifold rule.", False),
         "skirt_depth": length("skirt: metres from the lowest height the noise can reach (base_height + height times its lowest value) down to the underside, the same for every tile.", 1.0, MAX_RELIEF),
         "attributes": ATTRIBUTE_FIELD,
+        "form": string("worn (the default): real ground damage on the noise surface, by process: slopes steeper than soil can stand fail and leave bare scars, rills cut along the flow where its stream power passes a threshold, and tussock hummocks rise on gentle grassland; it also stores each vertex's micro-relief (ground_relief) that render_final displaces near the camera; the forms fade out at the tile's edges so tiles still meet. none: the smooth noise surface alone.", ["worn", "none"], "worn"),
         **STACK_FIELDS,
     },
     ["name", "height"],
@@ -68,6 +70,9 @@ def heightfield(ctx, args):
     check_vertex_cap(resolution * resolution + (4 * (resolution - 1) if skirt else 0))
     columns, rows = grid_points(size, resolution, tile)
     heights = surface_heights(columns, rows, args, args["height"], base_height)
+    formed = None
+    if args["form"] == "worn":
+        heights, relief, _, formed = ground_form.worn(heights, resolution, size, columns, rows, args.get("seed", 0))
     origin = numpy.array([tile[0] * size[0], tile[1] * size[1]])
     shape = TileMesh(columns - origin[0], rows - origin[1], heights, resolution, size, tile, floor)
     mesh = bpy.data.meshes.new(args["name"])
@@ -88,6 +93,9 @@ def heightfield(ctx, args):
     result["finest_wavelength"] = rounded(finest_wavelength(args), 9)
     if finest_wavelength(args) < 2.0 * spacing:
         result["warning"] = "the finest octave is shorter than two vertex spacings and shows as aliased noise; use fewer octaves or a higher resolution"
+    if formed is not None:
+        ground_form.store_relief(obj, relief)
+        result["form"] = formed
     if "attributes" in args:
         result["attributes"] = write_attributes(obj, args["attributes"], (resolution - 1) ** 2, resolution * resolution)
     return result
